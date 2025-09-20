@@ -1,7 +1,17 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { getStripeClient } from "@/lib/stripe";
+import type { Database } from "@/lib/supabase";
+
+function resolveStripeCustomerId(metadata?: Record<string, unknown>) {
+  const id =
+    metadata?.["stripe_customer_id"] ?? metadata?.["stripeCustomerId"];
+
+  return typeof id === "string" && id.trim().length > 0 ? id : undefined;
+}
 
 const requestSchema = z.object({
   customerId: z.string().min(1).optional(),
@@ -23,12 +33,68 @@ export async function POST(request: Request) {
     const json = await request.json();
     const payload = requestSchema.parse(json);
 
-    const stripe = getStripeClient();
-    let customerId = payload.customerId ?? null;
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => cookieStore,
+    });
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!customerId && payload.customerEmail) {
+    if (userError) {
+      console.error("Failed to retrieve authenticated user", userError);
+      return NextResponse.json(
+        { message: "Unable to verify authentication." },
+        { status: 401 }
+      );
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "You must be signed in to manage billing." },
+        { status: 401 }
+      );
+    }
+
+    const userMetadata = user.user_metadata as Record<string, unknown> | undefined;
+    const appMetadata = user.app_metadata as Record<string, unknown> | undefined;
+    const stripeCustomerIdFromUser =
+      resolveStripeCustomerId(userMetadata) ?? resolveStripeCustomerId(appMetadata);
+    const normalizedUserEmail =
+      typeof user.email === "string" ? user.email.toLowerCase() : undefined;
+
+    if (payload.customerId) {
+      if (!stripeCustomerIdFromUser || payload.customerId !== stripeCustomerIdFromUser) {
+        return NextResponse.json(
+          { message: "The requested Stripe customer does not match your account." },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (payload.customerEmail) {
+      if (
+        !normalizedUserEmail ||
+        payload.customerEmail.toLowerCase() !== normalizedUserEmail
+      ) {
+        return NextResponse.json(
+          { message: "The requested Stripe customer does not match your account." },
+          { status: 403 }
+        );
+      }
+    }
+
+    const stripe = getStripeClient();
+    let customerId = stripeCustomerIdFromUser ?? null;
+
+    if (!customerId && payload.customerId) {
+      customerId = payload.customerId;
+    }
+
+    if (!customerId && normalizedUserEmail) {
       const existingCustomers = await stripe.customers.list({
-        email: payload.customerEmail,
+        email: normalizedUserEmail,
         limit: 1,
       });
 
@@ -37,8 +103,8 @@ export async function POST(request: Request) {
 
     if (!customerId) {
       return NextResponse.json(
-        { message: "A Stripe customer id or email is required." },
-        { status: 400 }
+        { message: "No Stripe customer is associated with your account." },
+        { status: 404 }
       );
     }
 
