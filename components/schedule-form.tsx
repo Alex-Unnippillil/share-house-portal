@@ -71,9 +71,9 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
       type="submit"
       aria-disabled={isDisabled}
       disabled={isDisabled}
-      className={`px-6 py-2 rounded text-white font-semibold ${
+      className={`rounded px-6 py-2 font-semibold text-white ${
         isDisabled
-          ? 'bg-gray-400 cursor-not-allowed'
+          ? 'cursor-not-allowed bg-gray-400'
           : 'bg-green-500 hover:bg-green-600'
       }`}
     >
@@ -193,32 +193,32 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
 
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
+    <form onSubmit={handleSubmit} className="max-w-md space-y-6">
       {/* Display messages from server action state */}
       {serverState?.message && (
-        <p className={`p-3 rounded text-sm ${serverState.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <p className={`rounded p-3 text-sm ${serverState.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
           {serverState.message}
           {serverState.success && serverState.googleEventLink && (
-             <a href={serverState.googleEventLink} target="_blank" rel="noopener noreferrer" className="ml-2 underline font-semibold">View Event</a>
+             <a href={serverState.googleEventLink} target="_blank" rel="noopener noreferrer" className="ml-2 font-semibold underline">View Event</a>
           )}
         </p>
       )}
        {serverState?.error && (
-        <p className="p-3 rounded bg-red-100 text-red-800 text-sm">
+        <p className="rounded bg-red-100 p-3 text-sm text-red-800">
           Server Error: {serverState.error}
         </p>
       )}
 
       {/* Display General Client Validation Errors (if not specific to date/time) */}
        {clientErrors && !dateTimeClientError && (
-             <div className="p-3 rounded bg-yellow-100 text-yellow-800 text-sm border border-yellow-300">
+             <div className="rounded border border-yellow-300 bg-yellow-100 p-3 text-sm text-yellow-800">
                 Please correct the errors indicated below.
              </div>
           )}
 
       {/* Date Selection */}
       <div>
-         <h3 className="text-lg font-semibold mb-2 text-gray-800">1. Select a Date</h3>
+         <h3 className="mb-2 text-lg font-semibold text-gray-800">1. Select a Date</h3>
          <style>{css}</style>
          <DayPicker
             mode="single"
@@ -228,7 +228,7 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
             fromDate={new Date()}
             // disabled={[ (day) => day.getDay() === 0 || day.getDay() === 6 ]}
             footer={selectedDate ? `Selected date: ${format(selectedDate, 'PPP')}` : 'Please pick a day.'}
-            className="bg-white rounded-md shadow"
+            className="rounded-md bg-white shadow"
             // Associate potential errors with the picker region for accessibility
             aria-describedby={dateTimeClientError ? "datetime-client-error" : undefined}
          />
@@ -237,18 +237,18 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
       {/* Time Slot Selection */}
       {selectedDate && (
         <div>
-          <h3 className="text-lg font-semibold mb-2 text-gray-800">2. Select a Time Slot</h3>
+          <h3 className="mb-2 text-lg font-semibold text-gray-800">2. Select a Time Slot</h3>
           {availableTimeSlots.length > 0 ? (
-             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                {availableTimeSlots.map((slot) => (
                  <button
                    key={slot}
                    type="button"
                    onClick={() => handleTimeSelect(slot)} // Use specific handler
-                   className={`p-2 border rounded text-center text-sm font-medium transition-colors duration-150 ease-in-out ${
+                   className={`rounded border p-2 text-center text-sm font-medium transition-colors duration-150 ease-in-out ${
                      selectedTimeSlot === slot
-                       ? 'bg-green-600 text-white border-green-700 ring-2 ring-green-300'
-                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-gray-400'
+                       ? 'border-green-700 bg-green-600 text-white ring-2 ring-green-300'
+                       : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-100'
                    }`}
                     // Associate potential errors with the time slot region
                     aria-describedby={dateTimeClientError ? "datetime-client-error" : undefined}
@@ -258,7 +258,7 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
                ))}
              </div>
           ) : (
-              <p className="text-gray-500 italic">No available time slots for the selected date based on predefined hours.</p>
+              <p className="italic text-gray-500">No available time slots for the selected date based on predefined hours.</p>
           )}
             {/* Display Client-Side Date/Time Validation Error */}
             {dateTimeClientError && (

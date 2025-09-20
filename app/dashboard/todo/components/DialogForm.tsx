@@ -26,7 +26,7 @@ export default function DailogForm({
 			<DialogTrigger asChild id={id}>
 				{Trigger}
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px] my-5">
+			<DialogContent className="my-5 sm:max-w-[425px]">
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>

@@ -19,10 +19,10 @@ data: { user },} = await supabase.auth.getUser()
 
   return (
     <div className="mt-10 px-2 lg:p-8">
-    <div className="mx-auto px-2 flex w-full flex-col justify-center space-y-6">
-<div className="flex flex-col space-y-2 text-justified-center items-justified-center">
+    <div className="mx-auto flex w-full flex-col justify-center space-y-6 px-2">
+<div className="text-justified-center items-justified-center flex flex-col space-y-2">
         <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Account Profile</h1>
-        <p className="text-base text-justify ">
+        <p className="text-justify text-base ">
           Update your account...</p>
 
         <Link

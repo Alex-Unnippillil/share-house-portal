@@ -37,13 +37,14 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           <span className="font-bold">{siteConfig.name}</span>
         </Link>
       </div>
+
       <SheetContent side="left" className="pr-0">
         <MobileLink
           href="/"
           className="flex items-center"
           onOpenChange={setOpen}
         >
-          <Icons.logo className="mr-1 h-6 w-6" />
+          <Icons.logo className="mr-1 size-6" />
           <span className="font-bold">{siteConfig.name}</span>
         </MobileLink>
         <div className="px-6 py-4">

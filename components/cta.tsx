@@ -16,7 +16,7 @@ export default function Cta() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-3xl mx-auto"
+          className="mx-auto max-w-3xl"
         >
           <Card className="shadow-lg">
             <CardHeader className="text-center">
@@ -25,7 +25,7 @@ export default function Cta() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
               >
-                <CardTitle className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold">Ready for Onyx?</CardTitle>
+                <CardTitle className="text-3xl font-extrabold sm:text-5xl md:text-6xl lg:text-7xl">Ready for Onyx?</CardTitle>
                 <CardDescription className="mt-2 text-2xl font-bold">
                   Book a meeting today.
                 </CardDescription>

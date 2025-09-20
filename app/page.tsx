@@ -4,6 +4,7 @@ import { readUserSession } from "@/utils/actions"
 
 import { siteConfig } from "@/config/site"
 import { buttonVariants } from "@/components/ui/button"
+
 import AnimatedInfographic from "@/components/animated-infographic"
 import Cta from "@/components/cta"
 import Featurez from "@/components/features"
@@ -40,6 +41,7 @@ export default async function IndexPage() {
             Login
           </Link>
           <Link
+
             href={siteConfig.links.signup}
             className={buttonVariants({ variant: "outline" })}
           >

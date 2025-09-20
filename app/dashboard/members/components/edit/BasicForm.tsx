@@ -66,7 +66,7 @@ export default function BasicForm() {
 				/>
 				<Button
 					type="submit"
-					className="flex gap-2 items-center w-full"
+					className="flex w-full items-center gap-2"
 					variant="outline"
 				>
 					Update{" "}

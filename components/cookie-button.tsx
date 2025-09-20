@@ -19,7 +19,7 @@ return (
 
        <a href="#" className={cn("yourConsentManager")}>
 
-                <Icons.cookie className="h-5 w-5" />
+                <Icons.cookie className="size-5" />
 </a>
                 <span className="sr-only">Cookie Preferences</span>
               </div>

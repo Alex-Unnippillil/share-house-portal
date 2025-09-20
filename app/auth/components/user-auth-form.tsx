@@ -82,7 +82,7 @@ const [isLoading, setIsLoading] = React.useState<boolean>(false)
             />
           </div>
           <Button
-				className="w-full flex items-center gap-2"
+				className="flex w-full items-center gap-2"
 				variant="outline"
 			>
 				Sign In{" "}
@@ -104,9 +104,9 @@ const [isLoading, setIsLoading] = React.useState<boolean>(false)
       </div>
       <Button variant="outline" type="button" disabled={isLoading}>
         {isLoading ? (
-          <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+          <Icons.spinner className="mr-2 size-4 animate-spin" />
         ) : (
-          <Icons.gitHub className="mr-2 h-4 w-4" />
+          <Icons.gitHub className="mr-2 size-4" />
         )}{" "}
         GitHub
       </Button>

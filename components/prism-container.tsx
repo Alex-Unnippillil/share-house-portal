@@ -11,10 +11,10 @@ const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
 
 function LoadingFallback() {
   return (
-    <div className="w-full h-[70vh] md:h-[80vh] flex items-center justify-center bg-arctic-gradient">
+    <div className="bg-arctic-gradient flex h-[70vh] w-full items-center justify-center md:h-[80vh]">
       <div className="text-center">
         <div
-          className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+          className="inline-block size-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
           role="status"
         >
           <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
@@ -29,7 +29,7 @@ function LoadingFallback() {
 
 export default function PrismContainer() {
   return (
-    <div className="w-full h-[70vh] md:h-[80vh]">
+    <div className="h-[70vh] w-full md:h-[80vh]">
       <Suspense fallback={<LoadingFallback />}>
         <FeaturePrism />
       </Suspense>
