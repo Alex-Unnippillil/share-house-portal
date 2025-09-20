@@ -37,15 +37,15 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="w-full h-full flex items-center justify-center bg-gray-900">
-          <div className="text-center p-6 max-w-md">
-            <h2 className="text-xl font-bold text-red-400 mb-4">Something went wrong</h2>
-            <p className="text-gray-300 mb-4">
+        <div className="flex size-full items-center justify-center bg-gray-900">
+          <div className="max-w-md p-6 text-center">
+            <h2 className="mb-4 text-xl font-bold text-red-400">Something went wrong</h2>
+            <p className="mb-4 text-gray-300">
               We were unable to load the 3D visualization. This might be due to browser compatibility issues.
             </p>
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
               Try again
             </button>
@@ -208,7 +208,7 @@ function EnergyFlow({ from, to, color, active, speed = 1 }) {
     }
 
     return [positions, sizes]
-  }, [from, to, count])
+  }, [from])
 
   useFrame(({ clock }) => {
     if (particlesRef.current && active) {
@@ -1220,7 +1220,7 @@ export default function FeaturePrism() {
 
   return (
     <ErrorBoundary>
-      <div className="w-full h-full relative">
+      <div className="relative size-full">
         <Canvas shadows dpr={[1, 2]}>
           <color attach="background" args={["#030712"]} />
           <fog attach="fog" args={["#030712", 5, 20]} />
@@ -1259,7 +1259,7 @@ export default function FeaturePrism() {
 
         {/* Feature Modal */}
         <Dialog open={!!selectedFeature} onOpenChange={() => setSelectedFeature(null)}>
-          <DialogContent className="sm:max-w-md bg-gray-900 text-white border-gray-700">
+          <DialogContent className="border-gray-700 bg-gray-900 text-white sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl">
                 {selectedFeature && (
@@ -1275,7 +1275,7 @@ export default function FeaturePrism() {
             </DialogHeader>
 
             <div className="py-4">
-              <p className="text-gray-200 text-lg leading-relaxed">{selectedFeature?.description}</p>
+              <p className="text-lg leading-relaxed text-gray-200">{selectedFeature?.description}</p>
             </div>
 
             <DialogFooter>
@@ -1294,7 +1294,7 @@ export default function FeaturePrism() {
         </Dialog>
 
         {/* Instructions overlay */}
-        <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white p-3 rounded-md text-center">
+        <div className="absolute inset-x-4 bottom-4 rounded-md bg-black/70 p-3 text-center text-white">
           <p className="text-sm md:text-base">
             Click on any hexagon to learn more about each feature.
             <br className="hidden md:block" />

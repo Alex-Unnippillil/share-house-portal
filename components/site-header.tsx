@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
-      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0 xs:space-x0">
+      <div className="xs:space-x0 container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <MainNav items={siteConfig.mainNav} />
     <MobileNav />    
  <div className="flex flex-1 items-center justify-end space-x-4">
@@ -26,7 +26,7 @@ export function SiteHeader() {
                   variant: "ghost",
                 })}
               >
-                <Icons.gitHub className="h-5 w-5" />
+                <Icons.gitHub className="size-5" />
                 <span className="sr-only">GitHub</span>
               </div>
             </Link>
@@ -41,7 +41,7 @@ export function SiteHeader() {
                   variant: "ghost",
                 })}
               >
-                <Icons.twitter className="h-4 w-4 fill-current" />
+                <Icons.twitter className="size-4 fill-current" />
                 <span className="sr-only">Twitter</span>
               </div>
             </Link>

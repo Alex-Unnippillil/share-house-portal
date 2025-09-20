@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 export default function PlaygroundPage() {
   return (
     <>
-      <div className="max-w-dvw w-full h-full flex-col md:flex">
+      <div className="max-w-dvw size-full flex-col md:flex">
         <div className="container flex flex-col items-start justify-between space-y-2 py-4 sm:flex-row sm:items-center sm:space-y-0 md:h-16">
           <h2 className="text-lg font-semibold">Playground</h2>
           <div className="ml-auto flex w-full space-x-2 sm:justify-end">
@@ -55,7 +55,7 @@ export default function PlaygroundPage() {
         <Tabs defaultValue="complete" className="flex-1">
           <div className="container h-full py-6">
             <div className="grid h-full items-stretch gap-6 md:grid-cols-[1fr_200px]">
-              <div className="flex-col space-y-4 xs:flex md:order-2">
+              <div className="xs:flex flex-col space-y-4 md:order-2">
                 <div className="grid gap-2">
                   <HoverCard openDelay={200}>
                     <HoverCardTrigger asChild>
@@ -77,7 +77,7 @@ export default function PlaygroundPage() {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="none"
-                        className="h-5 w-5"
+                        className="size-5"
                       >
                         <rect
                           x="4"
@@ -143,7 +143,7 @@ export default function PlaygroundPage() {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="none"
-                        className="h-5 w-5"
+                        className="size-5"
                       >
                         <path
                           fillRule="evenodd"
@@ -183,7 +183,7 @@ export default function PlaygroundPage() {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="none"
-                        className="h-5 w-5"
+                        className="size-5"
                       >
                         <rect
                           x="4"
@@ -249,7 +249,7 @@ export default function PlaygroundPage() {
                       <Button>Submit</Button>
                       <Button variant="secondary">
                         <span className="sr-only">Show history</span>
-                        <CounterClockwiseClockIcon className="h-4 w-4" />
+                        <CounterClockwiseClockIcon className="size-4" />
                       </Button>
                     </div>
                   </div>
@@ -267,7 +267,7 @@ export default function PlaygroundPage() {
                       <Button>Submit</Button>
                       <Button variant="secondary">
                         <span className="sr-only">Show history</span>
-                        <CounterClockwiseClockIcon className="h-4 w-4" />
+                        <CounterClockwiseClockIcon className="size-4" />
                       </Button>
                     </div>
                   </div>
@@ -298,7 +298,7 @@ export default function PlaygroundPage() {
                       <Button>Submit</Button>
                       <Button variant="secondary">
                         <span className="sr-only">Show history</span>
-                        <CounterClockwiseClockIcon className="h-4 w-4" />
+                        <CounterClockwiseClockIcon className="size-4" />
                       </Button>
                     </div>
                   </div>

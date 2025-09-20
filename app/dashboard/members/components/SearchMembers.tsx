@@ -5,7 +5,7 @@ export default function SearchMembers() {
 	return (
 		<Input
 			placeholder="search by role, name"
-			className=" ring-zinc-300 bg-white dark:bg-inherit focus:dark:ring-zinc-700  focus:ring-zinc-300"
+			className=" bg-white ring-zinc-300 focus:ring-zinc-300 dark:bg-inherit  focus:dark:ring-zinc-700"
 		/>
 	);
 }

@@ -96,7 +96,7 @@ const languages = [
   }
 
   return (
-    <div className="                                   w-full px-2 py-8 space-y-8">
+    <div className="                                   w-full space-y-8 px-2 py-8">
 <Avatar
 
       uid={user?.id ?? null}
@@ -141,7 +141,7 @@ const languages = [
       </div>
 
 
-<div className="w-full grid grid-cols-1 justify-evenly">    
+<div className="grid w-full grid-cols-1 justify-evenly">    
 
 
 
@@ -155,8 +155,8 @@ const languages = [
         </button>
         </div>
 
-      <div className="flex flex-col w-full mb-2">
-        <form className="space-y-8 items-center" action="/auth/signout" method="post">
+      <div className="mb-2 flex w-full flex-col">
+        <form className="items-center space-y-8" action="/auth/signout" method="post">
           <button           className={buttonVariants({ variant: "outline" })} type="submit">
             Sign out
           </button>

@@ -10,7 +10,7 @@ export function SiteFooter() {
         <div className="flex-1 space-y-4">
          <Link className="ml-0 flex items-center gap-1" href="/" target="_blank"
               rel="noreferrer">
-          <Icons.logo className="h-6 w-6" />
+          <Icons.logo className="size-6" />
           <span className="inline-block font-bold">{siteConfig.name}</span>
         </Link>
           <p className="text-sm text-muted-foreground">Pioneering real world asset solutions for the digital age.</p>
@@ -60,7 +60,7 @@ export function SiteFooter() {
                     variant: "ghost",
                   })}
                 >
-                  <Icons.gitHub className="h-5 w-5" />
+                  <Icons.gitHub className="size-5" />
                   <span className="sr-only">GitHub</span>
                 </div>
               </Link>
@@ -75,7 +75,7 @@ export function SiteFooter() {
                   variant: "ghost",
                 })}
               >
-                <Icons.twitter className="h-4 w-4" />
+                <Icons.twitter className="size-4" />
                 <span className="sr-only">Twitter</span>
               </div>
             </Link>
@@ -90,7 +90,7 @@ export function SiteFooter() {
                   variant: "ghost",
                 })}
               >
-                <Icons.linkedin className="h-5 w-5" />
+                <Icons.linkedin className="size-5" />
                 <span className="sr-only">LinkedIn</span>
               </div>
             </Link>
