@@ -1,55 +1,37 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
-  name: "Onyx",
+  name: "Share House Portal",
   description:
-    "Onyx SaaS PWA Template with validated CRUD ops, user authentication + RBAC, maximum header security, Rust API runtime, TanStack, and more.",
+    "A streamlined rental property hub where tenants can pay rent, access lease documents, coordinate shared amenities, and stay connected with their housemates.",
   mainNav: [
     {
       title: "Home",
       href: "/",
     },
-
-    { 
+    {
+      title: "Pay rent",
+      href: "/#payments",
+    },
+    {
+      title: "Amenities",
+      href: "/#essentials",
+    },
+    {
+      title: "Community",
+      href: "/#community",
+    },
+    {
       title: "Account",
       href: "/account",
     },
-    { 
-      title: "Dashboard",
-      href: "/dashboard",
-    },
-    { 
-      title: "OpenAI",
-      href: "/playground",
-    },
-    { 
-      title: "Podcasts",
-      href: "/music",
-    },
-    { 
-      title: "Blog",
-      href: "/blog",
-    },
-    { 
-      title: "RBAC",
-      href: "/dashboard/members",
-    },
-    { 
-      title: "About",
-      href: "/about",
-    },
-    {
-      title: "Contact",
-      href: "/contact",
-    },
   ],
   links: {
-    twitter: "https://twitter.com/r_mourey_jr",
-    github: "https://github.com/rmourey26/onyx",
-    login: "https://onyx-rho-pink.vercel.app/auth",
-    signup: "https://onyx-rho-pink.vercel.app/onboarding",
+    twitter: "https://twitter.com/sharehouse",
+    github: "https://github.com/share-house",
+    login: "/auth",
+    signup: "/onboarding",
     contact: "/contact",
-    linkedin:
-"https://linkedin.com/in/robertmoureyjr",
+    linkedin: "https://linkedin.com/company/share-house-collective",
   },
 }

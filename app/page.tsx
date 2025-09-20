@@ -1,60 +1,124 @@
 import Link from "next/link"
+import { addMonths, format, startOfMonth } from "date-fns"
+import { Home, NotebookPen, Sparkles } from "lucide-react"
 
-import { siteConfig } from "@/config/site"
-import { buttonVariants } from "@/components/ui/button"
-import { readUserSession } from "@/utils/actions";
-import Featurez from "@/components/features"
-import { redirect } from "next/navigation";
-import Cta from "@/components/cta";
-import AnimatedInfographic from "@/components/animated-infographic";
-import WhyOnyxWrapper from "@/components/whyonyxwrapper";
-import PrismContainer from "@/components/prism-container"
+import { readUserSession } from "@/utils/actions"
+import { redirect } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { RentPaymentForm } from "@/components/portal/rent-payment-form"
+import { LeaseAgreementCard } from "@/components/portal/lease-agreement-card"
+import { AmenityReservation } from "@/components/portal/amenity-reservation"
+import { SharedSpaceDiagram } from "@/components/portal/shared-space-diagram"
+import { MessageBoard } from "@/components/portal/message-board"
+
+const heroHighlights = () => {
+  const nextDueDate = startOfMonth(addMonths(new Date(), 1))
+  return [
+    {
+      label: "Next rent due",
+      value: format(nextDueDate, "MMMM d, yyyy"),
+      description: "AutoPay reminders are sent three days before the due date.",
+      icon: Home,
+    },
+    {
+      label: "Amenity on deck",
+      value: "Kitchen · Wednesday 7 PM",
+      description: "Taylor reserved the space for shared meal prep.",
+      icon: NotebookPen,
+    },
+    {
+      label: "Community highlight",
+      value: "Compost pickup Thursday",
+      description: "Roll the bin to the curb on Wednesday night, thank you!",
+      icon: Sparkles,
+    },
+  ]
+}
 
 export default async function IndexPage() {
-  const { data: userSession } = await readUserSession();
+  const { data: userSession } = await readUserSession()
 
-        if (userSession.session) {
-                return redirect("/dashboard");
-        }
+  if (userSession.session) {
+    return redirect("/dashboard")
+  }
+
+  const highlights = heroHighlights()
+
   return (
-   
-<section className="relative max-w-dvw w-full overflow-hidden bg-arctic-gradient pb-16">
-<div className="container px-4 py-8 mx-auto flex flex-col space-y-16 items-center pb-16 pt-16 sm:pt-16 sm:pb-24">
-      <div className="flex mx-auto flex-col px-4 md:px-6 lg:px-8 w-full items-center gap-y-12">
-        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-tight tracking-tighter md:text-6xl text-center">
-          Onyx SaaS PWA Template
-        </h1>
-
-     {/* The PrismContainer uses dynamic client-side rendering to display the FeaturesAnimation component. I wanted to demo the usage of Fibonacci's Golden Ratio in an interactive 3D component for devs who may be interested in expanding upon the general concept of the animation. Theres a working implementation running NextJS 15 and React 19 at github.com/rmourey26/3d-prism-infographic and 3d-prism-infographic.vercel.app. The Onyx version needs some tinkering to work properly with React 18.3. I should be able to get that done by 05-10-2025. We'll see. 
-        <PrismContainer />
-      */}
-        <p className="max-w-3xl text-lg lg:text-xl xs:text-justify text-muted-foreground">
-         Secure user authentication + RBAC, Zod validated Supabase Postgres DB CRUD ops, Rust serverless API runtime, TanStack queries with Supabase cache helpers, Resend, SID.ai, NextMDX, admin dashboard, and more. Onboard users and receive inquiries immediately. 
-        </p>
-      </div>
-      <Cta />
-      <div className="flex gap-6 mb-8">
-        <Link
-          href={siteConfig.links.login}
-          target="_blank"
-          rel="noreferrer"
-          className={buttonVariants()}
-        >
-          Login
-        </Link>
-        <Link
-          target="_blank"
-          rel="noreferrer"
-          href={siteConfig.links.signup}
-          className={buttonVariants({ variant: "outline" })}
-        >
-          Sign Up
-        </Link>
+    <div className="flex flex-col gap-16 pb-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-20 text-white">
+        <div className="container flex flex-col gap-12">
+          <div className="flex flex-col gap-6 lg:w-2/3">
+            <span className="w-fit rounded-full border border-white/20 bg-white/10 px-4 py-1 text-sm font-medium uppercase tracking-wide">
+              Share House Portal
+            </span>
+            <h1 className="text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
+              Everything your household needs to stay coordinated
+            </h1>
+            <p className="text-lg text-white/80">
+              Pay rent, review your lease, reserve amenities, and keep the conversation flowing. This dashboard gives every tenant
+              clarity about shared spaces and responsibilities.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg">
+                <Link href="#payments">Pay rent</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="bg-white/10 text-white hover:bg-white/20">
+                <Link href="#community">Open message board</Link>
+              </Button>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {highlights.map((item) => {
+              const Icon = item.icon
+              return (
+                <Card key={item.label} className="border-white/10 bg-white/5 text-white shadow-lg backdrop-blur">
+                  <CardContent className="space-y-3 p-6">
+                    <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/80">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                      {item.label}
+                    </div>
+                    <p className="text-xl font-semibold">{item.value}</p>
+                    <p className="text-sm text-white/70">{item.description}</p>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         </div>
-      </div>
-      <AnimatedInfographic />
-   <Featurez/>
-   <WhyOnyxWrapper />
-    </section>
+      </section>
+
+      <section id="essentials" className="container flex flex-col gap-12">
+        <div className="space-y-3">
+          <h2 className="text-3xl font-semibold tracking-tight text-foreground">Household essentials</h2>
+          <p className="text-muted-foreground">
+            Manage your rent, agreements, and shared amenities without leaving the portal.
+          </p>
+        </div>
+        <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
+          <div id="payments">
+            <RentPaymentForm />
+          </div>
+          <div className="space-y-6">
+            <LeaseAgreementCard />
+            <AmenityReservation />
+          </div>
+        </div>
+      </section>
+
+      <section id="community" className="container flex flex-col gap-12">
+        <div className="space-y-3">
+          <h2 className="text-3xl font-semibold tracking-tight text-foreground">Shared living resources</h2>
+          <p className="text-muted-foreground">
+            Explore the shared space map and stay in sync with your housemates.
+          </p>
+        </div>
+        <div className="grid gap-6 xl:grid-cols-[1.2fr,1fr]">
+          <SharedSpaceDiagram />
+          <MessageBoard />
+        </div>
+      </section>
+    </div>
   )
 }

@@ -8,40 +8,41 @@ export function SiteFooter() {
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-         <Link className="ml-0 flex items-center gap-1" href="/" target="_blank"
-              rel="noreferrer">
-          <Icons.logo className="h-6 w-6" />
-          <span className="inline-block font-bold">{siteConfig.name}</span>
-        </Link>
-          <p className="text-sm text-muted-foreground">Pioneering real world asset solutions for the digital age.</p>
+          <Link className="ml-0 flex items-center gap-1" href="/">
+            <Icons.logo className="h-6 w-6" />
+            <span className="inline-block font-bold">{siteConfig.name}</span>
+          </Link>
+          <p className="text-sm text-muted-foreground">
+            Helping shared households stay organised with transparent payments, clear expectations, and open communication.
+          </p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-12 sm:grid-cols-3">
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">Solutions</h3>
+            <h3 className="text-sm font-medium">Portal</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="#" className="text-muted-foreground transition-colors hover:text-primary">
-                  Rewards
+                <Link href="/#payments" className="text-muted-foreground transition-colors hover:text-primary">
+                  Rent payments
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
-                  Contact
+                <Link href="/#essentials" className="text-muted-foreground transition-colors hover:text-primary">
+                  Amenity calendar
                 </Link>
               </li>
             </ul>
           </div>
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">Company</h3>
+            <h3 className="text-sm font-medium">Support</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground transition-colors hover:text-primary">
-                  About Us
+                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
+                  Contact management
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-muted-foreground transition-colors hover:text-primary">
-                  Blog
+                <Link href="/terms" className="text-muted-foreground transition-colors hover:text-primary">
+                  House rules
                 </Link>
               </li>
             </ul>
@@ -100,7 +101,7 @@ export function SiteFooter() {
       </div>
       <div className="container border-t py-6">
         <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Onyx. All Rights Reserved.
+          © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
         </p>
       </div>
     </footer>
