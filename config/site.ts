@@ -19,6 +19,10 @@ export const siteConfig = {
       href: "/dashboard",
     },
     {
+      title: "Rent",
+      href: "/rent",
+    },
+    {
       title: "OpenAI",
       href: "/playground",
     },

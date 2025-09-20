@@ -968,6 +968,63 @@ export type Database = {
         }
         Relationships: []
       }
+      leases: {
+        Row: {
+          created_at: string
+          deposit_amount: number
+          end_date: string | null
+          id: string
+          metadata: Json
+          rent_amount: number
+          start_date: string
+          status: Database["public"]["Enums"]["lease_status"]
+          tenant_id: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_amount?: number
+          end_date?: string | null
+          id?: string
+          metadata?: Json
+          rent_amount: number
+          start_date: string
+          status?: Database["public"]["Enums"]["lease_status"]
+          tenant_id: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_amount?: number
+          end_date?: string | null
+          id?: string
+          metadata?: Json
+          rent_amount?: number
+          start_date?: string
+          status?: Database["public"]["Enums"]["lease_status"]
+          tenant_id?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_tenant_id_fkey",
+            columns: ["tenant_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "leases_unit_id_fkey",
+            columns: ["unit_id"],
+            isOneToOne: false,
+            referencedRelation: "units",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       meetings: {
         Row: {
           created_at: string | null
@@ -1226,6 +1283,56 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          name: string
+          owner_profile_id: string | null
+          postal_code: string | null
+          state: string | null
+          street: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name: string
+          owner_profile_id?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name?: string
+          owner_profile_id?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_owner_profile_id_fkey",
+            columns: ["owner_profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1342,6 +1449,116 @@ export type Database = {
           weight?: number | null
         }
         Relationships: []
+      }
+      rent_invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          lease_id: string
+          metadata: Json
+          paid_amount: number
+          period_end: string | null
+          period_start: string | null
+          status: Database["public"]["Enums"]["rent_invoice_status"]
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          lease_id: string
+          metadata?: Json
+          paid_amount?: number
+          period_end?: string | null
+          period_start?: string | null
+          status?: Database["public"]["Enums"]["rent_invoice_status"]
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          lease_id?: string
+          metadata?: Json
+          paid_amount?: number
+          period_end?: string | null
+          period_start?: string | null
+          status?: Database["public"]["Enums"]["rent_invoice_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_invoices_lease_id_fkey",
+            columns: ["lease_id"],
+            isOneToOne: false,
+            referencedRelation: "leases",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      rent_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string | null
+          lease_id: string
+          metadata: Json
+          processed_at: string | null
+          provider: string
+          provider_payment_id: string | null
+          provider_session_id: string | null
+          receipt_url: string | null
+          status: Database["public"]["Enums"]["rent_payment_status"]
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          lease_id: string
+          metadata?: Json
+          processed_at?: string | null
+          provider: string
+          provider_payment_id?: string | null
+          provider_session_id?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["rent_payment_status"]
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          lease_id?: string
+          metadata?: Json
+          processed_at?: string | null
+          provider?: string
+          provider_payment_id?: string | null
+          provider_session_id?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["rent_payment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_invoice_id_fkey",
+            columns: ["invoice_id"],
+            isOneToOne: false,
+            referencedRelation: "rent_invoices",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "rent_payments_lease_id_fkey",
+            columns: ["lease_id"],
+            isOneToOne: false,
+            referencedRelation: "leases",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       shipments: {
         Row: {
@@ -1593,6 +1810,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members_table"
             referencedColumns: ["member_id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string
+          id: string
+          metadata: Json
+          property_id: string
+          square_feet: number | null
+          status: string
+          unit_number: string
+          updated_at: string
+        }
+        Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          property_id: string
+          square_feet?: number | null
+          status?: string
+          unit_number: string
+          updated_at?: string
+        }
+        Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          property_id?: string
+          square_feet?: number | null
+          status?: string
+          unit_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_property_id_fkey",
+            columns: ["property_id"],
+            isOneToOne: false,
+            referencedRelation: "properties",
+            referencedColumns: ["id"],
           },
         ]
       }
@@ -2232,6 +2496,14 @@ export const Constants = {
         "Oceania",
         "North America",
         "South America",
+      ],
+      lease_status: ["pending", "active", "ended", "terminated"],
+      rent_invoice_status: ["draft", "open", "paid", "overdue", "void"],
+      rent_payment_status: [
+        "pending",
+        "succeeded",
+        "failed",
+        "refunded",
       ],
       user_role: ["user", "admin"],
     },
