@@ -19,6 +19,10 @@ export const siteConfig = {
       href: "/dashboard",
     },
     {
+      title: "Shared Spaces",
+      href: "/shared-spaces",
+    },
+    {
       title: "OpenAI",
       href: "/playground",
     },
