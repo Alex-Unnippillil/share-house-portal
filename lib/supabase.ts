@@ -183,6 +183,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          rules: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          rules?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          rules?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      amenity_reservations: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          end_time: string
+          id: string
+          lease_id: string
+          start_time: string
+          status: "approved" | "cancelled" | "denied" | "pending"
+          updated_at: string
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string | null
+          end_time: string
+          id?: string
+          lease_id: string
+          start_time: string
+          status?: "approved" | "cancelled" | "denied" | "pending"
+          updated_at?: string | null
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          lease_id?: string
+          start_time?: string
+          status?: "approved" | "cancelled" | "denied" | "pending"
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenity_reservations_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "amenity_reservations_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agents: {
         Row: {
           created_at: string | null
