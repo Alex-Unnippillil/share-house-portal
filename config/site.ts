@@ -10,31 +10,31 @@ export const siteConfig = {
       href: "/",
     },
 
-    { 
+    {
       title: "Account",
       href: "/account",
     },
-    { 
+    {
       title: "Dashboard",
       href: "/dashboard",
     },
-    { 
+    {
       title: "OpenAI",
       href: "/playground",
     },
-    { 
+    {
       title: "Podcasts",
       href: "/music",
     },
-    { 
+    {
       title: "Blog",
       href: "/blog",
     },
-    { 
+    {
       title: "RBAC",
       href: "/dashboard/members",
     },
-    { 
+    {
       title: "About",
       href: "/about",
     },
@@ -46,10 +46,9 @@ export const siteConfig = {
   links: {
     twitter: "https://twitter.com/r_mourey_jr",
     github: "https://github.com/rmourey26/onyx",
-    login: "https://onyx-rho-pink.vercel.app/auth",
-    signup: "https://onyx-rho-pink.vercel.app/onboarding",
+    login: "/auth",
+    signup: "/onboarding",
     contact: "/contact",
-    linkedin:
-"https://linkedin.com/in/robertmoureyjr",
+    linkedin: "https://linkedin.com/in/robertmoureyjr",
   },
 }
