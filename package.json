@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-sns": "^3.893.0",
+    "@aws-sdk/client-sqs": "^3.893.0",
     "@ducanh2912/next-pwa": "^10.2.8",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -109,6 +112,8 @@
     "eslint-plugin-tailwindcss": "^3.14.2",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vite": "^7.1.6",
+    "vitest": "^3.2.4"
   }
 }
