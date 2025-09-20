@@ -1226,6 +1226,69 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_space_maps: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          description: string | null
+          diagram_path: string
+          id: string
+          last_uploaded_at: string
+          lease_id: string
+          metadata: Json
+          tenant_profile_id: string
+          title: string | null
+          unit_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bucket_id?: string
+          created_at?: string
+          description?: string | null
+          diagram_path: string
+          id?: string
+          last_uploaded_at?: string
+          lease_id: string
+          metadata?: Json
+          tenant_profile_id: string
+          title?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          description?: string | null
+          diagram_path?: string
+          id?: string
+          last_uploaded_at?: string
+          lease_id?: string
+          metadata?: Json
+          tenant_profile_id?: string
+          title?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_space_maps_tenant_profile_id_fkey"
+            columns: ["tenant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_space_maps_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
