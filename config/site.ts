@@ -15,8 +15,16 @@ export const siteConfig = {
       href: "/account",
     },
     {
+      title: "Leases",
+      href: "/leases",
+    },
+    {
       title: "Dashboard",
       href: "/dashboard",
+    },
+    {
+      title: "Lease Admin",
+      href: "/dashboard/leases",
     },
     {
       title: "OpenAI",
