@@ -53,9 +53,44 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - SUPABASE_JWT_SECRET="Your supabase JWT secret"
     - NEXT_PUBLIC_SUPABASE_URL="Your supabase project URL"
     - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
+  - Configure payments (optional)
+    - STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+    - STRIPE_DEFAULT_PRICE_ID or NEXT_PUBLIC_STRIPE_DEFAULT_AMOUNT (in CAD)
+    - NEXT_PUBLIC_STRIPE_MODE ("payment" or "subscription")
+    - NEXT_PUBLIC_STRIPE_SUCCESS_URL and NEXT_PUBLIC_STRIPE_CANCEL_URL
+    - NEXT_PUBLIC_STRIPE_ALLOW_PROMOTION_CODES ("true" to enable)
+    - NEXT_PUBLIC_STRIPE_TAX_RATES (comma separated list of tax rate IDs)
+    - NEXT_PUBLIC_INTERAC_RECIPIENT_EMAIL and NEXT_PUBLIC_INTERAC_RECIPIENT_NAME
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
+  - Add authorized development and production URL's to Supabase URL config.
+
+### Payments
+
+- A new Billing page is available at `/account/billing` for authenticated users. It exposes Stripe Checkout for card payments and an Interac e-Transfer form that logs transfers for manual reconciliation.
+- Configure the environment variables listed above to enable Stripe and Interac messaging. If you do not provide a Stripe price identifier or default amount the checkout button will be disabled by design.
+- Create an `interac_payments` table in Supabase matching the schema defined in `lib/supabase.ts`. A minimal SQL definition looks like:
+
+```sql
+create table if not exists public.interac_payments (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now() not null,
+  sender_name text not null,
+  sender_email text not null,
+  amount_cents integer not null,
+  currency text not null default 'CAD',
+  reference text,
+  message text,
+  security_question text,
+  security_answer_hash text,
+  auto_deposit boolean not null default false,
+  status text not null default 'pending',
+  metadata jsonb,
+  processed_at timestamptz,
+  user_id uuid references auth.users(id)
+);
+```
+
 ### Run  
 - Development server:
 

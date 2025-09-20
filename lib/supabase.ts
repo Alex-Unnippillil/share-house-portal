@@ -968,6 +968,68 @@ export type Database = {
         }
         Relationships: []
       }
+      interac_payments: {
+        Row: {
+          amount_cents: number
+          auto_deposit: boolean
+          created_at: string
+          currency: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          processed_at: string | null
+          reference: string | null
+          security_answer_hash: string | null
+          security_question: string | null
+          sender_email: string
+          sender_name: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          auto_deposit?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          processed_at?: string | null
+          reference?: string | null
+          security_answer_hash?: string | null
+          security_question?: string | null
+          sender_email: string
+          sender_name: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          auto_deposit?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          processed_at?: string | null
+          reference?: string | null
+          security_answer_hash?: string | null
+          security_question?: string | null
+          sender_email?: string
+          sender_name?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interac_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           created_at: string | null
