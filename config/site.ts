@@ -14,9 +14,13 @@ export const siteConfig = {
       title: "Account",
       href: "/account",
     },
-    { 
+    {
       title: "Dashboard",
       href: "/dashboard",
+    },
+    {
+      title: "Message Board",
+      href: "/message-board",
     },
     { 
       title: "OpenAI",
@@ -49,6 +53,7 @@ export const siteConfig = {
     login: "https://onyx-rho-pink.vercel.app/auth",
     signup: "https://onyx-rho-pink.vercel.app/onboarding",
     contact: "/contact",
+    messageBoard: "/message-board",
     linkedin:
 "https://linkedin.com/in/robertmoureyjr",
   },
