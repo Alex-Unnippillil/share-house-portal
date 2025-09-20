@@ -1,0 +1,36 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .ts,.tsx,.vue --report-unused-disable-directives --max-warnings 0",
+    "type-check": "vue-tsc --noEmit",
+    "format": "prettier \"src/**/*.{ts,tsx,js,vue,json,css}\" --write"
+  },
+  "dependencies": {
+    "@vueuse/core": "^11.1.0",
+    "axios": "^1.7.7",
+    "pinia": "^2.2.6",
+    "vue": "^3.5.21",
+    "vue-i18n": "^9.14.1",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^3.7.2",
+    "@types/node": "^20.14.15",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/eslint-config-typescript": "^13.0.0",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-vue": "^9.29.1",
+    "prettier": "^2.8.8",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.6",
+    "vue-tsc": "^3.0.7"
+  }
+}
