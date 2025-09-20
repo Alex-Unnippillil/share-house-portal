@@ -10,11 +10,15 @@ export const siteConfig = {
       href: "/",
     },
 
-    { 
+    {
       title: "Account",
       href: "/account",
     },
-    { 
+    {
+      title: "Shared Spaces",
+      href: "/shared-spaces",
+    },
+    {
       title: "Dashboard",
       href: "/dashboard",
     },
