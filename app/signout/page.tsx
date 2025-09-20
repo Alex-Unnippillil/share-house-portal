@@ -16,9 +16,9 @@ export default async function page() {
         }
 
     return (
-          <div className="container px-4 py-8 items-centered">
+          <div className="items-centered container px-4 py-8">
           <div className="mt-6">
-                          <h1 className="text-2xl text-center font-semibold tracking-tight mb-4">Sign out of Onyx</h1>
+                          <h1 className="mb-4 text-center text-2xl font-semibold tracking-tight">Sign out of Onyx</h1>
             <SignOut/>
 </div>
 </div>

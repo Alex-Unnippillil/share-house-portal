@@ -15,7 +15,7 @@ export default function Todo() {
 	];
 
 	return (
-		<div className="flex justify-center items-center h-screen">
+		<div className="flex h-screen items-center justify-center">
 			<div className="w-96 space-y-5">
 
 				<CreateForm />

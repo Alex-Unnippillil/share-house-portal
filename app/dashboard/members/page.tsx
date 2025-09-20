@@ -7,7 +7,7 @@ import CreateMember from "./components/create/CreateMember";
 
 export default function Members() {
 	return (
-		<div className="space-y-5 w-full overflow-y-auto px-3">
+		<div className="w-full space-y-5 overflow-y-auto px-3">
 			<h1 className="text-3xl font-bold">Members</h1>
 			<div className="flex gap-2">
 				<SearchMembers />

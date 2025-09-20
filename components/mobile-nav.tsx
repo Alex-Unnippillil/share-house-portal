@@ -3,18 +3,21 @@
 import * as React from "react"
 import Link, { LinkProps } from "next/link"
 import { useRouter } from "next/navigation"
-import { ViewVerticalIcon } from "@radix-ui/react-icons"
-import AuthButton from '@/components/auth-button'
 
 import { docsConfig } from "@/config/docs"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
-import { Icons } from "@/components/icons"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Icons } from "@/components/icons"
+import { SignOutButton } from "@/components/sign-out-button"
 
-export function MobileNav() {
+interface MobileNavProps {
+  isAuthenticated: boolean
+}
+
+export function MobileNav({ isAuthenticated }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -24,25 +27,68 @@ export function MobileNav() {
           variant="ghost"
           className="mr-0 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
         >
-                    <Icons.menu className="h-6 w-6" />
+          <Icons.menu className="h-6 w-6" />
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>
-<div className="xs:items-center ml-1 gap-4 md:hidden">
-      <Link href="/" className="flex items-center space-x-2">
-        <Icons.logo className="h-6 w-6" />
-<span className="font-bold">{siteConfig.name}</span>
-      </Link>
-    </div>
+      <div className="xs:items-center ml-1 gap-4 md:hidden">
+        <Link href="/" className="flex items-center space-x-2">
+          <Icons.logo className="h-6 w-6" />
+          <span className="font-bold">{siteConfig.name}</span>
+        </Link>
+      </div>
+
       <SheetContent side="left" className="pr-0">
         <MobileLink
           href="/"
           className="flex items-center"
           onOpenChange={setOpen}
         >
-          <Icons.logo className="mr-1 h-6 w-6" />
+          <Icons.logo className="mr-1 size-6" />
           <span className="font-bold">{siteConfig.name}</span>
         </MobileLink>
+        <div className="px-6 py-4">
+          {isAuthenticated ? (
+            <div className="flex flex-col gap-2">
+              <MobileLink
+                href="/dashboard"
+                onOpenChange={setOpen}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  "justify-center"
+                )}
+              >
+                Dashboard
+              </MobileLink>
+              <SignOutButton
+                variant="outline"
+                size="sm"
+                className="w-full justify-center"
+                formClassName="w-full"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <MobileLink
+                href="/auth"
+                onOpenChange={setOpen}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  "justify-center"
+                )}
+              >
+                Log in
+              </MobileLink>
+              <MobileLink
+                href="/onboarding"
+                onOpenChange={setOpen}
+                className={cn(buttonVariants({ size: "sm" }), "justify-center")}
+              >
+                Sign up
+              </MobileLink>
+            </div>
+          )}
+        </div>
         <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
           <div className="flex flex-col space-y-3">
             {docsConfig.mainNav?.map(

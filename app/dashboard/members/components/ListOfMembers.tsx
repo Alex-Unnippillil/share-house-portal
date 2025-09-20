@@ -33,7 +33,7 @@ export default function ListOfMembers() {
 		},
 	];
 	return (
-		<div className="dark:bg-inherit bg-white mx-2 rounded-sm">
+		<div className="mx-2 rounded-sm bg-white dark:bg-inherit">
 			{members.map((member, index) => {
 				return (
 					<div
@@ -45,7 +45,7 @@ export default function ListOfMembers() {
 						<div>
 							<span
 								className={cn(
-									" dark:bg-zinc-800 px-2 py-1 rounded-full shadow capitalize  border-[.5px] text-sm",
+									" rounded-full border-[.5px] px-2 py-1 text-sm capitalize  shadow dark:bg-zinc-800",
 									{
 										"border-green-500 text-green-600 bg-green-200":
 											member.role === "admin",
@@ -61,7 +61,7 @@ export default function ListOfMembers() {
 						<div>
 							<span
 								className={cn(
-									" dark:bg-zinc-800 px-2 py-1 rounded-full  capitalize text-sm border-zinc-300  border",
+									" rounded-full border border-zinc-300 px-2  py-1 text-sm capitalize  dark:bg-zinc-800",
 									{
 										"text-green-600 px-4 dark:border-green-400 bg-green-200":
 											member.status === "active",
@@ -74,7 +74,7 @@ export default function ListOfMembers() {
 							</span>
 						</div>
 
-						<div className="flex gap-2 items-center">
+						<div className="flex items-center gap-2">
 							<Button variant="outline">
 								<TrashIcon />
 								Delete

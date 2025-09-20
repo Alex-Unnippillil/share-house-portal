@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 
 export default function Component() {
   return (
-    <div className="flex justify-center items-center h-screen bg-background">
-      <div className="max-w-md w-full space-y-6 p-8 rounded-lg shadow-lg bg-card">
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="w-full max-w-md space-y-6 rounded-lg bg-card p-8 shadow-lg">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Join the Waitlist</h1>
           <p className="text-muted-foreground">Be the first to know when we launch our new product.</p>

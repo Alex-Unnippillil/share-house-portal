@@ -105,7 +105,7 @@ export default function AuthForm() {
 						)}
 					/>
     <Button
-				className="w-full flex items-center gap-2"
+				className="flex w-full items-center gap-2"
 				variant="outline"
 			>
 				Log In{" "}

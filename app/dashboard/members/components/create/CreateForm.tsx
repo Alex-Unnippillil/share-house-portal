@@ -83,7 +83,7 @@ export default function MemberForm() {
 		<Form {...form}>
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
-				className="px-2 py-2 w-full space-y-6"
+				className="w-full space-y-6 p-2"
 			>
 				<FormField
 					control={form.control}
@@ -224,7 +224,7 @@ export default function MemberForm() {
 				/>
 				<Button
 					type="submit"
-					className="w-full flex gap-2 items-center"
+					className="flex w-full items-center gap-2"
 					variant="outline"
 				>
 					Submit{" "}

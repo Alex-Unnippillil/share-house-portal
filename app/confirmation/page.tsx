@@ -32,7 +32,7 @@ export default function ConfirmationPage() {
 
   if (!meetLink) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Error</CardTitle>
@@ -50,15 +50,15 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <CheckCircle className="mx-auto mb-4 size-16 text-green-500" />
           <CardTitle>Meeting Scheduled!</CardTitle>
           <CardDescription>Your Google Meet has been created successfully</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 bg-muted rounded-md break-all">
+          <div className="break-all rounded-md bg-muted p-3">
             <p className="font-mono text-sm">{meetLink}</p>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -67,11 +67,11 @@ export default function ConfirmationPage() {
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={copyToClipboard} className="gap-2">
-            {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copied ? <CheckCircle className="size-4" /> : <Copy className="size-4" />}
             {copied ? "Copied" : "Copy Link"}
           </Button>
           <Button onClick={addToCalendar} className="gap-2">
-            <Calendar className="h-4 w-4" />
+            <Calendar className="size-4" />
             Open in Calendar
           </Button>
         </CardFooter>

@@ -27,7 +27,7 @@ export default function ListOfTodo() {
 		},
 	];
 	return (
-		<div className="dark:bg-inherit bg-white mx-2 rounded-sm">
+		<div className="mx-2 rounded-sm bg-white dark:bg-inherit">
 			{todos.map((todo, index) => {
 				return (
 					<div
@@ -44,7 +44,7 @@ export default function ListOfTodo() {
 										<div>
 											<span
 												className={cn(
-													"  dark:bg-zinc-800 px-2 py-1 rounded-full shadow capitalize  border-[.5px] text-sm",
+													"  rounded-full border-[.5px] px-2 py-1 text-sm capitalize  shadow dark:bg-zinc-800",
 													{
 														"border-green-500 bg-green-400 dark:text-green-400":
 															todo.status ===
@@ -60,7 +60,7 @@ export default function ListOfTodo() {
 							} else {
 								return (
 									<h1
-										className="flex items-center dark:text-white text-lg"
+										className="flex items-center text-lg dark:text-white"
 										key={index}
 									>
 										{todo[key as keyof typeof todo]}
@@ -69,7 +69,7 @@ export default function ListOfTodo() {
 							}
 						})}
 
-						<div className="flex gap-2 items-center">
+						<div className="flex items-center gap-2">
 							<Button
 								variant="outline"
 								className="bg-dark dark:bg-inherit"

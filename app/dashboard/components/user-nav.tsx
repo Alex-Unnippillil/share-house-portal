@@ -19,8 +19,8 @@ import {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-            <Avatar className="h-8 w-8">
+          <Button variant="ghost" className="relative size-8 rounded-full">
+            <Avatar className="size-8">
               <AvatarImage src="/avatar.png" alt="@onyx" />
               <AvatarFallback>OX</AvatarFallback>
             </Avatar>

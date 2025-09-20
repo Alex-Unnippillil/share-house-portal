@@ -36,10 +36,10 @@ const InfoGraphicItem = ({
         hidden: { opacity: 0, y: 50 },
       }}
       transition={{ duration: 0.5, delay: index * 0.2 }}
-      className="flex flex-col items-center mb-8 group"
+      className="group mb-8 flex flex-col items-center"
     >
       <motion.div
-        className="text-4xl font-bold text-primary mb-2 flex items-center"
+        className="mb-2 flex items-center text-4xl font-bold text-primary"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2 + index * 0.2, type: "spring", stiffness: 100 }}
@@ -48,7 +48,7 @@ const InfoGraphicItem = ({
         {percentage}%
       </motion.div>
       <motion.div
-        className="text-center text-sm max-w-xs mb-4"
+        className="mb-4 max-w-xs text-center text-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 + index * 0.2 }}
@@ -96,12 +96,12 @@ const AnimatedInfographic = () => {
   ]
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="mx-auto w-full max-w-4xl">
       <CardHeader>
-        <CardTitle className="text-3xl md:text-4xl font-bold text-center">Untapped Consumers</CardTitle>
+        <CardTitle className="text-center text-3xl font-bold md:text-4xl">Untapped Consumers</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-8 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="gap-8 space-y-8 md:grid md:grid-cols-2 md:space-y-0 lg:grid-cols-3">
           {items.map((item, index) => (
             <InfoGraphicItem key={index} percentage={item.percentage} text={item.text} icon={item.icon} index={index} />
           ))}
