@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["react"],
+    "moduleResolution": "bundler"
+  },
+  "include": ["packages/*/src/**/*", "types/**/*.d.ts"],
+  "exclude": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx", "node_modules"]
+}
