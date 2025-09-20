@@ -1,0 +1,52 @@
+# Required AWS region and networking IDs
+region   = "us-east-1"
+cluster_name = "share-house-portal-eks"
+vpc_id   = "vpc-xxxxxxxxxxxxxxxxx"
+subnet_ids = [
+  "subnet-aaaaaaaaaaaaaaaaa",
+  "subnet-bbbbbbbbbbbbbbbbb"
+]
+
+# Optionally separate control plane subnets
+# control_plane_subnet_ids = []
+
+cluster_endpoint_public_access  = false
+cluster_endpoint_private_access = true
+
+# Example managed node group definitions
+eks_managed_node_groups = {
+  default = {
+    min_size       = 2
+    max_size       = 5
+    desired_size   = 2
+    instance_types = ["t3.medium"]
+    capacity_type  = "ON_DEMAND"
+    labels = {
+      role = "default"
+    }
+  }
+  spot = {
+    min_size       = 0
+    max_size       = 4
+    desired_size   = 0
+    instance_types = ["t3.large", "t3a.large"]
+    capacity_type  = "SPOT"
+    labels = {
+      lifecycle = "spot"
+    }
+  }
+}
+
+# Allow external-dns to manage Route53 hosted zones and limit to domains you own
+external_dns_hosted_zone_arns = [
+  "arn:aws:route53:::hostedzone/Z1111111111111"
+]
+external_dns_domain_filters = [
+  "example.com"
+]
+external_dns_txt_owner_id = "share-house-portal"
+
+# Provide custom tags for all AWS resources
+# tags = {
+#   Environment = "staging"
+# }
