@@ -411,6 +411,88 @@ export type Database = {
         }
         Relationships: []
       }
+      amenities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          rules: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          rules?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          rules?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      amenity_reservations: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          end_at: string
+          id: string
+          lease_id: string
+          notes: string | null
+          start_at: string
+          status: Database["public"]["Enums"]["amenity_reservation_status"]
+          time_range: unknown
+          updated_at: string
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string
+          end_at: string
+          id?: string
+          lease_id: string
+          notes?: string | null
+          start_at: string
+          status?: Database["public"]["Enums"]["amenity_reservation_status"]
+          updated_at?: string
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string
+          end_at?: string
+          id?: string
+          lease_id?: string
+          notes?: string | null
+          start_at?: string
+          status?: Database["public"]["Enums"]["amenity_reservation_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenity_reservations_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "amenity_reservations_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
@@ -1766,6 +1848,11 @@ export type Database = {
       }
     }
     Enums: {
+      amenity_reservation_status:
+        | "approved"
+        | "cancelled"
+        | "denied"
+        | "pending"
       continents:
         | "Africa"
         | "Antarctica"

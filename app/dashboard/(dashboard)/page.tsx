@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import Image from "next/image"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -115,6 +116,35 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">
                       +180.1% from last month
                     </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Amenities
+                    </CardTitle>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      className="size-4 text-muted-foreground"
+                    >
+                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                      <path d="M3 9h18M9 21V9" />
+                    </svg>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Configure shared spaces and review tenant reservation requests in one
+                      place.
+                    </p>
+                    <Button asChild variant="secondary" className="mt-4 w-full">
+                      <Link href="/dashboard/amenities">Manage amenities</Link>
+                    </Button>
                   </CardContent>
                 </Card>
                 <Card>
