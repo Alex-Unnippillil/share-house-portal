@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function MusicPage() {
   return (
-  <div className="block xs:max-w-dvw xs:w-full">
+  <div className="xs:max-w-dvw xs:w-full block">
      <Menu />
         <div className="border-t">
           <div className="bg-background">
@@ -47,7 +47,7 @@ export default function MusicPage() {
                       </TabsList>
                       <div className="ml-auto mr-4">
                         <Button>
-                          <PlusCircledIcon className="mr-2 h-4 w-4" />
+                          <PlusCircledIcon className="mr-2 size-4" />
                           Add music
                         </Button>
                       </div>

@@ -3,7 +3,7 @@ import { AuthFormLegacy } from '@/app/auth-server-action/components/AuthFormLega
 
 export default function page() {
 	return (
-		<div className="flex justify-center items-center h-screen">
+		<div className="flex h-screen items-center justify-center">
 			<div className="w-96">
 				<AuthFormLegacy />
 			</div>

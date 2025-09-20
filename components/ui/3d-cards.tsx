@@ -2,6 +2,7 @@
 
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -86,7 +87,7 @@ export const CardBody = ({
   return (
     <div
       className={cn(
-        "h-96 w-96 [transform-style:preserve-3d]  [&>*]:[transform-style:preserve-3d]",
+        "size-96 [transform-style:preserve-3d] [&>*]:[transform-style:preserve-3d]",
         className,
       )}
     >
@@ -120,18 +121,45 @@ export const CardItem = ({
   const ref = useRef<HTMLDivElement>(null);
   const [isMouseEntered] = useMouseEnter();
 
+  const translateWithUnit = useCallback((value: number | string) => {
+    return typeof value === "number" ? `${value}px` : value;
+  }, []);
+
+  const rotateWithUnit = useCallback((value: number | string) => {
+    return typeof value === "number" ? `${value}deg` : value;
+  }, []);
+
+  const handleAnimations = useCallback(() => {
+    if (!ref.current) return;
+
+    if (isMouseEntered) {
+      ref.current.style.transform = `translateX(${translateWithUnit(
+        translateX,
+      )}) translateY(${translateWithUnit(translateY)}) translateZ(${translateWithUnit(
+        translateZ,
+      )}) rotateX(${rotateWithUnit(rotateX)}) rotateY(${rotateWithUnit(
+        rotateY,
+      )}) rotateZ(${rotateWithUnit(rotateZ)})`;
+      return;
+    }
+
+    ref.current.style.transform =
+      "translateX(0px) translateY(0px) translateZ(0px) rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+  }, [
+    isMouseEntered,
+    rotateWithUnit,
+    rotateX,
+    rotateY,
+    rotateZ,
+    translateWithUnit,
+    translateX,
+    translateY,
+    translateZ,
+  ]);
+
   useEffect(() => {
     handleAnimations();
-  }, [isMouseEntered]);
-
-  const handleAnimations = () => {
-    if (!ref.current) return;
-    if (isMouseEntered) {
-      ref.current.style.transform = `translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
-    } else {
-      ref.current.style.transform = `translateX(0px) translateY(0px) translateZ(0px) rotateX(0deg) rotateY(0deg) rotateZ(0deg)`;
-    }
-  };
+  }, [handleAnimations]);
 
   return (
     <Tag

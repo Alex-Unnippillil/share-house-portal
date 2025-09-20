@@ -34,7 +34,7 @@ export default async function SchedulePage() {
     //    .order('start_time', { ascending: true });
 
     return (
-        <div className="container mx-auto p-4 pt-10 flex justify-center">
+        <div className="container mx-auto flex justify-center p-4 pt-10">
             <Card className="w-full max-w-2xl">
                 <CardHeader>
                     <CardTitle>Schedule a New Meeting</CardTitle>

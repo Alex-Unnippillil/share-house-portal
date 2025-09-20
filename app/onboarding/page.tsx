@@ -31,7 +31,7 @@ export default function OnboardingPage() {
           className="hidden"
         />
       </div>
-      <div className="container relative h-[640px] grid grid-cols-1 flex-col items-center justify-center mx-auto md:grid-cols-2 lg:max-w-none lg:px-0">
+      <div className="container relative mx-auto grid h-[640px] grid-cols-1 flex-col items-center justify-center md:grid-cols-2 lg:max-w-none lg:px-0">
         <Link
           href="/auth"
           className={cn(
@@ -61,7 +61,7 @@ export default function OnboardingPage() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="mr-2 h-6 w-6"
+              className="mr-2 size-6"
             >
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>

@@ -66,7 +66,7 @@ const router = useRouter();
                         <Form {...form}>
                                 <form
                                         onSubmit={form.handleSubmit(onSubmit)}
-                                        className="w-full px-2 space-y-6"
+                                        className="w-full space-y-6 px-2"
                                 >
 <FormField
                                                 control={form.control}
@@ -121,11 +121,11 @@ const router = useRouter();
            <Button
             type="submit"
             disabled={isLoading}
-                                className="w-1/2 flex items-center gap-2"
+                                className="flex w-1/2 items-center gap-2"
                                 variant="outline"
                         >
                                 Send Message
-                                <ChevronRight className="ml-2 h-4 w-4"/>
+                                <ChevronRight className="ml-2 size-4"/>
    </Button>
                                 </form>
                         </Form>

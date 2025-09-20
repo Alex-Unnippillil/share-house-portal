@@ -49,18 +49,18 @@ export default function AuthButton() {
   };
 
   if (loading) {
-    return <button className="px-4 py-2 rounded bg-gray-200 text-gray-600 animate-pulse" disabled>Loading...</button>;
+    return <button className="animate-pulse rounded bg-gray-200 px-4 py-2 text-gray-600" disabled>Loading...</button>;
   }
 
   return user ? (
     <div className="flex items-center gap-4">
-       <span className="text-sm hidden sm:inline">Hey, {user.email}!</span>
-       <button onClick={handleSignOut} className="py-2 px-4 rounded-md no-underline bg-red-500 hover:bg-red-600 text-white">
+       <span className="hidden text-sm sm:inline">Hey, {user.email}!</span>
+       <button onClick={handleSignOut} className="rounded-md bg-red-500 px-4 py-2 text-white no-underline hover:bg-red-600">
          Logout
        </button>
     </div>
   ) : (
-    <button onClick={handleSignIn} className="py-2 px-4 rounded-md no-underline bg-blue-500 hover:bg-blue-600 text-white">
+    <button onClick={handleSignIn} className="rounded-md bg-blue-500 px-4 py-2 text-white no-underline hover:bg-blue-600">
       Login with Google
     </button>
   );
