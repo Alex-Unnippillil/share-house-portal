@@ -968,6 +968,70 @@ export type Database = {
         }
         Relationships: []
       }
+      leases: {
+        Row: {
+          created_at: string
+          deposit_amount: string | null
+          end_date: string | null
+          id: string
+          property_id: string
+          rent_amount: string
+          start_date: string
+          status: string
+          tenant_id: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_amount?: string | null
+          end_date?: string | null
+          id?: string
+          property_id: string
+          rent_amount: string
+          start_date: string
+          status?: string
+          tenant_id: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_amount?: string | null
+          end_date?: string | null
+          id?: string
+          property_id?: string
+          rent_amount?: string
+          start_date?: string
+          status?: string
+          tenant_id?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_property_id_fkey",
+            columns: ["property_id"],
+            isOneToOne: false,
+            referencedRelation: "properties",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "leases_tenant_id_fkey",
+            columns: ["tenant_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "leases_unit_id_fkey",
+            columns: ["unit_id"],
+            isOneToOne: false,
+            referencedRelation: "units",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       meetings: {
         Row: {
           created_at: string | null
@@ -1226,6 +1290,101 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          city: string
+          country: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string
+          postal_code: string
+          state: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          postal_code: string
+          state: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          postal_code?: string
+          state?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      units: {
+        Row: {
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string
+          property_id: string
+          rent_amount: string
+          square_feet: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          property_id: string
+          rent_amount?: string
+          square_feet?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          property_id?: string
+          rent_amount?: string
+          square_feet?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_property_id_fkey",
+            columns: ["property_id"],
+            isOneToOne: false,
+            referencedRelation: "properties",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1288,6 +1447,119 @@ export type Database = {
           xhandle?: string | null
         }
         Relationships: []
+      }
+      rent_invoices: {
+        Row: {
+          amount_due: string
+          created_at: string
+          currency: string
+          description: string | null
+          due_date: string
+          id: string
+          lease_id: string
+          metadata: Json | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          lease_id: string
+          metadata?: Json | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          lease_id?: string
+          metadata?: Json | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_invoices_lease_id_fkey",
+            columns: ["lease_id"],
+            isOneToOne: false,
+            referencedRelation: "leases",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      rent_payments: {
+        Row: {
+          amount: string
+          created_at: string
+          currency: string
+          id: string
+          invoice_id: string | null
+          lease_id: string
+          metadata: Json | null
+          payment_provider: string
+          processed_at: string | null
+          provider_payment_id: string | null
+          provider_session_id: string | null
+          status: string
+        }
+        Insert: {
+          amount: string
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          lease_id: string
+          metadata?: Json | null
+          payment_provider?: string
+          processed_at?: string | null
+          provider_payment_id?: string | null
+          provider_session_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          lease_id?: string
+          metadata?: Json | null
+          payment_provider?: string
+          processed_at?: string | null
+          provider_payment_id?: string | null
+          provider_session_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_invoice_id_fkey",
+            columns: ["invoice_id"],
+            isOneToOne: false,
+            referencedRelation: "rent_invoices",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "rent_payments_lease_id_fkey",
+            columns: ["lease_id"],
+            isOneToOne: false,
+            referencedRelation: "leases",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       reusable_packages: {
         Row: {
