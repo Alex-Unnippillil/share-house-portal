@@ -450,38 +450,216 @@ export type Database = {
         }
         Relationships: []
       }
-      chat: {
+      properties: {
         Row: {
+          address: string | null
           created_at: string
-          id: number
-          messages: string[] | null
-          path: string | null
-          profile_id: string
-          sharepath: string | null
-          title: string | null
-          user_id: string | null
+          id: string
+          metadata: Json
+          name: string
+          updated_at: string
         }
         Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_units: {
+        Row: {
           created_at: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
-          profile_id: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
+          id: string
+          label: string
+          metadata: Json
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          metadata?: Json
+          property_id: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
-          profile_id?: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
+          id?: string
+          label?: string
+          metadata?: Json
+          property_id?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "property_units_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_messages: {
+        Row: {
+          attachments: Json
+          author_id: string
+          body: string
+          created_at: string
+          id: number
+          moderation_note: string | null
+          pinned: boolean
+          pinned_at: string | null
+          pinned_by: string | null
+          property_id: string
+          removed: boolean
+          removed_at: string | null
+          removed_by: string | null
+          unit_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          attachments?: Json
+          author_id?: string
+          body: string
+          created_at?: string
+          id?: number
+          moderation_note?: string | null
+          pinned?: boolean
+          pinned_at?: string | null
+          pinned_by?: string | null
+          property_id: string
+          removed?: boolean
+          removed_at?: string | null
+          removed_by?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: number
+          moderation_note?: string | null
+          pinned?: boolean
+          pinned_at?: string | null
+          pinned_by?: string | null
+          property_id?: string
+          removed?: boolean
+          removed_at?: string | null
+          removed_by?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_messages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_pinned_by_fkey"
+            columns: ["pinned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "property_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_property_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          property_id: string
+          role: string
+          unit_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          property_id: string
+          role?: string
+          unit_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          property_id?: string
+          role?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_property_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_property_memberships_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_property_memberships_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "property_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       countries: {
         Row: {
