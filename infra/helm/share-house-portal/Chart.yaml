@@ -1,0 +1,6 @@
+apiVersion: v2
+name: share-house-portal
+version: 0.1.0
+appVersion: "1.0.0"
+description: Helm chart for deploying the Share House Portal web application with hardened ingress controls.
+type: application

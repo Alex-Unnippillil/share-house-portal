@@ -1,0 +1,55 @@
+image:
+  repository: ghcr.io/share-house-portal/web
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: app.share-house.example
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: share-house-portal-tls
+      hosts:
+        - app.share-house.example
+  rateLimits:
+    connections: 20
+    rps: 10
+    burstMultiplier: 3
+  requestSizeLimit: 2m
+  cors:
+    enabled: true
+    allowCredentials: true
+    allowOrigins:
+      - https://app.share-house.example
+      - https://admin.share-house.example
+    allowMethods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowHeaders:
+      - Authorization
+      - Content-Type
+      - X-Requested-With
+    exposeHeaders:
+      - X-Request-Id
+      - X-Trace-Id
+    maxAge: 600
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -77,6 +77,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frmourey26%2Fonyx%2Ftree%2Fmain)
 
 
+## Traffic protection and observability
+
+- Kubernetes ingress and Helm configuration for strict CORS enforcement, per-IP rate limiting, and request size controls live under `infra/kubernetes` and `infra/helm/share-house-portal`.
+- AWS WAFv2 Terraform definitions for API Gateway, ALB, and the CloudFront SPA distribution live under `infra/aws/waf`.
+- Operational limits, approved origins, and the tuning playbook are documented in [`docs/security/traffic-controls.md`](docs/security/traffic-controls.md).
+
+
 ### Reference/Credit
 - @chensokheng
 

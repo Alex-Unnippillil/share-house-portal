@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: share-house-portal
+  namespace: web
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.share-house.example,https://admin.share-house.example"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization,Content-Type,X-Requested-With"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    nginx.ingress.kubernetes.io/cors-max-age: "600"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      set $cors_allowed 0;
+      if ($http_origin = "") {
+        set $cors_allowed 1;
+      }
+      if ($http_origin ~* "^https://(app|admin)\\.share-house\\.example$") {
+        set $cors_allowed 1;
+      }
+      if ($cors_allowed != 1) {
+        return 403;
+      }
+spec:
+  rules:
+    - host: app.share-house.example
+      http:
+        paths:
+          - backend:
+              service:
+                name: share-house-portal
+                port:
+                  number: 3000
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - app.share-house.example
+      secretName: share-house-portal-tls
