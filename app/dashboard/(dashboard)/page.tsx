@@ -1,11 +1,9 @@
 import { Metadata } from "next"
-import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -15,183 +13,160 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { CalendarDateRangePicker } from "@/app/dashboard/components/date-range-picker"
-import { MainNav } from "@/app/dashboard/components/main-nav"
-import { Overview } from "@/app/dashboard/components/overview"
-import { RecentSales } from "@/app/dashboard/components/recent-sales"
-import { Search } from "@/app/dashboard/components/search"
-import TeamSwitcher from "@/app/dashboard/components/team-switcher"
-import { UserNav } from "@/app/dashboard/components/user-nav"
+
+import { CalendarDateRangePicker } from "../components/date-range-picker"
+import { DocumentApprovalsCard } from "../components/document-approvals-card"
+import { MaintenanceBacklogCard } from "../components/maintenance-backlog-card"
+import { MessagingFeed } from "../components/messaging-feed"
+import { Overview } from "../components/overview"
+import { RecentPayments } from "../components/recent-payments"
+import { RentCollectionCard } from "../components/rent-collection-card"
+import { UpcomingBookingsCard } from "../components/upcoming-bookings-card"
+import { VisitorApprovalsCard } from "../components/visitor-approvals-card"
+import { DashboardHeader } from "../components/dashboard-header"
+import { canViewWidget } from "../lib/access"
+import {
+  fetchDashboardData,
+  filterDataByRole,
+  getDashboardContext,
+} from "../lib/data"
+import { buildNavItems } from "../lib/navigation"
+import {
+  buildMonthlyCollectionSeries,
+  calculateRentCollectionSummary,
+  selectRecentMessages,
+  selectRecentPayments,
+  selectUpcomingBookings,
+  summarizeDocumentApprovals,
+  summarizeMaintenanceRequests,
+  summarizeVisitorApprovals,
+} from "../lib/transform"
 
 export const metadata: Metadata = {
-  title: "Onyx Dashboard",
-  description: "Manage your Onyx account and users.",
+  title: "Building operations dashboard",
+  description: "Portfolio-wide overview of rent, maintenance, and bookings.",
 }
 
-export default function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: { building?: string }
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const { supabase, buildings, activeBuilding } = await getDashboardContext({
+    searchParams,
+    currentPath: "/dashboard",
+  })
+
+  const rawData = await fetchDashboardData(supabase, activeBuilding.id)
+  const data = filterDataByRole(rawData, activeBuilding.role)
+
+  const rentSummary = calculateRentCollectionSummary(data.rentPayments)
+  const monthlySeries = buildMonthlyCollectionSeries(data.rentPayments)
+  const maintenanceSummary = summarizeMaintenanceRequests(data.maintenance)
+  const visitorSummary = summarizeVisitorApprovals(data.visitors)
+  const documentSummary = summarizeDocumentApprovals(data.documents)
+  const upcomingBookings = selectUpcomingBookings(data.bookings)
+  const recentPayments = selectRecentPayments(data.rentPayments)
+  const recentMessages = selectRecentMessages(data.messages)
+
+  const canViewRent = canViewWidget(activeBuilding.role, "rent")
+  const canViewMaintenance = canViewWidget(activeBuilding.role, "maintenance")
+  const canViewVisitors = canViewWidget(activeBuilding.role, "visitors")
+  const canViewDocuments = canViewWidget(activeBuilding.role, "documents")
+  const canViewBookings = canViewWidget(activeBuilding.role, "bookings")
+  const canViewMessages = canViewWidget(activeBuilding.role, "messages")
+
+  const navItems = buildNavItems(activeBuilding.id)
+
   return (
-    <>
-      <div className="xs:flex max-w-dvw w-full flex-col">
-        <div className="border-b">
-          <div className="flex h-16 items-center px-4">
-            <TeamSwitcher />
-            <MainNav className="mx-6" />
-            <div className="ml-auto flex items-center space-x-4">
-              <Search />
-              <UserNav />
-            </div>
+    <div className="xs:flex max-w-dvw w-full flex-col">
+      <DashboardHeader
+        buildings={buildings}
+        activeBuildingId={activeBuilding.id}
+        activeBuildingName={activeBuilding.name}
+        navItems={navItems}
+      />
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="text-3xl font-bold tracking-tight">
+            {activeBuilding.name} overview
+          </h2>
+          <div className="flex items-center space-x-2">
+            <CalendarDateRangePicker />
+            <Button variant="outline">Export</Button>
           </div>
         </div>
-        <div className="flex-1 space-y-4 p-8 pt-6">
-          <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-            <div className="flex items-center space-x-2">
-              <CalendarDateRangePicker />
-              <Button>Download</Button>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="reports" disabled>
+              Reports
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <RentCollectionCard
+                summary={rentSummary}
+                role={activeBuilding.role}
+                canView={canViewRent}
+                buildingName={activeBuilding.name}
+              />
+              <MaintenanceBacklogCard
+                summary={maintenanceSummary}
+                role={activeBuilding.role}
+                canView={canViewMaintenance}
+              />
+              <VisitorApprovalsCard
+                summary={visitorSummary}
+                canView={canViewVisitors}
+              />
+              <DocumentApprovalsCard
+                summary={documentSummary}
+                canView={canViewDocuments}
+              />
             </div>
-          </div>
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="analytics" disabled>
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="reports" disabled>
-                Reports
-              </TabsTrigger>
-              <TabsTrigger value="notifications" disabled>
-                Notifications
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Revenue
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">$45,231.89</div>
-                    <p className="text-xs text-muted-foreground">
-                      +20.1% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Subscriptions
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+2350</div>
-                    <p className="text-xs text-muted-foreground">
-                      +180.1% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <rect width="20" height="14" x="2" y="5" rx="2" />
-                      <path d="M2 10h20" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+12,234</div>
-                    <p className="text-xs text-muted-foreground">
-                      +19% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Active Now
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+573</div>
-                    <p className="text-xs text-muted-foreground">
-                      +201 since last hour
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
-                  <CardHeader>
-                    <CardTitle>Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                    <Overview />
-                  </CardContent>
-                </Card>
-                <Card className="col-span-3">
-                  <CardHeader>
-                    <CardTitle>Recent Sales</CardTitle>
-                    <CardDescription>
-                      You made 265 sales this month.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RecentSales />
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+              <Card className="col-span-4">
+                <CardHeader>
+                  <CardTitle>Monthly rent collected</CardTitle>
+                </CardHeader>
+                <CardContent className="pl-2">
+                  <Overview data={monthlySeries} />
+                </CardContent>
+              </Card>
+              <Card className="col-span-3">
+                <CardHeader>
+                  <CardTitle>Recent payments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RecentPayments payments={recentPayments} canView={canViewRent} />
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-7">
+              <UpcomingBookingsCard
+                bookings={upcomingBookings}
+                canView={canViewBookings}
+              />
+              <MessagingFeed messages={recentMessages} canView={canViewMessages} />
+            </div>
+          </TabsContent>
+          <TabsContent value="analytics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Building insights</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Dive deeper into performance by exploring the analytics section for
+                  occupancy, revenue, and engagement trends per building.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-    </>
+    </div>
   )
 }
