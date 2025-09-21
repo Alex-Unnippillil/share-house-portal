@@ -1226,6 +1226,271 @@ export type Database = {
         }
         Relationships: []
       }
+      buildings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      building_managers: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          manager_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          manager_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          manager_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_managers_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_managers_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floorplan_annotations: {
+        Row: {
+          annotation_type: string
+          assigned_profile_id: string | null
+          color: string | null
+          created_at: string
+          created_by: string | null
+          floorplan_id: string
+          geometry: Json
+          id: string
+          label: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          annotation_type?: string
+          assigned_profile_id?: string | null
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          floorplan_id: string
+          geometry: Json
+          id?: string
+          label: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annotation_type?: string
+          assigned_profile_id?: string | null
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          floorplan_id?: string
+          geometry?: Json
+          id?: string
+          label?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floorplan_annotations_assigned_profile_id_fkey"
+            columns: ["assigned_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplan_annotations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplan_annotations_floorplan_id_fkey"
+            columns: ["floorplan_id"]
+            isOneToOne: false
+            referencedRelation: "floorplans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floorplans: {
+        Row: {
+          asset_path: string
+          building_id: string
+          content_type: string | null
+          created_at: string
+          height: number | null
+          id: string
+          metadata: Json
+          name: string
+          unit_id: string
+          updated_at: string
+          uploaded_by: string | null
+          width: number | null
+        }
+        Insert: {
+          asset_path: string
+          building_id: string
+          content_type?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          metadata?: Json
+          name: string
+          unit_id: string
+          updated_at?: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Update: {
+          asset_path?: string
+          building_id?: string
+          content_type?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          metadata?: Json
+          name?: string
+          unit_id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floorplans_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplans_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplans_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_assignments: {
+        Row: {
+          assignment_role: string | null
+          created_at: string
+          id: string
+          tenant_id: string
+          unit_id: string
+        }
+        Insert: {
+          assignment_role?: string | null
+          created_at?: string
+          id?: string
+          tenant_id: string
+          unit_id: string
+        }
+        Update: {
+          assignment_role?: string | null
+          created_at?: string
+          id?: string
+          tenant_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_assignments_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          building_id: string
+          created_at: string
+          floor: number | null
+          id: string
+          unit_code: string
+          updated_at: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          floor?: number | null
+          id?: string
+          unit_code: string
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          floor?: number | null
+          id?: string
+          unit_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1626,6 +1891,12 @@ export type Database = {
           total_cost: number | null
           total_shipments: number | null
           total_weight: number | null
+        }
+        Relationships: []
+      }
+      v_admin_profiles: {
+        Row: {
+          id: string | null
         }
         Relationships: []
       }
