@@ -1289,6 +1289,124 @@ export type Database = {
         }
         Relationships: []
       }
+      rent_payment_occurrences: {
+        Row: {
+          amount_cents: number
+          autopay_run_at: string | null
+          created_at: string
+          due_date: string
+          grace_expires_on: string | null
+          id: string
+          late_fee_cents: number
+          notes: string | null
+          paid_at: string | null
+          schedule_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          autopay_run_at?: string | null
+          created_at?: string
+          due_date: string
+          grace_expires_on?: string | null
+          id?: string
+          late_fee_cents?: number
+          notes?: string | null
+          paid_at?: string | null
+          schedule_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          autopay_run_at?: string | null
+          created_at?: string
+          due_date?: string
+          grace_expires_on?: string | null
+          id?: string
+          late_fee_cents?: number
+          notes?: string | null
+          paid_at?: string | null
+          schedule_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payment_occurrences_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "rent_payment_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rent_payment_schedules: {
+        Row: {
+          anchor_date: string
+          autopay_enabled: boolean
+          created_at: string
+          currency: string
+          day_of_month: number
+          grace_period_days: number
+          id: string
+          late_fee_cap_cents: number | null
+          late_fee_flat_cents: number | null
+          late_fee_percent: number | null
+          late_fee_type: string
+          next_run_date: string
+          rent_amount_cents: number
+          tenant_id: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          anchor_date: string
+          autopay_enabled?: boolean
+          created_at?: string
+          currency?: string
+          day_of_month: number
+          grace_period_days?: number
+          id?: string
+          late_fee_cap_cents?: number | null
+          late_fee_flat_cents?: number | null
+          late_fee_percent?: number | null
+          late_fee_type?: string
+          next_run_date: string
+          rent_amount_cents: number
+          tenant_id: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          anchor_date?: string
+          autopay_enabled?: boolean
+          created_at?: string
+          currency?: string
+          day_of_month?: number
+          grace_period_days?: number
+          id?: string
+          late_fee_cap_cents?: number | null
+          late_fee_flat_cents?: number | null
+          late_fee_percent?: number | null
+          late_fee_type?: string
+          next_run_date?: string
+          rent_amount_cents?: number
+          tenant_id?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payment_schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reusable_packages: {
         Row: {
           created_at: string | null
