@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import Image from "next/image"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -144,7 +145,7 @@ export default function DashboardPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Active Now
+                      Amenity requests
                     </CardTitle>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -156,14 +157,18 @@ export default function DashboardPage() {
                       strokeWidth="2"
                       className="size-4 text-muted-foreground"
                     >
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                      <path d="M8 2v4M16 2v4M3 9h18M5 9v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" />
+                      <path d="M10 13h4" />
                     </svg>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+573</div>
+                  <CardContent className="space-y-2">
+                    <div className="text-2xl font-bold">Review queue</div>
                     <p className="text-xs text-muted-foreground">
-                      +201 since last hour
+                      Approve or deny shared space reservations from residents.
                     </p>
+                    <Button asChild size="sm" variant="outline" className="mt-2">
+                      <Link href="/dashboard/amenities">Open amenity desk</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

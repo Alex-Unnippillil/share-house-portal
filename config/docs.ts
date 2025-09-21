@@ -11,11 +11,15 @@ export const docsConfig: DocsConfig = {
       title: "Home",
       href: "/",
     },
-    { 
+    {
       title: "Account",
       href: "/account",
     },
-    { 
+    {
+      title: "Amenities",
+      href: "/amenities",
+    },
+    {
       title: "Dashboard",
       href: "/dashboard",
     },
