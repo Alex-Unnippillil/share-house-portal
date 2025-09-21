@@ -33,15 +33,17 @@ export default function NavLinks() {
 						href={link.href}
 						key={index}
 						className={cn(
-							"flex items-center gap-2 rounded-sm p-2",
+							"inline-flex rounded-sm p-2",
 							{
 								" bg-gray-500 dark:bg-gray-700 text-white ":
 									pathname === link.href,
 							}
 						)}
 					>
-						<Icon />
-						{link.text}
+						<span className="flex items-center gap-2">
+							<Icon />
+							{link.text}
+						</span>
 					</Link>
 				);
 			})}
