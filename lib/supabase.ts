@@ -968,6 +968,94 @@ export type Database = {
         }
         Relationships: []
       }
+      lease_documents: {
+        Row: {
+          created_at: string
+          effective_date: string
+          expiration_date: string | null
+          id: string
+          lease_id: string
+          storage_path: string
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          effective_date: string
+          expiration_date?: string | null
+          id?: string
+          lease_id: string
+          storage_path: string
+          title: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          created_at?: string
+          effective_date?: string
+          expiration_date?: string | null
+          id?: string
+          lease_id?: string
+          storage_path?: string
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_documents_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leases: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          label: string
+          property_address: string | null
+          start_date: string | null
+          status: string
+          tenant_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          label: string
+          property_address?: string | null
+          start_date?: string | null
+          status?: string
+          tenant_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          label?: string
+          property_address?: string | null
+          start_date?: string | null
+          status?: string
+          tenant_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_tenant_profile_id_fkey"
+            columns: ["tenant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           created_at: string | null
