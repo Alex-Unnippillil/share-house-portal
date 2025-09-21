@@ -26,21 +26,25 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z.object({
-	role: z.enum(["admin", "user"]),
-	status: z.enum(["active", "resigned"]),
+        role: z.enum(["resident", "house_manager", "platform_admin"]),
+        status: z.enum(["active", "resigned"]),
 });
 
 export default function AdvanceForm() {
-	const roles = ["admin", "user"];
-	const status = ["active", "resigned"];
+        const roles = [
+                { value: "resident", label: "Resident" },
+                { value: "house_manager", label: "House Manager" },
+                { value: "platform_admin", label: "Platform Admin" },
+        ];
+        const status = ["active", "resigned"];
 
-	const form = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			role: "user",
-			status: "active",
-		},
-	});
+        const form = useForm<z.infer<typeof FormSchema>>({
+                resolver: zodResolver(FormSchema),
+                defaultValues: {
+                        role: "resident",
+                        status: "active",
+                },
+        });
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
 		toast({
@@ -77,16 +81,16 @@ export default function AdvanceForm() {
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									{roles.map((role, index) => {
-										return (
-											<SelectItem
-												value={role}
-												key={index}
-											>
-												{role}
-											</SelectItem>
-										);
-									})}
+                                                                        {roles.map((role, index) => {
+                                                                                return (
+                                                                                        <SelectItem
+                                                                                                value={role.value}
+                                                                                                key={index}
+                                                                                        >
+                                                                                                {role.label}
+                                                                                        </SelectItem>
+                                                                                );
+                                                                        })}
 								</SelectContent>
 							</Select>
 
