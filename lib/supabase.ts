@@ -1226,6 +1226,102 @@ export type Database = {
         }
         Relationships: []
       }
+      floorplan_overlays: {
+        Row: {
+          created_at: string
+          display_order: number
+          floorplan_id: string
+          geometry: Json
+          id: string
+          is_interactive: boolean
+          metadata: Json | null
+          name: string
+          occupant_profile_id: string | null
+          overlay_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          floorplan_id: string
+          geometry: Json
+          id?: string
+          is_interactive?: boolean
+          metadata?: Json | null
+          name: string
+          occupant_profile_id?: string | null
+          overlay_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          floorplan_id?: string
+          geometry?: Json
+          id?: string
+          is_interactive?: boolean
+          metadata?: Json | null
+          name?: string
+          occupant_profile_id?: string | null
+          overlay_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floorplan_overlays_floorplan_id_fkey",
+            columns: ["floorplan_id"],
+            isOneToOne: false,
+            referencedRelation: "floorplans",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "floorplan_overlays_occupant_profile_id_fkey",
+            columns: ["occupant_profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      floorplans: {
+        Row: {
+          base_image_bucket: string
+          base_image_path: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          name: string
+          unit_label: string
+          updated_at: string
+        }
+        Insert: {
+          base_image_bucket?: string
+          base_image_path: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name: string
+          unit_label: string
+          updated_at?: string
+        }
+        Update: {
+          base_image_bucket?: string
+          base_image_path?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name?: string
+          unit_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1288,6 +1384,54 @@ export type Database = {
           xhandle?: string | null
         }
         Relationships: []
+      }
+      resident_floorplans: {
+        Row: {
+          created_at: string
+          effective_end: string | null
+          effective_start: string
+          floorplan_id: string
+          id: string
+          is_primary: boolean
+          resident_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_end?: string | null
+          effective_start?: string
+          floorplan_id: string
+          id?: string
+          is_primary?: boolean
+          resident_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_end?: string | null
+          effective_start?: string
+          floorplan_id?: string
+          id?: string
+          is_primary?: boolean
+          resident_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_floorplans_floorplan_id_fkey",
+            columns: ["floorplan_id"],
+            isOneToOne: false,
+            referencedRelation: "floorplans",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "resident_floorplans_resident_id_fkey",
+            columns: ["resident_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       reusable_packages: {
         Row: {
