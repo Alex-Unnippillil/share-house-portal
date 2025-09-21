@@ -11,32 +11,37 @@ export const docsConfig: DocsConfig = {
       title: "Home",
       href: "/",
     },
-    { 
+    {
       title: "Account",
       href: "/account",
+      roles: ["tenant", "roommate", "property_manager", "admin"],
     },
-    { 
+    {
       title: "Dashboard",
       href: "/dashboard",
+      roles: ["tenant", "roommate", "property_manager", "admin"],
     },
-    { 
+    {
       title: "OpenAI",
       href: "/playground",
+      roles: ["admin"],
     },
 
-    { 
+    {
       title: "Podcasts",
       href: "/music",
+      roles: ["admin"],
     },
-    { 
+    {
       title: "Blog",
       href: "/blog",
     },
-    { 
+    {
       title: "RBAC",
       href: "/dashboard/members",
+      roles: ["property_manager", "admin"],
     },
-    { 
+    {
       title: "About",
       href: "/about",
     },
@@ -53,6 +58,7 @@ export const docsConfig: DocsConfig = {
           title: "Sign Out",
           href: "/signout",
           items: [],
+          roles: ["tenant", "roommate", "property_manager", "admin"],
         },
       ],
     },

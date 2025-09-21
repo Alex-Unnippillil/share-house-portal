@@ -13,18 +13,22 @@ export const siteConfig = {
     {
       title: "Account",
       href: "/account",
+      roles: ["tenant", "roommate", "property_manager", "admin"],
     },
     {
       title: "Dashboard",
       href: "/dashboard",
+      roles: ["tenant", "roommate", "property_manager", "admin"],
     },
     {
       title: "OpenAI",
       href: "/playground",
+      roles: ["admin"],
     },
     {
       title: "Podcasts",
       href: "/music",
+      roles: ["admin"],
     },
     {
       title: "Blog",
@@ -33,6 +37,7 @@ export const siteConfig = {
     {
       title: "RBAC",
       href: "/dashboard/members",
+      roles: ["property_manager", "admin"],
     },
     {
       title: "About",
