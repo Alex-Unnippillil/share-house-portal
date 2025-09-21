@@ -6,22 +6,25 @@ import { readUserSession } from "@/utils/actions";
 import { redirect } from "next/navigation";
 
 export default async function Layout({ children }: { children: ReactNode }) {
-	const { data: userSession } = await readUserSession();
+  const {
+    data: { session, activeRole },
+  } = await readUserSession();
 
-	if (!userSession.session) {
-		return redirect("/auth");
-	}
-	return (
-		<div className="flex w-full ">
-			<div className="flex h-screen flex-col">
-				<SideNav />
-				<MobileSideNav />
-			</div>
+  if (!session) {
+    return redirect("/auth");
+  }
 
-			<div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
-				<ToggleSidebar />
-				{children}
-			</div>
-		</div>
-	);
+  return (
+    <div className="flex w-full ">
+      <div className="flex h-screen flex-col">
+        <SideNav activeRole={activeRole ?? null} />
+        <MobileSideNav activeRole={activeRole ?? null} />
+      </div>
+
+      <div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
+        <ToggleSidebar />
+        {children}
+      </div>
+    </div>
+  );
 }

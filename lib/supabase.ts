@@ -411,6 +411,62 @@ export type Database = {
         }
         Relationships: []
       }
+      building_memberships: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          role: Database["public"]["Enums"]["building_role"]
+          user_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          role: Database["public"]["Enums"]["building_role"]
+          user_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          role?: Database["public"]["Enums"]["building_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_memberships_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buildings: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
@@ -1240,7 +1296,6 @@ export type Database = {
           job_title: string | null
           linkedin_url: string | null
           public_id: string | null
-          role: string | null
           updated_at: string | null
           username: string | null
           waddress: string | null
@@ -1260,7 +1315,6 @@ export type Database = {
           job_title?: string | null
           linkedin_url?: string | null
           public_id?: string | null
-          role?: string | null
           updated_at?: string | null
           username?: string | null
           waddress?: string | null
@@ -1280,7 +1334,6 @@ export type Database = {
           job_title?: string | null
           linkedin_url?: string | null
           public_id?: string | null
-          role?: string | null
           updated_at?: string | null
           username?: string | null
           waddress?: string | null
@@ -1598,6 +1651,16 @@ export type Database = {
       }
     }
     Views: {
+      user_roles: {
+        Row: {
+          building_id: string | null
+          created_at: string | null
+          is_primary: boolean | null
+          role: Database["public"]["Enums"]["building_role"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       package_utilization: {
         Row: {
           created_at: string | null
@@ -1766,6 +1829,11 @@ export type Database = {
       }
     }
     Enums: {
+      building_role:
+        | "tenant"
+        | "roommate"
+        | "property_manager"
+        | "admin"
       continents:
         | "Africa"
         | "Antarctica"

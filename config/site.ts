@@ -1,3 +1,5 @@
+import { ALL_BUILDING_ROLES } from "@/types/auth"
+
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
@@ -13,10 +15,14 @@ export const siteConfig = {
     {
       title: "Account",
       href: "/account",
+      requiresAuth: true,
     },
     {
       title: "Dashboard",
       href: "/dashboard",
+      requiresAuth: true,
+      requireActiveMembership: true,
+      allowedRoles: ALL_BUILDING_ROLES,
     },
     {
       title: "OpenAI",
@@ -33,6 +39,9 @@ export const siteConfig = {
     {
       title: "RBAC",
       href: "/dashboard/members",
+      requiresAuth: true,
+      requireActiveMembership: true,
+      allowedRoles: ["property_manager", "admin"],
     },
     {
       title: "About",

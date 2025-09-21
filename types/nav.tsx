@@ -1,5 +1,5 @@
 import { Icons } from "@/components/icons"
-
+import type { BuildingRole } from "@/types/auth"
 
 export interface NavItem {
   title: string
@@ -8,6 +8,9 @@ export interface NavItem {
   external?: boolean
   icon?: keyof typeof Icons
   label?: string
+  requiresAuth?: boolean
+  requireActiveMembership?: boolean
+  allowedRoles?: BuildingRole[]
 }
 
 export interface NavItemWithChildren extends NavItem {

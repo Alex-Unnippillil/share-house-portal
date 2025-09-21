@@ -9,31 +9,47 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { filterNavItems } from "@/lib/navigation"
 
 export async function SiteHeader() {
   const {
-    data: { session },
+    data: { session, activeRole, activeMembership },
   } = await readUserSession()
+
   const isAuthenticated = Boolean(session)
+  const hasActiveMembership = Boolean(activeMembership)
+  const navItems = filterNavItems({
+    items: siteConfig.mainNav,
+    isAuthenticated,
+    activeRole,
+    hasActiveMembership,
+  })
+  const canAccessDashboard = navItems.some((item) => item.href === "/dashboard")
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="xs:space-x0 container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
-        <MainNav items={siteConfig.mainNav} />
-        <MobileNav isAuthenticated={isAuthenticated} />
+        <MainNav items={navItems} />
+        <MobileNav
+          isAuthenticated={isAuthenticated}
+          canAccessDashboard={canAccessDashboard}
+          navItems={navItems}
+        />
         <div className="flex flex-1 items-center justify-end gap-4">
           <div className="hidden items-center gap-2 md:flex">
             {isAuthenticated ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "sm" }),
-                    "justify-center"
-                  )}
-                >
-                  Dashboard
-                </Link>
+                {canAccessDashboard && (
+                  <Link
+                    href="/dashboard"
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "sm" }),
+                      "justify-center"
+                    )}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <SignOutButton
                   variant="outline"
                   size="sm"

@@ -12,12 +12,19 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Icons } from "@/components/icons"
 import { SignOutButton } from "@/components/sign-out-button"
+import type { NavItem } from "@/types/nav"
 
 interface MobileNavProps {
   isAuthenticated: boolean
+  canAccessDashboard: boolean
+  navItems: NavItem[]
 }
 
-export function MobileNav({ isAuthenticated }: MobileNavProps) {
+export function MobileNav({
+  isAuthenticated,
+  canAccessDashboard,
+  navItems,
+}: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -50,16 +57,18 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
         <div className="px-6 py-4">
           {isAuthenticated ? (
             <div className="flex flex-col gap-2">
-              <MobileLink
-                href="/dashboard"
-                onOpenChange={setOpen}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "justify-center"
-                )}
-              >
-                Dashboard
-              </MobileLink>
+              {canAccessDashboard && (
+                <MobileLink
+                  href="/dashboard"
+                  onOpenChange={setOpen}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "justify-center"
+                  )}
+                >
+                  Dashboard
+                </MobileLink>
+              )}
               <SignOutButton
                 variant="outline"
                 size="sm"
@@ -90,6 +99,22 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           )}
         </div>
         <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+          {navItems.length > 0 && (
+            <div className="flex flex-col space-y-3 pb-6">
+              {navItems.map(
+                (item) =>
+                  item.href && (
+                    <MobileLink
+                      key={item.href}
+                      href={item.href}
+                      onOpenChange={setOpen}
+                    >
+                      {item.title}
+                    </MobileLink>
+                  )
+              )}
+            </div>
+          )}
           <div className="flex flex-col space-y-3">
             {docsConfig.mainNav?.map(
               (item) =>
