@@ -12,16 +12,16 @@ export function MainNav({
       {...props}
     >
       <Link
-        href="#"
+        href="/dashboard"
         className="text-sm font-medium transition-colors hover:text-primary"
       >
         Overview
       </Link>
       <Link
-        href="#"
+        href="/dashboard/leases"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        Customers
+        Leases
       </Link>
       <Link
        href="#"
