@@ -55,6 +55,10 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
     - NEXT_PUBLIC_SITE_URL="http://localhost:3000" # Used for auth redirects in development
     - SUPABASE_WORKOS_CONNECTION_ID="Your WorkOS connection ID" # Optional, required to enable SSO via WorkOS
+    - CALCOM_API_KEY="Your Cal.com personal access token"
+    - CALCOM_BASE_URL="https://cal.your-domain.com" # Base URL for Cal.com API calls
+    - CALCOM_WEBHOOK_SECRET="Webhook signing secret from Cal.com"
+    - NEXT_PUBLIC_CALCOM_EMBED_HOST="https://cal.your-domain.com" # Used by the client embed widget
 
   - Enable WorkOS SSO (optional)
     - Create a WorkOS connection in the Supabase dashboard and copy the connection ID from the Connections table

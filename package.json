@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest"
   },
   "dependencies": {
+    "@calcom/embed-react": "^1.5.3",
     "@ducanh2912/next-pwa": "^10.2.8",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -95,6 +97,7 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^3.7.2",
+    "@testing-library/react": "^14.2.1",
     "@types/eslint": "^8.56.2",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.14.15",
@@ -107,8 +110,10 @@
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-tailwindcss": "^3.14.2",
+    "jsdom": "^27.0.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.4"
   }
 }

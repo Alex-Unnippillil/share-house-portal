@@ -411,6 +411,108 @@ export type Database = {
         }
         Relationships: []
       }
+      amenities: {
+        Row: {
+          building_id: string | null
+          calcom_event_slug: string
+          calcom_event_type_id: number
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          building_id?: string | null
+          calcom_event_slug: string
+          calcom_event_type_id: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string | null
+          calcom_event_slug?: string
+          calcom_event_type_id?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      amenity_bookings: {
+        Row: {
+          amenity_id: string
+          building_id: string | null
+          calcom_booking_id: string
+          calcom_event_type_id: number
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["amenity_booking_status"]
+          tenant_id: string | null
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amenity_id: string
+          building_id?: string | null
+          calcom_booking_id: string
+          calcom_event_type_id: number
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["amenity_booking_status"]
+          tenant_id?: string | null
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amenity_id?: string
+          building_id?: string | null
+          calcom_booking_id?: string
+          calcom_event_type_id?: number
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["amenity_booking_status"]
+          tenant_id?: string | null
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenity_bookings_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "amenity_bookings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
@@ -1766,6 +1868,7 @@ export type Database = {
       }
     }
     Enums: {
+      amenity_booking_status: "pending" | "confirmed" | "cancelled"
       continents:
         | "Africa"
         | "Antarctica"
