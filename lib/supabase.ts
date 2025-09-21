@@ -450,6 +450,59 @@ export type Database = {
         }
         Relationships: []
       }
+      buildings: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      building_memberships: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: number
+          role: Database["public"]["Enums"]["portal_role"]
+          user_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: number
+          role: Database["public"]["Enums"]["portal_role"]
+          user_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: number
+          role?: Database["public"]["Enums"]["portal_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_memberships_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat: {
         Row: {
           created_at: string
@@ -1629,6 +1682,17 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          building_id: string
+          building_name: string
+          building_slug: string
+          created_at: string
+          role: Database["public"]["Enums"]["portal_role"]
+          user_id: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       binary_quantize: {
@@ -1774,6 +1838,11 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      portal_role:
+        | "tenant"
+        | "roommate"
+        | "property_manager"
+        | "admin"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
@@ -2232,6 +2301,12 @@ export const Constants = {
         "Oceania",
         "North America",
         "South America",
+      ],
+      portal_role: [
+        "tenant",
+        "roommate",
+        "property_manager",
+        "admin",
       ],
       user_role: ["user", "admin"],
     },

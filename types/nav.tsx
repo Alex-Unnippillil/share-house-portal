@@ -1,4 +1,5 @@
 import { Icons } from "@/components/icons"
+import type { PortalRole } from "@/types/rbac"
 
 
 export interface NavItem {
@@ -8,6 +9,7 @@ export interface NavItem {
   external?: boolean
   icon?: keyof typeof Icons
   label?: string
+  roles?: PortalRole[]
 }
 
 export interface NavItemWithChildren extends NavItem {

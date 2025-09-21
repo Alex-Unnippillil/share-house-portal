@@ -4,7 +4,6 @@ import * as React from "react"
 import Link, { LinkProps } from "next/link"
 import { useRouter } from "next/navigation"
 
-import { docsConfig } from "@/config/docs"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -12,12 +11,28 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Icons } from "@/components/icons"
 import { SignOutButton } from "@/components/sign-out-button"
+import type { BuildingMembership, PortalRole } from "@/types/rbac"
+import type { MainNavItem, SidebarNavItem } from "types/nav"
 
 interface MobileNavProps {
   isAuthenticated: boolean
+  canAccessDashboard: boolean
+  docsMainNav: MainNavItem[]
+  docsSidebarNav: SidebarNavItem[]
+  activeBuildingName: string | null
+  role: PortalRole | null
+  memberships: BuildingMembership[]
 }
 
-export function MobileNav({ isAuthenticated }: MobileNavProps) {
+export function MobileNav({
+  isAuthenticated,
+  canAccessDashboard,
+  docsMainNav,
+  docsSidebarNav,
+  activeBuildingName,
+  role,
+  memberships,
+}: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -27,13 +42,13 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           variant="ghost"
           className="mr-0 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
         >
-          <Icons.menu className="h-6 w-6" />
+          <Icons.menu className="size-6" />
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>
       <div className="xs:items-center ml-1 gap-4 md:hidden">
         <Link href="/" className="flex items-center space-x-2">
-          <Icons.logo className="h-6 w-6" />
+          <Icons.logo className="size-6" />
           <span className="font-bold">{siteConfig.name}</span>
         </Link>
       </div>
@@ -48,18 +63,33 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           <span className="font-bold">{siteConfig.name}</span>
         </MobileLink>
         <div className="px-6 py-4">
+          {isAuthenticated && (
+            <div className="flex flex-col gap-1 text-left text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {activeBuildingName ?? "No building selected"}
+              </span>
+              <span className="capitalize">
+                Role: {role ? role.replace(/_/g, " ") : "unassigned"}
+              </span>
+              {memberships.length > 1 && (
+                <span>{memberships.length} active memberships</span>
+              )}
+            </div>
+          )}
           {isAuthenticated ? (
             <div className="flex flex-col gap-2">
-              <MobileLink
-                href="/dashboard"
-                onOpenChange={setOpen}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "justify-center"
-                )}
-              >
-                Dashboard
-              </MobileLink>
+              {canAccessDashboard && (
+                <MobileLink
+                  href="/dashboard"
+                  onOpenChange={setOpen}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "justify-center"
+                  )}
+                >
+                  Dashboard
+                </MobileLink>
+              )}
               <SignOutButton
                 variant="outline"
                 size="sm"
@@ -91,7 +121,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
         </div>
         <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
           <div className="flex flex-col space-y-3">
-            {docsConfig.mainNav?.map(
+            {docsMainNav?.map(
               (item) =>
                 item.href && (
                   <MobileLink
@@ -105,7 +135,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
             )}
           </div>
           <div className="flex flex-col space-y-2">
-            {docsConfig.sidebarNav.map((item, index) => (
+            {docsSidebarNav.map((item, index) => (
               <div key={index} className="flex flex-col space-y-3 pt-6">
                 <h4 className="font-medium">{item.title}</h4>
                 {item?.items?.length &&
