@@ -1,70 +1,56 @@
-'use client';
+import { useMemo, useState } from 'react'
+import { addMinutes, format, formatISO, isPast, isSameDay, setHours, setMilliseconds, setMinutes, setSeconds, startOfDay } from 'date-fns'
+import { DayPicker } from 'react-day-picker'
+import { z } from 'zod'
 
-import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button'
-import { scheduleMeetingAction } from '@/app/schedule/actions';
-import { useFormState, useFormStatus } from 'react-dom';
-import { DayPicker } from 'react-day-picker';
-import { z } from 'zod'; // Import Zod
-import {
-    format,
-    formatISO,
-    addMinutes,
-    setHours,
-    setMinutes,
-    setSeconds,
-    setMilliseconds,
-    isPast,
-    isSameDay,
-    startOfDay,
-    isValid // Import isValid for robustness
-} from 'date-fns';
+import { useFormState, useFormStatus } from 'react-dom'
+import { scheduleMeetingAction } from '@/app/schedule/actions'
 
-// --- Zod Schema for Client-Side Validation ---
-// This schema validates the data *after* the user has made selections
-// and we've constructed the initial Date objects.
-const clientScheduleSchema = z.object({
-    startDateTime: z.date({
-        // Error if we somehow fail to create a valid Date object
-        invalid_type_error: "Invalid date or time selected.",
-        // Error if the user hasn't selected both date and time slot
-        required_error: "Please select both a date and a time slot."
-       })
-       .refine(date => isValid(date), { // Ensure the created date is valid
-            message: "Invalid date/time combination."
-       })
-       .refine(date => !isPast(date), { // Ensure the date/time is not in the past
-            message: "The selected time slot has already passed. Please select a future time.",
-       }),
-    // We don't strictly need to validate endDateTime client-side if start is valid
-    // and duration is fixed, but it could be added for completeness.
-    // userEmail: z.string().email(), // Usually passed as prop, less critical here
-    // userName: z.string().min(1), // Usually passed as prop
-});
-
-// Type for flattened Zod errors specifically for our schema structure
-type ClientValidationErrors = z.inferFlattenedErrors<typeof clientScheduleSchema>['fieldErrors'];
-
-
-interface ScheduleFormProps {
-  userEmail: string;
-  userName: string;
+type AmenityOption = {
+  id: string
+  name: string
+  description: string | null
+  amenity_type: string
+  requires_approval: boolean
 }
 
-const initialState: { message: string | null; error: string | null; success: boolean; googleEventLink?: string | null } = {
+type ClientValidationErrors = z.inferFlattenedErrors<typeof clientScheduleSchema>['fieldErrors']
+
+type ScheduleFormProps = {
+  userEmail: string
+  userName: string
+  amenities: AmenityOption[]
+}
+
+type ActionState = {
+  message: string | null
+  error: string | null
+  success: boolean
+  googleEventLink?: string | null
+}
+
+const clientScheduleSchema = z.object({
+  startDateTime: z
+    .date({ invalid_type_error: 'Invalid date or time selected.', required_error: 'Please select both a date and a time slot.' })
+    .refine((date) => !isPast(date), {
+      message: 'The selected time slot has already passed. Please select a future time.',
+    }),
+})
+
+const initialState: ActionState = {
   message: null,
   error: null,
   success: false,
   googleEventLink: null,
-};
+}
 
-const MEETING_DURATION_MINUTES = 60;
-const AVAILABLE_HOURS_START = 9;
-const AVAILABLE_HOURS_END = 17;
+const MEETING_DURATION_MINUTES = 60
+const AVAILABLE_HOURS_START = 9
+const AVAILABLE_HOURS_END = 17
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
-  const { pending } = useFormStatus();
-  const isDisabled = pending || disabled;
+  const { pending } = useFormStatus()
+  const isDisabled = pending || disabled
 
   return (
     <button
@@ -72,208 +58,223 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
       aria-disabled={isDisabled}
       disabled={isDisabled}
       className={`rounded px-6 py-2 font-semibold text-white ${
-        isDisabled
-          ? 'cursor-not-allowed bg-gray-400'
-          : 'bg-green-500 hover:bg-green-600'
+        isDisabled ? 'cursor-not-allowed bg-gray-400' : 'bg-green-500 hover:bg-green-600'
       }`}
     >
-      {pending ? 'Scheduling...' : 'Schedule Meeting'}
+      {pending ? 'Scheduling…' : 'Schedule Reservation'}
     </button>
-  );
+  )
 }
 
-export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
-  // Server action state
-  const [serverState, formAction] = useFormState(scheduleMeetingAction, initialState);
-  // Component state
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined);
-  // Client-side validation state
-  const [clientErrors, setClientErrors] = useState<ClientValidationErrors | null>(null);
-
+export function ScheduleForm({ userEmail, userName, amenities }: ScheduleFormProps) {
+  const [serverState, formAction] = useFormState(scheduleMeetingAction, initialState)
+  const [selectedAmenityId, setSelectedAmenityId] = useState<string>('')
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined)
+  const [clientErrors, setClientErrors] = useState<ClientValidationErrors | null>(null)
+  const [amenityError, setAmenityError] = useState<string | null>(null)
 
   const availableTimeSlots = useMemo(() => {
-    // ... (time slot generation logic remains the same) ...
-    if (!selectedDate) return [];
-    const slots: string[] = [];
-    const today = startOfDay(new Date());
-    const selectedDayStart = startOfDay(selectedDate);
-    for (let hour = AVAILABLE_HOURS_START; hour < AVAILABLE_HOURS_END; hour++) {
-      const slotStartTime = setMilliseconds(setSeconds(setMinutes(setHours(selectedDate, hour), 0), 0), 0);
-      if (isSameDay(selectedDayStart, today) && isPast(slotStartTime)) {
-          continue;
-      }
-      slots.push(format(slotStartTime, 'HH:mm'));
-    }
-    return slots;
-  }, [selectedDate]);
+    if (!selectedDate) return []
 
-  // Clear client errors when selection changes
+    const slots: string[] = []
+    const today = startOfDay(new Date())
+    const selectedDayStart = startOfDay(selectedDate)
+
+    for (let hour = AVAILABLE_HOURS_START; hour < AVAILABLE_HOURS_END; hour++) {
+      const slotStartTime = setMilliseconds(setSeconds(setMinutes(setHours(selectedDate, hour), 0), 0), 0)
+
+      if (isSameDay(selectedDayStart, today) && isPast(slotStartTime)) {
+        continue
+      }
+
+      slots.push(format(slotStartTime, 'HH:mm'))
+    }
+
+    return slots
+  }, [selectedDate])
+
   const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(undefined);
-    setClientErrors(null); // Clear errors
-  };
+    setSelectedDate(date)
+    setSelectedTimeSlot(undefined)
+    setClientErrors(null)
+  }
 
   const handleTimeSelect = (slot: string) => {
-    setSelectedTimeSlot(slot);
-    setClientErrors(null); // Clear errors
-  };
+    setSelectedTimeSlot(slot)
+    setClientErrors(null)
+  }
 
-  // Handle form submission
+  const handleAmenitySelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedAmenityId(event.target.value)
+    setAmenityError(null)
+  }
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setClientErrors(null); // Clear previous client errors on new submission attempt
+    event.preventDefault()
+    setClientErrors(null)
 
-    // 1. Construct Date objects (attempt)
-    let startDateTime: Date | null = null;
-    let endDateTime: Date | null = null;
+    if (!selectedAmenityId) {
+      setAmenityError('Please select an amenity to reserve.')
+      return
+    }
+
+    let startDateTime: Date | null = null
+    let endDateTime: Date | null = null
 
     if (selectedDate && selectedTimeSlot) {
-        try {
-            const [hour, minute] = selectedTimeSlot.split(':').map(Number);
-            // Ensure hour and minute are valid numbers before setting
-            if (!isNaN(hour) && !isNaN(minute)) {
-                startDateTime = setMilliseconds(setSeconds(setMinutes(setHours(selectedDate, hour), minute), 0), 0);
-                endDateTime = addMinutes(startDateTime, MEETING_DURATION_MINUTES);
-            } else {
-                 console.error("Invalid time slot format parsed:", selectedTimeSlot);
-                 // Set startDateTime to an invalid date to trigger Zod error below
-                 startDateTime = new Date('invalid date');
-            }
-        } catch (error) {
-            console.error("Error constructing date:", error);
-             // Set startDateTime to an invalid date to trigger Zod error below
-            startDateTime = new Date('invalid date');
+      try {
+        const [hour, minute] = selectedTimeSlot.split(':').map(Number)
+
+        if (!Number.isNaN(hour) && !Number.isNaN(minute)) {
+          startDateTime = setMilliseconds(setSeconds(setMinutes(setHours(selectedDate, hour), minute), 0), 0)
+          endDateTime = addMinutes(startDateTime, MEETING_DURATION_MINUTES)
+        } else {
+          startDateTime = new Date('invalid date')
         }
+      } catch {
+        startDateTime = new Date('invalid date')
+      }
     }
 
-    // 2. Client-side validation using Zod
-    // We primarily validate startDateTime as it implies date/time selection and past check
-    const validationResult = clientScheduleSchema.safeParse({ startDateTime });
+    const validationResult = clientScheduleSchema.safeParse({ startDateTime })
 
     if (!validationResult.success) {
-      // Validation failed: Update client error state and stop
-      setClientErrors(validationResult.error.flatten().fieldErrors);
-      console.log("Client validation failed:", validationResult.error.flatten().fieldErrors);
-      return;
+      setClientErrors(validationResult.error.flatten().fieldErrors)
+      return
     }
 
-    // 3. Validation successful: Proceed with formatting and FormData
-    // Use the validated data from result.data for type safety
-    const startTimeISO = formatISO(validationResult.data.startDateTime);
-    // endDateTime was constructed earlier, assuming fixed duration based on validated start
-    const endTimeISO = formatISO(endDateTime!); // Use non-null assertion as startDateTime is valid
+    const startTimeISO = formatISO(validationResult.data.startDateTime)
+    const endTimeISO = formatISO(endDateTime!)
 
-    // 4. Prepare FormData
-    const formData = new FormData();
-    formData.append('startTime', startTimeISO);
-    formData.append('endTime', endTimeISO);
-    formData.append('userEmail', userEmail);
-    formData.append('userName', userName);
-    formData.append('summary', `Meeting with ${userName}`);
-    formData.append('description', `Scheduled via App by ${userEmail} for ${format(validationResult.data.startDateTime, 'PPP p')}`);
+    const form = new FormData()
+    form.append('amenityId', selectedAmenityId)
+    form.append('startTime', startTimeISO)
+    form.append('endTime', endTimeISO)
+    form.append('userEmail', userEmail)
+    form.append('userName', userName)
+    form.append('summary', `Reservation with ${userName}`)
+    form.append('description', `Scheduled via app for ${format(validationResult.data.startDateTime, 'PPP p')}`)
 
-    // 5. Trigger Server Action
-    console.log("Client validation passed. Submitting to server action...");
-    formAction(formData);
-  };
+    formAction(form)
+  }
 
-  // Determine if the submit button should be disabled
-  const isSubmitDisabled = !selectedDate || !selectedTimeSlot;
+  const isSubmitDisabled = !selectedDate || !selectedTimeSlot || !selectedAmenityId || amenities.length === 0
+  const dateTimeClientError = clientErrors?.startDateTime?.[0]
 
-  // Get specific client-side error message for date/time selection
-  const dateTimeClientError = clientErrors?.startDateTime?.[0];
-
-  // CSS for DayPicker (remains the same)
   const css = `
-    .rdp { /* ... same styles ... */ }
-    /* ... other rdp styles ... */
-  `;
-
+    .rdp {
+      --rdp-accent-color: #16a34a;
+      --rdp-accent-background-color: rgba(34, 197, 94, 0.15);
+      margin: 0;
+    }
+    .rdp-day_selected,
+    .rdp-day_selected:focus-visible,
+    .rdp-day_selected:hover {
+      background-color: var(--rdp-accent-color);
+      border-color: var(--rdp-accent-color);
+      color: white;
+    }
+  `
 
   return (
     <form onSubmit={handleSubmit} className="max-w-md space-y-6">
-      {/* Display messages from server action state */}
       {serverState?.message && (
-        <p className={`rounded p-3 text-sm ${serverState.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <p
+          className={`rounded p-3 text-sm ${
+            serverState.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
+        >
           {serverState.message}
           {serverState.success && serverState.googleEventLink && (
-             <a href={serverState.googleEventLink} target="_blank" rel="noopener noreferrer" className="ml-2 font-semibold underline">View Event</a>
+            <a href={serverState.googleEventLink} target="_blank" rel="noopener noreferrer" className="ml-2 font-semibold underline">
+              View Event
+            </a>
           )}
         </p>
       )}
-       {serverState?.error && (
-        <p className="rounded bg-red-100 p-3 text-sm text-red-800">
-          Server Error: {serverState.error}
-        </p>
+
+      {serverState?.error && (
+        <p className="rounded bg-red-100 p-3 text-sm text-red-800">Server Error: {serverState.error}</p>
       )}
 
-      {/* Display General Client Validation Errors (if not specific to date/time) */}
-       {clientErrors && !dateTimeClientError && (
-             <div className="rounded border border-yellow-300 bg-yellow-100 p-3 text-sm text-yellow-800">
-                Please correct the errors indicated below.
-             </div>
-          )}
-
-      {/* Date Selection */}
-      <div>
-         <h3 className="mb-2 text-lg font-semibold text-gray-800">1. Select a Date</h3>
-         <style>{css}</style>
-         <DayPicker
-            mode="single"
-            required // Keep required for accessibility, Zod handles actual logic
-            selected={selectedDate}
-            onSelect={handleDateSelect}
-            fromDate={new Date()}
-            // disabled={[ (day) => day.getDay() === 0 || day.getDay() === 6 ]}
-            footer={selectedDate ? `Selected date: ${format(selectedDate, 'PPP')}` : 'Please pick a day.'}
-            className="rounded-md bg-white shadow"
-            // Associate potential errors with the picker region for accessibility
-            aria-describedby={dateTimeClientError ? "datetime-client-error" : undefined}
-         />
-      </div>
-
-      {/* Time Slot Selection */}
-      {selectedDate && (
+      {amenities.length === 0 ? (
+        <div className="rounded border border-yellow-300 bg-yellow-100 p-3 text-sm text-yellow-800">
+          No reservable amenities are configured for your building yet.
+        </div>
+      ) : (
         <div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-800">2. Select a Time Slot</h3>
-          {availableTimeSlots.length > 0 ? (
-             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-               {availableTimeSlots.map((slot) => (
-                 <button
-                   key={slot}
-                   type="button"
-                   onClick={() => handleTimeSelect(slot)} // Use specific handler
-                   className={`rounded border p-2 text-center text-sm font-medium transition-colors duration-150 ease-in-out ${
-                     selectedTimeSlot === slot
-                       ? 'border-green-700 bg-green-600 text-white ring-2 ring-green-300'
-                       : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-100'
-                   }`}
-                    // Associate potential errors with the time slot region
-                    aria-describedby={dateTimeClientError ? "datetime-client-error" : undefined}
-                 >
-                   {slot}
-                 </button>
-               ))}
-             </div>
-          ) : (
-              <p className="italic text-gray-500">No available time slots for the selected date based on predefined hours.</p>
-          )}
-            {/* Display Client-Side Date/Time Validation Error */}
-            {dateTimeClientError && (
-              <p id="datetime-client-error" className="mt-2 text-sm text-red-600">
-                  {dateTimeClientError}
-              </p>
-            )}
+          <label className="mb-2 block text-lg font-semibold text-gray-800" htmlFor="amenity">
+            1. Select an Amenity
+          </label>
+          <select
+            id="amenity"
+            name="amenity"
+            className="w-full rounded border border-gray-300 p-2"
+            value={selectedAmenityId}
+            onChange={handleAmenitySelect}
+          >
+            <option value="">Choose an amenity…</option>
+            {amenities.map((amenity) => (
+              <option key={amenity.id} value={amenity.id}>
+                {amenity.name} {amenity.requires_approval ? '(Approval required)' : ''}
+              </option>
+            ))}
+          </select>
+          {amenityError && <p className="mt-2 text-sm text-red-600">{amenityError}</p>}
         </div>
       )}
 
-      {/* Submit Button */}
+      <div>
+        <h3 className="mb-2 text-lg font-semibold text-gray-800">2. Select a Date</h3>
+        <style>{css}</style>
+        <DayPicker
+          mode="single"
+          required
+          selected={selectedDate}
+          onSelect={handleDateSelect}
+          fromDate={new Date()}
+          footer={selectedDate ? `Selected date: ${format(selectedDate, 'PPP')}` : 'Please pick a day.'}
+          className="rounded-md bg-white shadow"
+          aria-describedby={dateTimeClientError ? 'datetime-client-error' : undefined}
+        />
+      </div>
+
+      {selectedDate && (
+        <div>
+          <h3 className="mb-2 text-lg font-semibold text-gray-800">3. Select a Time Slot</h3>
+          {availableTimeSlots.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {availableTimeSlots.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => handleTimeSelect(slot)}
+                  className={`rounded border p-2 text-center text-sm font-medium transition-colors duration-150 ease-in-out ${
+                    selectedTimeSlot === slot
+                      ? 'border-green-700 bg-green-600 text-white ring-2 ring-green-300'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-100'
+                  }`}
+                  aria-describedby={dateTimeClientError ? 'datetime-client-error' : undefined}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="italic text-gray-500">No available time slots for the selected date.</p>
+          )}
+          {dateTimeClientError && (
+            <p id="datetime-client-error" className="mt-2 text-sm text-red-600">
+              {dateTimeClientError}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="pt-4">
-         {/* Disable button based on selection, not clientErrors (Zod prevents submission) */}
-         <SubmitButton disabled={isSubmitDisabled} />
+        <SubmitButton disabled={isSubmitDisabled} />
       </div>
     </form>
-  );
+  )
 }
