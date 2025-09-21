@@ -19,12 +19,12 @@ export const siteConfig = {
       href: "/dashboard",
     },
     {
-      title: "OpenAI",
-      href: "/playground",
+      title: "Amenities",
+      href: "/amenities",
     },
     {
-      title: "Podcasts",
-      href: "/music",
+      title: "Community Guidelines",
+      href: "/community-guidelines",
     },
     {
       title: "Blog",
