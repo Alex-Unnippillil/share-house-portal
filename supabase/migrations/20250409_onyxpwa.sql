@@ -112,6 +112,183 @@ CREATE POLICY "Individuals can view their own todos." ON public.todos FOR SELECT
 CREATE POLICY "Individuals can insert their own todos." ON public.todos FOR INSERT TO authenticated WITH CHECK ((select auth.uid()) = user_id);
 CREATE POLICY "Individuals can update their own todos." ON public.todos FOR UPDATE TO authenticated USING ((select auth.uid()) = user_id) WITH CHECK ((select auth.uid()) = user_id);
 CREATE POLICY "Individuals can delete their own todos." ON public.todos FOR DELETE TO authenticated USING ((select auth.uid()) = user_id);
-```
 
--- Remember to create RLS policies for this table before using it with Supabase APIs.
+-- Communications service domain --------------------------------------------------------
+
+create type public.announcement_status as enum ('draft', 'scheduled', 'published', 'archived');
+create type public.bulletin_status as enum ('pending', 'approved', 'rejected', 'escalated', 'archived');
+create type public.moderation_status as enum ('clean', 'under_review', 'action_required', 'resolved');
+create type public.abuse_status as enum ('open', 'investigating', 'resolved');
+create type public.survey_status as enum ('draft', 'open', 'closed', 'archived');
+create type public.moderation_action as enum ('submit', 'approve', 'reject', 'escalate', 'resolve', 'flag');
+
+CREATE TABLE public.communications_announcements (
+  id bigint primary key generated always as identity,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  title text NOT NULL,
+  body text NOT NULL,
+  status public.announcement_status NOT NULL DEFAULT 'draft',
+  publish_at timestamp with time zone NULL,
+  expire_at timestamp with time zone NULL,
+  created_by uuid NOT NULL,
+  target_roles text[] NULL,
+  CONSTRAINT communications_announcements_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE CASCADE
+) WITH (OIDS=FALSE);
+ALTER TABLE public.communications_announcements ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_communications_announcements_status ON public.communications_announcements(status);
+CREATE INDEX IF NOT EXISTS idx_communications_announcements_publish_at ON public.communications_announcements(publish_at);
+
+CREATE TABLE public.communications_bulletins (
+  id bigint primary key generated always as identity,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  author_id uuid NOT NULL,
+  title text NOT NULL,
+  content text NOT NULL,
+  status public.bulletin_status NOT NULL DEFAULT 'pending',
+  moderation_status public.moderation_status NOT NULL DEFAULT 'clean',
+  abuse_reason text NULL,
+  abuse_context jsonb NULL,
+  moderated_by uuid NULL,
+  moderated_at timestamp with time zone NULL,
+  CONSTRAINT communications_bulletins_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id) ON DELETE CASCADE,
+  CONSTRAINT communications_bulletins_moderated_by_fkey FOREIGN KEY (moderated_by) REFERENCES public.profiles(id) ON DELETE SET NULL
+) WITH (OIDS=FALSE);
+ALTER TABLE public.communications_bulletins ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_communications_bulletins_status ON public.communications_bulletins(status);
+CREATE INDEX IF NOT EXISTS idx_communications_bulletins_moderation_status ON public.communications_bulletins(moderation_status);
+
+CREATE TABLE public.communications_bulletin_audits (
+  id bigint primary key generated always as identity,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  bulletin_id bigint NOT NULL,
+  actor_id uuid NOT NULL,
+  action public.moderation_action NOT NULL,
+  notes text NULL,
+  metadata jsonb NULL,
+  CONSTRAINT communications_bulletin_audits_bulletin_id_fkey FOREIGN KEY (bulletin_id) REFERENCES public.communications_bulletins(id) ON DELETE CASCADE,
+  CONSTRAINT communications_bulletin_audits_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.profiles(id) ON DELETE CASCADE
+) WITH (OIDS=FALSE);
+ALTER TABLE public.communications_bulletin_audits ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.communications_abuse_reports (
+  id bigint primary key generated always as identity,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  bulletin_id bigint NOT NULL,
+  reporter_id uuid NOT NULL,
+  status public.abuse_status NOT NULL DEFAULT 'open',
+  reason text NOT NULL,
+  details text NULL,
+  resolved_at timestamp with time zone NULL,
+  resolution_notes text NULL,
+  CONSTRAINT communications_abuse_reports_bulletin_id_fkey FOREIGN KEY (bulletin_id) REFERENCES public.communications_bulletins(id) ON DELETE CASCADE,
+  CONSTRAINT communications_abuse_reports_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.profiles(id) ON DELETE CASCADE
+) WITH (OIDS=FALSE);
+ALTER TABLE public.communications_abuse_reports ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_communications_abuse_reports_status ON public.communications_abuse_reports(status);
+
+CREATE TABLE public.communications_surveys (
+  id bigint primary key generated always as identity,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  title text NOT NULL,
+  description text NULL,
+  status public.survey_status NOT NULL DEFAULT 'draft',
+  questions jsonb NOT NULL,
+  created_by uuid NOT NULL,
+  closes_at timestamp with time zone NULL,
+  metadata jsonb NULL,
+  CONSTRAINT communications_surveys_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE CASCADE
+) WITH (OIDS=FALSE);
+ALTER TABLE public.communications_surveys ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_communications_surveys_status ON public.communications_surveys(status);
+
+CREATE TABLE public.communications_survey_responses (
+  id bigint primary key generated always as identity,
+  survey_id bigint NOT NULL,
+  respondent_id uuid NULL,
+  submitted_at timestamp with time zone NOT NULL DEFAULT now(),
+  answers jsonb NOT NULL,
+  metadata jsonb NULL,
+  CONSTRAINT communications_survey_responses_survey_id_fkey FOREIGN KEY (survey_id) REFERENCES public.communications_surveys(id) ON DELETE CASCADE,
+  CONSTRAINT communications_survey_responses_respondent_id_fkey FOREIGN KEY (respondent_id) REFERENCES public.profiles(id) ON DELETE SET NULL
+) WITH (OIDS=FALSE);
+ALTER TABLE public.communications_survey_responses ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_communications_survey_responses_survey_id ON public.communications_survey_responses(survey_id);
+
+-- RBAC aware policies rely on the profiles.role column populated via the application layer.
+CREATE POLICY "Announcements visible to authenticated users" ON public.communications_announcements
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Announcements manageable by admins" ON public.communications_announcements
+  FOR ALL TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Bulletins viewable when authored or approved" ON public.communications_bulletins
+  FOR SELECT TO authenticated USING (
+    author_id = auth.uid()
+    OR status IN ('approved'::public.bulletin_status, 'escalated'::public.bulletin_status)
+  );
+CREATE POLICY "Bulletins insert by authenticated" ON public.communications_bulletins
+  FOR INSERT TO authenticated WITH CHECK (author_id = auth.uid());
+CREATE POLICY "Bulletins managed by admins" ON public.communications_bulletins
+  FOR UPDATE TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Abuse reports readable by admins" ON public.communications_abuse_reports
+  FOR SELECT TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+    OR reporter_id = auth.uid()
+  );
+CREATE POLICY "Abuse reports insert by authenticated" ON public.communications_abuse_reports
+  FOR INSERT TO authenticated WITH CHECK (reporter_id = auth.uid());
+
+CREATE POLICY "Surveys readable to authenticated" ON public.communications_surveys
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Surveys managed by admins" ON public.communications_surveys
+  FOR ALL TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Survey responses readable to admins or owners" ON public.communications_survey_responses
+  FOR SELECT TO authenticated USING (
+    respondent_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  );
+CREATE POLICY "Survey responses insert by authenticated" ON public.communications_survey_responses
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+-- Remember to create any additional RLS policies tailored to your environment before using these tables with Supabase APIs.

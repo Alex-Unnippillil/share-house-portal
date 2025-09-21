@@ -1596,6 +1596,301 @@ export type Database = {
           },
         ]
       }
+      communications_announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          expire_at: string | null
+          id: number
+          publish_at: string | null
+          status: Database["public"]["Enums"]["announcement_status"]
+          target_roles: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          expire_at?: string | null
+          id?: number
+          publish_at?: string | null
+          status?: Database["public"]["Enums"]["announcement_status"]
+          target_roles?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          expire_at?: string | null
+          id?: number
+          publish_at?: string | null
+          status?: Database["public"]["Enums"]["announcement_status"]
+          target_roles?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications_bulletins: {
+        Row: {
+          abuse_context: Json | null
+          abuse_reason: string | null
+          author_id: string
+          content: string
+          created_at: string
+          id: number
+          moderation_status: Database["public"]["Enums"]["moderation_status"]
+          moderated_at: string | null
+          moderated_by: string | null
+          status: Database["public"]["Enums"]["bulletin_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          abuse_context?: Json | null
+          abuse_reason?: string | null
+          author_id: string
+          content: string
+          created_at?: string
+          id?: number
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
+          moderated_at?: string | null
+          moderated_by?: string | null
+          status?: Database["public"]["Enums"]["bulletin_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          abuse_context?: Json | null
+          abuse_reason?: string | null
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: number
+          moderation_status?: Database["public"]["Enums"]["moderation_status"]
+          moderated_at?: string | null
+          moderated_by?: string | null
+          status?: Database["public"]["Enums"]["bulletin_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_bulletins_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_bulletins_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications_bulletin_audits: {
+        Row: {
+          action: Database["public"]["Enums"]["moderation_action"]
+          actor_id: string
+          bulletin_id: number
+          created_at: string
+          id: number
+          metadata: Json | null
+          notes: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["moderation_action"]
+          actor_id: string
+          bulletin_id: number
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          notes?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["moderation_action"]
+          actor_id?: string
+          bulletin_id?: number
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_bulletin_audits_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_bulletin_audits_bulletin_id_fkey"
+            columns: ["bulletin_id"]
+            isOneToOne: false
+            referencedRelation: "communications_bulletins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications_abuse_reports: {
+        Row: {
+          bulletin_id: number
+          created_at: string
+          details: string | null
+          id: number
+          reason: string
+          reporter_id: string
+          resolved_at: string | null
+          resolution_notes: string | null
+          status: Database["public"]["Enums"]["abuse_status"]
+          updated_at: string
+        }
+        Insert: {
+          bulletin_id: number
+          created_at?: string
+          details?: string | null
+          id?: number
+          reason: string
+          reporter_id: string
+          resolved_at?: string | null
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["abuse_status"]
+          updated_at?: string
+        }
+        Update: {
+          bulletin_id?: number
+          created_at?: string
+          details?: string | null
+          id?: number
+          reason?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["abuse_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_abuse_reports_bulletin_id_fkey"
+            columns: ["bulletin_id"]
+            isOneToOne: false
+            referencedRelation: "communications_bulletins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_abuse_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications_surveys: {
+        Row: {
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: number
+          metadata: Json | null
+          questions: Json
+          status: Database["public"]["Enums"]["survey_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: number
+          metadata?: Json | null
+          questions: Json
+          status?: Database["public"]["Enums"]["survey_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: number
+          metadata?: Json | null
+          questions?: Json
+          status?: Database["public"]["Enums"]["survey_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_surveys_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications_survey_responses: {
+        Row: {
+          answers: Json
+          id: number
+          metadata: Json | null
+          respondent_id: string | null
+          submitted_at: string
+          survey_id: number
+        }
+        Insert: {
+          answers: Json
+          id?: number
+          metadata?: Json | null
+          respondent_id?: string | null
+          submitted_at?: string
+          survey_id: number
+        }
+        Update: {
+          answers?: Json
+          id?: number
+          metadata?: Json | null
+          respondent_id?: string | null
+          submitted_at?: string
+          survey_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_survey_responses_respondent_id_fkey"
+            columns: ["respondent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_survey_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "communications_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       package_utilization: {
@@ -1775,6 +2070,27 @@ export type Database = {
         | "North America"
         | "South America"
       user_role: "user" | "admin"
+      announcement_status: "draft" | "scheduled" | "published" | "archived"
+      bulletin_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "escalated"
+        | "archived"
+      moderation_status:
+        | "clean"
+        | "under_review"
+        | "action_required"
+        | "resolved"
+      abuse_status: "open" | "investigating" | "resolved"
+      survey_status: "draft" | "open" | "closed" | "archived"
+      moderation_action:
+        | "submit"
+        | "approve"
+        | "reject"
+        | "escalate"
+        | "resolve"
+        | "flag"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2232,6 +2548,19 @@ export const Constants = {
         "Oceania",
         "North America",
         "South America",
+      ],
+      announcement_status: ["draft", "scheduled", "published", "archived"],
+      bulletin_status: ["pending", "approved", "rejected", "escalated", "archived"],
+      moderation_status: ["clean", "under_review", "action_required", "resolved"],
+      abuse_status: ["open", "investigating", "resolved"],
+      survey_status: ["draft", "open", "closed", "archived"],
+      moderation_action: [
+        "submit",
+        "approve",
+        "reject",
+        "escalate",
+        "resolve",
+        "flag",
       ],
       user_role: ["user", "admin"],
     },
