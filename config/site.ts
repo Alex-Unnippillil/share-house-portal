@@ -19,27 +19,31 @@ export const siteConfig = {
       href: "/dashboard",
     },
     {
-      title: "OpenAI",
-      href: "/playground",
+      title: "Payments",
+      href: "/dashboard/payments",
     },
     {
-      title: "Podcasts",
-      href: "/music",
+      title: "Bookings",
+      href: "/dashboard/bookings",
     },
     {
-      title: "Blog",
-      href: "/blog",
+      title: "Documents",
+      href: "/dashboard/documents",
     },
     {
-      title: "RBAC",
-      href: "/dashboard/members",
+      title: "Messaging",
+      href: "/dashboard/messages",
     },
     {
-      title: "About",
-      href: "/about",
+      title: "Maintenance",
+      href: "/dashboard/maintenance",
     },
     {
-      title: "Contact",
+      title: "Visitors",
+      href: "/dashboard/visitors",
+    },
+    {
+      title: "Support",
       href: "/contact",
     },
   ],

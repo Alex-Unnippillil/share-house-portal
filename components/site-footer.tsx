@@ -1,4 +1,5 @@
 import Link from "next/link"
+
 import { siteConfig } from "@/config/site"
 import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
@@ -8,25 +9,31 @@ export function SiteFooter() {
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-         <Link className="ml-0 flex items-center gap-1" href="/" target="_blank"
-              rel="noreferrer">
-          <Icons.logo className="size-6" />
-          <span className="inline-block font-bold">{siteConfig.name}</span>
-        </Link>
-          <p className="text-sm text-muted-foreground">Pioneering real world asset solutions for the digital age.</p>
+          <Link className="ml-0 flex items-center gap-1" href="/">
+            <Icons.logo className="size-6" />
+            <span className="inline-block font-bold">{siteConfig.name}</span>
+          </Link>
+          <p className="text-sm text-muted-foreground">
+            The all-in-one roommate portal for payments, bookings, documents, and everyday coordination.
+          </p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-12 sm:grid-cols-3">
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Solutions</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="#" className="text-muted-foreground transition-colors hover:text-primary">
-                  Rewards
+                <Link href="/dashboard/payments" className="text-muted-foreground transition-colors hover:text-primary">
+                  Rent payments
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
-                  Contact
+                <Link href="/dashboard/bookings" className="text-muted-foreground transition-colors hover:text-primary">
+                  Amenity bookings
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard/messages" className="text-muted-foreground transition-colors hover:text-primary">
+                  Messaging hub
                 </Link>
               </li>
             </ul>
@@ -35,13 +42,18 @@ export function SiteFooter() {
             <h3 className="text-sm font-medium">Company</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground transition-colors hover:text-primary">
-                  About Us
+                <Link href="/dashboard/documents" className="text-muted-foreground transition-colors hover:text-primary">
+                  Lease documents
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-muted-foreground transition-colors hover:text-primary">
-                  Blog
+                <Link href="/dashboard/maintenance" className="text-muted-foreground transition-colors hover:text-primary">
+                  Maintenance requests
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
+                  Contact support
                 </Link>
               </li>
             </ul>
@@ -65,35 +77,35 @@ export function SiteFooter() {
                 </div>
               </Link>
               <Link
-              href={siteConfig.links.twitter}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <div
-                className={buttonVariants({
-                  size: "icon",
-                  variant: "ghost",
-                })}
+                href={siteConfig.links.twitter}
+                target="_blank"
+                rel="noreferrer"
               >
-                <Icons.twitter className="size-4" />
-                <span className="sr-only">Twitter</span>
-              </div>
-            </Link>
-            <Link
-              href={siteConfig.links.linkedin}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <div
-                className={buttonVariants({
-                  size: "icon",
-                  variant: "ghost",
-                })}
+                <div
+                  className={buttonVariants({
+                    size: "icon",
+                    variant: "ghost",
+                  })}
+                >
+                  <Icons.twitter className="size-4" />
+                  <span className="sr-only">Twitter</span>
+                </div>
+              </Link>
+              <Link
+                href={siteConfig.links.linkedin}
+                target="_blank"
+                rel="noreferrer"
               >
-                <Icons.linkedin className="size-5" />
-                <span className="sr-only">LinkedIn</span>
-              </div>
-            </Link>
+                <div
+                  className={buttonVariants({
+                    size: "icon",
+                    variant: "ghost",
+                  })}
+                >
+                  <Icons.linkedin className="size-5" />
+                  <span className="sr-only">LinkedIn</span>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
