@@ -1,10 +1,16 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import type { Database } from '@/lib/supabase'
+import {
+  assertTenantAccess,
+  createBuildingScopedQuery,
+  type BuildingRole,
+} from '@/utils/supabase/tenancy'
 
 export function createClient() {
   const cookieStore = cookies()
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -34,3 +40,19 @@ export function createClient() {
     }
   )
 }
+
+export async function createTenantScopedServerClient(
+  buildingId: string,
+  allowedRoles: BuildingRole[] = []
+) {
+  const client = createClient()
+  await assertTenantAccess(client, buildingId, allowedRoles)
+
+  return {
+    client,
+    buildingId,
+    scope: createBuildingScopedQuery(client, buildingId),
+  }
+}
+
+export { assertTenantAccess }

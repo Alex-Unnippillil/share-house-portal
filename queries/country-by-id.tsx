@@ -1,15 +1,18 @@
-import { TypedSupabaseClient } from '@/utils/typed-supabase-client'
+import type { TypedSupabaseClient } from '@/utils/typed-supabase-client'
 
-export function getCountryById(client: TypedSupabaseClient, countryId: number) {
+export function getCountryById(client: TypedSupabaseClient, buildingId: string) {
   return client
-    .from('countries')
+    .from('buildings')
     .select(
       `
       id,
-      name
+      name,
+      code,
+      timezone,
+      is_active
     `
     )
-    .eq('id', countryId)
+    .eq('id', buildingId)
     .throwOnError()
     .single()
 }

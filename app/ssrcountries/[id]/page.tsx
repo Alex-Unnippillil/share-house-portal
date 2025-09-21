@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import Country from './country'
 import { getCountryById } from '@/queries/country-by-id'
 
-export default async function CountryPage({ params }: { params: { id: number } }) {
+export default async function CountryPage({ params }: { params: { id: string } }) {
   const queryClient = new QueryClient()
   const cookieStore = cookies()
   const supabase = await useSupabaseServer(cookieStore)
