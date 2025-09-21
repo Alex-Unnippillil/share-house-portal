@@ -3,6 +3,7 @@ import {
     AvatarFallback,
     AvatarImage,
   } from "@/components/ui/avatar"
+  import { Badge } from "@/components/ui/badge"
   import { Button } from "@/components/ui/button"
   import {
     DropdownMenu,
@@ -14,24 +15,42 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
-  
-  export function UserNav() {
+  import type { AppRole } from "@/config/rbac"
+  import { ROLE_LABELS } from "@/config/rbac"
+
+  type UserNavProps = {
+    name?: string | null
+    email?: string | null
+    avatarUrl?: string | null
+    role: AppRole
+  }
+
+  export function UserNav({ name, email, avatarUrl, role }: UserNavProps) {
+    const displayName = name ?? "Roommate"
+    const displayEmail = email ?? "user@onyx.app"
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative size-8 rounded-full">
-            <Avatar className="size-8">
-              <AvatarImage src="/avatar.png" alt="@onyx" />
-              <AvatarFallback>OX</AvatarFallback>
+          <Button variant="ghost" className="relative size-9 rounded-full">
+            <Avatar className="size-9">
+              <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
+              <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuContent className="w-64" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">onyx</p>
-              <p className="text-xs leading-none text-muted-foreground">
-                e@onyx.com
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold leading-none">{displayName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{displayEmail}</p>
+                </div>
+                <Badge variant="secondary">{ROLE_LABELS[role]}</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Access tailored for the {ROLE_LABELS[role]} role.
               </p>
             </div>
           </DropdownMenuLabel>
@@ -42,17 +61,16 @@ import {
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              Billing
-              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+              Notification settings
+              <DropdownMenuShortcut>⌘N</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              Settings
-              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+              Billing portal
+              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem className="text-destructive">
             Log out
             <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
           </DropdownMenuItem>

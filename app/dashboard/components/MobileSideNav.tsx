@@ -1,30 +1,44 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { SideBar } from "./SideNav";
-import { useEffect } from "react";
+import type { AppRole } from "@/config/rbac";
+import { SidebarShell } from "./sidebar-shell";
 
-export default function MobileSideNav() {
-	useEffect(() => {
-		window.addEventListener("resize", (e: UIEvent) => {
-			const w = e.target as Window;
-			if (w.innerWidth >= 1024) {
-				document.getElementById("sidebar-close")?.click();
-			}
-		});
-		return () => {
-			window.removeEventListener("resize", () => {});
-		};
-	}, []);
+type MobileSideNavProps = {
+        role: AppRole;
+};
 
-	return (
-		<Sheet>
-			<SheetTrigger asChild id="toggle-sidebar">
-				<span></span>
-			</SheetTrigger>
-			<SheetContent side={"left"} className="dark:bg-gradient-dark flex">
-				<SideBar />
-			</SheetContent>
-		</Sheet>
-	);
+export default function MobileSideNav({ role }: MobileSideNavProps) {
+        const [open, setOpen] = useState(false);
+
+        useEffect(() => {
+                const handler = (event: UIEvent) => {
+                        const w = event.target as Window;
+                        if (w.innerWidth >= 1024) {
+                                setOpen(false);
+                                document.getElementById("sidebar-close")?.click();
+                        }
+                };
+                window.addEventListener("resize", handler);
+                return () => {
+                        window.removeEventListener("resize", handler);
+                };
+        }, []);
+
+        return (
+                <Sheet open={open} onOpenChange={setOpen}>
+                        <SheetTrigger asChild id="toggle-sidebar">
+                                <span></span>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="flex max-w-xs p-0">
+                                <SidebarShell
+                                        role={role}
+                                        className="size-full bg-background dark:bg-gradient-dark"
+                                        onNavigate={() => setOpen(false)}
+                                />
+                        </SheetContent>
+                </Sheet>
+        );
 }

@@ -29,38 +29,42 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z
-	.object({
-		name: z.string().min(2, {
-			message: "Username must be at least 2 characters.",
-		}),
-		role: z.enum(["user", "admin"]),
-		status: z.enum(["active", "resigned"]),
-		email: z.string().email(),
-		password: z
-			.string()
-			.min(6, { message: "Password should be 6 characters" }),
-		confirm: z
-			.string()
-			.min(6, { message: "Password should be 6 characters" }),
-	})
+        .object({
+                name: z.string().min(2, {
+                        message: "Username must be at least 2 characters.",
+                }),
+                role: z.enum(["resident", "house_manager", "platform_admin"]),
+                status: z.enum(["active", "resigned"]),
+                email: z.string().email(),
+                password: z
+                        .string()
+                        .min(6, { message: "Password should be 6 characters" }),
+                confirm: z
+                        .string()
+                        .min(6, { message: "Password should be 6 characters" }),
+        })
 	.refine((data) => data.confirm === data.password, {
 		message: "Passowrd doesn't match",
 		path: ["confirm"],
 	});
 
 export default function MemberForm() {
-	const roles = ["admin", "user"];
-	const status = ["active", "resigned"];
+        const roles = [
+                { value: "resident", label: "Resident" },
+                { value: "house_manager", label: "House Manager" },
+                { value: "platform_admin", label: "Platform Admin" },
+        ];
+        const status = ["active", "resigned"];
 
-	const form = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			name: "",
-			role: "user",
-			status: "active",
-			email: "",
-		},
-	});
+        const form = useForm<z.infer<typeof FormSchema>>({
+                resolver: zodResolver(FormSchema),
+                defaultValues: {
+                        name: "",
+                        role: "resident",
+                        status: "active",
+                        email: "",
+                },
+        });
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
 		createMember();
@@ -172,16 +176,16 @@ export default function MemberForm() {
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									{roles.map((role, index) => {
-										return (
-											<SelectItem
-												value={role}
-												key={index}
-											>
-												{role}
-											</SelectItem>
-										);
-									})}
+                                                                        {roles.map((role, index) => {
+                                                                                return (
+                                                                                        <SelectItem
+                                                                                                value={role.value}
+                                                                                                key={index}
+                                                                                        >
+                                                                                                {role.label}
+                                                                                        </SelectItem>
+                                                                                );
+                                                                        })}
 								</SelectContent>
 							</Select>
 

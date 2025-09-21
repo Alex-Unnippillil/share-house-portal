@@ -20,17 +20,21 @@ import { useTransition } from "react";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z.object({
-	title: z.string().min(1, {
-		message: "Title is required.",
-	}),
+        title: z.string().min(1, {
+                message: "Title is required.",
+        }),
 });
 
-export default function CreateForm() {
-	const [isPending, startTransition] = useTransition();
+type CreateFormProps = {
+        canCreate: boolean;
+};
 
-	const form = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
-		defaultValues: {
+export default function CreateForm({ canCreate }: CreateFormProps) {
+        const [isPending, startTransition] = useTransition();
+
+        const form = useForm<z.infer<typeof FormSchema>>({
+                resolver: zodResolver(FormSchema),
+                defaultValues: {
 			title: "",
 		},
 	});
@@ -48,12 +52,12 @@ export default function CreateForm() {
 	}
 
 	return (
-		<Form {...form}>
-			<form
-				onSubmit={form.handleSubmit(onSubmit)}
-				className="w-full space-y-6"
-			>
-				<FormField
+                <Form {...form}>
+                        <form
+                                onSubmit={form.handleSubmit(onSubmit)}
+                                className="w-full space-y-6"
+                        >
+                                <FormField
 					control={form.control}
 					name="title"
 					render={({ field }) => (
@@ -68,19 +72,27 @@ export default function CreateForm() {
 							</FormControl>
 							<FormMessage />
 						</FormItem>
-					)}
-				/>
-<Button
-				className="flex w-full items-center gap-2"
-				variant="outline"
-			>
-				Create{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
-			</Button>
+                                        )}
+                                />
+                                <Button
+                                        className="flex w-full items-center gap-2"
+                                        variant="outline"
+                                        type="submit"
+                                        disabled={!canCreate}
+                                >
+                                        Create{" "}
+                                        <AiOutlineLoading3Quarters
+                                                className={cn(" animate-spin", { hidden: !isPending })}
+                                        />
+                                </Button>
+                                {!canCreate ? (
+                                        <p className="text-xs text-muted-foreground">
+                                                Only operational roles can create shared todos. You can still track existing
+                                                assignments.
+                                        </p>
+                                ) : null}
 
-			</form>
-		</Form>
-	);
+                        </form>
+                </Form>
+        );
 }
