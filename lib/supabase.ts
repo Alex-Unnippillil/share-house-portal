@@ -450,6 +450,131 @@ export type Database = {
         }
         Relationships: []
       }
+      document_download_logs: {
+        Row: {
+          documenso_envelope_id: string | null
+          downloaded_at: string
+          id: string
+          ip_address: string | null
+          lease_version_id: string | null
+          profile_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          documenso_envelope_id?: string | null
+          downloaded_at?: string
+          id?: string
+          ip_address?: string | null
+          lease_version_id?: string | null
+          profile_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          documenso_envelope_id?: string | null
+          downloaded_at?: string
+          id?: string
+          ip_address?: string | null
+          lease_version_id?: string | null
+          profile_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_download_logs_lease_version_id_fkey"
+            columns: ["lease_version_id"]
+            isOneToOne: false
+            referencedRelation: "lease_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_download_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_signers: {
+        Row: {
+          created_at: string
+          documenso_signer_id: string | null
+          email: string
+          id: string
+          lease_version_id: string
+          name: string
+          role: string | null
+          signed_at: string | null
+          signing_order: number | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          documenso_signer_id?: string | null
+          email: string
+          id?: string
+          lease_version_id: string
+          name: string
+          role?: string | null
+          signed_at?: string | null
+          signing_order?: number | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          documenso_signer_id?: string | null
+          email?: string
+          id?: string
+          lease_version_id?: string
+          name?: string
+          role?: string | null
+          signed_at?: string | null
+          signing_order?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_signers_lease_version_id_fkey"
+            columns: ["lease_version_id"]
+            isOneToOne: false
+            referencedRelation: "lease_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          doc_type: string | null
+          documenso_template_id: string
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          doc_type?: string | null
+          documenso_template_id: string
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          doc_type?: string | null
+          documenso_template_id?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat: {
         Row: {
           created_at: string
@@ -1003,6 +1128,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      lease_versions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          documenso_envelope_id: string
+          document_id: string
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          status: string
+          tenant_profile_id: string | null
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          documenso_envelope_id: string
+          document_id: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          tenant_profile_id?: string | null
+          updated_at?: string
+          version_number?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          documenso_envelope_id?: string
+          document_id?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          tenant_profile_id?: string | null
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lease_versions_tenant_profile_id_fkey"
+            columns: ["tenant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       members_table: {
         Row: {
