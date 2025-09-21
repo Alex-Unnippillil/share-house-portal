@@ -183,6 +183,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          building_id: string | null
+          calcom_event_slug: string
+          calcom_event_type_id: string
+          calcom_host: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          building_id?: string | null
+          calcom_event_slug: string
+          calcom_event_type_id: string
+          calcom_host: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string | null
+          calcom_event_slug?: string
+          calcom_event_type_id?: string
+          calcom_host?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      amenity_bookings: {
+        Row: {
+          amenity_id: string
+          building_id: string | null
+          calcom_event_id: string
+          created_at: string
+          end_time: string
+          id: string
+          start_time: string
+          status: "pending" | "confirmed" | "cancelled" | "conflict"
+          unit_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amenity_id: string
+          building_id?: string | null
+          calcom_event_id: string
+          created_at?: string
+          end_time: string
+          id?: string
+          start_time: string
+          status?: "pending" | "confirmed" | "cancelled" | "conflict"
+          unit_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amenity_id?: string
+          building_id?: string | null
+          calcom_event_id?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+          status?: "pending" | "confirmed" | "cancelled" | "conflict"
+          unit_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenity_bookings_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "amenity_bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agents: {
         Row: {
           created_at: string | null
@@ -964,42 +1063,6 @@ export type Database = {
           id?: number
           message?: string
           name?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      meetings: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          end_time: string
-          id: string
-          meet_link: string
-          start_time: string
-          summary: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          end_time: string
-          id?: string
-          meet_link: string
-          start_time: string
-          summary: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          end_time?: string
-          id?: string
-          meet_link?: string
-          start_time?: string
-          summary?: string
-          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
