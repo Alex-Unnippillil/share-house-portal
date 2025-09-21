@@ -62,8 +62,40 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
-### Run  
+  - Add authorized development and production URL's to Supabase URL config.
+
+### Documenso configuration
+
+- Provision your Documenso instance and create the lease templates that should be
+  available inside the Share House Portal.
+- Copy the Documenso REST credentials into `.env.local` (or use the provided
+  `.env.example` as a starting point):
+
+  ```bash
+  DOCUMENSO_BASE_URL="https://documenso.example.com"
+  DOCUMENSO_API_KEY="your-documenso-token"
+  DOCUMENSO_WEBHOOK_SECRET="super-secret-token"
+  ```
+
+- Apply the latest Supabase migration to create the new document tables:
+
+  ```bash
+  supabase db push
+  ```
+
+- Configure a webhook in Documenso that points to
+  `https://your-app-url/api/documenso/webhook` and include the
+  `x-documenso-webhook-secret` header so envelope status changes are reflected in
+  Supabase.
+- Signed document downloads are served from
+  `/api/documenso/envelopes/:envelopeId` and each download is logged in
+  `document_download_logs` for auditing.
+- Run the Vitest suite to validate document workflows:
+
+  ```bash
+  pnpm test
+  ```
+### Run
 - Development server:
 
 ```bash
