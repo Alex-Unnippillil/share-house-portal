@@ -1,202 +1,108 @@
-"use server";
+"use server"
 
-import { createSupbaseServerClient } from "@/utils/supaone";
-import { redirect } from "next/navigation";
-import { revalidatePath } from 'next/cache'
+import type { VerifyOtpParams } from "@supabase/supabase-js"
 
-export async function signUpWithEmailAndPassword(data: {
-        email: string;
-        password: string;
-        confirm: string;
-}) {
-        const supabase = await createSupbaseServerClient();
+import { redirect } from "next/navigation"
 
-        const result = await supabase.auth.signUp(data);
-        return JSON.stringify(result);
+import { createSupbaseServerClient } from "@/utils/supaone"
 
-
+interface Credentials {
+  email: string
+  password: string
 }
 
-export async function loginWithEmailAndPassword(data: {
-        email: string;
-        password: string;
-}) {
-        const supabase = await createSupbaseServerClient();
-
-// Register this immediately after calling createClient!
-// Because signInWithOAuth causes a redirect, you need to fetch the
-// provider tokens from the callback.
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session && session.provider_token) {
-    window.localStorage.setItem('oauth_provider_token', session.provider_token)
+function getSiteUrl() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (siteUrl) return siteUrl
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
   }
-
-  if (session && session.provider_refresh_token) {
-    window.localStorage.setItem('oauth_provider_refresh_token', session.provider_refresh_token)
-  }
-
-  if (event === 'SIGNED_OUT') {
-    window.localStorage.removeItem('oauth_provider_token')
-    window.localStorage.removeItem('oauth_provider_refresh_token')
-  }
-})
-
-        const result = await supabase.auth.signInWithPassword(data);
-        return JSON.stringify(result);
+  return "http://localhost:3000"
 }
 
+export async function signUpWithEmailAndPassword(data: Credentials & { confirm: string }) {
+  const supabase = await createSupbaseServerClient()
+  const result = await supabase.auth.signUp(data)
+  return { data: result.data, error: result.error }
+}
+
+export async function loginWithEmailAndPassword(data: Credentials) {
+  const supabase = await createSupbaseServerClient()
+  const result = await supabase.auth.signInWithPassword(data)
+  return { data: result.data, error: result.error }
+}
+
+async function signInWithOAuthProvider(provider: "google" | "github" | "twitter") {
+  const supabase = await createSupbaseServerClient()
+  const baseUrl = getSiteUrl()
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${baseUrl}/auth/sso-callback`,
+      queryParams:
+        provider === "google"
+          ? {
+              access_type: "offline",
+              prompt: "consent",
+            }
+          : undefined,
+    },
+  })
+
+  return { url: data?.url ?? null, error }
+}
 
 export async function signInWithGoogle() {
-
-     const supabase = await createSupbaseServerClient();  
-
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session && session.provider_token) {
-    window.localStorage.setItem('oauth_provider_token', session.provider_token)
-  }
-
-  if (session && session.provider_refresh_token) {
-    window.localStorage.setItem('oauth_provider_refresh_token', session.provider_refresh_token)
-  }
-
-  if (event === 'SIGNED_OUT') {
-    window.localStorage.removeItem('oauth_provider_token')
-    window.localStorage.removeItem('oauth_provider_refresh_token')
-  }
-})
-    const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-       queryParams: {
-         access_type: 'offline',
-         prompt: 'consent',
-       },
-    },
-  })
-
-if (data.url) {
-  redirect(data.url)
- }
+  return signInWithOAuthProvider("google")
 }
-
-/*
-
-export async function signInWithGoogle(): Promise<{ error?: string; url?: string }> {
-  try {
-    const supabase = createSupbaseServerClient()
-
-    
-    const { data, error } = await (await supabase).auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-      },
-    });
-
-     (await supabase).auth.onAuthStateChange((event, session) => {
-      if (session && session.provider_token) {
-        window.localStorage.setItem('oauth_provider_token', session.provider_token)
-      }
-    
-      if (session && session.provider_refresh_token) {
-        window.localStorage.setItem('oauth_provider_refresh_token', session.provider_refresh_token)
-      }
-    
-      if (event === 'SIGNED_OUT') {
-        window.localStorage.removeItem('oauth_provider_token')
-        window.localStorage.removeItem('oauth_provider_refresh_token')
-      }
-    })
-
-    if (error) {
-      return { error: error.message }
-    }
-    
-
-    return { url: data.url }
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "An unknown error occurred" }
-  }
-}
-
-*/
 
 export async function signInWithGithub() {
-
-     const supabase = await createSupbaseServerClient();  
-
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session && session.provider_token) {
-    window.localStorage.setItem('oauth_provider_token', session.provider_token)
-  }
-
-  if (session && session.provider_refresh_token) {
-    window.localStorage.setItem('oauth_provider_refresh_token', session.provider_refresh_token)
-  }
-
-  if (event === 'SIGNED_OUT') {
-    window.localStorage.removeItem('oauth_provider_token')
-    window.localStorage.removeItem('oauth_provider_refresh_token')
-  }
-})
-    const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'github',
-    options: {
-       redirectTo: '/auth/callback',
-    },
-  })
-
-if (data.url) {
-  redirect(data.url)
- }
+  return signInWithOAuthProvider("github")
 }
+
 export async function signInWithTwitter() {
+  return signInWithOAuthProvider("twitter")
+}
 
-     const supabase = await createSupbaseServerClient();  
+export async function requestPasswordReset({ email }: { email: string }) {
+  const supabase = await createSupbaseServerClient()
+  const baseUrl = getSiteUrl()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${baseUrl}/auth/session-renewal`,
+  })
+  return { error }
+}
 
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session && session.provider_token) {
-    window.localStorage.setItem('oauth_provider_token', session.provider_token)
-  }
-
-  if (session && session.provider_refresh_token) {
-    window.localStorage.setItem('oauth_provider_refresh_token', session.provider_refresh_token)
-  }
-
-  if (event === 'SIGNED_OUT') {
-    window.localStorage.removeItem('oauth_provider_token')
-    window.localStorage.removeItem('oauth_provider_refresh_token')
-  }
-})
-    const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'twitter',
+export async function sendEmailOtp({ email }: { email: string }) {
+  const supabase = await createSupbaseServerClient()
+  const baseUrl = getSiteUrl()
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
     options: {
-       redirectTo: '/auth/callback',
+      emailRedirectTo: `${baseUrl}/auth/session-renewal`,
     },
   })
-
-if (data.url) {
-  redirect(data.url)
- }
+  return { error }
 }
+
+export async function verifyEmailOtp({ email, token }: { email: string; token: string }) {
+  const supabase = await createSupbaseServerClient()
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  } as VerifyOtpParams)
+  return { error }
+}
+
+export async function refreshActiveSession() {
+  const supabase = await createSupbaseServerClient()
+  const { error } = await supabase.auth.refreshSession()
+  return { error }
+}
+
 export async function signOut() {
-        const supabase = await createSupbaseServerClient();
-
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session && session.provider_token) {
-    window.localStorage.setItem('oauth_provider_token', session.provider_token)
-  }
-
-  if (session && session.provider_refresh_token) {
-    window.localStorage.setItem('oauth_provider_refresh_token', session.provider_refresh_token)
-  }
-
-  if (event === 'SIGNED_OUT') {
-    window.localStorage.removeItem('oauth_provider_token')
-    window.localStorage.removeItem('oauth_provider_refresh_token')
-  }
-})
-        const { error } = await supabase.auth.signOut();
-        redirect("/");
+  const supabase = await createSupbaseServerClient()
+  await supabase.auth.signOut()
+  redirect("/")
 }

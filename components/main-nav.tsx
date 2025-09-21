@@ -8,11 +8,12 @@ import { Icons } from "@/components/icons"
 
 interface MainNavProps {
   items?: NavItem[]
+  className?: string
 }
 
-export function MainNav({ items }: MainNavProps) {
+export function MainNav({ items, className }: MainNavProps) {
   return (
-        <div className="mr-2 hidden gap-4 md:flex md:gap-8">
+    <div className={cn("mr-2 hidden items-center gap-4 md:flex md:gap-8", className)}>
       <Link href="/" className="flex items-center space-x-2">
         <Icons.logo className="size-6" />
         <span className="inline-block font-bold">{siteConfig.name}</span>
@@ -31,6 +32,11 @@ export function MainNav({ items }: MainNavProps) {
                   )}
                 >
                   {item.title}
+                  {item.label ? (
+                    <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                      {item.label}
+                    </span>
+                  ) : null}
                 </Link>
               )
           )}

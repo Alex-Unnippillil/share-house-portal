@@ -8,6 +8,10 @@ export interface NavItem {
   external?: boolean
   icon?: keyof typeof Icons
   label?: string
+  roles?: string[]
+  requiresAuth?: boolean
+  guestOnly?: boolean
+  tenantsOnly?: boolean
 }
 
 export interface NavItemWithChildren extends NavItem {

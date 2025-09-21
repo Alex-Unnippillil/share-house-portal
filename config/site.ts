@@ -9,18 +9,22 @@ export const siteConfig = {
       title: "Home",
       href: "/",
     },
-
     {
       title: "Account",
       href: "/account",
+      requiresAuth: true,
     },
     {
       title: "Dashboard",
       href: "/dashboard",
+      requiresAuth: true,
+      roles: ["admin", "user"],
     },
     {
       title: "OpenAI",
       href: "/playground",
+      requiresAuth: true,
+      roles: ["admin", "user"],
     },
     {
       title: "Podcasts",
@@ -33,6 +37,8 @@ export const siteConfig = {
     {
       title: "RBAC",
       href: "/dashboard/members",
+      requiresAuth: true,
+      roles: ["admin"],
     },
     {
       title: "About",
@@ -46,7 +52,7 @@ export const siteConfig = {
   links: {
     twitter: "https://twitter.com/r_mourey_jr",
     github: "https://github.com/rmourey26/onyx",
-    login: "/auth",
+    login: "/auth/login",
     signup: "/onboarding",
     contact: "/contact",
     linkedin: "https://linkedin.com/in/robertmoureyjr",

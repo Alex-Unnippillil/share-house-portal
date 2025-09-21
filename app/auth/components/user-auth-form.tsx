@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginWithEmailAndPassword, signInWithGithub } from "../actions"
 import { toast } from "@/components/ui/use-toast"
-import { AuthTokenResponse } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -39,28 +38,33 @@ const [isLoading, setIsLoading] = React.useState<boolean>(false)
     
     setIsLoading(true)
     startTransition(async () => {
-			const { error } = JSON.parse(
-				await loginWithEmailAndPassword(data)
-			) as AuthTokenResponse;
+      try {
+        const { error } = await loginWithEmailAndPassword(data)
 
-			if (error) {
-				toast({
-					title: "Login failed!",
-					description: (
-						<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-							<code className="text-white">{error.message}</code>
-						</pre>
-					),
-				});
-			} else {
-				toast({
-					title: "Successful login 🎉",
-				});
-			}
-		});
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
+        if (error) {
+          toast({
+            title: "Login failed!",
+            description: error.message,
+            variant: "destructive",
+          })
+          return
+        }
+
+        toast({
+          title: "Successful login 🎉",
+        })
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Please try again later."
+        toast({
+          title: "Login failed!",
+          description: message,
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    })
   }
 
   return (
