@@ -183,6 +183,264 @@ export type Database = {
   }
   public: {
     Tables: {
+      amenity_bookings: {
+        Row: {
+          amenity_id: string | null
+          amenity_name: string
+          building_id: string
+          created_at: string | null
+          end_time: string
+          id: string
+          resident_id: string | null
+          resident_name: string | null
+          start_time: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          amenity_id?: string | null
+          amenity_name: string
+          building_id: string
+          created_at?: string | null
+          end_time: string
+          id?: string
+          resident_id?: string | null
+          resident_name?: string | null
+          start_time: string
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          amenity_id?: string | null
+          amenity_name?: string
+          building_id?: string
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          resident_id?: string | null
+          resident_name?: string | null
+          start_time?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      building_staff_assignments: {
+        Row: {
+          assigned_role: string
+          building_id: string
+          building_name: string | null
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          assigned_role: string
+          building_id: string
+          building_name?: string | null
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          assigned_role?: string
+          building_id?: string
+          building_name?: string | null
+          id?: string
+          profile_id?: string
+        }
+        Relationships: []
+      }
+      buildings: {
+        Row: {
+          address: string | null
+          id: string
+          name: string
+          region: string | null
+        }
+        Insert: {
+          address?: string | null
+          id?: string
+          name: string
+          region?: string | null
+        }
+        Update: {
+          address?: string | null
+          id?: string
+          name?: string
+          region?: string | null
+        }
+        Relationships: []
+      }
+      document_workflows: {
+        Row: {
+          building_id: string
+          completed_at: string | null
+          document_title: string
+          id: string
+          resident_id: string | null
+          resident_name: string | null
+          status: string
+          submitted_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          building_id: string
+          completed_at?: string | null
+          document_title: string
+          id?: string
+          resident_id?: string | null
+          resident_name?: string | null
+          status: string
+          submitted_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          building_id?: string
+          completed_at?: string | null
+          document_title?: string
+          id?: string
+          resident_id?: string | null
+          resident_name?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      maintenance_requests: {
+        Row: {
+          assigned_to: string | null
+          building_id: string
+          description: string | null
+          id: string
+          priority: string
+          status: string
+          submitted_at: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          building_id: string
+          description?: string | null
+          id?: string
+          priority: string
+          status: string
+          submitted_at?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          building_id?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          submitted_at?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      message_threads: {
+        Row: {
+          building_id: string
+          id: string
+          last_activity_at: string
+          subject: string
+          unresolved: boolean
+          unread_count: number | null
+        }
+        Insert: {
+          building_id: string
+          id?: string
+          last_activity_at: string
+          subject: string
+          unresolved?: boolean
+          unread_count?: number | null
+        }
+        Update: {
+          building_id?: string
+          id?: string
+          last_activity_at?: string
+          subject?: string
+          unresolved?: boolean
+          unread_count?: number | null
+        }
+        Relationships: []
+      }
+      rent_payments: {
+        Row: {
+          amount: number
+          autopay_enrolled: boolean
+          building_id: string
+          due_date: string
+          id: string
+          lease_id: string | null
+          paid_at: string | null
+          resident_id: string | null
+          resident_name: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          autopay_enrolled?: boolean
+          building_id: string
+          due_date: string
+          id?: string
+          lease_id?: string | null
+          paid_at?: string | null
+          resident_id?: string | null
+          resident_name?: string | null
+          status: string
+        }
+        Update: {
+          amount?: number
+          autopay_enrolled?: boolean
+          building_id?: string
+          due_date?: string
+          id?: string
+          lease_id?: string | null
+          paid_at?: string | null
+          resident_id?: string | null
+          resident_name?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      visitor_logs: {
+        Row: {
+          approval_status: string
+          arrival_date: string
+          building_id: string
+          created_at: string | null
+          host_name: string | null
+          id: string
+          notes: string | null
+          visitor_name: string
+        }
+        Insert: {
+          approval_status: string
+          arrival_date: string
+          building_id: string
+          created_at?: string | null
+          host_name?: string | null
+          id?: string
+          notes?: string | null
+          visitor_name: string
+        }
+        Update: {
+          approval_status?: string
+          arrival_date?: string
+          building_id?: string
+          created_at?: string | null
+          host_name?: string | null
+          id?: string
+          notes?: string | null
+          visitor_name?: string
+        }
+        Relationships: []
+      }
       ai_agents: {
         Row: {
           created_at: string | null

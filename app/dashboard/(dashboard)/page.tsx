@@ -1,197 +1,114 @@
 import { Metadata } from "next"
-import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+
 import { CalendarDateRangePicker } from "@/app/dashboard/components/date-range-picker"
 import { MainNav } from "@/app/dashboard/components/main-nav"
-import { Overview } from "@/app/dashboard/components/overview"
-import { RecentSales } from "@/app/dashboard/components/recent-sales"
 import { Search } from "@/app/dashboard/components/search"
 import TeamSwitcher from "@/app/dashboard/components/team-switcher"
 import { UserNav } from "@/app/dashboard/components/user-nav"
+import { DocumentApprovalsCard } from "@/app/dashboard/components/document-approvals-card"
+import { MaintenanceBacklogCard } from "@/app/dashboard/components/maintenance-backlog-card"
+import { MessageCenterCard } from "@/app/dashboard/components/message-center-card"
+import { RentCollectionCard } from "@/app/dashboard/components/rent-collection-card"
+import { UpcomingBookingsCard } from "@/app/dashboard/components/upcoming-bookings-card"
+import { VisitorApprovalsCard } from "@/app/dashboard/components/visitor-approvals-card"
+import {
+  fetchDocumentApprovals,
+  fetchMaintenanceQueue,
+  fetchMessageAlerts,
+  fetchRentCollectionSummary,
+  fetchUpcomingBookings,
+  fetchVisitorApprovals,
+  resolveAccessContext,
+} from "@/app/dashboard/lib/data-sources"
+import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
 
 export const metadata: Metadata = {
-  title: "Onyx Dashboard",
-  description: "Manage your Onyx account and users.",
+  title: "Operations dashboard",
+  description: "Portfolio overview across rent, maintenance, visitors, and documents.",
 }
 
-export default function DashboardPage() {
+type DashboardPageProps = {
+  searchParams?: {
+    building?: string
+  }
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const supabase = await createSupbaseServerClientReadOnly()
+  const { context, activeBuilding } = await resolveAccessContext(
+    supabase,
+    searchParams?.building ?? null
+  )
+
+  const [rentSummary, bookings, maintenanceQueue, visitorApprovals, documentApprovals, messageAlerts] =
+    await Promise.all([
+      fetchRentCollectionSummary(context, activeBuilding.id),
+      fetchUpcomingBookings(context, activeBuilding.id),
+      fetchMaintenanceQueue(context, activeBuilding.id),
+      fetchVisitorApprovals(context, activeBuilding.id),
+      fetchDocumentApprovals(context, activeBuilding.id),
+      fetchMessageAlerts(context, activeBuilding.id),
+    ])
+
   return (
-    <>
-      <div className="xs:flex max-w-dvw w-full flex-col">
-        <div className="border-b">
-          <div className="flex h-16 items-center px-4">
-            <TeamSwitcher />
-            <MainNav className="mx-6" />
-            <div className="ml-auto flex items-center space-x-4">
-              <Search />
-              <UserNav />
-            </div>
+    <div className="xs:flex max-w-dvw w-full flex-col">
+      <div className="border-b">
+        <div className="flex h-16 items-center px-4">
+          <TeamSwitcher
+            buildings={context.buildings}
+            selectedBuildingId={activeBuilding.id}
+            role={context.profile.role}
+          />
+          <MainNav className="mx-6" buildingId={activeBuilding.id} role={context.profile.role} />
+          <div className="ml-auto flex items-center space-x-4">
+            <Search buildingName={activeBuilding.name} />
+            <UserNav />
           </div>
-        </div>
-        <div className="flex-1 space-y-4 p-8 pt-6">
-          <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-            <div className="flex items-center space-x-2">
-              <CalendarDateRangePicker />
-              <Button>Download</Button>
-            </div>
-          </div>
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="analytics" disabled>
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="reports" disabled>
-                Reports
-              </TabsTrigger>
-              <TabsTrigger value="notifications" disabled>
-                Notifications
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Revenue
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">$45,231.89</div>
-                    <p className="text-xs text-muted-foreground">
-                      +20.1% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Subscriptions
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+2350</div>
-                    <p className="text-xs text-muted-foreground">
-                      +180.1% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <rect width="20" height="14" x="2" y="5" rx="2" />
-                      <path d="M2 10h20" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+12,234</div>
-                    <p className="text-xs text-muted-foreground">
-                      +19% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Active Now
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+573</div>
-                    <p className="text-xs text-muted-foreground">
-                      +201 since last hour
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
-                  <CardHeader>
-                    <CardTitle>Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                    <Overview />
-                  </CardContent>
-                </Card>
-                <Card className="col-span-3">
-                  <CardHeader>
-                    <CardTitle>Recent Sales</CardTitle>
-                    <CardDescription>
-                      You made 265 sales this month.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RecentSales />
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
-    </>
+      <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">{activeBuilding.name}</h2>
+            <p className="text-sm text-muted-foreground">
+              Portfolio health for property managers and admins.
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <CalendarDateRangePicker />
+            <Button variant="outline">Export CSV</Button>
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-7">
+          <div className="lg:col-span-4">
+            <RentCollectionCard summary={rentSummary} />
+          </div>
+          <div className="lg:col-span-3">
+            <MaintenanceBacklogCard queue={maintenanceQueue} />
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-7">
+          <div className="lg:col-span-4">
+            <UpcomingBookingsCard bookings={bookings} />
+          </div>
+          <div className="lg:col-span-3">
+            <VisitorApprovalsCard approvals={visitorApprovals} />
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-7">
+          <div className="lg:col-span-4">
+            <DocumentApprovalsCard approvals={documentApprovals} />
+          </div>
+          <div className="lg:col-span-3">
+            <MessageCenterCard threads={messageAlerts} />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
