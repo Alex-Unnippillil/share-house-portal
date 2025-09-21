@@ -1596,6 +1596,278 @@ export type Database = {
           },
         ]
       }
+      buildings: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          slug: string | null
+          street_address: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          slug?: string | null
+          street_address?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          slug?: string | null
+          street_address?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      floorplan_annotations: {
+        Row: {
+          annotation_type: Database["public"]["Enums"]["floorplan_annotation_type"]
+          created_at: string | null
+          created_by: string | null
+          floorplan_id: string
+          geometry: Json
+          id: string
+          label: string
+          metadata: Json | null
+          profile_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          annotation_type?: Database["public"]["Enums"]["floorplan_annotation_type"]
+          created_at?: string | null
+          created_by?: string | null
+          floorplan_id: string
+          geometry: Json
+          id?: string
+          label: string
+          metadata?: Json | null
+          profile_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          annotation_type?: Database["public"]["Enums"]["floorplan_annotation_type"]
+          created_at?: string | null
+          created_by?: string | null
+          floorplan_id?: string
+          geometry?: Json
+          id?: string
+          label?: string
+          metadata?: Json | null
+          profile_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floorplan_annotations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplan_annotations_floorplan_id_fkey"
+            columns: ["floorplan_id"]
+            isOneToOne: false
+            referencedRelation: "floorplans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplan_annotations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floorplans: {
+        Row: {
+          building_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          media_type: string
+          name: string
+          storage_path: string
+          unit_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          building_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          media_type?: string
+          name: string
+          storage_path: string
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          building_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          media_type?: string
+          name?: string
+          storage_path?: string
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floorplans_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floorplans_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_manager_buildings: {
+        Row: {
+          building_id: string
+          created_at: string | null
+          id: string
+          manager_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string | null
+          id?: string
+          manager_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string | null
+          id?: string
+          manager_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_manager_buildings_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_manager_buildings_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_memberships: {
+        Row: {
+          created_at: string | null
+          id: string
+          invited_by: string | null
+          membership_role: Database["public"]["Enums"]["unit_membership_role"]
+          profile_id: string
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          membership_role?: Database["public"]["Enums"]["unit_membership_role"]
+          profile_id: string
+          unit_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          membership_role?: Database["public"]["Enums"]["unit_membership_role"]
+          profile_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_memberships_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_memberships_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          bathrooms: number | null
+          bedrooms: number | null
+          building_id: string
+          created_at: string | null
+          id: string
+          unit_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_id: string
+          created_at?: string | null
+          id?: string
+          unit_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_id?: string
+          created_at?: string | null
+          id?: string
+          unit_number?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       package_utilization: {
@@ -1774,7 +2046,9 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      floorplan_annotation_type: "storage" | "chore" | "note" | "other"
       user_role: "user" | "admin"
+      unit_membership_role: "tenant" | "roommate" | "property_manager"
     }
     CompositeTypes: {
       [_ in never]: never
