@@ -1558,6 +1558,696 @@ export type Database = {
         }
         Relationships: []
       }
+      attachments: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          entity_id: number
+          entity_type: string
+          expires_at: string | null
+          file_name: string | null
+          file_size: number | null
+          id: number
+          notes: string | null
+          retention_expires_at: string | null
+          s3_bucket: string
+          s3_key: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          entity_id: number
+          entity_type: string
+          expires_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: number
+          notes?: string | null
+          retention_expires_at?: string | null
+          s3_bucket: string
+          s3_key: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          entity_id?: number
+          entity_type?: string
+          expires_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: number
+          notes?: string | null
+          retention_expires_at?: string | null
+          s3_bucket?: string
+          s3_key?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buildings: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          postal_code: string | null
+          state: string | null
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          postal_code?: string | null
+          state?: string | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          postal_code?: string | null
+          state?: string | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      carriers: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: number
+          name: string
+          notes: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: number
+          name: string
+          notes?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: number
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      incident_reports: {
+        Row: {
+          actions_taken: string | null
+          building_id: number
+          closed_at: string | null
+          created_at: string
+          description: string
+          follow_up_actions: string | null
+          follow_up_at: string | null
+          id: number
+          incident_time: string | null
+          incident_type: string | null
+          notes: string | null
+          reported_at: string
+          reported_by: string | null
+          severity: string | null
+          shift_log_id: number | null
+          status: string
+          unit_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          actions_taken?: string | null
+          building_id: number
+          closed_at?: string | null
+          created_at?: string
+          description: string
+          follow_up_actions?: string | null
+          follow_up_at?: string | null
+          id?: number
+          incident_time?: string | null
+          incident_type?: string | null
+          notes?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          severity?: string | null
+          shift_log_id?: number | null
+          status?: string
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actions_taken?: string | null
+          building_id?: number
+          closed_at?: string | null
+          created_at?: string
+          description?: string
+          follow_up_actions?: string | null
+          follow_up_at?: string | null
+          id?: number
+          incident_time?: string | null
+          incident_type?: string | null
+          notes?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          severity?: string | null
+          shift_log_id?: number | null
+          status?: string
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_reports_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_shift_log_id_fkey"
+            columns: ["shift_log_id"]
+            isOneToOne: false
+            referencedRelation: "shift_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      key_transactions: {
+        Row: {
+          building_id: number | null
+          created_at: string
+          due_at: string | null
+          handled_by: string | null
+          id: number
+          key_id: number
+          notes: string | null
+          occurred_at: string
+          recipient_contact: string | null
+          recipient_name: string | null
+          returned_at: string | null
+          transaction_type: string
+          unit_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          building_id?: number | null
+          created_at?: string
+          due_at?: string | null
+          handled_by?: string | null
+          id?: number
+          key_id: number
+          notes?: string | null
+          occurred_at?: string
+          recipient_contact?: string | null
+          recipient_name?: string | null
+          returned_at?: string | null
+          transaction_type: string
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: number | null
+          created_at?: string
+          due_at?: string | null
+          handled_by?: string | null
+          id?: number
+          key_id?: number
+          notes?: string | null
+          occurred_at?: string
+          recipient_contact?: string | null
+          recipient_name?: string | null
+          returned_at?: string | null
+          transaction_type?: string
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "key_transactions_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_transactions_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_transactions_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "key_transactions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keys: {
+        Row: {
+          building_id: number
+          created_at: string
+          description: string | null
+          id: number
+          label: string
+          serial_number: string | null
+          status: string
+          storage_location: string | null
+          unit_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          building_id: number
+          created_at?: string
+          description?: string | null
+          id?: number
+          label: string
+          serial_number?: string | null
+          status?: string
+          storage_location?: string | null
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: number
+          created_at?: string
+          description?: string | null
+          id?: number
+          label?: string
+          serial_number?: string | null
+          status?: string
+          storage_location?: string | null
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keys_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keys_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_logs: {
+        Row: {
+          building_id: number
+          carrier_id: number | null
+          created_at: string
+          delivered_at: string | null
+          id: number
+          notes: string | null
+          notified_at: string | null
+          picked_up_at: string | null
+          picked_up_by: string | null
+          picked_up_contact: string | null
+          received_at: string
+          received_by: string | null
+          recipient_name: string
+          status: string
+          tracking_number: string | null
+          unit_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          building_id: number
+          carrier_id?: number | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: number
+          notes?: string | null
+          notified_at?: string | null
+          picked_up_at?: string | null
+          picked_up_by?: string | null
+          picked_up_contact?: string | null
+          received_at?: string
+          received_by?: string | null
+          recipient_name: string
+          status?: string
+          tracking_number?: string | null
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: number
+          carrier_id?: number | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: number
+          notes?: string | null
+          notified_at?: string | null
+          picked_up_at?: string | null
+          picked_up_by?: string | null
+          picked_up_contact?: string | null
+          received_at?: string
+          received_by?: string | null
+          recipient_name?: string
+          status?: string
+          tracking_number?: string | null
+          unit_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_logs_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_logs_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_logs_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_logs_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_signatures: {
+        Row: {
+          captured_by: string | null
+          id: number
+          package_log_id: number
+          signed_at: string
+          signature_notes: string | null
+          signer_name: string
+          signer_type: string | null
+        }
+        Insert: {
+          captured_by?: string | null
+          id?: number
+          package_log_id: number
+          signed_at?: string
+          signature_notes?: string | null
+          signer_name: string
+          signer_type?: string | null
+        }
+        Update: {
+          captured_by?: string | null
+          id?: number
+          package_log_id?: number
+          signed_at?: string
+          signature_notes?: string | null
+          signer_name?: string
+          signer_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_signatures_captured_by_fkey"
+            columns: ["captured_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_signatures_package_log_id_fkey"
+            columns: ["package_log_id"]
+            isOneToOne: false
+            referencedRelation: "package_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_logs: {
+        Row: {
+          building_id: number
+          created_at: string
+          handoff_notes: string | null
+          handoff_profile_id: string | null
+          id: number
+          issues: string | null
+          shift_date: string
+          shift_end: string | null
+          shift_start: string | null
+          staff_profile_id: string | null
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          building_id: number
+          created_at?: string
+          handoff_notes?: string | null
+          handoff_profile_id?: string | null
+          id?: number
+          issues?: string | null
+          shift_date: string
+          shift_end?: string | null
+          shift_start?: string | null
+          staff_profile_id?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: number
+          created_at?: string
+          handoff_notes?: string | null
+          handoff_profile_id?: string | null
+          id?: number
+          issues?: string | null
+          shift_date?: string
+          shift_end?: string | null
+          shift_start?: string | null
+          staff_profile_id?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_logs_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_logs_handoff_profile_id_fkey"
+            columns: ["handoff_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_logs_staff_profile_id_fkey"
+            columns: ["staff_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          bathroom_count: number | null
+          bedroom_count: number | null
+          building_id: number
+          created_at: string
+          floor: string | null
+          id: number
+          square_feet: number | null
+          status: string
+          unit_number: string
+          updated_at: string
+        }
+        Insert: {
+          bathroom_count?: number | null
+          bedroom_count?: number | null
+          building_id: number
+          created_at?: string
+          floor?: string | null
+          id?: number
+          square_feet?: number | null
+          status?: string
+          unit_number: string
+          updated_at?: string
+        }
+        Update: {
+          bathroom_count?: number | null
+          bedroom_count?: number | null
+          building_id?: number
+          created_at?: string
+          floor?: string | null
+          id?: number
+          square_feet?: number | null
+          status?: string
+          unit_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_logs: {
+        Row: {
+          building_id: number
+          check_in: string
+          check_out: string | null
+          contact_information: string | null
+          created_at: string
+          created_by: string | null
+          government_id_number: string | null
+          government_id_type: string | null
+          host_contact: string | null
+          host_name: string | null
+          id: number
+          notes: string | null
+          purpose: string | null
+          unit_id: number | null
+          updated_at: string
+          visitor_name: string
+          visitor_type: string | null
+        }
+        Insert: {
+          building_id: number
+          check_in?: string
+          check_out?: string | null
+          contact_information?: string | null
+          created_at?: string
+          created_by?: string | null
+          government_id_number?: string | null
+          government_id_type?: string | null
+          host_contact?: string | null
+          host_name?: string | null
+          id?: number
+          notes?: string | null
+          purpose?: string | null
+          unit_id?: number | null
+          updated_at?: string
+          visitor_name: string
+          visitor_type?: string | null
+        }
+        Update: {
+          building_id?: number
+          check_in?: string
+          check_out?: string | null
+          contact_information?: string | null
+          created_at?: string
+          created_by?: string | null
+          government_id_number?: string | null
+          government_id_type?: string | null
+          host_contact?: string | null
+          host_name?: string | null
+          id?: number
+          notes?: string | null
+          purpose?: string | null
+          unit_id?: number | null
+          updated_at?: string
+          visitor_name?: string
+          visitor_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_logs_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           created_at: string
