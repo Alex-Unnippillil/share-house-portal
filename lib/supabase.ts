@@ -1596,6 +1596,168 @@ export type Database = {
           },
         ]
       }
+      rent_payments: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          paid_at: string | null
+          profile_id: string
+          receipt_url: string | null
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          profile_id: string
+          receipt_url?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          profile_id?: string
+          receipt_url?: string | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_customers: {
+        Row: {
+          billing_email: string | null
+          created_at: string
+          default_payment_method: string | null
+          id: string
+          metadata: Json
+          profile_id: string
+          stripe_customer_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          created_at?: string
+          default_payment_method?: string | null
+          id?: string
+          metadata?: Json
+          profile_id: string
+          stripe_customer_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          created_at?: string
+          default_payment_method?: string | null
+          id?: string
+          metadata?: Json
+          profile_id?: string
+          stripe_customer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_billing_settings: {
+        Row: {
+          autopay_day: number | null
+          autopay_enabled: boolean
+          autopay_payment_method: string | null
+          billing_portal_url: string | null
+          created_at: string
+          currency: string
+          last_autopay_at: string | null
+          metadata: Json
+          next_autopay_at: string | null
+          profile_id: string
+          rent_amount: number | null
+          share_percentage: number | null
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          autopay_day?: number | null
+          autopay_enabled?: boolean
+          autopay_payment_method?: string | null
+          billing_portal_url?: string | null
+          created_at?: string
+          currency?: string
+          last_autopay_at?: string | null
+          metadata?: Json
+          next_autopay_at?: string | null
+          profile_id: string
+          rent_amount?: number | null
+          share_percentage?: number | null
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          autopay_day?: number | null
+          autopay_enabled?: boolean
+          autopay_payment_method?: string | null
+          billing_portal_url?: string | null
+          created_at?: string
+          currency?: string
+          last_autopay_at?: string | null
+          metadata?: Json
+          next_autopay_at?: string | null
+          profile_id?: string
+          rent_amount?: number | null
+          share_percentage?: number | null
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_billing_settings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       package_utilization: {
@@ -1634,6 +1796,10 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      is_staff: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       decrement_package_usage: {
         Args: { package_id: string }

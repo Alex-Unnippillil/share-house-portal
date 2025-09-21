@@ -52,16 +52,23 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - NEXT_PUBLIC_SUPABASE_ANON_KEY="Your supabase anon key"
     - SUPABASE_JWT_SECRET="Your supabase JWT secret"
     - NEXT_PUBLIC_SUPABASE_URL="Your supabase project URL"
-    - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
+    - SUPABASE_SERVICE_ROLE_KEY="Your supabase service role key"
     - NEXT_PUBLIC_SITE_URL="http://localhost:3000" # Used for auth redirects in development
     - SUPABASE_WORKOS_CONNECTION_ID="Your WorkOS connection ID" # Optional, required to enable SSO via WorkOS
+    - STRIPE_SECRET_KEY="sk_test_..."
+    - STRIPE_WEBHOOK_SECRET="whsec_..."
+    - STRIPE_AUTOPAY_PRICE_ID="price_..." # Recurring rent price configured in Stripe
+    - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+    - PAYMENTS_BUSINESS_NAME="Share House Portal" # Display name for receipts
+    - PAYMENTS_SUPPORT_EMAIL="payments@example.com"
+    - PAYMENTS_SUPPORT_PHONE="+1 (555) 010-0000" # Optional hotline shown on receipts
 
   - Enable WorkOS SSO (optional)
     - Create a WorkOS connection in the Supabase dashboard and copy the connection ID from the Connections table
     - Add the issuer URL from WorkOS when prompted in Supabase so that Supabase can validate the JWTs
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
-  - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
+  - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'. Run the migrations in `supabase/migrations` to provision rent payment tables, Stripe customer mappings, and billing metadata.
   - Add authorized development and production URL's to Supabase URL config. 
 ### Run  
 - Development server:
@@ -74,6 +81,14 @@ yarn i && yarn run dev
 pnpm i && pnpm dev
 # or
 bun i && bun dev
+```
+
+### Testing
+
+Run the Stripe webhook integration tests and type checks via Vitest:
+
+```bash
+pnpm test
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
