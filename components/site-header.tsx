@@ -4,7 +4,6 @@ import { readUserSession } from "@/utils/actions"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
-import { Icons } from "@/components/icons"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
@@ -63,36 +62,33 @@ export async function SiteHeader() {
               </>
             )}
           </div>
-          <nav className="flex items-center space-x-1">
+          <nav className="flex items-center gap-2">
             <Link
-              href={siteConfig.links.github}
-              target="_blank"
-              rel="noreferrer"
+              href={siteConfig.links.support}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "hidden sm:inline-flex"
+              )}
             >
-              <div
-                className={buttonVariants({
-                  size: "icon",
-                  variant: "ghost",
-                })}
-              >
-                <Icons.gitHub className="size-5" />
-                <span className="sr-only">GitHub</span>
-              </div>
+              Support
             </Link>
             <Link
-              href={siteConfig.links.twitter}
-              target="_blank"
-              rel="noreferrer"
+              href={siteConfig.links.leases}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "hidden sm:inline-flex"
+              )}
             >
-              <div
-                className={buttonVariants({
-                  size: "icon",
-                  variant: "ghost",
-                })}
-              >
-                <Icons.twitter className="size-4 fill-current" />
-                <span className="sr-only">Twitter</span>
-              </div>
+              Leases
+            </Link>
+            <Link
+              href={siteConfig.links.amenities}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "hidden sm:inline-flex"
+              )}
+            >
+              Amenities
             </Link>
             <ThemeToggle />
           </nav>

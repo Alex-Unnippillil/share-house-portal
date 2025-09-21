@@ -1,4 +1,4 @@
- import type { Metadata, Viewport } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
-    manifest: 'https://onyx-rho-pink.vercel.app/manifest.json',
-  metadataBase: new URL('https://onyx-rho-pink.vercel.app'),
+  manifest: '/manifest.json',
+  metadataBase: new URL('https://share-house-portal.vercel.app'),
   alternates: {
     canonical: '/',
     languages: {
@@ -37,12 +37,19 @@ export const metadata: Metadata = {
     },
   },
   referrer: 'origin-when-cross-origin',
-  keywords: ['NextJS 14 TypeScript', 'Supabase SSR', 'TanStack React Query', 'vercel', 'openai', 'MVP Template', 'Onyx SaaS PWA template', 'Zod', 'Shadcn-UI', 'Tailwind CSS', 'SaaS', 'NextJS Supabase Postgres Tailwind TanStack', 'NextJS CSP',
-             'PWA', 'NextJS SaaS PWA Template', 'CRUD ops', 'secure headers', 'NextJS templates with user authentication, RBAC, and CRUD ops', 'NextJS templates with data validation and database integration',
-            'Rust API runtime for vercel serverless functions', 'NextJS secure headers', 'NextJS NextMDX'],
-  authors: [{ name: 'Robert Mourey Jr' }],
-  creator: 'Robert Mourey Jr',
-  publisher: 'Robert Mourey Jr', 
+  keywords: [
+    'tenant portal',
+    'rent payments',
+    'shared housing',
+    'roommate communication',
+    'amenities booking',
+    'lease documents',
+    'community message board',
+    'maintenance requests',
+  ],
+  authors: [{ name: 'Share House Team' }],
+  creator: 'Share House Team',
+  publisher: 'Share House Team',
   formatDetection: {
     email: false,
     address: false,
@@ -50,11 +57,10 @@ export const metadata: Metadata = {
   },
   generator: 'NextJS',
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
   },
-
   robots: {
     index: false,
     follow: true,
@@ -72,42 +78,33 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
-    url: "https://onyx-rho-pink.vercel.app",
+    url: 'https://share-house-portal.vercel.app',
     images: [
       {
-        url: 'https://onyx-rho-pink.vercel.app/og-image.jpg', // Must be an absolute URL
-        width: 1230,
-        height: 640,
-      },
-      {
-        url: 'https://quantumone.b-cdn.net/onyx/opengraph-image.jpg', // Must be an absolute URL
-        width: 1800,
-        height: 1600,
-        alt: 'blockchain business',
+        url: 'https://share-house-portal.vercel.app/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Share House Portal overview with rent, amenities, and messages',
       },
     ],
     locale: 'en_US',
     type: 'website',
   },
-    twitter: {
-         title: siteConfig.name,
-         description: siteConfig.description,
-         site: '@r_mourey_jr',
-         creator: '@r_mourey_jr',
-         images: [
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: [
       {
-        url: 'https://onyx-rho-pink.vercel.app/twitter-image.jpg', // Must be an absolute URL
-        width: 1800,
-        height: 900,
+        url: 'https://share-house-portal.vercel.app/twitter-image.jpg',
+        width: 1200,
+        height: 675,
+        alt: 'Share House Portal social preview',
       },
-      {
-        url: 'https://quantumone.b-cdn.net/onyx/twitter-image.jpg',
-        width: 1800,
-        height: 900,
-      },
-     ],
-   },
+    ],
+  },
 }
+
 export const viewport: Viewport =  {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
