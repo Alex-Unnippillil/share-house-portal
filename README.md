@@ -1,92 +1,76 @@
-<a href="https://onyx-rho-pink.vercel.app/">
-  <img alt="Onyx open graph image." src="https://quantumone.b-cdn.net/onyx-git/og-image.jpg">
-  <h1 align="center">Onyx MVP Template</h1>
-</a>
+# Share House Portal
 
-<a href="https://securityheaders.com/">
-  <img alt="Onyx security score image." src="https://quantumone.b-cdn.net/onyx-git/onyx-security-score-ls.jpg">
-  <h2 align="center">Onyx SecurityHeaders.com Score</h2>
-</a>
+Share House Portal is a tenant-facing web experience for properties with shared units. It brings rent collection, amenity reservations, visitor compliance, and roommate collaboration into a single secure workspace so tenants and property managers always share the same source of truth.
 
+![Share House Portal preview](public/share-house-og.svg)
 
-### What is Onyx?
-- Onyx is a turnkey, full stack NextJS 14+ progressive web app written in Typescript that includes role based access control (RBAC),
-complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Query, Rust serverless function runtime and API, Markdown pages with ability to insert React components, React Hook form, and more. Fork, customize, and deploy on Vercel or elsewhere to have your MVP up and running in a few days or less. Stack details are below. 
+## Highlights
 
-### Stack and Features
-- NextJS 14 App Router in Typescript 
-- Supabase 
-  - SSR Auth with
-    - Fully configured email/password signup, login, oauth, PKCE and confirm routes 
-    - middleware 
-    - server actions
-    - typed Auth & DB clients
-    - readOnly userSession clients
-  - Postgres DB with CRUD functions configured
-    - User account and profile management configured 
-    - RBAC configured admin dashboard with data visualization, members administration and todo lists
-    - Contact form with toast, Zod validation, server side table insert  
-- TanStack React Query, Table, and Dev Tools
-  - Demo SSR with Supabase DB & cache helpers 
-- Zod data validation, schemas, event handling.
-- Shadcn-UI, Radix-UI primitives, Tailwind CSS
-- Markdown pages with Next/MDX - create page.mdx and layout.tsx for each markdown page
-- Next-PWA
-- Next Compose Plugins  
-- React Hook Form
-- OpenAI playground UI
-- Onboarding, signIn/signUp pages
-- Podcast UI
-- CookieButton component configured to work with Consent Manager from Termly free plan. Just create a free Termly account, add your Script tag on the app/layout page using Next Script and then add your CookieButton to your app/layout just above the ThemeProvider and just below your termly Script tag.  
-- Custom Formik Components with MUI are not used in app but code is solid for use in a "MUI Base X TailwindCSS config". Onyx is NOT currently configured for MUI nor MUI Base X TailwindCSS. 
-- Lucide React Icons with many brand SVGs ready for your props 
-- More..
+- **Rent collection built on Stripe** – split rent by roommate, configure autopay schedules, and reconcile payments with exportable ledgers.
+- **Amenity scheduling powered by Cal.com** – embed booking flows for kitchens, lounges, gaming rooms, parking bays, and more with realtime availability rules.
+- **Visitor management** – register overnight guests, enforce stay limits, and keep audit trails for property teams and security staff.
+- **Roommate collaboration** – realtime message boards, task assignments, and document storage aligned with Supabase Realtime and Documenso workflows.
+- **Accessible, responsive marketing site** – light/dark themes, semantic landmarks, and mobile-first layouts tailored for shared living communities.
 
-### API 
-- [Rust runtime for Vercel Serverless Functions](https://github.com/vercel-community/rust)
+## Tech stack
 
-### Getting started with Onyx:
-- First, configure your environment
-  - Create a file named .env.local in project root
-  - Create a Supabase account and add the following to your env file
-    - NEXT_PUBLIC_SUPABASE_ANON_KEY="Your supabase anon key"
-    - SUPABASE_JWT_SECRET="Your supabase JWT secret"
-    - NEXT_PUBLIC_SUPABASE_URL="Your supabase project URL"
-    - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
-    - NEXT_PUBLIC_SITE_URL="http://localhost:3000" # Used for auth redirects in development
-    - SUPABASE_WORKOS_CONNECTION_ID="Your WorkOS connection ID" # Optional, required to enable SSO via WorkOS
+| Layer | Technology |
+| --- | --- |
+| Framework | [Next.js 14 App Router](https://nextjs.org/) + TypeScript |
+| Styling | Tailwind CSS + [shadcn/ui](https://ui.shadcn.com/) |
+| Data + Auth | [Supabase](https://supabase.com/) (Postgres, Auth, Storage, Realtime) |
+| Payments | [Stripe](https://stripe.com/) Checkout & Billing Portal |
+| Scheduling | [Cal.com](https://cal.com/) embedded booking widgets |
+| Documents | [Documenso](https://documenso.com/) digital signing |
+| Deployment | [Vercel](https://vercel.com/) |
 
-  - Enable WorkOS SSO (optional)
-    - Create a WorkOS connection in the Supabase dashboard and copy the connection ID from the Connections table
-    - Add the issuer URL from WorkOS when prompted in Supabase so that Supabase can validate the JWTs
-    - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
+## Getting started
 
-  - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
-### Run  
-- Development server:
+1. **Install dependencies**
 
-```bash
-npm i && npm run dev
-# or
-yarn i && yarn run dev
-# or
-pnpm i && pnpm dev
-# or
-bun i && bun dev
-```
+   ```bash
+   pnpm install
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Configure environment variables** – copy `.env.example` if available and provide the following keys:
 
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL="https://YOUR-supabase-url"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR-anon-key"
+   SUPABASE_SERVICE_ROLE_KEY="YOUR-service-role-key"
+   NEXT_PUBLIC_APP_URL="http://localhost:3000"
+   STRIPE_SECRET_KEY="sk_live_or_test"
+   STRIPE_WEBHOOK_SECRET="whsec_..."
+   CALCOM_BASE_URL="https://cal.your-domain"
+   CALCOM_API_KEY="YOUR-calcom-key"
+   DOCUMENSO_BASE_URL="https://docs.your-domain"
+   DOCUMENSO_API_KEY="YOUR-documenso-key"
+   ```
 
-### Deploy on Vercel
+3. **Run the development server**
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frmourey26%2Fonyx%2Ftree%2Fmain)
+   ```bash
+   pnpm dev
+   ```
 
+   The app is available at [http://localhost:3000](http://localhost:3000).
 
-### Reference/Credit
-- @chensokheng
+4. **Run lint checks** (recommended before committing)
 
+   ```bash
+   pnpm lint
+   ```
 
-### Tips/Support
-<a href="https://www.buymeacoffee.com/rmoureyjr" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="51" width="217"></a>
+## Deployment
+
+Deploy to Vercel using the dashboard or the `vercel` CLI. Configure environment variables in each environment (`development`, `staging`, `production`) and supply Supabase, Stripe, Cal.com, and Documenso credentials. Enable Supabase Row Level Security policies for tenant isolation before going live.
+
+## Project resources
+
+- Tenant handbook: `/resources/tenant-handbook`
+- Manager playbook: `/resources/manager-playbook`
+- Support center: `/support`
+
+---
+
+Share House Portal is designed to keep roommates, tenants, and property managers aligned without spreadsheets or fragmented tooling. Contributions and feedback are welcome.

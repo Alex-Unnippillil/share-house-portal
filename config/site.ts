@@ -1,54 +1,45 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
-  name: "Onyx",
+  name: "Share House Portal",
   description:
-    "Onyx SaaS PWA Template with validated CRUD ops, user authentication + RBAC, maximum header security, Rust API runtime, TanStack, and more.",
+    "The Share House Portal keeps roommates, tenants, and property managers aligned with rent collection, amenity reservations, visitor policies, and collaborative task tools.",
   mainNav: [
     {
-      title: "Home",
-      href: "/",
-    },
-
-    {
-      title: "Account",
-      href: "/account",
+      title: "Overview",
+      href: "#overview",
     },
     {
-      title: "Dashboard",
-      href: "/dashboard",
+      title: "Rent",
+      href: "#rent",
     },
     {
-      title: "OpenAI",
-      href: "/playground",
+      title: "Amenities",
+      href: "#amenities",
     },
     {
-      title: "Podcasts",
-      href: "/music",
+      title: "Visitors",
+      href: "#visitors",
     },
     {
-      title: "Blog",
-      href: "/blog",
+      title: "Collaboration",
+      href: "#collaboration",
     },
     {
-      title: "RBAC",
-      href: "/dashboard/members",
-    },
-    {
-      title: "About",
-      href: "/about",
-    },
-    {
-      title: "Contact",
-      href: "/contact",
+      title: "Resources",
+      href: "#resources",
     },
   ],
   links: {
-    twitter: "https://twitter.com/r_mourey_jr",
-    github: "https://github.com/rmourey26/onyx",
     login: "/auth",
     signup: "/onboarding",
     contact: "/contact",
-    linkedin: "https://linkedin.com/in/robertmoureyjr",
+    tenantHandbook: "/resources/tenant-handbook",
+    managerGuide: "/resources/manager-playbook",
+    support: "/support",
+    twitter: "https://twitter.com/sharehouseportal",
+    github: "https://github.com/share-house-portal/share-house-portal",
+    linkedin: "https://www.linkedin.com/company/share-house-portal",
+    status: "https://status.sharehouseportal.app",
   },
 }

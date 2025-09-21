@@ -1,7 +1,7 @@
 {
-  "name": "Onyx",
-  "short_name": "Onyx",
-  "description": "A batteries included MVP Template.",
+  "name": "Share House Portal",
+  "short_name": "ShareHouse",
+  "description": "Rent, amenities, visitors, and roommate collaboration in one secure portal for shared properties.",
   "start_url": "/", 
   "display": "standalone",
   "background_color": "#fff",
