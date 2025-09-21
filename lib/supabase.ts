@@ -1558,6 +1558,62 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_space_maps: {
+        Row: {
+          bucket_id: string
+          created_at: string
+          description: string | null
+          diagram_updated_at: string
+          file_path: string
+          id: string
+          lease_id: string
+          metadata: Json
+          room_labels: Json
+          tenant_id: string
+          title: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bucket_id?: string
+          created_at?: string
+          description?: string | null
+          diagram_updated_at?: string
+          file_path: string
+          id?: string
+          lease_id: string
+          metadata?: Json
+          room_labels?: Json
+          tenant_id: string
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bucket_id?: string
+          created_at?: string
+          description?: string | null
+          diagram_updated_at?: string
+          file_path?: string
+          id?: string
+          lease_id?: string
+          metadata?: Json
+          room_labels?: Json
+          tenant_id?: string
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_space_maps_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           created_at: string
