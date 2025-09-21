@@ -1,41 +1,48 @@
 "use client"
 
 import type React from "react"
-import { BitcoinIcon, Cloud, Shield, Zap, type LucideIcon } from 'lucide-react'
+import { BedDouble, CalendarClock, CreditCard, FileSignature, Map, MessageSquare } from "lucide-react"
 import { motion } from "framer-motion"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { Icons } from "./icons"
 
 interface Feature {
-  icon: React.ReactElement<LucideIcon>
+  icon: React.ReactElement
   title: string
   description: string
 }
 
 const features: Feature[] = [
   {
-    icon: <BitcoinIcon className="size-8" />,
-    title: "Blockchain AI Analytics",
-    description:
-      "Harness the power of blockchain AI to derive actionable insights from your data",
+    icon: <CreditCard className="size-8" />,
+    title: "Stripe rent payments",
+    description: "Autopay or collect one-off rent with payouts flowing directly to your house account.",
   },
   {
-    icon: <Cloud className="size-8" />,
-    title: "Hybrid Architecture",
+    icon: <CalendarClock className="size-8" />,
+    title: "Cal.com amenity reservations",
     description:
-      "All the benefits of next generation blockchain technology with the ease of todays cloud platforms",
+      "Reserve the kitchen, theatre TV, PlayStation lounge, parking spots, or shared computer with instant availability checks.",
   },
   {
-    icon: <Shield className="size-8" />,
-    title: "Enterprise Grade Security",
-    description: "State of the art security measures to protect your most valuable assets now and into the quantum era.",
+    icon: <BedDouble className="size-8" />,
+    title: "Overnight visitor bookings",
+    description: "Request overnight guests, capture approvals, and sync with security teams before anyone arrives.",
   },
   {
-    icon: <Zap className="size-8" />,
-    title: "Optimal Results",
-    description:
-      "Optimized for speed and efficiency, our solutions deliver unparalleled performance and energy efficiency.",
+    icon: <FileSignature className="size-8" />,
+    title: "Documenso lease room",
+    description: "Deliver downloadable agreements, collect signatures, and store renewal packages without email chains.",
+  },
+  {
+    icon: <Map className="size-8" />,
+    title: "Per-tenant floorplan overlays",
+    description: "Assign storage, chores, and maintenance context across every floor so roommates know exactly where to go.",
+  },
+  {
+    icon: <MessageSquare className="size-8" />,
+    title: "Realtime community & admin",
+    description: "Moderated message boards, announcements, and RBAC-secured back office dashboards keep everyone aligned.",
   },
 ]
 
@@ -69,9 +76,11 @@ const Featurez: React.FC = () => {
   return (
     <section className="bg-background py-16">
       <div className="container mx-auto px-4">
-        <h2 className="mb-10 text-center text-3xl font-bold text-foreground md:text-4xl lg:text-7xl">Transformative Solutions</h2>
+        <h2 className="mb-10 text-center text-3xl font-bold text-foreground md:text-4xl lg:text-7xl">
+          Shared house essentials
+        </h2>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
           {features.map((feature, index) => (
             <FeatureCard key={index} {...feature} index={index} />
           ))}

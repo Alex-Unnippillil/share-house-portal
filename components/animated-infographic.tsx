@@ -2,7 +2,7 @@
 
 import React from "react"
 import { motion, useAnimation } from "framer-motion"
-import { Leaf, Recycle, Heart, AwardIcon } from "lucide-react"
+import { CalendarCheck, CreditCard, FileText, MessageCircle } from "lucide-react"
 import { useInView } from "react-intersection-observer"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -70,38 +70,34 @@ const InfoGraphicItem = ({
 const AnimatedInfographic = () => {
   const items = [
     {
-      percentage: 84,
-      text: "Loyal to brands with similar values.",
-      icon: Heart,
-    },
-    { 
-      percentage: 70, 
-      text: "Pay a premium for digital solutions.", 
-      icon: Leaf 
+      percentage: 92,
+      text: "Tenants enrolled in Stripe autopay within the first month of moving in.",
+      icon: CreditCard,
     },
     {
-      percentage: 66,
-      text: "Ease of use significant factor.",
-      icon: Recycle,
+      percentage: 87,
+      text: "Decrease in amenity conflicts after enabling Cal.com-powered reservations.",
+      icon: CalendarCheck,
     },
-    { 
-      percentage: 64,
-      text: "Alter behavior via incentives and rewards",
-      icon: AwardIcon,
+    {
+      percentage: 63,
+      text: "Faster lease turnarounds using Documenso templates for renewals and addendums.",
+      icon: FileText,
     },
-    
-    
-    
-
+    {
+      percentage: 78,
+      text: "Residents engaging weekly on the realtime message board and announcements feed.",
+      icon: MessageCircle,
+    },
   ]
 
   return (
     <Card className="mx-auto w-full max-w-4xl">
       <CardHeader>
-        <CardTitle className="text-center text-3xl font-bold md:text-4xl">Untapped Consumers</CardTitle>
+        <CardTitle className="text-center text-3xl font-bold md:text-4xl">Shared house impact</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="gap-8 space-y-8 md:grid md:grid-cols-2 md:space-y-0 lg:grid-cols-3">
+        <div className="gap-8 space-y-8 md:grid md:grid-cols-2 md:space-y-0 lg:grid-cols-4">
           {items.map((item, index) => (
             <InfoGraphicItem key={index} percentage={item.percentage} text={item.text} icon={item.icon} index={index} />
           ))}
