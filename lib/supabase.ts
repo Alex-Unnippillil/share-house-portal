@@ -1229,6 +1229,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          building_id: string | null
           card_style: Json | null
           card_styles: string | null
           company: string | null
@@ -1241,6 +1242,7 @@ export type Database = {
           linkedin_url: string | null
           public_id: string | null
           role: string | null
+          unit_id: string | null
           updated_at: string | null
           username: string | null
           waddress: string | null
@@ -1249,6 +1251,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          building_id?: string | null
           card_style?: Json | null
           card_styles?: string | null
           company?: string | null
@@ -1261,6 +1264,7 @@ export type Database = {
           linkedin_url?: string | null
           public_id?: string | null
           role?: string | null
+          unit_id?: string | null
           updated_at?: string | null
           username?: string | null
           waddress?: string | null
@@ -1269,6 +1273,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          building_id?: string | null
           card_style?: Json | null
           card_styles?: string | null
           company?: string | null
@@ -1281,6 +1286,7 @@ export type Database = {
           linkedin_url?: string | null
           public_id?: string | null
           role?: string | null
+          unit_id?: string | null
           updated_at?: string | null
           username?: string | null
           waddress?: string | null
@@ -1593,6 +1599,211 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members_table"
             referencedColumns: ["member_id"]
+          },
+        ]
+      }
+      visitor_log_audits: {
+        Row: {
+          action: string
+          actor_profile_id: string | null
+          created_at: string
+          id: number
+          log_id: number
+          metadata: Json
+          notes: string | null
+        }
+        Insert: {
+          action: string
+          actor_profile_id?: string | null
+          created_at?: string
+          id?: number
+          log_id: number
+          metadata?: Json
+          notes?: string | null
+        }
+        Update: {
+          action?: string
+          actor_profile_id?: string | null
+          created_at?: string
+          id?: number
+          log_id?: number
+          metadata?: Json
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_log_audits_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_log_audits_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_logs: {
+        Row: {
+          approval_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          arrival_date: string
+          building_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          host_profile_id: string
+          id: number
+          metadata: Json
+          reason: string | null
+          rule_id: number | null
+          status: string
+          total_nights: number
+          unit_id: string
+          updated_at: string
+          visitor_email: string | null
+          visitor_name: string
+          departure_date: string
+        }
+        Insert: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_date: string
+          building_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          host_profile_id: string
+          id?: number
+          metadata?: Json
+          reason?: string | null
+          rule_id?: number | null
+          status?: string
+          total_nights: number
+          unit_id: string
+          updated_at?: string
+          visitor_email?: string | null
+          visitor_name: string
+          departure_date: string
+        }
+        Update: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_date?: string
+          building_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          host_profile_id?: string
+          id?: number
+          metadata?: Json
+          reason?: string | null
+          rule_id?: number | null
+          status?: string
+          total_nights?: number
+          unit_id?: string
+          updated_at?: string
+          visitor_email?: string | null
+          visitor_name?: string
+          departure_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_logs_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_host_profile_id_fkey"
+            columns: ["host_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_rules: {
+        Row: {
+          active: boolean
+          advance_notice_hours: number | null
+          building_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: number
+          max_consecutive_nights: number
+          max_visits_per_month: number | null
+          metadata: Json
+          require_manager_approval: boolean
+          title: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          advance_notice_hours?: number | null
+          building_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: number
+          max_consecutive_nights?: number
+          max_visits_per_month?: number | null
+          metadata?: Json
+          require_manager_approval?: boolean
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          advance_notice_hours?: number | null
+          building_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: number
+          max_consecutive_nights?: number
+          max_visits_per_month?: number | null
+          metadata?: Json
+          require_manager_approval?: boolean
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
