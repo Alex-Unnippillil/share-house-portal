@@ -1,41 +1,61 @@
 "use client"
 
-import type React from "react"
-import { BitcoinIcon, Cloud, Shield, Zap, type LucideIcon } from 'lucide-react'
+import type { FC } from "react"
+import {
+  CalendarCheck2,
+  CreditCard,
+  FileSignature,
+  MessageSquare,
+  ShieldCheck,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 import { motion } from "framer-motion"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { Icons } from "./icons"
 
 interface Feature {
-  icon: React.ReactElement<LucideIcon>
+  icon: LucideIcon
   title: string
   description: string
 }
 
 const features: Feature[] = [
   {
-    icon: <BitcoinIcon className="size-8" />,
-    title: "Blockchain AI Analytics",
+    icon: CreditCard,
+    title: "Stripe rent automation",
     description:
-      "Harness the power of blockchain AI to derive actionable insights from your data",
+      "Collect recurring payments, send receipts instantly, and reconcile shared expenses without leaving the dashboard.",
   },
   {
-    icon: <Cloud className="size-8" />,
-    title: "Hybrid Architecture",
+    icon: CalendarCheck2,
+    title: "cal.com amenity scheduling",
     description:
-      "All the benefits of next generation blockchain technology with the ease of todays cloud platforms",
+      "Keep the gym, yoga studio, or roof deck organized with self-serve bookings that sync directly to residents’ calendars.",
   },
   {
-    icon: <Shield className="size-8" />,
-    title: "Enterprise Grade Security",
-    description: "State of the art security measures to protect your most valuable assets now and into the quantum era.",
+    icon: MessageSquare,
+    title: "Supabase realtime message boards",
+    description:
+      "Announce house updates, vote on events, and resolve maintenance threads together with live notifications.",
   },
   {
-    icon: <Zap className="size-8" />,
-    title: "Optimal Results",
+    icon: FileSignature,
+    title: "Documenso lease locker",
     description:
-      "Optimized for speed and efficiency, our solutions deliver unparalleled performance and energy efficiency.",
+      "Store e-signed leases, house rules, and move-in checklists with instant download access for every roommate.",
+  },
+  {
+    icon: Users,
+    title: "Guided roommate onboarding",
+    description:
+      "Invite new tenants with templated checklists, Stripe setup guidance, and Supabase RBAC that matches room assignments.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Privacy-first operations",
+    description:
+      "Tenant documents and payments stay protected with role-based permissions and audit trails across every workflow.",
   },
 ]
 
@@ -43,37 +63,48 @@ interface FeatureCardProps extends Feature {
   index: number
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, index }) => {
+const FeatureCard: FC<FeatureCardProps> = ({ icon: Icon, title, description, index }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <Card className="h-full transition-shadow duration-300 hover:shadow-lg">
+      <Card className="h-full border-primary/10 bg-background/60 shadow-sm transition-shadow duration-300 hover:shadow-lg">
         <CardHeader>
           <div className="mb-4 flex items-center justify-center">
-            <div className="rounded-full bg-primary/10 p-2 text-primary">{icon}</div>
+            <div className="rounded-full bg-primary/10 p-3 text-primary">
+              <Icon className="size-6" aria-hidden="true" />
+            </div>
           </div>
-          <CardTitle className="text-center text-xl font-semibold">{title}</CardTitle>
+          <CardTitle className="text-center text-xl font-semibold text-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CardDescription className="text-center">{description}</CardDescription>
+          <CardDescription className="text-center text-sm text-foreground/70">{description}</CardDescription>
         </CardContent>
       </Card>
     </motion.div>
   )
 }
 
-const Featurez: React.FC = () => {
+const Featurez: FC = () => {
   return (
-    <section className="bg-background py-16">
+    <section className="bg-background/50 py-16">
       <div className="container mx-auto px-4">
-        <h2 className="mb-10 text-center text-3xl font-bold text-foreground md:text-4xl lg:text-7xl">Transformative Solutions</h2>
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
+            Everything shared homes need in one portal
+          </h2>
+          <p className="mt-4 text-base text-muted-foreground">
+            Connect the tools your community already uses—Stripe, Supabase, cal.com, and Documenso—with flows designed for
+            co-living teams.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
-            <FeatureCard key={index} {...feature} index={index} />
+            <FeatureCard key={feature.title} {...feature} index={index} />
           ))}
         </div>
       </div>
