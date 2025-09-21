@@ -1,80 +1,80 @@
 "use client"
 
 import type React from "react"
-
 import { motion } from "framer-motion"
-import { Mail, BitcoinIcon, Palette, DollarSign, type LucideIcon } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { Icons } from "./icons"
+import { FileCheck2, Gauge, ShieldCheck, Users } from "lucide-react"
 
-interface Feature {
-  icon: React.ReactElement<LucideIcon>
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
+interface Benefit {
+  icon: React.ReactElement
   title: string
   description: string
 }
 
-const features: Feature[] = [
+const benefits: Benefit[] = [
   {
-    icon: <Mail className="size-8" />,
-    title: "USPS-Compliant Solutions",
-    description:
-      "Engineered to bring high tech to global supply chain and logistics industries.",
+    icon: <Users className="size-8" />,
+    title: "Onboarding built for real roommates",
+    description: "Capture rent shares, vehicle info, emergency contacts, and storage assignments during one guided flow.",
   },
   {
-    icon: <BitcoinIcon className="size-8" />,
-    title: "Enterprise Blockchain",
-    description:
-      "Onyx's next generation blockchain architecture is designed for optimal enterprise usability.",
+    icon: <Gauge className="size-8" />,
+    title: "Realtime command center",
+    description: "Managers reconcile rent, amenity bookings, maintenance tickets, and visitor logs from a single dashboard.",
   },
   {
-    icon: <Palette className="size-8" />,
-    title: "Custom Branding",
-    description: "Onyx white label enhances your brand's sustainability story.",
+    icon: <FileCheck2 className="size-8" />,
+    title: "Document workflows handled",
+    description: "Documenso templates keep every lease, addendum, and chore roster digitally signed and versioned.",
   },
   {
-    icon: <DollarSign className="size-8" />,
-    title: "Lower Costs, Higher Impact",
-    description:
-      "Cut costs, exceed sustainability goals without added complexity.",
+    icon: <ShieldCheck className="size-8" />,
+    title: "Security and compliance",
+    description: "Supabase row-level security, visitor audit trails, and encrypted storage ensure every household stays protected.",
   },
 ]
 
-interface FeatureCardProps extends Feature {
+interface BenefitCardProps extends Benefit {
   index: number
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, index }) => {
+const BenefitCard: React.FC<BenefitCardProps> = ({ icon, title, description, index }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+      viewport={{ once: true, amount: 0.4 }}
     >
-      <Card className="h-full transition-shadow duration-300 hover:shadow-lg">
+      <Card className="h-full border-primary/10 bg-background/80">
         <CardHeader>
           <div className="mb-4 flex items-center justify-center">
-            <div className="rounded-full bg-primary/10 p-2 text-primary">{icon}</div>
+            <div className="rounded-full bg-primary/10 p-3 text-primary">{icon}</div>
           </div>
           <CardTitle className="text-center text-xl font-semibold">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CardDescription className="text-center">{description}</CardDescription>
+          <CardDescription className="text-center text-base">{description}</CardDescription>
         </CardContent>
       </Card>
     </motion.div>
   )
 }
 
-const WhyOnyx: React.FC = () => {
+const WhyShareHouse: React.FC = () => {
   return (
-    <section className="bg-background py-16">
-      <div className="container mx-auto px-4">
-        <h2 className="mb-12 text-center text-3xl font-bold text-foreground md:text-4xl">Why Onyx?</h2>
-   
+    <section id="collaboration" className="bg-muted/40 py-16">
+      <div className="container mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
+        <div className="mx-auto mb-12 max-w-3xl text-center">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Why properties choose the Share House Portal</h2>
+          <p className="mt-4 text-muted-foreground">
+            Purpose-built workflows bring tenants, roommates, and property teams together without sacrificing security or compliance.
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {features.map((feature, index) => (
-            <FeatureCard key={index} {...feature} index={index} />
+          {benefits.map((benefit, index) => (
+            <BenefitCard key={benefit.title} {...benefit} index={index} />
           ))}
         </div>
       </div>
@@ -82,5 +82,4 @@ const WhyOnyx: React.FC = () => {
   )
 }
 
-export default WhyOnyx
-
+export default WhyShareHouse

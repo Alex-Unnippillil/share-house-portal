@@ -1,0 +1,64 @@
+<svg width="960" height="720" viewBox="0 0 960 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="40" x2="820" y2="680" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF2FF" />
+      <stop offset="1" stop-color="#DBEAFE" />
+    </linearGradient>
+    <linearGradient id="panel" x1="120" y1="160" x2="620" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" />
+      <stop offset="1" stop-color="#F8FAFC" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#2563EB" />
+      <stop offset="1" stop-color="#0EA5E9" />
+    </linearGradient>
+    <linearGradient id="accent-warm" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#F97316" />
+      <stop offset="1" stop-color="#F59E0B" />
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="200%" height="200%">
+      <feDropShadow dx="0" dy="24" stdDeviation="32" flood-opacity="0.12" />
+    </filter>
+  </defs>
+  <rect width="960" height="720" rx="48" fill="url(#bg)" />
+  <g transform="translate(120 110)">
+    <rect width="720" height="520" rx="32" fill="url(#panel)" filter="url(#shadow)" />
+    <rect x="32" y="32" width="120" height="32" rx="16" fill="#E0F2FE" />
+    <text x="48" y="54" font-family="'Inter', 'Segoe UI', sans-serif" font-size="16" font-weight="600" fill="#0369A1">
+      Unit A2
+    </text>
+    <rect x="32" y="88" width="656" height="320" rx="24" fill="#F1F5F9" />
+    <rect x="48" y="108" width="208" height="120" rx="20" fill="#FFFFFF" stroke="#E2E8F0" />
+    <text x="72" y="148" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" fill="#64748B">Rent due</text>
+    <text x="72" y="180" font-family="'Inter', 'Segoe UI', sans-serif" font-size="28" font-weight="600" fill="#0F172A">$6,420</text>
+    <rect x="48" y="244" width="208" height="40" rx="12" fill="#DBEAFE" />
+    <text x="72" y="270" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" fill="#1D4ED8">Autopay on track</text>
+    <rect x="272" y="108" width="400" height="220" rx="20" fill="#FFFFFF" stroke="#E2E8F0" />
+    <text x="296" y="148" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" fill="#64748B">Amenity bookings</text>
+    <text x="296" y="180" font-family="'Inter', 'Segoe UI', sans-serif" font-size="28" font-weight="600" fill="#0F172A">Kitchen · 6</text>
+    <rect x="296" y="208" width="152" height="12" rx="6" fill="#E2E8F0" />
+    <rect x="296" y="208" width="112" height="12" rx="6" fill="url(#accent)" />
+    <text x="296" y="244" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" fill="#64748B">Media room · 4</text>
+    <rect x="296" y="272" width="152" height="12" rx="6" fill="#E2E8F0" />
+    <rect x="296" y="272" width="92" height="12" rx="6" fill="url(#accent-warm)" />
+    <text x="296" y="308" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" fill="#64748B">Parking · 2</text>
+    <rect x="296" y="336" width="152" height="12" rx="6" fill="#E2E8F0" />
+    <rect x="296" y="336" width="56" height="12" rx="6" fill="#38BDF8" />
+    <rect x="48" y="420" width="624" height="84" rx="18" fill="#FFFFFF" stroke="#E2E8F0" />
+    <rect x="64" y="436" width="72" height="72" rx="16" fill="#F8FAFC" stroke="#DBEAFE" />
+    <text x="152" y="464" font-family="'Inter', 'Segoe UI', sans-serif" font-size="16" font-weight="600" fill="#0F172A">Visitor log</text>
+    <text x="152" y="492" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" fill="#64748B">3 guests approved this week</text>
+    <rect x="544" y="456" width="100" height="32" rx="12" fill="#1D4ED8" />
+    <text x="562" y="477" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" font-weight="600" fill="#FFFFFF">Review</text>
+    <rect x="560" y="108" width="112" height="32" rx="16" fill="#E0F2FE" />
+    <text x="576" y="130" font-family="'Inter', 'Segoe UI', sans-serif" font-size="14" font-weight="600" fill="#0C4A6E">Today</text>
+    <g transform="translate(32 440)">
+      <rect x="552" y="-304" width="96" height="96" rx="24" fill="#2563EB" opacity="0.1" />
+    </g>
+    <g transform="translate(32 80)">
+      <rect x="0" y="0" width="24" height="180" rx="12" fill="url(#accent)" />
+      <rect x="40" y="0" width="24" height="140" rx="12" fill="#38BDF8" opacity="0.7" />
+      <rect x="80" y="0" width="24" height="110" rx="12" fill="url(#accent-warm)" opacity="0.8" />
+    </g>
+  </g>
+</svg>

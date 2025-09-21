@@ -2,10 +2,10 @@
 
 import type React from "react"
 
-import WhyOnyx from "./whyonyx"
+import WhyShareHouse from "./whyonyx"
 
-const WhyOnyxWrapper: React.FC = () => {
-  return <WhyOnyx />
+const WhyShareHouseWrapper: React.FC = () => {
+  return <WhyShareHouse />
 }
 
-export default WhyOnyxWrapper
+export default WhyShareHouseWrapper

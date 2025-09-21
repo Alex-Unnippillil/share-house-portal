@@ -1,0 +1,61 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="og-bg" x1="100" y1="40" x2="1100" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A" />
+      <stop offset="1" stop-color="#1E293B" />
+    </linearGradient>
+    <linearGradient id="og-accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#38BDF8" />
+      <stop offset="1" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="og-warm" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FACC15" />
+      <stop offset="1" stop-color="#F97316" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" rx="48" fill="url(#og-bg)" />
+  <g transform="translate(120 120)">
+    <text x="0" y="0" font-family="'Inter', 'Segoe UI', sans-serif" font-size="22" letter-spacing="0.3em" fill="#A5B4FC">
+      SHARE HOUSE PORTAL
+    </text>
+    <text x="0" y="86" font-family="'Inter', 'Segoe UI', sans-serif" font-size="72" font-weight="700" fill="#F8FAFC">
+      Shared living, organized.
+    </text>
+    <text x="0" y="154" font-family="'Inter', 'Segoe UI', sans-serif" font-size="26" fill="#CBD5F5">
+      Rent autopay · Amenity bookings · Visitor policies · Roommate collaboration
+    </text>
+    <g transform="translate(0 212)">
+      <rect width="420" height="220" rx="32" fill="#0F172A" fill-opacity="0.65" stroke="#334155" stroke-width="2" />
+      <text x="40" y="64" font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" fill="#CBD5F5">Rent collection</text>
+      <text x="40" y="108" font-family="'Inter', 'Segoe UI', sans-serif" font-size="46" font-weight="600" fill="#F8FAFC">$6,420</text>
+      <text x="40" y="152" font-family="'Inter', 'Segoe UI', sans-serif" font-size="18" fill="#94A3B8">98% on-time autopay</text>
+      <rect x="40" y="168" width="168" height="10" rx="5" fill="#1E293B" />
+      <rect x="40" y="168" width="132" height="10" rx="5" fill="url(#og-accent)" />
+    </g>
+    <g transform="translate(460 212)">
+      <rect width="240" height="220" rx="32" fill="#0F172A" fill-opacity="0.65" stroke="#334155" stroke-width="2" />
+      <text x="32" y="64" font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" fill="#CBD5F5">Amenities today</text>
+      <text x="32" y="112" font-family="'Inter', 'Segoe UI', sans-serif" font-size="40" font-weight="600" fill="#F8FAFC">12 bookings</text>
+      <rect x="32" y="148" width="176" height="12" rx="6" fill="#1E293B" />
+      <rect x="32" y="148" width="132" height="12" rx="6" fill="url(#og-warm)" />
+      <text x="32" y="190" font-family="'Inter', 'Segoe UI', sans-serif" font-size="18" fill="#94A3B8">Kitchen · Media · Parking</text>
+    </g>
+    <g transform="translate(728 212)">
+      <rect width="212" height="220" rx="32" fill="#0F172A" fill-opacity="0.65" stroke="#334155" stroke-width="2" />
+      <text x="32" y="64" font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" fill="#CBD5F5">Visitors cleared</text>
+      <text x="32" y="116" font-family="'Inter', 'Segoe UI', sans-serif" font-size="44" font-weight="600" fill="#F8FAFC">3 approvals</text>
+      <text x="32" y="160" font-family="'Inter', 'Segoe UI', sans-serif" font-size="18" fill="#94A3B8">Policy reminders delivered</text>
+      <rect x="32" y="176" width="148" height="12" rx="6" fill="#1E293B" />
+      <rect x="32" y="176" width="104" height="12" rx="6" fill="url(#og-accent)" />
+    </g>
+    <g transform="translate(968 212)">
+      <rect width="152" height="220" rx="32" fill="#1E293B" opacity="0.4" />
+      <rect x="24" y="36" width="24" height="148" rx="12" fill="url(#og-accent)" />
+      <rect x="64" y="72" width="24" height="112" rx="12" fill="url(#og-warm)" />
+      <rect x="104" y="104" width="24" height="80" rx="12" fill="#38BDF8" opacity="0.7" />
+    </g>
+    <text x="0" y="492" font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" fill="#A5B4FC">
+      Built with Supabase · Stripe · Cal.com · Documenso
+    </text>
+  </g>
+</svg>
