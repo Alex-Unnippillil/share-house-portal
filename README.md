@@ -62,7 +62,12 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
+  - Add authorized development and production URL's to Supabase URL config.
+  - Configure Cal.com credentials for amenity scheduling
+    - CALCOM_API_KEY="Your Cal.com personal API key"
+    - (optional) CALCOM_BASE_URL="https://api.cal.com/v1" if you are using a self-hosted instance
+    - NEXT_PUBLIC_CALCOM_BASE_URL="https://cal.com" to build widget links for residents
+  - Run the Supabase SQL migrations in `supabase/migrations` to create the `amenities`, `amenity_reservations`, and `overnight_visits` tables before launching the portal.
 ### Run  
 - Development server:
 

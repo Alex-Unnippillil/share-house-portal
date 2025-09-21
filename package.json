@@ -14,6 +14,7 @@
     "@emotion/styled": "^11.11.0",
     "@hanchon/signature-to-pubkey": "1.0.1",
     "@hookform/resolvers": "^3.3.4",
+    "@calcom/embed-react": "^1.3.5",
     "@jdion/tilt-react": "^1.0.0",
     "@mdx-js/loader": "^3.0.1",
     "@mdx-js/react": "^3.0.1",

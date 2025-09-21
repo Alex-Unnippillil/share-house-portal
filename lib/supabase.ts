@@ -183,6 +183,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          approval_required: boolean
+          cal_event_type: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          approval_required?: boolean
+          cal_event_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          approval_required?: boolean
+          cal_event_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      amenity_reservations: {
+        Row: {
+          amenity_id: string
+          cal_booking_id: string
+          cal_booking_url: string | null
+          created_at: string
+          end_time: string
+          id: string
+          metadata: Json
+          start_time: string
+          status: "pending" | "confirmed" | "cancelled"
+          user_id: string
+        }
+        Insert: {
+          amenity_id: string
+          cal_booking_id: string
+          cal_booking_url?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          metadata?: Json
+          start_time: string
+          status?: "pending" | "confirmed" | "cancelled"
+          user_id: string
+        }
+        Update: {
+          amenity_id?: string
+          cal_booking_id?: string
+          cal_booking_url?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          metadata?: Json
+          start_time?: string
+          status?: "pending" | "confirmed" | "cancelled"
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenity_reservations_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "amenity_reservations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agents: {
         Row: {
           created_at: string | null
@@ -235,6 +319,66 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "ai_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      overnight_visits: {
+        Row: {
+          approved_by: string | null
+          approval_notes: string | null
+          created_at: string
+          decided_at: string | null
+          end_date: string
+          guest_email: string | null
+          guest_name: string
+          id: string
+          notes: string | null
+          resident_id: string
+          start_date: string
+          status: "pending" | "approved" | "denied"
+        }
+        Insert: {
+          approved_by?: string | null
+          approval_notes?: string | null
+          created_at?: string
+          decided_at?: string | null
+          end_date: string
+          guest_email?: string | null
+          guest_name: string
+          id?: string
+          notes?: string | null
+          resident_id: string
+          start_date: string
+          status?: "pending" | "approved" | "denied"
+        }
+        Update: {
+          approved_by?: string | null
+          approval_notes?: string | null
+          created_at?: string
+          decided_at?: string | null
+          end_date?: string
+          guest_email?: string | null
+          guest_name?: string
+          id?: string
+          notes?: string | null
+          resident_id?: string
+          start_date?: string
+          status?: "pending" | "approved" | "denied"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overnight_visits_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "overnight_visits_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
