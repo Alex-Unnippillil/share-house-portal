@@ -1,5 +1,7 @@
 import { Metadata } from "next"
 import Image from "next/image"
+import Link from "next/link"
+import { Wallet } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -164,6 +166,25 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">
                       +201 since last hour
                     </p>
+                  </CardContent>
+                </Card>
+                <Card className="md:col-span-2 lg:col-span-4">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-sm font-medium">Rent portal</CardTitle>
+                      <CardDescription>
+                        Review balances, see payment history, and pay rent in a few clicks.
+                      </CardDescription>
+                    </div>
+                    <Wallet className="size-5 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Stay current on charges and download receipts from the tenant dashboard.
+                    </div>
+                    <Button asChild>
+                      <Link href="/rent">Go to rent</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
