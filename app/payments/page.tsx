@@ -1,6 +1,8 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
+import SharedLedger from "./components/shared-ledger"
+
 const paymentHighlights = [
   {
     title: "AutoPay scheduling",
@@ -46,6 +48,7 @@ export default function PaymentsPage() {
           </Card>
         ))}
       </div>
+      <SharedLedger />
     </div>
   )
 }
