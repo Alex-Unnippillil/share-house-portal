@@ -450,38 +450,329 @@ export type Database = {
         }
         Relationships: []
       }
-      chat: {
+      buildings: {
         Row: {
+          address: string | null
           created_at: string
-          id: number
-          messages: string[] | null
-          path: string | null
-          profile_id: string
-          sharepath: string | null
-          title: string | null
-          user_id: string | null
+          id: string
+          name: string
+          updated_at: string
         }
         Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      message_moderation: {
+        Row: {
+          action: Database["public"]["Enums"]["moderation_action"]
           created_at: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
+          id: string
+          message_id: string
+          moderator_id: string
+          reason: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["moderation_action"]
+          created_at?: string
+          id?: string
+          message_id: string
+          moderator_id: string
+          reason?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["moderation_action"]
+          created_at?: string
+          id?: string
+          message_id?: string
+          moderator_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_moderation_message_id_fkey",
+            columns: ["message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_moderation_moderator_id_fkey",
+            columns: ["moderator_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      message_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          metadata: Json
           profile_id: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
+          reaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          metadata?: Json
+          profile_id: string
+          reaction_type: string
         }
         Update: {
           created_at?: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
+          id?: string
+          message_id?: string
+          metadata?: Json
           profile_id?: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
+          reaction_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey",
+            columns: ["message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_reactions_profile_id_fkey",
+            columns: ["profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          id: string
+          is_deleted: boolean
+          metadata: Json
+          message_type: string
+          parent_message_id: string | null
+          thread_id: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          id?: string
+          is_deleted?: boolean
+          metadata?: Json
+          message_type?: string
+          parent_message_id?: string | null
+          thread_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          id?: string
+          is_deleted?: boolean
+          metadata?: Json
+          message_type?: string
+          parent_message_id?: string | null
+          thread_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_parent_message_id_fkey",
+            columns: ["parent_message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_thread_id_fkey",
+            columns: ["thread_id"],
+            isOneToOne: false,
+            referencedRelation: "threads",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      tenant_assignments: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          profile_id: string
+          role: "tenant" | "roommate" | "property_manager" | "admin"
+          unit_id: string | null
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          role: "tenant" | "roommate" | "property_manager" | "admin"
+          unit_id?: string | null
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          role?: "tenant" | "roommate" | "property_manager" | "admin"
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_assignments_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "tenant_assignments_profile_id_fkey",
+            columns: ["profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "tenant_assignments_unit_id_fkey",
+            columns: ["unit_id"],
+            isOneToOne: false,
+            referencedRelation: "units",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      threads: {
+        Row: {
+          building_id: string
+          category: string
+          created_at: string
+          created_by: string
+          id: string
+          is_locked: boolean
+          metadata: Json
+          pinned_message_id: string | null
+          title: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          building_id: string
+          category?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_locked?: boolean
+          metadata?: Json
+          pinned_message_id?: string | null
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string
+          category?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_locked?: boolean
+          metadata?: Json
+          pinned_message_id?: string | null
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threads_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_pinned_message_id_fkey",
+            columns: ["pinned_message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_unit_id_fkey",
+            columns: ["unit_id"],
+            isOneToOne: false,
+            referencedRelation: "units",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      units: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       countries: {
         Row: {
@@ -1598,6 +1889,15 @@ export type Database = {
       }
     }
     Views: {
+      v_tenant_scoped_roles: {
+        Row: {
+          building_id: string | null
+          profile_id: string | null
+          role: "tenant" | "roommate" | "property_manager" | "admin" | null
+          unit_id: string | null
+        }
+        Relationships: []
+      }
       package_utilization: {
         Row: {
           created_at: string | null
@@ -1774,6 +2074,13 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      moderation_action:
+        | "pin"
+        | "unpin"
+        | "delete"
+        | "restore"
+        | "flag"
+        | "resolve_flag"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
