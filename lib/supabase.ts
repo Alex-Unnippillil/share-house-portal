@@ -1031,6 +1031,66 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          currency: string
+          id: string
+          invoice_id: string | null
+          metadata: Json
+          paid_at: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_payment_intent_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_paid: number
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json
+          paid_at?: string | null
+          status: string
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json
+          paid_at?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "rent_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moralis_users: {
         Row: {
           created_at: string
@@ -1288,6 +1348,56 @@ export type Database = {
           xhandle?: string | null
         }
         Relationships: []
+      }
+      rent_invoices: {
+        Row: {
+          amount_due: number
+          created_at: string
+          currency: string
+          description: string | null
+          due_date: string
+          id: string
+          metadata: Json
+          status: string
+          stripe_invoice_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          metadata?: Json
+          status?: string
+          stripe_invoice_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          stripe_invoice_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reusable_packages: {
         Row: {
@@ -1593,6 +1703,88 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members_table"
             referencedColumns: ["member_id"]
+          },
+        ]
+      }
+      stripe_customers: {
+        Row: {
+          created_at: string
+          default_payment_method: string | null
+          id: string
+          stripe_customer_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_payment_method?: string | null
+          id?: string
+          stripe_customer_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_payment_method?: string | null
+          id?: string
+          stripe_customer_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          id: string
+          metadata: Json
+          status: string
+          stripe_price_id: string | null
+          stripe_subscription_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          metadata?: Json
+          status: string
+          stripe_price_id?: string | null
+          stripe_subscription_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          metadata?: Json
+          status?: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -55,6 +55,14 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
     - NEXT_PUBLIC_SITE_URL="http://localhost:3000" # Used for auth redirects in development
     - SUPABASE_WORKOS_CONNECTION_ID="Your WorkOS connection ID" # Optional, required to enable SSO via WorkOS
+    - STRIPE_SECRET_KEY="sk_test_..." # Required for server-side Stripe API calls
+    - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..." # Used by the client when rendering Stripe elements
+    - STRIPE_WEBHOOK_SECRET="whsec_..." # Stripe webhook signing secret for `/api/stripe/webhook`
+    - STRIPE_RECURRING_PRICE_ID="price_..." # Subscription price used when tenants enable autopay
+    - NEXT_PUBLIC_APP_URL="http://localhost:3000" # Used for Checkout success/cancel redirects
+    - RESEND_API_KEY="your-resend-api-key" # Enables payment receipt emails via Resend
+    - RESEND_RECEIPTS_FROM="Onyx Receipts <receipts@example.com>" # Optional override for receipt sender email
+    - RECEIPTS_SUPPORT_EMAIL="support@example.com" # Optional support contact shown in receipt emails
 
   - Enable WorkOS SSO (optional)
     - Create a WorkOS connection in the Supabase dashboard and copy the connection ID from the Connections table
@@ -62,19 +70,24 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
+  - Add authorized development and production URL's to Supabase URL config.
+  - Apply the latest payments migration: `supabase db push`.
+
+### Stripe & rent payments
+
+- Checkout session creation lives at `/api/stripe/checkout`; tenants can enable/disable autopay via server actions in `/dashboard/payments`.
+- Webhook events are processed by `/api/stripe/webhook`, which verifies the signature, persists `rent_invoices`, `payments`, `stripe_customers`, and `stripe_subscriptions`, and triggers Resend receipts using real Stripe charge data.
+- Payment receipts are rendered with real charge metadata through the Resend-powered `/api/payments/receipt` endpoint. Configure Resend and Stripe environment variables above to enable the full flow locally.
 ### Run  
 - Development server:
 
 ```bash
-npm i && npm run dev
-# or
-yarn i && yarn run dev
-# or
 pnpm i && pnpm dev
 # or
-bun i && bun dev
+npm i && npm run dev
 ```
+
+Run the regression tests (Vitest) with `pnpm test`.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
