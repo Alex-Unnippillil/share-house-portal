@@ -450,39 +450,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chat: {
-        Row: {
-          created_at: string
-          id: number
-          messages: string[] | null
-          path: string | null
-          profile_id: string
-          sharepath: string | null
-          title: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
-          profile_id: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
-          profile_id?: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       countries: {
         Row: {
           continent: Database["public"]["Enums"]["continents"] | null
@@ -1289,6 +1256,91 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          address_line: string | null
+          city: string | null
+          created_at: string
+          id: string
+          manager_id: string | null
+          name: string
+          postal_code: string | null
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          manager_id?: string | null
+          name: string
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          manager_id?: string | null
+          name?: string
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_units: {
+        Row: {
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string
+          id: string
+          label: string
+          property_id: string
+          square_feet: number | null
+          updated_at: string
+        }
+        Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          id?: string
+          label: string
+          property_id: string
+          square_feet?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          created_at?: string
+          id?: string
+          label?: string
+          property_id?: string
+          square_feet?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_units_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reusable_packages: {
         Row: {
           created_at: string | null
@@ -1558,6 +1610,142 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_messages: {
+        Row: {
+          attachments: Json
+          author_id: string
+          body: string
+          created_at: string
+          id: number
+          is_pinned: boolean
+          is_removed: boolean
+          pinned_at: string | null
+          pinned_by: string | null
+          property_id: string
+          removed_at: string | null
+          removed_by: string | null
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          author_id: string
+          body: string
+          created_at?: string
+          id?: number
+          is_pinned?: boolean
+          is_removed?: boolean
+          pinned_at?: string | null
+          pinned_by?: string | null
+          property_id: string
+          removed_at?: string | null
+          removed_by?: string | null
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: number
+          is_pinned?: boolean
+          is_removed?: boolean
+          pinned_at?: string | null
+          pinned_by?: string | null
+          property_id?: string
+          removed_at?: string | null
+          removed_by?: string | null
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_messages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_pinned_by_fkey"
+            columns: ["pinned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_messages_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "property_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_property_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          property_id: string
+          role: string
+          unit_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          property_id: string
+          role?: string
+          unit_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          property_id?: string
+          role?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_property_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_property_memberships_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_property_memberships_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "property_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           created_at: string
@@ -1598,6 +1786,12 @@ export type Database = {
       }
     }
     Views: {
+      staff_profiles: {
+        Row: {
+          id: string | null
+        }
+        Relationships: []
+      }
       package_utilization: {
         Row: {
           created_at: string | null

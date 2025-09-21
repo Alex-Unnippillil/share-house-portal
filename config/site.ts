@@ -19,6 +19,10 @@ export const siteConfig = {
       href: "/dashboard",
     },
     {
+      title: "Message Board",
+      href: "/message-board",
+    },
+    {
       title: "OpenAI",
       href: "/playground",
     },
@@ -50,5 +54,6 @@ export const siteConfig = {
     signup: "/onboarding",
     contact: "/contact",
     linkedin: "https://linkedin.com/in/robertmoureyjr",
+    messageBoard: "/message-board",
   },
 }

@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import Image from "next/image"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -188,6 +189,24 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
               </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Community message board</CardTitle>
+                  <CardDescription>
+                    Coordinate with residents, share announcements, and log maintenance
+                    updates in real time.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center justify-between gap-4">
+                  <p className="max-w-xl text-sm text-muted-foreground">
+                    Visit the message board to post updates, pin critical notices, and keep
+                    every unit informed.
+                  </p>
+                  <Button asChild>
+                    <Link href="/message-board">Open message board</Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
