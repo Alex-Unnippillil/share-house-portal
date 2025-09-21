@@ -1,10 +1,13 @@
 import * as React from 'react';
 
+import { parsePaymentLineItems, type RentPaymentRow } from "@/lib/payments/types";
+
 export interface PaymentReceiptLineItem {
   description: string;
   quantity?: number;
   unitAmount?: number;
   totalAmount?: number;
+  interval?: string | null;
 }
 
 export interface PaymentReceiptEmailProps {
@@ -48,12 +51,17 @@ const renderLineItems = (
 ) => {
   if (!items?.length) return null;
 
+  const showInterval = items.some((item) => Boolean(item.interval));
+
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
       <thead>
         <tr>
           <th style={{ textAlign: 'left', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Item</th>
           <th style={{ textAlign: 'right', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Qty</th>
+          {showInterval && (
+            <th style={{ textAlign: 'right', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Interval</th>
+          )}
           <th style={{ textAlign: 'right', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Unit</th>
           <th style={{ textAlign: 'right', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Total</th>
         </tr>
@@ -65,6 +73,11 @@ const renderLineItems = (
             <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
               {item.quantity ?? '-'}
             </td>
+            {showInterval && (
+              <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
+                {item.interval ?? '—'}
+              </td>
+            )}
             <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
               {item.unitAmount != null ? formatCurrency(item.unitAmount, currency) : '—'}
             </td>
@@ -268,3 +281,43 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
 };
 
 export default PaymentReceiptEmail;
+
+export interface RentPaymentReceiptOptions {
+  payment: RentPaymentRow;
+  tenantName: string;
+  businessName?: string;
+  supportEmail?: string;
+}
+
+export function buildPaymentReceiptFromRentPayment(
+  options: RentPaymentReceiptOptions,
+): PaymentReceiptEmailProps {
+  const lineItems = parsePaymentLineItems(options.payment.line_items).map((item) => ({
+    description: item.description,
+    quantity: item.quantity ?? undefined,
+    unitAmount: item.unit_amount != null ? item.unit_amount / 100 : undefined,
+    totalAmount: item.total != null ? item.total / 100 : undefined,
+    interval: item.interval ?? null,
+  }));
+
+  const amountPaidCents = options.payment.amount_paid_cents ?? options.payment.amount_due_cents ?? 0;
+  const currency = options.payment.currency ?? "usd";
+
+  return {
+    customerName: options.tenantName,
+    paymentId:
+      options.payment.stripe_payment_intent_id ??
+      options.payment.stripe_invoice_id ??
+      options.payment.id,
+    amountPaid: amountPaidCents / 100,
+    currency,
+    paymentDate: options.payment.paid_at ? new Date(options.payment.paid_at) : new Date(),
+    items: lineItems,
+    businessName: options.businessName,
+    supportEmail: options.supportEmail,
+    notes: options.payment.due_date
+      ? `Rent period due ${new Date(options.payment.due_date).toLocaleDateString()}`
+      : undefined,
+    subtotalAmount: options.payment.amount_due_cents ? options.payment.amount_due_cents / 100 : undefined,
+  };
+}
