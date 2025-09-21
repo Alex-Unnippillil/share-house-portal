@@ -1,71 +1,68 @@
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-  } from "@/components/ui/avatar"
-  
-  export function RecentSales() {
+"use client"
+
+import { useMemo } from "react"
+import { formatDistanceToNow } from "date-fns"
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { useNotificationFeed } from "@/hooks/use-notification-feed"
+
+const TYPE_EMOJI: Record<string, string> = {
+  "message:new": "💬",
+  "message:moderated": "🛡️",
+  "maintenance:update": "🛠️",
+}
+
+const formatTimestamp = (timestamp: string) => {
+  try {
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+  } catch (error) {
+    console.error("Failed to format timestamp", error)
+    return "just now"
+  }
+}
+
+export function RecentSales() {
+  const notifications = useNotificationFeed()
+  const items = useMemo(() => notifications.slice(0, 5), [notifications])
+
+  if (items.length === 0) {
     return (
-      <div className="space-y-8">
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/01.png" alt="Avatar" />
-            <AvatarFallback>OM</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Olivia Martin</p>
-            <p className="text-sm text-muted-foreground">
-              olivia.martin@email.com
-            </p>
-          </div>
-          <div className="ml-auto font-medium">+$1,999.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="flex size-9 items-center justify-center space-y-0 border">
-            <AvatarImage src="/avatars/02.png" alt="Avatar" />
-            <AvatarFallback>JL</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Jackson Lee</p>
-            <p className="text-sm text-muted-foreground">jackson.lee@email.com</p>
-          </div>
-          <div className="ml-auto font-medium">+$39.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/03.png" alt="Avatar" />
-            <AvatarFallback>IN</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Isabella Nguyen</p>
-            <p className="text-sm text-muted-foreground">
-              isabella.nguyen@email.com
-            </p>
-          </div>
-          <div className="ml-auto font-medium">+$299.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/04.png" alt="Avatar" />
-            <AvatarFallback>WK</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">William Kim</p>
-            <p className="text-sm text-muted-foreground">will@email.com</p>
-          </div>
-          <div className="ml-auto font-medium">+$99.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/05.png" alt="Avatar" />
-            <AvatarFallback>SD</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Sofia Davis</p>
-            <p className="text-sm text-muted-foreground">sofia.davis@email.com</p>
-          </div>
-          <div className="ml-auto font-medium">+$39.00</div>
-        </div>
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>No activity yet.</p>
+        <p>Notifications from messaging and maintenance will appear here.</p>
       </div>
     )
   }
+
+  return (
+    <div className="space-y-6">
+      {items.map((notification) => {
+        const emoji = TYPE_EMOJI[notification.type] ?? "💡"
+        return (
+          <div key={notification.id} className="flex items-start gap-3">
+            <Avatar className="size-9">
+              <AvatarFallback>{emoji}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium leading-none">{notification.title}</p>
+              {notification.description && (
+                <p className="text-sm text-muted-foreground">
+                  {notification.description}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {formatTimestamp(notification.createdAt)}
+              </p>
+            </div>
+            {notification.status && (
+              <Badge variant="secondary" className="whitespace-nowrap">
+                {notification.status}
+              </Badge>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}

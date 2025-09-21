@@ -450,38 +450,58 @@ export type Database = {
         }
         Relationships: []
       }
-      chat: {
+      buildings: {
         Row: {
           created_at: string
-          id: number
-          messages: string[] | null
-          path: string | null
-          profile_id: string
-          sharepath: string | null
-          title: string | null
-          user_id: string | null
+          id: string
+          name: string
+          updated_at: string
         }
         Insert: {
-          created_at: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
-          profile_id: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
-          id?: number
-          messages?: string[] | null
-          path?: string | null
-          profile_id?: string
-          sharepath?: string | null
-          title?: string | null
-          user_id?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
+      }
+      units: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       countries: {
         Row: {
@@ -509,6 +529,298 @@ export type Database = {
           name?: string | null
         }
         Relationships: []
+      }
+      message_moderation: {
+        Row: {
+          action: "pin" | "unpin" | "flag" | "unflag" | "delete" | "restore"
+          building_id: string
+          created_at: string
+          id: string
+          message_id: string
+          metadata: Json
+          performed_by: string | null
+          reason: string | null
+          thread_id: string
+        }
+        Insert: {
+          action: "pin" | "unpin" | "flag" | "unflag" | "delete" | "restore"
+          building_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          metadata?: Json
+          performed_by?: string | null
+          reason?: string | null
+          thread_id?: string
+        }
+        Update: {
+          action?: "pin" | "unpin" | "flag" | "unflag" | "delete" | "restore"
+          building_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          metadata?: Json
+          performed_by?: string | null
+          reason?: string | null
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_moderation_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_moderation_message_id_fkey",
+            columns: ["message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_moderation_performed_by_fkey",
+            columns: ["performed_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_moderation_thread_id_fkey",
+            columns: ["thread_id"],
+            isOneToOne: false,
+            referencedRelation: "threads",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      message_reactions: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          message_id: string
+          profile_id: string
+          reaction: string
+          unit_id: string | null
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          profile_id: string
+          reaction: string
+          unit_id?: string | null
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          profile_id?: string
+          reaction?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_reactions_message_id_fkey",
+            columns: ["message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_reactions_profile_id_fkey",
+            columns: ["profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "message_reactions_unit_id_fkey",
+            columns: ["unit_id"],
+            isOneToOne: false,
+            referencedRelation: "units",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          author_id: string
+          building_id: string
+          client_id: string | null
+          content: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          message_type: "text" | "poll" | "system"
+          metadata: Json
+          parent_message_id: string | null
+          status: "active" | "flagged" | "deleted"
+          thread_id: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          building_id: string
+          client_id?: string | null
+          content: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          message_type?: "text" | "poll" | "system"
+          metadata?: Json
+          parent_message_id?: string | null
+          status?: "active" | "flagged" | "deleted"
+          thread_id: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          building_id?: string
+          client_id?: string | null
+          content?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          message_type?: "text" | "poll" | "system"
+          metadata?: Json
+          parent_message_id?: string | null
+          status?: "active" | "flagged" | "deleted"
+          thread_id?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_author_id_fkey",
+            columns: ["author_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_parent_message_id_fkey",
+            columns: ["parent_message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_thread_id_fkey",
+            columns: ["thread_id"],
+            isOneToOne: false,
+            referencedRelation: "threads",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_unit_id_fkey",
+            columns: ["unit_id"],
+            isOneToOne: false,
+            referencedRelation: "units",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      threads: {
+        Row: {
+          building_id: string
+          created_at: string
+          created_by: string
+          id: string
+          last_message_at: string
+          metadata: Json
+          pinned_at: string | null
+          pinned_by: string | null
+          pinned_message_id: string | null
+          title: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          last_message_at?: string
+          metadata?: Json
+          pinned_at?: string | null
+          pinned_by?: string | null
+          pinned_message_id?: string | null
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_message_at?: string
+          metadata?: Json
+          pinned_at?: string | null
+          pinned_by?: string | null
+          pinned_message_id?: string | null
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threads_building_id_fkey",
+            columns: ["building_id"],
+            isOneToOne: false,
+            referencedRelation: "buildings",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_pinned_by_fkey",
+            columns: ["pinned_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_pinned_message_fkey",
+            columns: ["pinned_message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_unit_id_fkey",
+            columns: ["unit_id"],
+            isOneToOne: false,
+            referencedRelation: "units",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       crm_activities: {
         Row: {
@@ -1229,6 +1541,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          building_id: string | null
           card_style: Json | null
           card_styles: string | null
           company: string | null
@@ -1240,15 +1553,17 @@ export type Database = {
           job_title: string | null
           linkedin_url: string | null
           public_id: string | null
-          role: string | null
+          role: Database["public"]["Enums"]["tenant_role"] | null
           updated_at: string | null
           username: string | null
+          unit_id: string | null
           waddress: string | null
           website: string | null
           xhandle: string | null
         }
         Insert: {
           avatar_url?: string | null
+          building_id?: string | null
           card_style?: Json | null
           card_styles?: string | null
           company?: string | null
@@ -1260,15 +1575,17 @@ export type Database = {
           job_title?: string | null
           linkedin_url?: string | null
           public_id?: string | null
-          role?: string | null
+          role?: Database["public"]["Enums"]["tenant_role"] | null
           updated_at?: string | null
           username?: string | null
+          unit_id?: string | null
           waddress?: string | null
           website?: string | null
           xhandle?: string | null
         }
         Update: {
           avatar_url?: string | null
+          building_id?: string | null
           card_style?: Json | null
           card_styles?: string | null
           company?: string | null
@@ -1280,9 +1597,10 @@ export type Database = {
           job_title?: string | null
           linkedin_url?: string | null
           public_id?: string | null
-          role?: string | null
+          role?: Database["public"]["Enums"]["tenant_role"] | null
           updated_at?: string | null
           username?: string | null
+          unit_id?: string | null
           waddress?: string | null
           website?: string | null
           xhandle?: string | null
@@ -1775,6 +2093,7 @@ export type Database = {
         | "North America"
         | "South America"
       user_role: "user" | "admin"
+      tenant_role: "tenant" | "roommate" | "property_manager" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
