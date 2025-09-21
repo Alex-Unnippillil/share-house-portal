@@ -26,12 +26,12 @@ data: { user },} = await supabase.auth.getUser()
           Update your account...</p>
 
         <Link
-          href="/playground"
+          href="/amenities"
           target="_blank"
           rel="noreferrer"
           className="text-1xl font-bold tracking-tighter sm:text-3xl"
         >
-         Check out the OpenAI Playground!
+         Preview everything that’s included in your home
         </Link>
        </div>
       <Separator />
