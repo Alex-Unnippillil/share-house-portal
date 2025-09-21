@@ -1,40 +1,69 @@
-import { EmailTemplate } from "@/components/email-template";
-import { Resend } from 'resend';
+import type { Database } from '@/lib/supabase'
+import { EmailTemplate } from '@/components/email-template'
+import { assertTenantAccess, createSupbaseServerClient } from '@/utils/supaone'
+import { Resend } from 'resend'
 
-export async function POST() {
-  const resendApiKey = process.env.RESEND_API_KEY;
+const STAFF_ROLES: Database['public']['Enums']['user_role'][] = [
+  'platform_admin',
+  'property_manager',
+  'building_staff',
+]
 
-  if (!resendApiKey) {
-    return Response.json({ error: "Resend API key is not configured." }, { status: 500 });
+export async function POST(request: Request) {
+  const buildingId = request.headers.get('x-building-id')
+
+  if (!buildingId) {
+    return Response.json(
+      { error: 'Missing X-Building-Id header.' },
+      { status: 400 }
+    )
   }
 
-  const resend = new Resend(resendApiKey);
+  const resendApiKey = process.env.RESEND_API_KEY
+
+  if (!resendApiKey) {
+    return Response.json(
+      { error: 'Resend API key is not configured.' },
+      { status: 500 }
+    )
+  }
+
+  const supabase = createSupbaseServerClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return Response.json({ error: 'Authentication required.' }, { status: 401 })
+  }
+
+  await assertTenantAccess(supabase, buildingId, STAFF_ROLES)
+
+  const resend = new Resend(resendApiKey)
 
   try {
     const { data, error } = await resend.emails.send({
       from: 'Acme <onboarding@resend.dev>',
       to: ['delivered@resend.dev'],
-      subject: 'Hello world',
+      subject: `Building ${buildingId}: Hello world`,
       react: EmailTemplate({ firstName: 'John' }),
-    });
+    })
 
     if (error) {
-      // Type guard to ensure 'error' is an Error object
       if (error instanceof Error) {
-        return Response.json({ error: error.message }, { status: 500 });
-      } else {
-        // Handle cases where 'error' is not an Error object (e.g., a string or object)
-        return Response.json({ error: String(error) }, { status: 500 });
+        return Response.json({ error: error.message }, { status: 500 })
       }
+
+      return Response.json({ error: String(error) }, { status: 500 })
     }
 
-    return Response.json(data);
+    return Response.json(data)
   } catch (error) {
-    // Type guard for the catch block 'error' as well.
     if (error instanceof Error) {
-      return Response.json({ error: error.message }, { status: 500 });
-    } else {
-      return Response.json({ error: String(error) }, { status: 500 });
+      return Response.json({ error: error.message }, { status: 500 })
     }
+
+    return Response.json({ error: String(error) }, { status: 500 })
   }
 }

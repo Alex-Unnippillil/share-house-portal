@@ -1,53 +1,64 @@
-// app/schedule/page.tsx
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { ScheduleForm } from '@/components/schedule-form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Toaster } from "@/components/ui/toaster"
+import { redirect } from 'next/navigation'
+
+import { ScheduleForm } from '@/components/schedule-form'
+import { Toaster } from '@/components/ui/toaster'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { createSupbaseServerClient, resolveTenantContext, scopeQueryToBuilding } from '@/utils/supaone'
 
 export default async function SchedulePage() {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value;
-                },
-            },
-        }
-    );
+  const supabase = createSupbaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/auth')
+  }
 
-    if (!user) {
-        redirect('/auth'); // Redirect to login if not authenticated
-    }
+  const tenantContext = await resolveTenantContext(supabase, user.id)
 
-    // Optional: Fetch existing meetings for display
-    // const { data: meetings, error } = await supabase
-    //    .from('meetings')
-    //    .select('*')
-    //    .eq('user_id', user.id)
-    //    .order('start_time', { ascending: true });
-
+  if (!tenantContext.buildingId) {
     return (
-        <div className="container mx-auto flex justify-center p-4 pt-10">
-            <Card className="w-full max-w-2xl">
-                <CardHeader>
-                    <CardTitle>Schedule a New Meeting</CardTitle>
-                    <CardDescription>
-                        Fill in the details below to create a Google Calendar event with a Meet link.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ScheduleForm userEmail={user.email!} userName={user.user_metadata?.full_name || user.email!} />
-                </CardContent>
-            </Card>
-            {/* Toaster must be included in your layout or page for toasts to work */}
-            <Toaster />
-        </div>
-    );
+      <div className="container mx-auto flex justify-center p-4 pt-10">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle>Schedule a New Reservation</CardTitle>
+            <CardDescription>
+              We could not determine your building membership. Contact your property manager.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
+  const { data: amenities } = await scopeQueryToBuilding(
+    supabase,
+    'amenities',
+    tenantContext.buildingId
+  )
+    .select('id, name, description, amenity_type, requires_approval')
+    .eq('is_active', true)
+    .order('name', { ascending: true })
+
+  return (
+    <div className="container mx-auto flex justify-center p-4 pt-10">
+      <Card className="w-full max-w-2xl">
+        <CardHeader>
+          <CardTitle>Schedule a New Reservation</CardTitle>
+          <CardDescription>
+            Reserve shared amenities and automatically generate a Google Meet invite for your roommates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScheduleForm
+            userEmail={user.email ?? ''}
+            userName={user.user_metadata?.full_name || user.email || ''}
+            amenities={amenities ?? []}
+          />
+        </CardContent>
+      </Card>
+      <Toaster />
+    </div>
+  )
 }

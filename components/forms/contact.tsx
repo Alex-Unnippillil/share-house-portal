@@ -43,25 +43,29 @@ const router = useRouter();
                 },
         });
 
-        function onSubmit(data: ContactValues) {
-     setIsLoading(true)   
-     updateInqueries(data)
-    toast({
-      title: "Thank you for contacting Onyx. We received your inquiry and will respond within 24 hours.",
-
-    });
-
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
-  
-  router.push('/')
-
+        async function onSubmit(data: ContactValues) {
+    setIsLoading(true)
+    try {
+      await updateInqueries(data)
+      toast({
+        title: 'Thank you for contacting Onyx. We received your inquiry and will respond within 24 hours.',
+      })
+      router.push('/')
+    } catch (error) {
+      toast({
+        title: 'Unable to send your message',
+        description: error instanceof Error ? error.message : String(error),
+      })
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false)
+      }, 3000)
+    }
   }
 
 
 
-        return (
+return (
 
                         <Form {...form}>
                                 <form

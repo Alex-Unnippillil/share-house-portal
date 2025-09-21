@@ -1,34 +1,28 @@
-"use server";
+'use server'
 
-import { createSupbaseServerClient } from "@/utils/supaone";
+import { Resend } from 'resend'
 
-import { redirect } from "next/navigation";
-
-type formData = {
-    name: string;
-    email: string;
-    message: string;
+export type ContactFormData = {
+  name: string
+  email: string
+  message: string
 }
 
+export async function updateInqueries(data: ContactFormData) {
+  const resendApiKey = process.env.RESEND_API_KEY
 
-export async function updateInqueries(data:formData) {
-      const supabase = await createSupbaseServerClient();
+  if (!resendApiKey) {
+    throw new Error('Resend API key is not configured.')
+  }
 
-try {
+  const resend = new Resend(resendApiKey)
 
-const { data: inqueries, error } = await supabase
-  .from('inqueries')
-  .insert(
-    { name: data.name, email: data.email, message: data.message})
-  .select()
+  await resend.emails.send({
+    from: 'Portal <support@example.com>',
+    to: ['support@example.com'],
+    subject: `Contact request from ${data.name}`,
+    text: `${data.message}\n\nReply to: ${data.email}`,
+  })
 
-const result = JSON.stringify(data)
-  return result;
-
-
-if (error) throw error
-      alert('Message sent!')
-    } catch (error) {
-      alert('Error updating the data!')
-    }
+  return JSON.stringify({ ok: true })
 }

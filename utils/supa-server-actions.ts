@@ -1,8 +1,14 @@
 import { type CookieOptions, createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export function createClient(cookieStore: ReturnType<typeof cookies>) {
-  return createServerClient(
+import type { Database } from '@/lib/supabase'
+import type { TypedSupabaseClient } from '@/utils/typed-supabase-client'
+import { assertTenantAccess } from '@/utils/supaone'
+
+export function createClient(
+  cookieStore: ReturnType<typeof cookies>
+): TypedSupabaseClient {
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -19,4 +25,11 @@ export function createClient(cookieStore: ReturnType<typeof cookies>) {
       },
     }
   )
+}
+
+export async function createTenantScopedClient(buildingId: string): Promise<TypedSupabaseClient> {
+  const cookieStore = cookies()
+  const client = createClient(cookieStore)
+  await assertTenantAccess(client, buildingId)
+  return client
 }
