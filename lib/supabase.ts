@@ -1004,6 +1004,104 @@ export type Database = {
         }
         Relationships: []
       }
+      lease_documents: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          documenso_document_id: string
+          documenso_download_url: string | null
+          documenso_envelope_id: string | null
+          id: string
+          last_synced_at: string | null
+          lease_id: string
+          metadata: Json
+          name: string
+          requested_at: string | null
+          signing_embed_url: string | null
+          status: Database["public"]["Enums"]["lease_document_status"]
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          documenso_document_id: string
+          documenso_download_url?: string | null
+          documenso_envelope_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          lease_id: string
+          metadata?: Json
+          name: string
+          requested_at?: string | null
+          signing_embed_url?: string | null
+          status?: Database["public"]["Enums"]["lease_document_status"]
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          documenso_document_id?: string
+          documenso_download_url?: string | null
+          documenso_envelope_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          lease_id?: string
+          metadata?: Json
+          name?: string
+          requested_at?: string | null
+          signing_embed_url?: string | null
+          status?: Database["public"]["Enums"]["lease_document_status"]
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_documents_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leases: {
+        Row: {
+          created_at: string
+          description: string | null
+          documenso_template_id: string | null
+          effective_date: string | null
+          id: string
+          metadata: Json
+          termination_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          documenso_template_id?: string | null
+          effective_date?: string | null
+          id?: string
+          metadata?: Json
+          termination_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          documenso_template_id?: string | null
+          effective_date?: string | null
+          id?: string
+          metadata?: Json
+          termination_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       members_table: {
         Row: {
           created_at: string
@@ -1342,6 +1440,57 @@ export type Database = {
           weight?: number | null
         }
         Relationships: []
+      }
+      resident_leases: {
+        Row: {
+          created_at: string
+          documenso_recipient_id: string | null
+          id: string
+          is_primary: boolean
+          lease_id: string
+          resident_id: string
+          role: string
+          signed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          documenso_recipient_id?: string | null
+          id?: string
+          is_primary?: boolean
+          lease_id: string
+          resident_id: string
+          role?: string
+          signed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          documenso_recipient_id?: string | null
+          id?: string
+          is_primary?: boolean
+          lease_id?: string
+          resident_id?: string
+          role?: string
+          signed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_leases_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_leases_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shipments: {
         Row: {
@@ -1774,6 +1923,12 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      lease_document_status:
+        | "draft"
+        | "awaiting_signature"
+        | "completed"
+        | "declined"
+        | "cancelled"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
