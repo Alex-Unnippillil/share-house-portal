@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.8",
@@ -109,6 +110,10 @@
     "eslint-plugin-tailwindcss": "^3.14.2",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "@testing-library/jest-dom": "^6.4.3",
+    "@testing-library/react": "^14.3.1",
+    "jsdom": "^25.0.1",
+    "vitest": "^1.6.0"
   }
 }
