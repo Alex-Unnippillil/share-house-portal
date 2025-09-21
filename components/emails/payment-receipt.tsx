@@ -21,6 +21,13 @@ export interface PaymentReceiptEmailProps {
   subtotalAmount?: number;
   taxAmount?: number;
   discountAmount?: number;
+  propertyName?: string;
+  unitLabel?: string;
+  paymentMethod?: string;
+  billingPeriodStart?: Date | string | null;
+  billingPeriodEnd?: Date | string | null;
+  supportPhone?: string;
+  managerName?: string;
 }
 
 const formatCurrency = (amount: number, currency: string) => {
@@ -35,11 +42,31 @@ const formatCurrency = (amount: number, currency: string) => {
   }
 };
 
-const formatDate = (date: Date) => {
+const toDate = (value: Date | string | null | undefined) => {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed;
+};
+
+const formatDateTime = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
+};
+
+const formatDateRange = (start: Date | null, end: Date | null) => {
+  if (!start && !end) return null;
+  if (start && end) {
+    return `${new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(start)} - ${new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(end)}`;
+  }
+  const value = start ?? end;
+  if (!value) return null;
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(value);
 };
 
 const renderLineItems = (
@@ -155,7 +182,16 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
   subtotalAmount,
   taxAmount,
   discountAmount,
+  propertyName,
+  unitLabel,
+  paymentMethod,
+  billingPeriodStart,
+  billingPeriodEnd,
+  supportPhone,
+  managerName,
 }) => {
+  const normalizedPeriodStart = toDate(billingPeriodStart);
+  const normalizedPeriodEnd = toDate(billingPeriodEnd);
   return (
     <div
       style={{
@@ -210,7 +246,7 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
                 Paid On
               </p>
               <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
-                {formatDate(paymentDate)}
+                {formatDateTime(paymentDate)}
               </p>
             </div>
             <div>
@@ -221,7 +257,56 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
                 {formatCurrency(amountPaid, currency)}
               </p>
             </div>
+            {unitLabel && (
+              <div>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+                  Unit
+                </p>
+                <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>{unitLabel}</p>
+              </div>
+            )}
+            {paymentMethod && (
+              <div>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+                  Payment Method
+                </p>
+                <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>{paymentMethod}</p>
+              </div>
+            )}
           </div>
+
+          {(propertyName || normalizedPeriodStart || normalizedPeriodEnd) && (
+            <div
+              style={{
+                backgroundColor: '#e2e8f0',
+                borderRadius: '10px',
+                padding: '16px',
+                marginBottom: '24px',
+                display: 'grid',
+                gap: '8px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              }}
+            >
+              {propertyName && (
+                <div>
+                  <p style={{ margin: 0, color: '#475569', fontSize: '12px', textTransform: 'uppercase' }}>
+                    Property
+                  </p>
+                  <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>{propertyName}</p>
+                </div>
+              )}
+              {formatDateRange(normalizedPeriodStart, normalizedPeriodEnd) && (
+                <div>
+                  <p style={{ margin: 0, color: '#475569', fontSize: '12px', textTransform: 'uppercase' }}>
+                    Billing Period
+                  </p>
+                  <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
+                    {formatDateRange(normalizedPeriodStart, normalizedPeriodEnd)}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {renderLineItems(items, currency)}
 
@@ -257,9 +342,14 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
               ) : (
                 ' our support team'
               )}
-              .
+              {supportPhone ? ` or call ${supportPhone}` : ''}.
             </p>
-            <p style={{ margin: '16px 0 0' }}>Thank you for choosing {businessName}.</p>
+            {managerName && (
+              <p style={{ margin: '16px 0 0' }}>This receipt was issued by {managerName}.</p>
+            )}
+            <p style={{ margin: managerName ? '4px 0 0' : '16px 0 0' }}>
+              Thank you for choosing {businessName}.
+            </p>
           </div>
         </div>
       </div>
