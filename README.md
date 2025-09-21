@@ -62,7 +62,12 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
+  - Add authorized development and production URL's to Supabase URL config.
+  - Configure Documenso if you plan to manage lease agreements through the portal:
+    - DOCUMENSO_BASE_URL="https://documenso.your-domain.com"
+    - DOCUMENSO_API_KEY="a Documenso personal access token with template + envelope scopes"
+    - DOCUMENSO_WEBHOOK_SECRET="shared secret used to verify webhook payloads"
+    - (optional) Schedule a polling job using DOCUMENSO_POLL_INTERVAL_SECONDS if webhooks are unavailable.
 ### Run  
 - Development server:
 

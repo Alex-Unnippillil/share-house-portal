@@ -914,6 +914,121 @@ export type Database = {
         }
         Relationships: []
       }
+      document_download_audit: {
+        Row: {
+          document_id: string
+          documenso_envelope_id: string | null
+          downloaded_at: string
+          downloaded_by: string | null
+          id: string
+          lease_version_id: string | null
+          notes: string | null
+          remote_addr: string | null
+          source: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          document_id: string
+          documenso_envelope_id?: string | null
+          downloaded_at?: string
+          downloaded_by?: string | null
+          id?: string
+          lease_version_id?: string | null
+          notes?: string | null
+          remote_addr?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          document_id?: string
+          documenso_envelope_id?: string | null
+          downloaded_at?: string
+          downloaded_by?: string | null
+          id?: string
+          lease_version_id?: string | null
+          notes?: string | null
+          remote_addr?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_download_audit_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_download_audit_downloaded_by_fkey"
+            columns: ["downloaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_download_audit_lease_version_id_fkey"
+            columns: ["lease_version_id"]
+            isOneToOne: false
+            referencedRelation: "lease_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          active_envelope_id: string | null
+          created_at: string
+          created_by: string | null
+          documenso_template_id: string
+          id: string
+          metadata: Json
+          status: Database["public"]["Enums"]["document_status"]
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active_envelope_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          documenso_template_id: string
+          id?: string
+          metadata?: Json
+          status?: Database["public"]["Enums"]["document_status"]
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active_envelope_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          documenso_template_id?: string
+          id?: string
+          metadata?: Json
+          status?: Database["public"]["Enums"]["document_status"]
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gpt_one: {
         Row: {
           created_at: string
@@ -967,6 +1082,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      lease_versions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          documenso_envelope_id: string
+          document_id: string
+          expires_at: string | null
+          id: string
+          sent_at: string | null
+          signers: Json
+          status: Database["public"]["Enums"]["document_status"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          documenso_envelope_id: string
+          document_id: string
+          expires_at?: string | null
+          id?: string
+          sent_at?: string | null
+          signers?: Json
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          documenso_envelope_id?: string
+          document_id?: string
+          expires_at?: string | null
+          id?: string
+          sent_at?: string | null
+          signers?: Json
+          status?: Database["public"]["Enums"]["document_status"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lease_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meetings: {
         Row: {
@@ -1774,6 +1939,14 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      document_status:
+        | "draft"
+        | "sent"
+        | "viewed"
+        | "completed"
+        | "declined"
+        | "expired"
+        | "cancelled"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
@@ -2232,6 +2405,15 @@ export const Constants = {
         "Oceania",
         "North America",
         "South America",
+      ],
+      document_status: [
+        "draft",
+        "sent",
+        "viewed",
+        "completed",
+        "declined",
+        "expired",
+        "cancelled",
       ],
       user_role: ["user", "admin"],
     },
