@@ -239,6 +239,226 @@ export type Database = {
           },
         ]
       }
+      directory_buildings: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string
+          postal_code: string | null
+          state: string | null
+          status: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          postal_code?: string | null
+          state?: string | null
+          status?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          postal_code?: string | null
+          state?: string | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      directory_residents: {
+        Row: {
+          building_id: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          metadata: Json | null
+          move_in_date: string | null
+          move_out_date: string | null
+          phone: string | null
+          status: string | null
+          tenant_id: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          building_id?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          metadata?: Json | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          phone?: string | null
+          status?: string | null
+          tenant_id: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          metadata?: Json | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          phone?: string | null
+          status?: string | null
+          tenant_id?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_residents_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "directory_buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directory_residents_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "directory_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directory_staff: {
+        Row: {
+          building_id: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          metadata: Json | null
+          phone: string | null
+          role: string | null
+          status: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          building_id?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          metadata?: Json | null
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          building_id?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          metadata?: Json | null
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_staff_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "directory_buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directory_units: {
+        Row: {
+          bathrooms: number | null
+          bedrooms: number | null
+          building_id: string
+          created_at: string
+          floor: string | null
+          id: string
+          metadata: Json | null
+          square_feet: number | null
+          status: string | null
+          tenant_id: string
+          unit_number: string
+          updated_at: string
+        }
+        Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_id: string
+          created_at?: string
+          floor?: string | null
+          id?: string
+          metadata?: Json | null
+          square_feet?: number | null
+          status?: string | null
+          tenant_id: string
+          unit_number: string
+          updated_at?: string
+        }
+        Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_id?: string
+          created_at?: string
+          floor?: string | null
+          id?: string
+          metadata?: Json | null
+          square_feet?: number | null
+          status?: string | null
+          tenant_id?: string
+          unit_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_units_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "directory_buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_analysis_results: {
         Row: {
           agent_id: string | null
