@@ -1,14 +1,13 @@
 "use client"
 
-import Link from 'next/link'
-import { siteConfig } from "@/config/site"
+import Link from "next/link"
 import { motion } from "framer-motion"
-import { Button, buttonVariants } from "@/components/ui/button"
+
+import { siteConfig } from "@/config/site"
+import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useState } from 'react'
 
 export default function Cta() {
-  const [isLoading, setIsLoading] = useState<boolean>(false)
   return (
     <section className="py-4 sm:py-6 lg:py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,9 +24,11 @@ export default function Cta() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
               >
-                <CardTitle className="text-3xl font-extrabold sm:text-5xl md:text-6xl lg:text-7xl">Ready for Onyx?</CardTitle>
+                <CardTitle className="text-3xl font-extrabold sm:text-5xl md:text-6xl lg:text-7xl">
+                  Launch your shared house portal
+                </CardTitle>
                 <CardDescription className="mt-2 text-2xl font-bold">
-                  Book a meeting today.
+                  Schedule a Cal.com walkthrough with our team.
                 </CardDescription>
               </motion.div>
             </CardHeader>
@@ -38,7 +39,8 @@ export default function Cta() {
                 transition={{ delay: 0.3, duration: 0.5 }}
                 className="mt-4 text-lg text-gray-600 dark:text-gray-300"
               >
-                Discover how Onyx is redefining e-commerce. 
+                Explore Stripe-powered rent collection, Documenso lease workflows, amenity reservations, and overnight visitor
+                approvals in a single session.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -47,15 +49,9 @@ export default function Cta() {
                 className="mt-8 flex justify-center"
               >
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-        <Link
-          target="_blank"
-          rel="noreferrer"
-          href={siteConfig.links.contact}
-          className={buttonVariants({ variant: "default"})}
-        >
-          Get Started
-        </Link>
-                 
+                  <Link href={siteConfig.links.contact} className={buttonVariants()}>
+                    Schedule a walkthrough
+                  </Link>
                 </motion.div>
               </motion.div>
             </CardContent>
@@ -65,4 +61,3 @@ export default function Cta() {
     </section>
   )
 }
-

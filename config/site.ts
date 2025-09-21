@@ -1,9 +1,9 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
-  name: "Onyx",
+  name: "ShareHouse Portal",
   description:
-    "Onyx SaaS PWA Template with validated CRUD ops, user authentication + RBAC, maximum header security, Rust API runtime, TanStack, and more.",
+    "Shared house tenant portal with rent payments, amenity scheduling, digital leases, realtime community tools, and an admin back office.",
   mainNav: [
     {
       title: "Home",

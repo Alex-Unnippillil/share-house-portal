@@ -1,42 +1,47 @@
 "use client"
 
 import type React from "react"
-
+import { CalendarClock, CreditCard, Database, FileSignature, Server, Sparkles } from "lucide-react"
 import { motion } from "framer-motion"
-import { Mail, BitcoinIcon, Palette, DollarSign, type LucideIcon } from "lucide-react"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { Icons } from "./icons"
 
 interface Feature {
-  icon: React.ReactElement<LucideIcon>
+  icon: React.ReactElement
   title: string
   description: string
 }
 
 const features: Feature[] = [
   {
-    icon: <Mail className="size-8" />,
-    title: "USPS-Compliant Solutions",
-    description:
-      "Engineered to bring high tech to global supply chain and logistics industries.",
+    icon: <Server className="size-8" />,
+    title: "Next.js 14 App Router",
+    description: "Server Actions, streaming, and instant navigation keep tenants productive on every device.",
   },
   {
-    icon: <BitcoinIcon className="size-8" />,
-    title: "Enterprise Blockchain",
-    description:
-      "Onyx's next generation blockchain architecture is designed for optimal enterprise usability.",
+    icon: <Database className="size-8" />,
+    title: "Supabase Postgres platform",
+    description: "Auth, storage, and realtime channels secure rent, amenity, and message board data out of the box.",
   },
   {
-    icon: <Palette className="size-8" />,
-    title: "Custom Branding",
-    description: "Onyx white label enhances your brand's sustainability story.",
+    icon: <CreditCard className="size-8" />,
+    title: "Stripe-powered rent",
+    description: "Automated billing, reminders, and ledger exports streamline monthly close for house managers.",
   },
   {
-    icon: <DollarSign className="size-8" />,
-    title: "Lower Costs, Higher Impact",
-    description:
-      "Cut costs, exceed sustainability goals without added complexity.",
+    icon: <CalendarClock className="size-8" />,
+    title: "Cal.com integrations",
+    description: "Sync amenity reservations and overnight visitor bookings to a single source of truth with no double-booking.",
+  },
+  {
+    icon: <FileSignature className="size-8" />,
+    title: "Documenso documents",
+    description: "Deliver downloadable leases, capture signatures, and manage compliance with version-controlled templates.",
+  },
+  {
+    icon: <Sparkles className="size-8" />,
+    title: "shadcn/ui + Tailwind on Vercel",
+    description: "Accessible components and zero-config deployments keep the portal polished, fast, and dependable.",
   },
 ]
 
@@ -66,13 +71,13 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, ind
   )
 }
 
-const WhyOnyx: React.FC = () => {
+const WhyShareHouse: React.FC = () => {
   return (
     <section className="bg-background py-16">
       <div className="container mx-auto px-4">
-        <h2 className="mb-12 text-center text-3xl font-bold text-foreground md:text-4xl">Why Onyx?</h2>
-   
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <h2 className="mb-12 text-center text-3xl font-bold text-foreground md:text-4xl">Why ShareHouse Portal?</h2>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <FeatureCard key={index} {...feature} index={index} />
           ))}
@@ -82,5 +87,4 @@ const WhyOnyx: React.FC = () => {
   )
 }
 
-export default WhyOnyx
-
+export default WhyShareHouse
