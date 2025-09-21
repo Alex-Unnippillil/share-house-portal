@@ -1,0 +1,3 @@
+packages:
+  - "mobile/packages/*"
+  - "mobile/apps/*"

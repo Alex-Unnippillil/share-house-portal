@@ -46,6 +46,7 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
 - [Rust runtime for Vercel Serverless Functions](https://github.com/vercel-community/rust)
 
 ### Getting started with Onyx:
+- Review the [development environment guide](./docs/development.md) for tooling and workspace conventions.
 - First, configure your environment
   - Create a file named .env.local in project root
   - Create a Supabase account and add the following to your env file
