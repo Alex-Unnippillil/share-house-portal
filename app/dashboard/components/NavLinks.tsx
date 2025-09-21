@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
+import { CardStackIcon, PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -8,18 +8,23 @@ import { usePathname } from "next/navigation";
 export default function NavLinks() {
 	const pathname = usePathname();
 
-	const links = [
-		{
-			href: "/dashboard/members",
-			text: "Members",
-			Icon: PersonIcon,
-		},
-		{
-			href: "/dashboard/todo",
-			text: "Todo",
-			Icon: CrumpledPaperIcon,
-		},
-	];
+        const links = [
+                {
+                        href: "/dashboard/payments",
+                        text: "Payments",
+                        Icon: CardStackIcon,
+                },
+                {
+                        href: "/dashboard/members",
+                        text: "Members",
+                        Icon: PersonIcon,
+                },
+                {
+                        href: "/dashboard/todo",
+                        text: "Todo",
+                        Icon: CrumpledPaperIcon,
+                },
+        ];
 
 	return (
 		<div className="space-y-5">

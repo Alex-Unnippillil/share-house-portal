@@ -1,116 +1,137 @@
+import type Stripe from 'stripe';
+
 import { PaymentReceiptEmail } from '@/components/emails/payment-receipt';
+import { buildReceiptPayload } from '@/lib/payments/stripe-format';
+import { getStripeClient } from '@/lib/stripe';
 import { Resend } from 'resend';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-const lineItemSchema = z.object({
-  description: z.string().min(1, "Line item description is required."),
-  quantity: z.number().positive().optional(),
-  unitAmount: z.number().nonnegative().optional(),
-  totalAmount: z.number().nonnegative().optional(),
-});
-
-const paymentReceiptSchema = z.object({
-  customerEmail: z.string().email(),
-  customerName: z.string().min(1),
-  paymentId: z.string().min(1),
-  amountPaid: z.number().positive(),
-  currency: z.string().min(3).max(10),
-  paymentDate: z.coerce.date().optional(),
-  items: z.array(lineItemSchema).optional(),
-  businessName: z.string().optional(),
-  supportEmail: z.string().email().optional(),
-  billingAddress: z.string().optional(),
-  notes: z.string().optional(),
-  subtotalAmount: z.number().nonnegative().optional(),
-  taxAmount: z.number().nonnegative().optional(),
-  discountAmount: z.number().nonnegative().optional(),
+const receiptRequestSchema = z.object({
+  chargeId: z.string().min(1, 'Stripe charge ID is required'),
   sendCopyTo: z.array(z.string().email()).optional(),
 });
 
-export async function POST(request: Request) {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (!resendApiKey) {
-    return Response.json(
-      { error: "Resend API key is not configured." },
-      { status: 500 },
-    );
+const formatBillingAddress = (charge: Stripe.Charge): string | undefined => {
+  const address = charge.billing_details?.address;
+  if (!address) return undefined;
+
+  const parts = [
+    address.line1,
+    address.line2,
+    [address.city, address.state, address.postal_code].filter(Boolean).join(', '),
+    address.country,
+  ].filter((part) => part && part.length > 0) as string[];
+
+  if (!parts.length) return undefined;
+  return parts.join('\n');
+};
+
+let resendClient: Resend | null = null;
+
+const getResendClient = () => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('Resend API key is not configured.');
+  }
+  if (!resendClient) {
+    resendClient = new Resend(apiKey);
+  }
+  return resendClient;
+};
+
+const getStripeInvoice = async (charge: Stripe.Charge) => {
+  const stripe = getStripeClient();
+  if (charge.invoice && typeof charge.invoice !== 'string') {
+    return charge.invoice;
+  }
+  if (typeof charge.invoice === 'string') {
+    return await stripe.invoices.retrieve(charge.invoice, {
+      expand: ['lines.data.price.product'],
+    });
+  }
+  return null;
+};
+
+const expandCharge = async (chargeId: string) => {
+  const stripe = getStripeClient();
+  const charge = await stripe.charges.retrieve(chargeId, {
+    expand: ['invoice.lines.data.price.product', 'customer'],
+  });
+  return charge;
+};
+
+export const sendReceiptEmail = async ({
+  chargeId,
+  additionalRecipients = [],
+}: {
+  chargeId: string;
+  additionalRecipients?: string[];
+}) => {
+  const charge = await expandCharge(chargeId);
+  if (!charge.paid) {
+    throw new Error('Charge is not marked as paid.');
   }
 
+  const invoice = await getStripeInvoice(charge);
+  const receiptPayload = buildReceiptPayload({ charge, invoice });
+
+  const billingAddress = formatBillingAddress(charge);
+  const fromAddress =
+    process.env.RESEND_RECEIPTS_FROM ?? 'Onyx Receipts <receipts@resend.dev>';
+
+  const resend = getResendClient();
+
+  const { customerEmail, ...emailProps } = receiptPayload;
+  const toRecipients = [customerEmail, ...additionalRecipients];
+
+  const { error } = await resend.emails.send({
+    from: fromAddress,
+    to: toRecipients,
+    subject: `Receipt for payment ${emailProps.paymentId}`,
+    react: PaymentReceiptEmail({
+      ...emailProps,
+      billingAddress,
+      supportEmail: process.env.RECEIPTS_SUPPORT_EMAIL ?? undefined,
+    }),
+  });
+
+  if (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(message);
+  }
+
+  return {
+    paymentId: emailProps.paymentId,
+    recipients: toRecipients,
+  };
+};
+
+export async function POST(request: Request) {
   let payload: unknown;
   try {
     payload = await request.json();
   } catch (error) {
-    return Response.json(
-      { error: "Invalid JSON payload." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400 });
   }
 
-  const parsed = paymentReceiptSchema.safeParse(payload);
-
+  const parsed = receiptRequestSchema.safeParse(payload);
   if (!parsed.success) {
-    return Response.json(
-      {
-        error: "Invalid payment receipt payload.",
-        details: parsed.error.flatten(),
-      },
-      { status: 400 },
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 422 },
     );
   }
-
-  const {
-    customerEmail,
-    customerName,
-    paymentId,
-    amountPaid,
-    currency,
-    paymentDate,
-    items,
-    businessName,
-    supportEmail,
-    billingAddress,
-    notes,
-    subtotalAmount,
-    taxAmount,
-    discountAmount,
-    sendCopyTo,
-  } = parsed.data;
-
-  const resend = new Resend(resendApiKey);
-
-  const fromAddress = process.env.RESEND_RECEIPTS_FROM ?? 'Onyx Receipts <receipts@resend.dev>';
-  const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])];
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: fromAddress,
-      to: emailRecipients,
-      subject: `Receipt for payment ${paymentId}`,
-      react: PaymentReceiptEmail({
-        customerName,
-        paymentId,
-        amountPaid,
-        currency,
-        paymentDate: paymentDate ?? new Date(),
-        items,
-        businessName,
-        supportEmail,
-        billingAddress,
-        notes,
-        subtotalAmount,
-        taxAmount,
-        discountAmount,
-      }),
+    const result = await sendReceiptEmail({
+      chargeId: parsed.data.chargeId,
+      additionalRecipients: parsed.data.sendCopyTo ?? [],
     });
 
-    if (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return Response.json({ error: message }, { status: 502 });
-    }
-
-    return Response.json({ id: data?.id ?? null });
+    return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return Response.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
