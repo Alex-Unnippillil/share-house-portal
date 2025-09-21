@@ -3,40 +3,35 @@ export type SiteConfig = typeof siteConfig
 export const siteConfig = {
   name: "Onyx",
   description:
-    "Onyx SaaS PWA Template with validated CRUD ops, user authentication + RBAC, maximum header security, Rust API runtime, TanStack, and more.",
+    "Roommate portal for rent payments, amenity bookings, shared documents, and realtime communication.",
   mainNav: [
     {
       title: "Home",
       href: "/",
-    },
-
-    {
-      title: "Account",
-      href: "/account",
     },
     {
       title: "Dashboard",
       href: "/dashboard",
     },
     {
-      title: "OpenAI",
-      href: "/playground",
+      title: "Payments",
+      href: "/payments",
     },
     {
-      title: "Podcasts",
-      href: "/music",
+      title: "Bookings",
+      href: "/bookings",
     },
     {
-      title: "Blog",
-      href: "/blog",
+      title: "Documents",
+      href: "/documents",
     },
     {
-      title: "RBAC",
-      href: "/dashboard/members",
+      title: "Messaging",
+      href: "/messaging",
     },
     {
-      title: "About",
-      href: "/about",
+      title: "Account",
+      href: "/account",
     },
     {
       title: "Contact",

@@ -11,34 +11,29 @@ export const docsConfig: DocsConfig = {
       title: "Home",
       href: "/",
     },
-    { 
-      title: "Account",
-      href: "/account",
-    },
-    { 
+    {
       title: "Dashboard",
       href: "/dashboard",
     },
-    { 
-      title: "OpenAI",
-      href: "/playground",
+    {
+      title: "Payments",
+      href: "/payments",
     },
-
-    { 
-      title: "Podcasts",
-      href: "/music",
+    {
+      title: "Bookings",
+      href: "/bookings",
     },
-    { 
-      title: "Blog",
-      href: "/blog",
+    {
+      title: "Documents",
+      href: "/documents",
     },
-    { 
-      title: "RBAC",
-      href: "/dashboard/members",
+    {
+      title: "Messaging",
+      href: "/messaging",
     },
-    { 
-      title: "About",
-      href: "/about",
+    {
+      title: "Account",
+      href: "/account",
     },
     {
       title: "Contact",

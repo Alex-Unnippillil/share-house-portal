@@ -8,25 +8,36 @@ export function SiteFooter() {
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-         <Link className="ml-0 flex items-center gap-1" href="/" target="_blank"
-              rel="noreferrer">
+         <Link className="ml-0 flex items-center gap-1" href="/">
           <Icons.logo className="size-6" />
           <span className="inline-block font-bold">{siteConfig.name}</span>
         </Link>
-          <p className="text-sm text-muted-foreground">Pioneering real world asset solutions for the digital age.</p>
+          <p className="text-sm text-muted-foreground">
+            Manage rent, roommates, and shared amenities from a single, secure portal.
+          </p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-12 sm:grid-cols-3">
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Solutions</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="#" className="text-muted-foreground transition-colors hover:text-primary">
-                  Rewards
+                <Link href="/payments" className="text-muted-foreground transition-colors hover:text-primary">
+                  Rent payments
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
-                  Contact
+                <Link href="/bookings" className="text-muted-foreground transition-colors hover:text-primary">
+                  Amenity bookings
+                </Link>
+              </li>
+              <li>
+                <Link href="/documents" className="text-muted-foreground transition-colors hover:text-primary">
+                  Document vault
+                </Link>
+              </li>
+              <li>
+                <Link href="/messaging" className="text-muted-foreground transition-colors hover:text-primary">
+                  Roommate messaging
                 </Link>
               </li>
             </ul>
@@ -40,8 +51,18 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-muted-foreground transition-colors hover:text-primary">
-                  Blog
+                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="text-muted-foreground transition-colors hover:text-primary">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-muted-foreground transition-colors hover:text-primary">
+                  Terms of Service
                 </Link>
               </li>
             </ul>
