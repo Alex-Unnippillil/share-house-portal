@@ -1,6 +1,8 @@
 import { google } from 'googleapis';
 import { GaxiosError } from 'gaxios'; // Part of googleapis
 
+import { appEventBus } from '@/lib/event-bus';
+
 // Configure the Google OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -79,6 +81,14 @@ export async function createGoogleCalendarEvent({
     });
 
     console.log('Google Calendar Event created: %s', response.data.htmlLink);
+    appEventBus.emit('calendar:eventCreated', {
+      summary,
+      description,
+      startTime,
+      endTime,
+      attendeeEmail,
+      attendeeName,
+    });
     return { success: true, eventId: response.data.id, link: response.data.htmlLink };
 
   } catch (error: unknown) {
