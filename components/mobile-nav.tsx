@@ -32,16 +32,18 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
         </Button>
       </SheetTrigger>
       <div className="xs:items-center ml-1 gap-4 md:hidden">
-        <Link href="/" className="flex items-center space-x-2">
-          <Icons.logo className="size-6" />
-          <span className="font-bold">{siteConfig.name}</span>
+        <Link href="/" className="inline-flex">
+          <span className="flex items-center gap-2">
+            <Icons.logo className="size-6" />
+            <span className="font-bold">{siteConfig.name}</span>
+          </span>
         </Link>
       </div>
 
       <SheetContent side="left" className="pr-0">
         <MobileLink
           href="/"
-          className="flex items-center"
+          className="inline-flex"
           onOpenChange={setOpen}
         >
           <Icons.logo className="mr-1 size-6" />
@@ -163,7 +165,7 @@ function MobileLink({
       className={cn(className)}
       {...props}
     >
-      {children}
+      <span className="inline-flex items-center gap-2">{children}</span>
     </Link>
   )
 }

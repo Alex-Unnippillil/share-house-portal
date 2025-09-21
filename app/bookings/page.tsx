@@ -1,7 +1,7 @@
 import Link from "next/link"
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 
 const bookingHighlights = [
@@ -38,9 +38,12 @@ export default function BookingsPage() {
           </p>
         </div>
         <Separator />
-        <Button asChild variant="secondary" className="w-fit">
-          <Link href="/schedule">Open amenity calendar</Link>
-        </Button>
+        <Link
+          href="/schedule"
+          className={buttonVariants({ variant: "secondary" })}
+        >
+          Open amenity calendar
+        </Link>
       </header>
       <div className="grid gap-6 md:grid-cols-2">
         {bookingHighlights.map((item) => (
