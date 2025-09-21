@@ -2018,6 +2018,202 @@ export type Database = {
         ]
       }
     }
+
+      rent_payments: {
+        Row: {
+          amount_due_cents: number
+          amount_paid_cents: number | null
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          due_date: string | null
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          line_items: Json
+          metadata: Json
+          paid_at: string | null
+          receipt_url: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_subscription_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due_cents: number
+          amount_paid_cents?: number | null
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          line_items?: Json
+          metadata?: Json
+          paid_at?: string | null
+          receipt_url?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due_cents?: number
+          amount_paid_cents?: number | null
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          line_items?: Json
+          metadata?: Json
+          paid_at?: string | null
+          receipt_url?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
+      stripe_customers: {
+        Row: {
+          billing_email: string | null
+          created_at: string
+          default_payment_method_id: string | null
+          id: string
+          livemode: boolean
+          metadata: Json
+          stripe_customer_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          created_at?: string
+          default_payment_method_id?: string | null
+          id?: string
+          livemode?: boolean
+          metadata?: Json
+          stripe_customer_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          created_at?: string
+          default_payment_method_id?: string | null
+          id?: string
+          livemode?: boolean
+          metadata?: Json
+          stripe_customer_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
+      tenant_billing_metadata: {
+        Row: {
+          autopay_day_of_month: number | null
+          autopay_enabled: boolean
+          autopay_payment_method_id: string | null
+          autopay_status: string | null
+          created_at: string
+          currency: string
+          default_payment_method_id: string | null
+          id: string
+          last_synced_at: string | null
+          metadata: Json
+          monthly_rent_cents: number | null
+          next_billing_date: string | null
+          stripe_subscription_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          autopay_day_of_month?: number | null
+          autopay_enabled?: boolean
+          autopay_payment_method_id?: string | null
+          autopay_status?: string | null
+          created_at?: string
+          currency?: string
+          default_payment_method_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json
+          monthly_rent_cents?: number | null
+          next_billing_date?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          autopay_day_of_month?: number | null
+          autopay_enabled?: boolean
+          autopay_payment_method_id?: string | null
+          autopay_status?: string | null
+          created_at?: string
+          currency?: string
+          default_payment_method_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json
+          monthly_rent_cents?: number | null
+          next_billing_date?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_billing_metadata_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
     Views: {
       [_ in never]: never
     }

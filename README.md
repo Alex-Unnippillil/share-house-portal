@@ -54,9 +54,14 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - NEXT_PUBLIC_SUPABASE_ANON_KEY="Your supabase anon key"
     - SUPABASE_JWT_SECRET="Your supabase JWT secret"
     - NEXT_PUBLIC_SUPABASE_URL="Your supabase project URL"
-    - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
+    - SUPABASE_SERVICE_ROLE_KEY="Your supabase service role key"
     - NEXT_PUBLIC_SITE_URL="http://localhost:3000" # Used for auth redirects in development
     - SUPABASE_WORKOS_CONNECTION_ID="Your WorkOS connection ID" # Optional, required to enable SSO via WorkOS
+    - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="Your Stripe publishable key"
+    - STRIPE_SECRET_KEY="Your Stripe secret key"
+    - STRIPE_WEBHOOK_SECRET="Your Stripe webhook signing secret"
+    - STRIPE_BILLING_PORTAL_RETURN_URL="https://your-app.com/dashboard/payments" # optional override
+    - SUPPORT_EMAIL="support@your-domain.com" # optional, used on receipts
 
   - Enable WorkOS SSO (optional)
     - Create a WorkOS connection in the Supabase dashboard and copy the connection ID from the Connections table

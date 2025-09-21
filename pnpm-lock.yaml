@@ -101,6 +101,9 @@ importers:
       '@react-three/fiber':
         specifier: 8.15.12
         version: 8.15.12(@types/react@18.3.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.160.0)
+      '@stripe/stripe-js':
+        specifier: ^3.3.0
+        version: 3.5.0
       '@supabase-cache-helpers/postgrest-react-query':
         specifier: ^1.4.0
         version: 1.4.0(@supabase/postgrest-js@1.9.2)(@supabase/supabase-js@2.39.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))(@tanstack/react-query@5.51.9(react@18.2.0))(react@18.2.0)
@@ -239,6 +242,9 @@ importers:
       sonner:
         specifier: ^1.5.0
         version: 1.5.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      stripe:
+        specifier: ^15.8.0
+        version: 15.12.0
       tailwind-merge:
         specifier: ^2.2.0
         version: 2.2.0
@@ -2607,6 +2613,10 @@ packages:
   '@selderee/plugin-htmlparser2@0.11.0':
     resolution: {integrity: sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ==}
 
+  '@stripe/stripe-js@3.5.0':
+    resolution: {integrity: sha512-pKS3wZnJoL1iTyGBXAvCwduNNeghJHY6QSRSNNvpYnrrQrLZ6Owsazjyynu0e0ObRgks0i7Rv+pe2M7/MBTZpQ==}
+    engines: {node: '>=12.16'}
+
   '@supabase-cache-helpers/postgrest-core@0.3.0':
     resolution: {integrity: sha512-anLCZeyKcTl5ggrn2xyZ7WRq6q1QnHxIemevg7OX+3NOw+xatZ0g0HpBBFrQfRLTz2UD6K5oeqmIKN9EPrNgeA==}
     peerDependencies:
@@ -2761,9 +2771,6 @@ packages:
 
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
-
-  '@types/estree@1.0.7':
-    resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
@@ -3791,9 +3798,6 @@ packages:
 
   es-iterator-helpers@1.0.15:
     resolution: {integrity: sha512-GhoY8uYqd6iwUl2kgjTm4CZAf6oo5mHK7BPqx3rKgx893YSsy0LGHV6gfqqQvZt/8xM8xeOnfXBCfqclMKkJ5g==}
-
-  es-module-lexer@1.6.0:
-    resolution: {integrity: sha512-qqnD1yMU6tk/jnaMosogGySTZP8YtUgAffA9nMN+E/rjxcfRQ6IEk7IiozUjgxKoFHBGjTLnrHB/YC45r/59EQ==}
 
   es-module-lexer@1.7.0:
     resolution: {integrity: sha512-jEQoCwk8hyb2AZziIOLhDqpm5+2ww5uIE6lkO/6jcOCusfk6LhMHpXXfBLXTZ7Ydyt0j4VoUQv6uGNYbdW+kBA==}
@@ -5389,10 +5393,6 @@ packages:
     resolution: {integrity: sha512-D/kj5JNu6oo2EIy+XL/26JEDTlIbB8hw85G8StOE6L74RQAVVP5rej6wxCNqyMbR4RkPfqvezVbPw81Ngd6Kcw==}
     engines: {node: ^10 || ^12 || >=14}
 
-  postcss@8.5.3:
-    resolution: {integrity: sha512-dle9A3yYxlBSrt8Fu+IpjGT8SY8hN0mlaA6GY8t0P5PjIOZemULz/E2Bnm/2dcUOena75OTNkHI76uZBNUUq3A==}
-    engines: {node: ^10 || ^12 || >=14}
-
   postcss@8.5.6:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
@@ -5939,6 +5939,10 @@ packages:
 
   strip-literal@3.0.0:
     resolution: {integrity: sha512-TcccoMhJOM3OebGhSBEmp3UZ2SfDMZUEBdRA/9ynfLi8yYajyWX3JiXArcJt4Umh4vISpspkQIY8ZZoCqjbviA==}
+
+  stripe@15.12.0:
+    resolution: {integrity: sha512-slTbYS1WhRJXVB8YXU8fgHizkUrM9KJyrw4Dd8pLEwzKHYyQTIE46EePC2MVbSDZdE24o1GdNtzmJV4PrPpmJA==}
+    engines: {node: '>=12.*'}
 
   style-to-object@0.4.4:
     resolution: {integrity: sha512-HYNoHZa2GorYNyqiCaBgsxvcJIn7OHq6inEga+E6Ke3m5JkoqpQbnFssk4jwe+K7AhGa2fcha4wSOf1Kn01dMg==}
@@ -9183,6 +9187,8 @@ snapshots:
       domhandler: 5.0.3
       selderee: 0.11.0
 
+  '@stripe/stripe-js@3.5.0': {}
+
   '@supabase-cache-helpers/postgrest-core@0.3.0(@supabase/postgrest-js@1.9.2)(@supabase/supabase-js@2.39.3(bufferutil@4.0.8)(utf-8-validate@5.0.10))':
     dependencies:
       '@supabase/postgrest-js': 1.9.2
@@ -9346,11 +9352,11 @@ snapshots:
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 8.56.12
-      '@types/estree': 1.0.7
+      '@types/estree': 1.0.8
 
   '@types/eslint@8.56.12':
     dependencies:
-      '@types/estree': 1.0.7
+      '@types/estree': 1.0.8
       '@types/json-schema': 7.0.15
 
   '@types/eslint@8.56.2':
@@ -9365,8 +9371,6 @@ snapshots:
   '@types/estree@0.0.39': {}
 
   '@types/estree@1.0.5': {}
-
-  '@types/estree@1.0.7': {}
 
   '@types/estree@1.0.8': {}
 
@@ -9580,7 +9584,7 @@ snapshots:
       '@vue/shared': 3.4.35
       estree-walker: 2.0.2
       magic-string: 0.30.17
-      postcss: 8.5.3
+      postcss: 8.5.6
       source-map-js: 1.2.1
     optional: true
 
@@ -10126,7 +10130,7 @@ snapshots:
   code-red@1.0.4:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
-      '@types/estree': 1.0.7
+      '@types/estree': 1.0.8
       acorn: 8.14.1
       estree-walker: 3.0.3
       periscopic: 3.1.0
@@ -10488,8 +10492,6 @@ snapshots:
       internal-slot: 1.0.6
       iterator.prototype: 1.1.2
       safe-array-concat: 1.0.1
-
-  es-module-lexer@1.6.0: {}
 
   es-module-lexer@1.7.0: {}
 
@@ -11356,7 +11358,7 @@ snapshots:
 
   is-reference@3.0.3:
     dependencies:
-      '@types/estree': 1.0.7
+      '@types/estree': 1.0.8
     optional: true
 
   is-regex@1.1.4:
@@ -12473,13 +12475,6 @@ snapshots:
       picocolors: 1.0.0
       source-map-js: 1.0.2
 
-  postcss@8.5.3:
-    dependencies:
-      nanoid: 3.3.11
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
-    optional: true
-
   postcss@8.5.6:
     dependencies:
       nanoid: 3.3.11
@@ -13122,6 +13117,11 @@ snapshots:
     dependencies:
       js-tokens: 9.0.1
 
+  stripe@15.12.0:
+    dependencies:
+      '@types/node': 20.17.30
+      qs: 6.14.0
+
   style-to-object@0.4.4:
     dependencies:
       inline-style-parser: 0.1.1
@@ -13172,7 +13172,7 @@ snapshots:
       '@ampproject/remapping': 2.3.0
       '@jridgewell/sourcemap-codec': 1.5.0
       '@jridgewell/trace-mapping': 0.3.25
-      '@types/estree': 1.0.7
+      '@types/estree': 1.0.8
       acorn: 8.14.1
       aria-query: 5.3.2
       axobject-query: 4.1.0
@@ -13706,7 +13706,7 @@ snapshots:
   webpack@5.93.0:
     dependencies:
       '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.7
+      '@types/estree': 1.0.8
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
@@ -13715,7 +13715,7 @@ snapshots:
       browserslist: 4.23.3
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.1
-      es-module-lexer: 1.6.0
+      es-module-lexer: 1.7.0
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
