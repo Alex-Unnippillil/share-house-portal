@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,16 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 
 interface Notification {
   id: string;
@@ -21,38 +31,164 @@ interface Notification {
   created_at: string;
 }
 
+type NotificationTypeFilter = Notification['type'] | 'all';
+type NotificationReadFilter = 'all' | 'read' | 'unread';
+
+interface NotificationFilters {
+  search: string;
+  type: NotificationTypeFilter;
+  read: NotificationReadFilter;
+}
+
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<NotificationFilters>({
+    search: "",
+    type: "all",
+    read: "all",
+  });
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
-
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await (supabase as any)
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+  const filtersRef = useRef(filters);
+  const isMounted = useRef(true);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    fetchNotifications();
+    filtersRef.current = filters;
+  }, [filters]);
 
-    // Subscribe to real-time notifications
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const hasActiveFilters =
+    filters.search.trim().length > 0 ||
+    filters.type !== "all" ||
+    filters.read !== "all";
+
+  const matchesFilters = useCallback(
+    (notification: Notification, currentFilters: NotificationFilters) => {
+      if (
+        currentFilters.type !== "all" &&
+        notification.type !== currentFilters.type
+      ) {
+        return false;
+      }
+
+      const readState = notification.read ? "read" : "unread";
+      if (
+        currentFilters.read !== "all" &&
+        readState !== currentFilters.read
+      ) {
+        return false;
+      }
+
+      const searchTerm = currentFilters.search.trim().toLowerCase();
+      if (searchTerm.length > 0) {
+        return (
+          notification.title.toLowerCase().includes(searchTerm) ||
+          notification.message.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      return true;
+    },
+    [],
+  );
+
+  const fetchNotifications = useCallback(
+    async (activeFilters: NotificationFilters) => {
+      try {
+        const { search, type, read } = activeFilters;
+
+        let query = (supabase as any)
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (type !== 'all') {
+          query = query.eq('type', type);
+        }
+
+        if (read !== 'all') {
+          query = query.eq('read', read === 'read');
+        }
+
+        if (search.trim()) {
+          const likePattern = `%${search.trim()}%`;
+          query = query.or(`title.ilike.${likePattern},message.ilike.${likePattern}`);
+        }
+
+        setLoading(true);
+
+        const [listResult, unreadResult] = await Promise.all([
+          query,
+          (supabase as any)
+            .from('notifications')
+            .select('*', { count: 'exact', head: true })
+            .eq('read', false),
+        ]);
+
+        if (listResult.error) throw listResult.error;
+
+        if (!isMounted.current) {
+          return;
+        }
+
+        const fetchedNotifications = (listResult.data || []) as Notification[];
+        setNotifications(fetchedNotifications);
+
+        if (!unreadResult.error && typeof unreadResult.count === 'number') {
+          setUnreadCount(unreadResult.count);
+        } else {
+          setUnreadCount(fetchedNotifications.filter((n) => !n.read).length);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      } finally {
+        if (isMounted.current) {
+          setLoading(false);
+        }
+      }
+    },
+    [supabase],
+  );
+
+  const debouncedFetch = useDebouncedCallback(
+    (activeFilters: NotificationFilters) => {
+      void fetchNotifications(activeFilters);
+    },
+    200,
+  );
+
+  const clearFilters = useCallback(() => {
+    setFilters({ search: "", type: "all", read: "all" });
+  }, []);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return () => {
+        debouncedFetch.cancel();
+      };
+    }
+
+    setLoading(true);
+    debouncedFetch(filters);
+    return () => {
+      debouncedFetch.cancel();
+    };
+  }, [filters, debouncedFetch]);
+
+  useEffect(() => {
+    void fetchNotifications(filtersRef.current);
+
     const channel = supabase
       .channel('notifications')
       .on(
@@ -64,15 +200,24 @@ export function NotificationCenter() {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
 
-          // Show toast for new notification
+          if (matchesFilters(newNotification, filtersRef.current)) {
+            setNotifications(prev => [newNotification, ...prev]);
+          }
+
+          if (!newNotification.read) {
+            setUnreadCount(prev => prev + 1);
+          }
+
           toast({
             title: newNotification.title,
             description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' :
-                    newNotification.type === 'warning' ? 'default' : 'default',
+            variant:
+              newNotification.type === 'error'
+                ? 'destructive'
+                : newNotification.type === 'warning'
+                  ? 'default'
+                  : 'default',
           });
         }
       )
@@ -81,7 +226,7 @@ export function NotificationCenter() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, supabase, toast]);
+  }, [fetchNotifications, matchesFilters, supabase, toast]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -92,12 +237,28 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      let wasUnread = false;
+      setNotifications(prev => {
+        const updated = prev.map(n => {
+          if (n.id === notificationId) {
+            if (!n.read) {
+              wasUnread = true;
+            }
+            return { ...n, read: true };
+          }
+          return n;
+        });
+
+        if (filtersRef.current.read === 'unread') {
+          return updated.filter(n => !n.read);
+        }
+
+        return updated;
+      });
+
+      if (wasUnread) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
@@ -116,10 +277,19 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
+      let unreadBefore = 0;
+      setNotifications(prev => {
+        unreadBefore = prev.filter(n => !n.read).length;
+        const updated = prev.map(n => ({ ...n, read: true }));
+        if (filtersRef.current.read === 'unread') {
+          return updated.filter(n => !n.read);
+        }
+        return updated;
+      });
+
+      if (unreadBefore > 0) {
+        setUnreadCount(prev => Math.max(0, prev - unreadBefore));
+      }
 
       toast({
         title: "All notifications marked as read",
@@ -219,6 +389,101 @@ export function NotificationCenter() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
+            <div className="space-y-3 border-b border-border p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex-1 space-y-1">
+                  <Label
+                    htmlFor="notification-search"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    Search
+                  </Label>
+                  <Input
+                    id="notification-search"
+                    placeholder="Search notifications"
+                    value={filters.search}
+                    onChange={(event) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        search: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="space-y-1 sm:w-40">
+                    <Label
+                      htmlFor="notification-type"
+                      className="text-xs font-medium text-muted-foreground"
+                    >
+                      Type
+                    </Label>
+                    <Select
+                      value={filters.type}
+                      onValueChange={(value) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          type: value as NotificationTypeFilter,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="notification-type">
+                        <SelectValue placeholder="All types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All types</SelectItem>
+                        <SelectItem value="info">Info</SelectItem>
+                        <SelectItem value="success">Success</SelectItem>
+                        <SelectItem value="warning">Warning</SelectItem>
+                        <SelectItem value="error">Error</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1 sm:w-40">
+                    <Label
+                      htmlFor="notification-read"
+                      className="text-xs font-medium text-muted-foreground"
+                    >
+                      Status
+                    </Label>
+                    <Select
+                      value={filters.read}
+                      onValueChange={(value) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          read: value as NotificationReadFilter,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="notification-read">
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All statuses</SelectItem>
+                        <SelectItem value="unread">Unread</SelectItem>
+                        <SelectItem value="read">Read</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {hasActiveFilters && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="sm:ml-auto"
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+              {filters.search.trim().length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Showing results for “{filters.search.trim()}”
+                </p>
+              )}
+            </div>
             <ScrollArea className="h-80">
               {loading ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
@@ -226,7 +491,9 @@ export function NotificationCenter() {
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  No notifications yet
+                  {hasActiveFilters
+                    ? 'No notifications match your filters'
+                    : 'No notifications yet'}
                 </div>
               ) : (
                 <div className="space-y-1">
