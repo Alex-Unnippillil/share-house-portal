@@ -12,4 +12,5 @@ export default function LoadingDashboard() {
                         </div>
                 </div>
         )
+
 }
