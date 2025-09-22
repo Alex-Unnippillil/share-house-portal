@@ -2,11 +2,15 @@
 
 import { createClient } from '@/utils/supa-server-actions';
 import { createGoogleCalendarEvent } from '@/lib/calendar-service';
-import { revalidatePath } from 'next/cache';
-import { Database } from '@/lib/supabase';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { formatISO, isPast } from 'date-fns'; // Import formatISO here
+import {
+  expandWithBuffer,
+  hasBufferedConflictWithWindows,
+  collectBufferedWindows,
+  type BookingRequest,
+} from '@/lib/bookings';
 
 // --- Updated Zod Schema for Server Action ---
 const scheduleSchema = z.object({
@@ -23,9 +27,13 @@ const scheduleSchema = z.object({
   endTime: z.coerce.date({
       errorMap: (issue, ctx) => ({ message: 'Invalid format for end date/time.' })
   }),
+  amenitySlug: z.string().min(1, { message: 'Please choose an amenity to book.' }),
+  bufferMinutes: z.coerce.number({
+    errorMap: () => ({ message: 'Buffer minutes must be a whole number.' }),
+  }).int().min(0, { message: 'Buffer minutes cannot be negative.' }).max(240, { message: 'Buffer minutes cannot exceed 240.' }),
   userEmail: z.string().email({ message: 'Invalid user email.' }),
   userName: z.string().min(1, { message: 'User name cannot be empty.' }),
-  summary: z.string().min(1, { message: 'Meeting summary cannot be empty.' }),
+  summary: z.string().min(1, { message: 'Booking summary cannot be empty.' }),
   description: z.string().optional(),
 })
 // Refine the relationship between the coerced Date objects
@@ -63,6 +71,8 @@ export async function scheduleMeetingAction(
        // Extract raw strings from FormData for Zod to coerce
        startTime: formData.get('startTime'),
        endTime: formData.get('endTime'),
+       amenitySlug: formData.get('amenitySlug'),
+       bufferMinutes: formData.get('bufferMinutes'),
        userEmail: formData.get('userEmail'),
        userName: formData.get('userName'),
        summary: formData.get('summary'),
@@ -91,6 +101,50 @@ export async function scheduleMeetingAction(
        return { success: false, message: null, error: 'User email mismatch.', googleEventLink: null };
    }
 
+
+  // --- Compute buffer window & verify availability before touching external services ---
+  const bookingRequest: BookingRequest = {
+    start: validatedData.startTime,
+    end: validatedData.endTime,
+    bufferMinutes: validatedData.bufferMinutes,
+  };
+
+  let bufferedSlot;
+  try {
+    bufferedSlot = expandWithBuffer(bookingRequest);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to apply buffer to booking request.';
+    return { success: false, message: null, error: message, googleEventLink: null };
+  }
+
+  const { data: existingBookings, error: existingBookingsError } = await supabase
+    .from('amenity_bookings')
+    .select('starts_at, ends_at, buffer_minutes')
+    .eq('amenity_slug', validatedData.amenitySlug);
+
+  if (existingBookingsError) {
+    console.error('Error loading existing bookings for buffer validation:', existingBookingsError);
+    return { success: false, message: null, error: 'Unable to confirm amenity availability. Please try again.', googleEventLink: null };
+  }
+
+  const existingWindows = existingBookings
+    ? collectBufferedWindows(
+        existingBookings.map((booking) => ({
+          start: new Date(booking.starts_at),
+          end: new Date(booking.ends_at),
+          bufferMinutes: booking.buffer_minutes ?? 0,
+        }))
+      )
+    : [];
+
+  if (hasBufferedConflictWithWindows(existingWindows, bufferedSlot.window)) {
+    return {
+      success: false,
+      message: null,
+      error: 'That time overlaps with another booking buffer. Please pick a different slot.',
+      googleEventLink: null,
+    };
+  }
 
   try {
     // 4. Create Google Calendar Event
@@ -135,13 +189,32 @@ export async function scheduleMeetingAction(
        console.log("Meeting details saved to database.");
     }
 
-    // 6. Revalidate the path if needed
-    // revalidatePath('/schedule');
+    const { error: bookingInsertError } = await supabase
+      .from('amenity_bookings')
+      .insert({
+        amenity_slug: validatedData.amenitySlug,
+        tenant_id: user.id,
+        starts_at: validatedData.startTime.toISOString(),
+        ends_at: validatedData.endTime.toISOString(),
+        slot: bufferedSlot.range,
+        buffer_minutes: validatedData.bufferMinutes,
+        note: validatedData.description ?? null,
+      });
 
-    // 7. Return success state
+    if (bookingInsertError) {
+      console.error('Error saving amenity booking:', bookingInsertError);
+      return {
+        success: false,
+        message: null,
+        error: 'Created calendar event but failed to save the booking. Please contact support.',
+        googleEventLink: calendarResult.link,
+      };
+    }
+
+    // 6. Return success state
     return {
         success: true,
-        message: 'Meeting scheduled successfully! Check your email for the invite.',
+        message: `Amenity reserved successfully. A ${validatedData.bufferMinutes}-minute buffer was applied before and after your booking.`,
         error: null,
         googleEventLink: calendarResult.link,
     };

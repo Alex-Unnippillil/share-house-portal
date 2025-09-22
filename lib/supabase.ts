@@ -239,6 +239,50 @@ export type Database = {
           },
         ]
       }
+      amenity_bookings: {
+        Row: {
+          amenity_slug: string
+          buffer_minutes: number
+          created_at: string
+          ends_at: string
+          id: string
+          note: string | null
+          slot: string
+          starts_at: string
+          tenant_id: string
+        }
+        Insert: {
+          amenity_slug: string
+          buffer_minutes?: number
+          created_at?: string
+          ends_at: string
+          id?: string
+          note?: string | null
+          slot: string
+          starts_at: string
+          tenant_id?: string
+        }
+        Update: {
+          amenity_slug?: string
+          buffer_minutes?: number
+          created_at?: string
+          ends_at?: string
+          id?: string
+          note?: string | null
+          slot?: string
+          starts_at?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenity_bookings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_analysis_results: {
         Row: {
           agent_id: string | null
