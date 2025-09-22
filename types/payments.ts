@@ -75,3 +75,52 @@ export interface CatchUpPaymentFormValues {
   includePropertyManager: boolean
   note?: string
 }
+
+export type LateFeeRule =
+  | {
+      mode: "flat"
+      amount: number
+    }
+  | {
+      mode: "percentage"
+      percentage: number
+      cap?: number
+    }
+
+export interface AutopayRunSummary {
+  processedAt: string
+  status: "succeeded" | "partial" | "failed"
+  totalCollected: number
+}
+
+export interface AutopayParticipant {
+  roommateId: string
+  roommateName: string
+  rentShare: number
+  autopayStatus: AutopayStatus
+  paymentMethod: string
+  lastPaymentDate: string
+  autopayDayOverride?: number
+}
+
+export interface AutopayScheduleSettings {
+  dueDay: number
+  autopayLeadDays: number
+  gracePeriodDays: number
+  retryWindowDays: number
+  autopayTime: string
+  timezone: string
+  lateFee: LateFeeRule
+}
+
+export interface AutopayScheduleConfig {
+  id: string
+  unitId: string
+  unitLabel: string
+  currency: string
+  rentAmount: number
+  autopayEnabled: boolean
+  settings: AutopayScheduleSettings
+  participants: AutopayParticipant[]
+  lastRun: AutopayRunSummary
+}

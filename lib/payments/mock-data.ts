@@ -1,4 +1,4 @@
-import type { CatchUpBalance } from "@/types/payments"
+import type { AutopayScheduleConfig, CatchUpBalance } from "@/types/payments"
 
 export const catchUpBalances: CatchUpBalance[] = [
   {
@@ -147,3 +147,56 @@ export const catchUpBalances: CatchUpBalance[] = [
     },
   },
 ]
+
+export const autopaySchedule: AutopayScheduleConfig = {
+  id: "autopay_unit_3b",
+  unitId: "unit_3b",
+  unitLabel: "Unit 3B",
+  currency: "USD",
+  rentAmount: 3780,
+  autopayEnabled: true,
+  settings: {
+    dueDay: 1,
+    autopayLeadDays: 2,
+    gracePeriodDays: 4,
+    retryWindowDays: 2,
+    autopayTime: "09:00",
+    timezone: "America/Los_Angeles",
+    lateFee: {
+      mode: "percentage",
+      percentage: 5,
+      cap: 150,
+    },
+  },
+  participants: [
+    {
+      roommateId: "rm_avery",
+      roommateName: "Avery Chen",
+      rentShare: 1260,
+      autopayStatus: "active",
+      paymentMethod: "Visa •••• 4242",
+      lastPaymentDate: "2024-05-28",
+    },
+    {
+      roommateId: "rm_jordan",
+      roommateName: "Jordan Blake",
+      rentShare: 1260,
+      autopayStatus: "paused",
+      paymentMethod: "Chase Checking •••• 9938",
+      lastPaymentDate: "2024-05-12",
+    },
+    {
+      roommateId: "rm_priya",
+      roommateName: "Priya Desai",
+      rentShare: 1260,
+      autopayStatus: "disabled",
+      paymentMethod: "Setup required",
+      lastPaymentDate: "2024-04-30",
+    },
+  ],
+  lastRun: {
+    processedAt: "2024-06-01T09:00:00-07:00",
+    status: "succeeded",
+    totalCollected: 1260,
+  },
+}

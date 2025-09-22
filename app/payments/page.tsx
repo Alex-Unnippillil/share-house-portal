@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { StripeActions } from "./_components/stripe-actions"
+import { AutoPayScheduleCard } from "./_components/autopay-schedule-card"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import {
   calculateOutstanding,
@@ -19,7 +20,7 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import type { CatchUpBalance } from "@/types/payments"
 
-import { loadCatchUpBalances } from "./loaders"
+import { loadAutopaySchedule, loadCatchUpBalances } from "./loaders"
 
 const paymentHighlights = [
   {
@@ -64,7 +65,10 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
-  const catchUpBalances = await loadCatchUpBalances()
+  const [catchUpBalances, autopaySchedule] = await Promise.all([
+    loadCatchUpBalances(),
+    loadAutopaySchedule(),
+  ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
     const nextCharge = getNextOutstandingCharge(balance.charges)
@@ -120,6 +124,7 @@ export default async function PaymentsPage() {
       </div>
       <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="space-y-6">
+          <AutoPayScheduleCard schedule={autopaySchedule} />
           <Card>
             <CardHeader>
               <CardTitle>Catch-up snapshot</CardTitle>
