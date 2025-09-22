@@ -1,30 +1,34 @@
 "use client";
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { SideBar } from "./SideNav";
 import { useEffect } from "react";
 
-export default function MobileSideNav() {
-	useEffect(() => {
-		window.addEventListener("resize", (e: UIEvent) => {
-			const w = e.target as Window;
-			if (w.innerWidth >= 1024) {
-				document.getElementById("sidebar-close")?.click();
-			}
-		});
-		return () => {
-			window.removeEventListener("resize", () => {});
-		};
-	}, []);
+import { useSidebarOpen, useSidebarSetOpen } from "@/lib/hooks/use-sidebar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { SideBar } from "./SideNav";
 
-	return (
-		<Sheet>
-			<SheetTrigger asChild id="toggle-sidebar">
-				<span></span>
-			</SheetTrigger>
-			<SheetContent side={"left"} className="dark:bg-gradient-dark flex">
-				<SideBar />
-			</SheetContent>
-		</Sheet>
-	);
+export default function MobileSideNav() {
+        const isOpen = useSidebarOpen();
+        const setOpen = useSidebarSetOpen();
+
+        useEffect(() => {
+                const handleResize = () => {
+                        if (window.innerWidth >= 1024) {
+                                setOpen(false);
+                        }
+                };
+
+                handleResize();
+                window.addEventListener("resize", handleResize);
+                return () => {
+                        window.removeEventListener("resize", handleResize);
+                };
+        }, [setOpen]);
+
+        return (
+                <Sheet open={isOpen} onOpenChange={setOpen}>
+                        <SheetContent side={"left"} className="dark:bg-gradient-dark flex">
+                                <SideBar />
+                        </SheetContent>
+                </Sheet>
+        );
 }

@@ -1,25 +1,121 @@
 'use client'
 
 import * as React from 'react'
+import { createContext, useContextSelector } from 'use-context-selector'
 
 const LOCAL_STORAGE_KEY = 'sidebar'
 
-interface SidebarContext {
-  isSidebarOpen: boolean
+type SidebarStore = {
+  getSnapshot: () => boolean
+  subscribe: (listener: () => void) => () => void
+  setSidebarOpen: (open: boolean) => void
   toggleSidebar: () => void
-  isLoading: boolean
 }
 
-const SidebarContext = React.createContext<SidebarContext | undefined>(
-  undefined
-)
+const SidebarContext = createContext<SidebarStore | undefined>(undefined)
+
+function readSidebarPreference(): boolean {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  const storedValue = window.localStorage.getItem(LOCAL_STORAGE_KEY)
+
+  if (!storedValue) {
+    return false
+  }
+
+  try {
+    return JSON.parse(storedValue)
+  } catch {
+    return false
+  }
+}
+
+function persistSidebarPreference(isOpen: boolean) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify(isOpen),
+    )
+  } catch {
+    // Ignore write failures (private mode, etc.).
+  }
+}
+
+function createSidebarStore(initialState: boolean): SidebarStore {
+  let state = initialState
+  const listeners = new Set<() => void>()
+
+  const setState = (next: boolean) => {
+    if (state === next) {
+      return
+    }
+
+    state = next
+    persistSidebarPreference(state)
+    listeners.forEach(listener => listener())
+  }
+
+  persistSidebarPreference(state)
+
+  return {
+    getSnapshot: () => state,
+    subscribe: listener => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    setSidebarOpen: setState,
+    toggleSidebar: () => setState(!state),
+  }
+}
+
+function useSidebarSelector<T>(selector: (store: SidebarStore) => T): T {
+  return useContextSelector(SidebarContext, store => {
+    if (!store) {
+      throw new Error('useSidebar must be used within a SidebarProvider')
+    }
+    return selector(store)
+  })
+}
 
 export function useSidebar() {
-  const context = React.useContext(SidebarContext)
-  if (!context) {
-    throw new Error('useSidebarContext must be used within a SidebarProvider')
-  }
-  return context
+  const store = useSidebarSelector(value => value)
+  const isSidebarOpen = React.useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getSnapshot,
+  )
+
+  return React.useMemo(
+    () => ({
+      isSidebarOpen,
+      setSidebarOpen: store.setSidebarOpen,
+      toggleSidebar: store.toggleSidebar,
+    }),
+    [isSidebarOpen, store.setSidebarOpen, store.toggleSidebar],
+  )
+}
+
+export function useSidebarOpen() {
+  const subscribe = useSidebarSelector(store => store.subscribe)
+  const getSnapshot = useSidebarSelector(store => store.getSnapshot)
+
+  return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+export function useSidebarSetOpen() {
+  return useSidebarSelector(store => store.setSidebarOpen)
+}
+
+export function useSidebarToggle() {
+  return useSidebarSelector(store => store.toggleSidebar)
 }
 
 interface SidebarProviderProps {
@@ -27,33 +123,40 @@ interface SidebarProviderProps {
 }
 
 export function SidebarProvider({ children }: SidebarProviderProps) {
-  const [isSidebarOpen, setSidebarOpen] = React.useState(true)
-  const [isLoading, setLoading] = React.useState(true)
+  const storeRef = React.useRef<SidebarStore>()
+
+  if (!storeRef.current) {
+    storeRef.current = createSidebarStore(readSidebarPreference())
+  }
 
   React.useEffect(() => {
-    const value = localStorage.getItem(LOCAL_STORAGE_KEY)
-    if (value) {
-      setSidebarOpen(JSON.parse(value))
+    if (typeof window === 'undefined') {
+      return
     }
-    setLoading(false)
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== LOCAL_STORAGE_KEY || event.newValue === null) {
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(event.newValue)
+        if (typeof parsed === 'boolean') {
+          storeRef.current?.setSidebarOpen(parsed)
+        }
+      } catch {
+        // Ignore invalid payloads.
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+    }
   }, [])
 
-  const toggleSidebar = () => {
-    setSidebarOpen(value => {
-      const newState = !value
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newState))
-      return newState
-    })
-  }
-
-  if (isLoading) {
-    return null
-  }
-
   return (
-    <SidebarContext.Provider
-      value={{ isSidebarOpen, toggleSidebar, isLoading }}
-    >
+    <SidebarContext.Provider value={storeRef.current}>
       {children}
     </SidebarContext.Provider>
   )

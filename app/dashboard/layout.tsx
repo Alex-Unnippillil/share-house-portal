@@ -2,6 +2,7 @@ import React, { ReactNode } from "react";
 import SideNav from "./components/SideNav";
 import ToggleSidebar from "./components/ToggleSidebar";
 import MobileSideNav from "./components/MobileSideNav";
+import { SidebarProvider } from "@/lib/hooks/use-sidebar";
 import { readUserSession } from "@/utils/actions";
 import { redirect } from "next/navigation";
 
@@ -11,17 +12,19 @@ export default async function Layout({ children }: { children: ReactNode }) {
 	if (!userSession.session) {
 		return redirect("/auth");
 	}
-	return (
-		<div className="flex w-full ">
-			<div className="flex h-screen flex-col">
-				<SideNav />
-				<MobileSideNav />
-			</div>
+        return (
+                <SidebarProvider>
+                        <div className="flex w-full ">
+                                <div className="flex h-screen flex-col">
+                                        <SideNav />
+                                        <MobileSideNav />
+                                </div>
 
-			<div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
-				<ToggleSidebar />
-				{children}
-			</div>
-		</div>
-	);
+                                <div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
+                                        <ToggleSidebar />
+                                        {children}
+                                </div>
+                        </div>
+                </SidebarProvider>
+        );
 }
