@@ -9,6 +9,73 @@ type BulkNotificationResult = {
   results: Array<{ index: number; success: boolean; error: unknown }>
 }
 
+export type MaintenanceNotificationManager = {
+  id: string
+  email?: string | null
+  name?: string | null
+}
+
+export type MaintenanceNotificationPayload = {
+  requesterName: string
+  title: string
+  description: string
+  priority: string
+  propertyManagers: MaintenanceNotificationManager[]
+}
+
+export function buildMaintenanceRequestNotifications({
+  requesterName,
+  title,
+  description,
+  priority,
+  propertyManagers,
+}: MaintenanceNotificationPayload): (NotificationData | InAppNotification)[] {
+  const uniqueManagers = Array.from(
+    new Map(
+      propertyManagers
+        .filter((manager) => manager && manager.id)
+        .map((manager) => [manager.id, manager])
+    ).values()
+  )
+
+  return uniqueManagers.flatMap((manager) => {
+    const notifications: (NotificationData | InAppNotification)[] = [
+      {
+        userId: manager.id,
+        title: "New Maintenance Request",
+        message: `${requesterName} reported: ${title}`,
+        type: "warning" as const,
+        actionUrl: "/dashboard",
+        metadata: {
+          priority,
+          description,
+          requesterName,
+          title,
+          managerName: manager.name ?? null,
+        },
+      },
+    ]
+
+    const recipient = manager.email?.trim()
+    if (recipient) {
+      notifications.unshift({
+        to: recipient,
+        subject: `New Maintenance Request: ${title}`,
+        template: "maintenance-request",
+        data: {
+          requesterName,
+          title,
+          description,
+          priority,
+        },
+        userId: manager.id,
+      })
+    }
+
+    return notifications
+  })
+}
+
 async function postNotification<T>(payload: unknown): Promise<T> {
   const response = await fetch("/api/notifications", {
     method: "POST",
@@ -174,31 +241,14 @@ export function useNotifications() {
     return sendBulkNotifications(notifications)
   }
 
-  const notifyMaintenanceRequest = async (data: {
-    requesterName: string
-    title: string
-    description: string
-    priority: string
-    propertyManager: { id: string; email: string; name: string }
-  }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
-      // Email to property manager
-      {
-        to: data.propertyManager.email,
-        subject: `New Maintenance Request: ${data.title}`,
-        template: "maintenance-request",
-        data,
-        userId: data.propertyManager.id,
-      },
-      // In-app notification to property manager
-      {
-        userId: data.propertyManager.id,
-        title: "New Maintenance Request",
-        message: `${data.requesterName} reported: ${data.title}`,
-        type: "warning" as const,
-        actionUrl: "/dashboard",
-      },
-    ]
+  const notifyMaintenanceRequest = async (
+    data: MaintenanceNotificationPayload
+  ): Promise<Array<{ index: number; success: boolean; error: unknown }>> => {
+    const notifications = buildMaintenanceRequestNotifications(data)
+
+    if (notifications.length === 0) {
+      return []
+    }
 
     return sendBulkNotifications(notifications)
   }
