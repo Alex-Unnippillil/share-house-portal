@@ -70,52 +70,49 @@ const nextConfig = {
   experimental: {
     mdxRs: true,
   },
-    images : {
-      remotePatterns: [
+  images: {
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'quantumone.b-cdn.net',
-        port: '',
-        pathname: '/onyx/**',
+        protocol: "https",
+        hostname: "quantumone.b-cdn.net",
+        port: "",
+        pathname: "/onyx/**",
       },
       {
-        protocol: 'https',
-        hostname: 'unpkg.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "unpkg.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'youtube.com',
-        port: '',
-        pathname: '/embed/HR6a2aHhY_c?si=L2O3Cf7pQ-0HHhsP',
-      },
-
-      {
-        protocol: 'https',
-        hostname: 'quantumone.b-cdn.net',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "youtube.com",
+        port: "",
+        pathname: "/embed/HR6a2aHhY_c?si=L2O3Cf7pQ-0HHhsP",
       },
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "quantumone.b-cdn.net",
+        port: "",
+        pathname: "/**",
       },
-
       {
-
-        protocol: 'https',
-        hostname: 'api.web3modal.com',
-        port: '',
-      
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.web3modal.com",
+        port: "",
       },
     ],
   },

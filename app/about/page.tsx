@@ -49,7 +49,13 @@ export default function AboutPage() {
               <Card>
                 <CardHeader className="text-center">
                   <Avatar className="mx-auto mb-4 size-24">
-                    <AvatarImage src={member.avatar} alt={member.name} />
+                    <AvatarImage
+                      src={member.avatar}
+                      alt={member.name}
+                      width={96}
+                      height={96}
+                      sizes="96px"
+                    />
                     <AvatarFallback>
                       {member.name
                         .split(" ")

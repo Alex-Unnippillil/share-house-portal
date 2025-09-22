@@ -71,6 +71,7 @@ export default function Avatar({
           src={avatarUrl}
           alt="Avatar"
           className="relative flex size-10 shrink-0 overflow-hidden rounded-full"
+          sizes={`${size}px`}
           style={{ height: size, width: size }}
         />
       ) : (
