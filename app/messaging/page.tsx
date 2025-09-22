@@ -1,3 +1,4 @@
+import { PropertyManagerUpdates } from "@/components/messaging/property-manager-updates"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
@@ -26,7 +27,7 @@ const messagingHighlights = [
 
 export default function MessagingPage() {
   return (
-    <div className="container max-w-5xl space-y-10 py-12">
+    <div className="container max-w-5xl space-y-12 py-12">
       <header className="space-y-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Messaging</h1>
@@ -46,6 +47,7 @@ export default function MessagingPage() {
           </Card>
         ))}
       </div>
+      <PropertyManagerUpdates />
     </div>
   )
 }
