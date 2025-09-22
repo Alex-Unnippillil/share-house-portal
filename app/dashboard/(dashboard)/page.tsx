@@ -22,6 +22,7 @@ import { RecentSales } from "@/app/dashboard/components/recent-sales"
 import { Search } from "@/app/dashboard/components/search"
 import TeamSwitcher from "@/app/dashboard/components/team-switcher"
 import { UserNav } from "@/app/dashboard/components/user-nav"
+import { BookingsInsightsCard } from "@/app/dashboard/components/bookings-insights"
 
 export const metadata: Metadata = {
   title: "Onyx Dashboard",
@@ -176,17 +177,20 @@ export default function DashboardPage() {
                     <Overview />
                   </CardContent>
                 </Card>
-                <Card className="col-span-3">
-                  <CardHeader>
-                    <CardTitle>Recent Sales</CardTitle>
-                    <CardDescription>
-                      You made 265 sales this month.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RecentSales />
-                  </CardContent>
-                </Card>
+                <div className="col-span-3 space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Sales</CardTitle>
+                      <CardDescription>
+                        You made 265 sales this month.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <RecentSales />
+                    </CardContent>
+                  </Card>
+                  <BookingsInsightsCard />
+                </div>
               </div>
             </TabsContent>
           </Tabs>
