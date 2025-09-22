@@ -1702,6 +1702,39 @@ export type Database = {
           },
         ]
       }
+      inquiries: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          message: string
+          status: string
+          created_at: string
+          updated_at: string
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          message: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          message?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       leases: {
         Row: {
           id: string
@@ -2120,177 +2153,6 @@ export type Database = {
           },
         ]
       }
-      // Removed duplicate document_signatures definition
-      // Removed duplicate document_access_logs definition
-      // Removed duplicate leases definition
-          signer_id: string
-          signer_email: string
-          signer_name: string | null
-          status: string
-          signed_at: string | null
-          declined_at: string | null
-          decline_reason: string | null
-          documenso_signature_id: string | null
-          ip_address: string | null
-          user_agent: string | null
-          signature_data: Json | null
-        }
-        Insert: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          document_id: string
-          signer_id: string
-          signer_email: string
-          signer_name?: string | null
-          status?: string
-          signed_at?: string | null
-          declined_at?: string | null
-          decline_reason?: string | null
-          documenso_signature_id?: string | null
-          ip_address?: string | null
-          user_agent?: string | null
-          signature_data?: Json | null
-        }
-        Update: {
-          id?: string
-          created_at?: string
-          updated_at?: string
-          document_id?: string
-          signer_id?: string
-          signer_email?: string
-          signer_name?: string | null
-          status?: string
-          signed_at?: string | null
-          declined_at?: string | null
-          decline_reason?: string | null
-          documenso_signature_id?: string | null
-          ip_address?: string | null
-          user_agent?: string | null
-          signature_data?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_signatures_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      document_access_logs: {
-        Row: {
-          id: string
-          created_at: string
-          document_id: string
-          user_id: string
-          action: string
-          ip_address: string | null
-          user_agent: string | null
-          metadata: Json | null
-        }
-        Insert: {
-          id?: string
-          created_at?: string
-          document_id: string
-          user_id: string
-          action: string
-          ip_address?: string | null
-          user_agent?: string | null
-          metadata?: Json | null
-        }
-        Update: {
-          id?: string
-          created_at?: string
-          document_id?: string
-          user_id?: string
-          action?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          metadata?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_access_logs_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      leases: {
-        Row: {
-          id: string
-          document_id: string
-          created_at: string
-          updated_at: string
-          start_date: string
-          end_date: string | null
-          rent_amount: number | null
-          rent_frequency: string
-          security_deposit: number | null
-          tenant_ids: string[]
-          property_address: string | null
-          unit_number: string | null
-          landlord_name: string | null
-          landlord_email: string | null
-          auto_renew: boolean
-          renewal_notice_days: number
-          special_terms: string | null
-          status: string
-        }
-        Insert: {
-          id?: string
-          document_id: string
-          created_at?: string
-          updated_at?: string
-          start_date: string
-          end_date?: string | null
-          rent_amount?: number | null
-          rent_frequency?: string
-          security_deposit?: number | null
-          tenant_ids: string[]
-          property_address?: string | null
-          unit_number?: string | null
-          landlord_name?: string | null
-          landlord_email?: string | null
-          auto_renew?: boolean
-          renewal_notice_days?: number
-          special_terms?: string | null
-          status?: string
-        }
-        Update: {
-          id?: string
-          document_id?: string
-          created_at?: string
-          updated_at?: string
-          start_date?: string
-          end_date?: string | null
-          rent_amount?: number | null
-          rent_frequency?: string
-          security_deposit?: number | null
-          tenant_ids?: string[]
-          property_address?: string | null
-          unit_number?: string | null
-          landlord_name?: string | null
-          landlord_email?: string | null
-          auto_renew?: boolean
-          renewal_notice_days?: number
-          special_terms?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "leases_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       package_utilization: {
@@ -2470,39 +2332,6 @@ export type Database = {
     CompositeTypes: {
       [_ in never]: never
     }
-  }
-  inquiries: {
-    Row: {
-      id: string
-      name: string
-      email: string
-      message: string
-      status: string
-      created_at: string
-      updated_at: string
-      metadata: Json | null
-    }
-    Insert: {
-      id?: string
-      name: string
-      email: string
-      message: string
-      status?: string
-      created_at?: string
-      updated_at?: string
-      metadata?: Json | null
-    }
-    Update: {
-      id?: string
-      name?: string
-      email?: string
-      message?: string
-      status?: string
-      created_at?: string
-      updated_at?: string
-      metadata?: Json | null
-    }
-    Relationships: []
   }
   storage: {
     Tables: {
