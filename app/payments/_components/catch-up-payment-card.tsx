@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { VirtualizedList } from "@/components/ui/virtualized-list"
 import {
   Form,
   FormControl,
@@ -39,6 +40,7 @@ import {
 } from "@/lib/payments/catch-up"
 import { formatCurrency, parseCurrencyInput, roundToCurrency } from "@/lib/payments/currency"
 import { createCatchUpFormSchema } from "@/lib/payments/schemas"
+import { cn } from "@/lib/utils"
 import type {
   AutopayStatus,
   CatchUpBalance,
@@ -379,62 +381,77 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                 </p>
               </div>
               <div className="overflow-hidden rounded-lg border">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
-                    <tr>
-                      <th className="py-2 pl-4 pr-2 font-medium">Charge</th>
-                      <th className="py-2 pr-2 font-medium">Due</th>
-                      <th className="py-2 pr-2 text-right font-medium">Outstanding</th>
-                      <th className="py-2 pr-2 text-right font-medium">Applying</th>
-                      <th className="py-2 pr-4 text-right font-medium">Remaining</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedBalance ? (
-                      selectedBalance.charges.map((charge) => {
-                        const allocation = allocationPreview.find(
-                          (item) => item.chargeId === charge.id,
-                        )
-                        const updatedCharge = updatedChargesPreview.find(
-                          (item) => item.id === charge.id,
-                        )
+                {selectedBalance ? (
+                  <>
+                    <VirtualizedList
+                      items={selectedBalance.charges}
+                      getItemKey={(charge) => charge.id}
+                      className="max-h-72"
+                      stickyHeader={
+                        <div className="grid grid-cols-[2fr_repeat(4,minmax(0,1fr))] gap-2 bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <span>Charge</span>
+                          <span>Due</span>
+                          <span className="text-right">Outstanding</span>
+                          <span className="text-right">Applying</span>
+                          <span className="text-right">Remaining</span>
+                        </div>
+                      }
+                      staticInnerClassName=""
+                      innerClassName=""
+                      estimateSize={() => 72}
+                      minItemCountForVirtualization={6}
+                      renderItem={(charge, index) => {
+                        const allocation = allocationPreview.find((item) => item.chargeId === charge.id)
+                        const updatedCharge = updatedChargesPreview.find((item) => item.id === charge.id)
                         const applyingAmount = allocation?.amount ?? 0
                         const remainingAmount = updatedCharge?.outstandingAmount ?? charge.outstandingAmount
+                        const charges = selectedBalance.charges
 
                         return (
-                          <tr key={charge.id} className="border-t">
-                            <td className="py-2 pl-4 pr-2">
+                          <div
+                            className={cn(
+                              'grid grid-cols-[2fr_repeat(4,minmax(0,1fr))] gap-2 px-4 py-3 text-sm',
+                              index !== charges.length - 1 && 'border-b border-border',
+                            )}
+                          >
+                            <div>
                               <div className="font-medium">{charge.description}</div>
-                              <div className="text-xs capitalize text-muted-foreground">
-                                {charge.category}
-                              </div>
-                            </td>
-                            <td className="py-2 pr-2 text-sm text-muted-foreground">
+                              <div className="text-xs capitalize text-muted-foreground">{charge.category}</div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
                               {format(parseISO(charge.dueDate), "MMM d")}
-                            </td>
-                            <td className="py-2 pr-2 text-right">
+                            </div>
+                            <div className="text-right font-medium">
                               {formatCurrency(charge.outstandingAmount, selectedBalance.currency)}
-                            </td>
-                            <td className="py-2 pr-2 text-right text-emerald-600">
+                            </div>
+                            <div
+                              className={cn(
+                                'text-right',
+                                applyingAmount > 0 ? 'text-emerald-600' : 'text-muted-foreground',
+                              )}
+                            >
                               {applyingAmount > 0
                                 ? `-${formatCurrency(applyingAmount, selectedBalance.currency)}`
-                                : "—"}
-                            </td>
-                            <td className="py-2 pr-4 text-right">
+                                : '—'}
+                            </div>
+                            <div className="text-right font-medium">
                               {formatCurrency(remainingAmount, selectedBalance.currency)}
-                            </td>
-                          </tr>
+                            </div>
+                          </div>
                         )
-                      })
-                    ) : (
-                      <tr>
-                        <td className="py-4 pl-4 text-sm text-muted-foreground" colSpan={5}>
-                          Select a roommate to preview catch-up distribution.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      }}
+                    />
+                    {selectedBalance.charges.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-muted-foreground">
+                        No open charges for this roommate.
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="px-4 py-6 text-sm text-muted-foreground">
+                    Select a roommate to preview catch-up distribution.
+                  </div>
+                )}
               </div>
             </div>
 
