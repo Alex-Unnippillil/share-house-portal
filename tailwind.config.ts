@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss"
 
+import { overlayColorPalette } from "./config/tailwind/colors"
+
 const config = {
   darkMode: ["class"],
   content: [
@@ -53,6 +55,7 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        ...overlayColorPalette,
       },
       borderRadius: {
         lg: "var(--radius)",

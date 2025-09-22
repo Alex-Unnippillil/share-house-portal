@@ -1,6 +1,6 @@
 /* styles.css */
 .DialogOverlay {
-    background: rgba(0 0 0 / 0.5);
+    background: hsl(var(--overlay-scrim) / 0.75);
     position: fixed;
     top: 0;
     left: 0;
@@ -15,4 +15,7 @@
     min-width: 300px;
     padding: 30px;
     border-radius: 4px;
+    background: hsl(var(--overlay-surface));
+    color: hsl(var(--overlay-surface-foreground));
+    border: 1px solid hsl(var(--overlay-outline));
   }

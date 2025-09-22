@@ -141,6 +141,18 @@ body {
     --input: 214 32% 91%;
     --ring: 196 100% 45%;
     --radius: 0.5rem;
+    --overlay-scrim: 222 47% 11%;
+    --overlay-surface: 210 40% 98%;
+    --overlay-surface-foreground: 222 47% 11%;
+    --overlay-outline: 215 25% 65%;
+    --overlay-storage: 188 72% 32%;
+    --overlay-storage-foreground: 210 40% 98%;
+    --overlay-chores: 276 65% 35%;
+    --overlay-chores-foreground: 210 40% 98%;
+    --overlay-maintenance: 26 90% 38%;
+    --overlay-maintenance-foreground: 210 40% 98%;
+    --overlay-visitors: 204 78% 34%;
+    --overlay-visitors-foreground: 210 40% 98%;
   }
 
   .dark {
@@ -163,6 +175,18 @@ body {
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 196 100% 50%;
+    --overlay-scrim: 222 67% 4%;
+    --overlay-surface: 222 47% 16%;
+    --overlay-surface-foreground: 210 40% 96%;
+    --overlay-outline: 215 15% 50%;
+    --overlay-storage: 188 75% 42%;
+    --overlay-storage-foreground: 222 47% 11%;
+    --overlay-chores: 276 65% 55%;
+    --overlay-chores-foreground: 210 40% 98%;
+    --overlay-maintenance: 26 90% 52%;
+    --overlay-maintenance-foreground: 222 47% 11%;
+    --overlay-visitors: 204 78% 52%;
+    --overlay-visitors-foreground: 222 47% 11%;
   }
 }
 
