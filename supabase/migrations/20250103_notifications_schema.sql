@@ -64,6 +64,17 @@ CREATE TABLE public.email_notifications (
   metadata JSONB
 );
 
+-- Create supply_items table for shared household inventory
+CREATE TABLE public.supply_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  unit TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (household_id, name)
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_maintenance_requests_requested_by ON public.maintenance_requests(requested_by);
 CREATE INDEX idx_maintenance_requests_assigned_to ON public.maintenance_requests(assigned_to);
@@ -82,12 +93,14 @@ CREATE INDEX idx_notifications_read ON public.notifications(read);
 CREATE INDEX idx_notifications_created_at ON public.notifications(created_at DESC);
 CREATE INDEX idx_email_notifications_user_id ON public.email_notifications(user_id);
 CREATE INDEX idx_email_notifications_sent_at ON public.email_notifications(sent_at DESC);
+CREATE INDEX idx_supply_items_household_id ON public.supply_items(household_id);
 
 -- Enable RLS
 ALTER TABLE public.maintenance_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.visitor_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.email_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.supply_items ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for maintenance_requests
 CREATE POLICY "Users can view maintenance requests for their unit" ON public.maintenance_requests
@@ -142,6 +155,47 @@ CREATE POLICY "Users can update their own notifications" ON public.notifications
 CREATE POLICY "Users can view their own email notifications" ON public.email_notifications
   FOR SELECT USING (auth.uid() = user_id);
 
+-- RLS Policies for supply_items
+CREATE POLICY "Household members can view supply items" ON public.supply_items
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1
+      FROM public.household_members hm
+      WHERE hm.household_id = supply_items.household_id
+        AND hm.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Household members can insert supply items" ON public.supply_items
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.household_members hm
+      WHERE hm.household_id = supply_items.household_id
+        AND hm.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Household members can update supply items" ON public.supply_items
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1
+      FROM public.household_members hm
+      WHERE hm.household_id = supply_items.household_id
+        AND hm.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Household members can delete supply items" ON public.supply_items
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1
+      FROM public.household_members hm
+      WHERE hm.household_id = supply_items.household_id
+        AND hm.user_id = auth.uid()
+    )
+  );
+
 -- Function to mark notifications as read
 CREATE OR REPLACE FUNCTION mark_notifications_read(notification_ids UUID[])
 RETURNS VOID AS $$
@@ -184,4 +238,8 @@ CREATE TRIGGER update_visitor_logs_updated_at
 
 CREATE TRIGGER update_notifications_updated_at
   BEFORE UPDATE ON public.notifications
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_supply_items_updated_at
+  BEFORE UPDATE ON public.supply_items
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
