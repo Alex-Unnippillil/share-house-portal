@@ -411,6 +411,42 @@ export type Database = {
         }
         Relationships: []
       }
+      amenities: {
+        Row: {
+          buffer_minutes: number | null
+          capacity: number
+          created_at: string | null
+          description: string | null
+          id: string
+          location: string | null
+          name: string
+          open_hours: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          buffer_minutes?: number | null
+          capacity?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          open_hours?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          buffer_minutes?: number | null
+          capacity?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          open_hours?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
