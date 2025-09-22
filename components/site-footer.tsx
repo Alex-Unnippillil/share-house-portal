@@ -8,12 +8,15 @@ export function SiteFooter() {
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-         <Link className="ml-0 flex items-center gap-1" href="/">
+         <Link className="ml-0 flex items-center gap-2" href="/">
           <Icons.logo className="size-6" />
-          <span className="inline-block font-bold">{siteConfig.name}</span>
+          <div className="flex flex-col leading-tight">
+            <span className="inline-block font-semibold">{siteConfig.name}</span>
+            <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>
+          </div>
         </Link>
           <p className="text-sm text-muted-foreground">
-            Manage rent, roommates, and shared amenities from a single, secure portal.
+            Manage rent, roommates, and shared amenities from a single, secure Roomsily HQ.
           </p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-12 sm:grid-cols-3">
@@ -66,7 +69,7 @@ export function SiteFooter() {
       </div>
       <div className="container border-t py-6">
         <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Shared House Portal. All Rights Reserved.
+          © {new Date().getFullYear()} Roomsily. All rights reserved.
         </p>
       </div>
     </footer>

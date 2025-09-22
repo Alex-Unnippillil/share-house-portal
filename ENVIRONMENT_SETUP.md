@@ -1,4 +1,4 @@
-# Share House Portal - Environment Setup Guide
+# Roomsily - Environment Setup Guide
 
 Based on your terminal errors, you're missing several API keys and configurations. Here's what you need to set up:
 

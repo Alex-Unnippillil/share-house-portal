@@ -1,6 +1,6 @@
-# Shared House Portal
+# Roomsily
 
-A comprehensive web application designed for shared house roommates to manage rent payments, amenity bookings, document sharing, and communication in a seamless, frictionless experience.
+Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates and property managers orchestrate rent payments, amenity bookings, document sharing, and communication through a beautifully streamlined experience.
 
 ## Features
 

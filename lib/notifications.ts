@@ -60,7 +60,7 @@ class NotificationService {
       }
 
       const { data, error } = await this.resend.emails.send({
-        from: "Shared House Portal <notifications@sharedhouseportal.com>",
+        from: "Roomsily <notifications@roomsily.com>",
         to: recipients,
         subject: notification.subject,
         html: emailContent,
@@ -230,9 +230,9 @@ class NotificationService {
   private getWelcomeTemplate(data?: any) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Welcome to Shared House Portal!</h2>
+        <h2>Welcome to Roomsily!</h2>
         <p>Hello ${data?.firstName || "there"}!</p>
-        <p>Welcome to your shared house management portal. You can now:</p>
+        <p>Welcome to your Roomsily co-living hub. You can now:</p>
         <ul>
           <li>Manage your rent payments</li>
           <li>Book shared amenities</li>

@@ -7,7 +7,7 @@ Accepted
 2024-05-28
 
 ## Context
-The Share House Portal serves multiple property management companies and must
+The Roomsily serves multiple property management companies and must
 prevent data leakage between buildings owned by different legal entities. Early
 prototypes stored tenant records without consistent tenancy identifiers, making
 it difficult to guarantee that queries, exports, and messaging stayed within the

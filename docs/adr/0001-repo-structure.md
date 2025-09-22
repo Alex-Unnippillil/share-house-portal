@@ -6,11 +6,11 @@
 
 ## Context
 
-The Share House platform includes multiple backend services, web and mobile clients, shared libraries, and infrastructure-as-code definitions. Product teams collaborate across these domains, share UI and API contracts, and rely on consistent tooling to deliver features quickly. Historically, related codebases have lived in separate repositories, which increased coordination cost for cross-cutting changes, duplicated CI/CD configuration, and complicated dependency management.
+The Roomsily platform includes multiple backend services, web and mobile clients, shared libraries, and infrastructure-as-code definitions. Product teams collaborate across these domains, share UI and API contracts, and rely on consistent tooling to deliver features quickly. Historically, related codebases have lived in separate repositories, which increased coordination cost for cross-cutting changes, duplicated CI/CD configuration, and complicated dependency management.
 
 ## Decision
 
-We will adopt a **monorepo** for the Share House platform. All product-critical services, clients, infrastructure definitions, and shared packages will live in this repository.
+We will adopt a **monorepo** for the Roomsily platform. All product-critical services, clients, infrastructure definitions, and shared packages will live in this repository.
 
 ### Rationale
 

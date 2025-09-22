@@ -1,7 +1,7 @@
 {
-  "name": "Shared House Portal",
-  "short_name": "House Portal",
-  "description": "Roommate portal for rent payments, shared documents, and realtime communication.",
+  "name": "Roomsily",
+  "short_name": "Roomsily",
+  "description": "www.roomsily keeps rent, roommates, amenities, and documents perfectly aligned.",
   "start_url": "/", 
   "display": "standalone",
   "background_color": "#fff",

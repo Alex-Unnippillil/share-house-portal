@@ -141,7 +141,7 @@ export function UploadDocumentDialog() {
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
           <DialogDescription>
-            Upload a new document to your shared house portal. Files will be securely stored and can be shared with tenants.
+            Upload a new document to your Roomsily hub. Files are securely stored and instantly shareable with every roommate.
           </DialogDescription>
         </DialogHeader>
 
