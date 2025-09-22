@@ -1,7 +1,22 @@
 {
+  "compress": true,
   "functions": {
     "app/api/**/*.rs": {
       "runtime": "vercel-rust@4.0.8"
+    },
+    "app/api/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 20,
+      "memory": 1024
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "Vary", "value": "Accept-Encoding" }
+      ]
+    }
+  ]
 }

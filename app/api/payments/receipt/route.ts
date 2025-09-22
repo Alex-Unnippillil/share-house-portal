@@ -1,6 +1,8 @@
-import { PaymentReceiptEmail } from '@/components/emails/payment-receipt';
-import { Resend } from 'resend';
-import { z } from 'zod';
+import { Resend } from 'resend'
+import { z } from 'zod'
+
+import { PaymentReceiptEmail } from '@/components/emails/payment-receipt'
+import { createCompressedJsonResponse } from '@/lib/http/compression'
 
 const lineItemSchema = z.object({
   description: z.string().min(1, "Line item description is required."),
@@ -28,34 +30,37 @@ const paymentReceiptSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY
   if (!resendApiKey) {
-    return Response.json(
-      { error: "Resend API key is not configured." },
-      { status: 500 },
-    );
+    return createCompressedJsonResponse(
+      request,
+      { error: 'Resend API key is not configured.' },
+      { status: 500 }
+    )
   }
 
-  let payload: unknown;
+  let payload: unknown
   try {
-    payload = await request.json();
+    payload = await request.json()
   } catch (error) {
-    return Response.json(
-      { error: "Invalid JSON payload." },
-      { status: 400 },
-    );
+    return createCompressedJsonResponse(
+      request,
+      { error: 'Invalid JSON payload.' },
+      { status: 400 }
+    )
   }
 
-  const parsed = paymentReceiptSchema.safeParse(payload);
+  const parsed = paymentReceiptSchema.safeParse(payload)
 
   if (!parsed.success) {
-    return Response.json(
+    return createCompressedJsonResponse(
+      request,
       {
-        error: "Invalid payment receipt payload.",
+        error: 'Invalid payment receipt payload.',
         details: parsed.error.flatten(),
       },
-      { status: 400 },
-    );
+      { status: 400 }
+    )
   }
 
   const {
@@ -76,7 +81,7 @@ export async function POST(request: Request) {
     sendCopyTo,
   } = parsed.data;
 
-  const resend = new Resend(resendApiKey);
+  const resend = new Resend(resendApiKey)
 
   const fromAddress = process.env.RESEND_RECEIPTS_FROM ?? 'Roomsily Receipts <receipts@resend.dev>';
   const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])];
@@ -104,13 +109,21 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return Response.json({ error: message }, { status: 502 });
+      const message = error instanceof Error ? error.message : String(error)
+      return createCompressedJsonResponse(
+        request,
+        { error: message },
+        { status: 502 }
+      )
     }
 
-    return Response.json({ id: data?.id ?? null });
+    return createCompressedJsonResponse(request, { id: data?.id ?? null })
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return Response.json({ error: message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error)
+    return createCompressedJsonResponse(
+      request,
+      { error: message },
+      { status: 500 }
+    )
   }
 }

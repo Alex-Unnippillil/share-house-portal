@@ -1,0 +1,106 @@
+{
+  "title": "Compression Sample",
+  "description": "This payload is intentionally verbose to verify that compression significantly reduces its transfer size.",
+  "entries": [
+    {
+      "id": 1,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 2,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 3,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 4,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 5,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 6,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 7,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 8,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 9,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 10,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 11,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 12,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 13,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 14,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 15,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 16,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 17,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 18,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 19,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    },
+    {
+      "id": 20,
+      "content": "Roommate responsibilities include cleaning schedules, rent reminders, maintenance checklists, and community announcements repeated for compression efficiency.",
+      "notes": "The quick brown fox jumps over the lazy dog used as filler text for compression testing purposes across multiple roommates."
+    }
+  ]
+}
