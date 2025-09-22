@@ -37,7 +37,7 @@ const paymentHighlights = [
       "Download itemized receipts and export payment history for reimbursement, tax, or dispute resolution needs.",
   },
   {
-    title: "Shared ledger",
+    title: "Roomsily ledger",
     description:
       "Track individual roommate contributions alongside property manager adjustments to maintain full transparency.",
   },

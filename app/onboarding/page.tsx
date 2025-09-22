@@ -9,7 +9,7 @@ import { AuthFormLegacy } from '@/app/auth-server-action/components/AuthFormLega
 
 export const metadata: Metadata = {
   title: "Onboarding",
-  description: "Shared House Portal new user onboarding",
+  description: "Roomsily household onboarding",
 }
 
 export default function OnboardingPage() {
@@ -20,7 +20,7 @@ export default function OnboardingPage() {
           src="/images/house-portal-1.jpg"
           width={1280}
           height={843}
-          alt="Shared House Portal"
+          alt="Roomsily household workspace"
           className="block dark:hidden"
         />
         <Image

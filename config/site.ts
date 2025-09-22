@@ -1,9 +1,9 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
-  name: "Shared House Portal",
+  name: "Roomsily",
   description:
-    "Roommate portal for rent payments, shared documents, and realtime communication.",
+    "www.roomsily is the modern co-living HQ for effortless rent, amenities, and roommate communication.",
   mainNav: [
     {
       title: "Home",

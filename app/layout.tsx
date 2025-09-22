@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
     manifest: '/manifest.json',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.roomsily'),
   alternates: {
     canonical: '/',
     languages: {
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     },
   },
   referrer: 'origin-when-cross-origin',
-  keywords: ['NextJS 14 TypeScript', 'Supabase SSR', 'TanStack React Query', 'vercel', 'openai', 'MVP Template', 'Onyx SaaS PWA template', 'Zod', 'Shadcn-UI', 'Tailwind CSS', 'SaaS', 'NextJS Supabase Postgres Tailwind TanStack', 'NextJS CSP',
+  keywords: ['Roomsily', 'NextJS 14 TypeScript', 'Supabase SSR', 'TanStack React Query', 'co-living software', 'rent payment portal', 'shadcn/ui', 'Tailwind CSS', 'SaaS', 'NextJS Supabase Postgres Tailwind TanStack', 'NextJS CSP',
              'PWA', 'NextJS SaaS PWA Template', 'CRUD ops', 'secure headers', 'NextJS templates with user authentication, RBAC, and CRUD ops', 'NextJS templates with data validation and database integration',
             'Rust API runtime for vercel serverless functions', 'NextJS secure headers', 'NextJS NextMDX'],
   authors: [{ name: 'Robert Mourey Jr' }],
@@ -72,18 +72,13 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
-    url: "https://onyx-rho-pink.vercel.app",
+    url: "https://www.roomsily",
     images: [
       {
-        url: 'https://onyx-rho-pink.vercel.app/og-image.jpg', // Must be an absolute URL
-        width: 1230,
-        height: 640,
-      },
-      {
-        url: 'https://quantumone.b-cdn.net/onyx/opengraph-image.jpg', // Must be an absolute URL
-        width: 1800,
-        height: 1600,
-        alt: 'blockchain business',
+        url: '/roomsily-og.svg',
+        width: 1200,
+        height: 630,
+        alt: 'Roomsily — modern co-living hub',
       },
     ],
     locale: 'en_US',
@@ -92,20 +87,9 @@ export const metadata: Metadata = {
     twitter: {
          title: siteConfig.name,
          description: siteConfig.description,
-         site: '@r_mourey_jr',
-         creator: '@r_mourey_jr',
-         images: [
-      {
-        url: 'https://onyx-rho-pink.vercel.app/twitter-image.jpg', // Must be an absolute URL
-        width: 1800,
-        height: 900,
-      },
-      {
-        url: 'https://quantumone.b-cdn.net/onyx/twitter-image.jpg',
-        width: 1800,
-        height: 900,
-      },
-     ],
+         site: '@roomsily',
+         creator: '@roomsily',
+         images: ['/roomsily-og.svg'],
    },
 }
 export const viewport: Viewport =  {

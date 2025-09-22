@@ -1,6 +1,6 @@
 # Engineering Conventions
 
-This document summarizes the agreed structure for the Share House monorepo and the coding standards all teams follow when contributing to it.
+This document summarizes the agreed structure for the Roomsily monorepo and the coding standards all teams follow when contributing to it.
 
 ## Top-level Folder Structure
 

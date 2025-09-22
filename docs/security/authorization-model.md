@@ -1,7 +1,7 @@
 # Authorization Model
 
 ## Overview
-This document describes the Share House Portal authorization strategy for securing
+This document describes the Roomsily authorization strategy for securing
 multi-tenant building data. Role-based access control (RBAC) is enforced at both
 endpoint and data-layer levels. Every request must include a `BuildingID` that is
 validated against the authenticated user's tenancy memberships, ensuring that no
@@ -10,7 +10,7 @@ data is exposed across buildings or portfolios.
 ## RBAC Roles
 | Role | Primary Responsibilities | Tenancy Membership |
 | --- | --- | --- |
-| **Platform Admin** | Manage global configuration, onboard properties, and view compliance dashboards. | Granted to Share House operations staff. Authorized for all buildings. |
+| **Platform Admin** | Manage global configuration, onboard properties, and view compliance dashboards. | Granted to Roomsily operations staff. Authorized for all buildings. |
 | **Property Manager** | Manage one or more buildings, configure leasing workflows, invite staff, and view tenant/maintenance details. | Explicitly assigned building list; can act on delegated buildings only. |
 | **Building Staff** | Address maintenance tickets, update common area information, and interact with residents. | Single building unless explicitly assigned to multiple. |
 | **Resident** | View personal lease details, submit maintenance requests, and manage payments or communication preferences. | Single building derived from active lease. |
