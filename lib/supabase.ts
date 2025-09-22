@@ -483,6 +483,136 @@ export type Database = {
         }
         Relationships: []
       }
+      chore_assignments: {
+        Row: {
+          chore_title: string
+          completed_at: string | null
+          created_at: string
+          due_date: string
+          id: number
+          inserted_by: string
+          member_id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          chore_title: string
+          completed_at?: string | null
+          created_at?: string
+          due_date: string
+          id?: number
+          inserted_by?: string
+          member_id: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chore_title?: string
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string
+          id?: number
+          inserted_by?: string
+          member_id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_assignments_inserted_by_fkey"
+            columns: ["inserted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_assignments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chore_member_streaks: {
+        Row: {
+          current_streak: number
+          last_completed_date: string | null
+          longest_streak: number
+          member_id: string
+          total_assignments: number
+          total_completed: number
+          updated_at: string
+        }
+        Insert: {
+          current_streak?: number
+          last_completed_date?: string | null
+          longest_streak?: number
+          member_id: string
+          total_assignments?: number
+          total_completed?: number
+          updated_at?: string
+        }
+        Update: {
+          current_streak?: number
+          last_completed_date?: string | null
+          longest_streak?: number
+          member_id?: string
+          total_assignments?: number
+          total_completed?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_member_streaks_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chore_streak_snapshots: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: number
+          longest_streak: number
+          member_id: string
+          snapshot_date: string
+          total_assignments: number
+          total_completed: number
+        }
+        Insert: {
+          created_at?: string
+          current_streak: number
+          id?: number
+          longest_streak: number
+          member_id: string
+          snapshot_date: string
+          total_assignments: number
+          total_completed: number
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: number
+          longest_streak?: number
+          member_id?: string
+          snapshot_date?: string
+          total_assignments?: number
+          total_completed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_streak_snapshots_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           continent: Database["public"]["Enums"]["continents"] | null
@@ -1558,6 +1688,60 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_notifications: {
+        Row: {
+          assignment_id: number | null
+          body: string
+          created_at: string
+          delivered_at: string | null
+          id: number
+          member_id: string
+          metadata: Json | null
+          notification_type: string
+          scheduled_for: string
+          title: string
+        }
+        Insert: {
+          assignment_id?: number | null
+          body: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: number
+          member_id: string
+          metadata?: Json | null
+          notification_type: string
+          scheduled_for?: string
+          title: string
+        }
+        Update: {
+          assignment_id?: number | null
+          body?: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: number
+          member_id?: string
+          metadata?: Json | null
+          notification_type?: string
+          scheduled_for?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_notifications_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "chore_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_notifications_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           created_at: string
@@ -1598,6 +1782,19 @@ export type Database = {
       }
     }
     Views: {
+      chore_member_streak_overview: {
+        Row: {
+          completion_percent: number | null
+          current_streak: number | null
+          last_completed_date: string | null
+          longest_streak: number | null
+          member_id: string | null
+          total_assignments: number | null
+          total_completed: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       package_utilization: {
         Row: {
           created_at: string | null
@@ -1637,6 +1834,10 @@ export type Database = {
       }
       decrement_package_usage: {
         Args: { package_id: string }
+        Returns: undefined
+      }
+      refresh_chore_member_streaks: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       get_page_parents: {

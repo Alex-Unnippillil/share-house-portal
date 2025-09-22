@@ -57,6 +57,7 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
     - NEXT_PUBLIC_SITE_URL="http://localhost:3000" # Used for auth redirects in development
     - SUPABASE_WORKOS_CONNECTION_ID="Your WorkOS connection ID" # Optional, required to enable SSO via WorkOS
+    - CRON_SECRET="your-cron-shared-secret" # Protects the scheduled chore analytics job
 
   - Enable WorkOS SSO (optional)
     - Create a WorkOS connection in the Supabase dashboard and copy the connection ID from the Connections table
@@ -64,7 +65,12 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
+  - Add authorized development and production URL's to Supabase URL config.
+
+### Scheduled chore analytics
+- Supabase's `refresh_chore_member_streaks` function aggregates streaks, records history in `chore_streak_snapshots`, and enqueues deadline reminders in `tenant_notifications`.
+- Configure a Vercel Cron job (or equivalent scheduler) to `POST` to `/api/cron/chore-analytics` with the `CRON_SECRET` bearer token two or more times per day so reminders go out two days before each due date.
+- The dashboard reads from `chore_member_streaks` and `chore_streak_snapshots`, ensuring analytics persist for upcoming gamification features.
 ### Run  
 - Development server:
 

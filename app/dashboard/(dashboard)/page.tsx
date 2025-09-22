@@ -1,5 +1,8 @@
 import { Metadata } from "next"
-import Image from "next/image"
+import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
+import { differenceInCalendarDays, format } from "date-fns"
+import { AlarmClock, Award, CheckCircle2, Flame } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -9,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import {
   Tabs,
   TabsContent,
@@ -17,18 +21,200 @@ import {
 } from "@/components/ui/tabs"
 import { CalendarDateRangePicker } from "@/app/dashboard/components/date-range-picker"
 import { MainNav } from "@/app/dashboard/components/main-nav"
-import { Overview } from "@/app/dashboard/components/overview"
-import { RecentSales } from "@/app/dashboard/components/recent-sales"
+import { Overview, type OverviewDatum } from "@/app/dashboard/components/overview"
+import { RecentSales, type Reminder } from "@/app/dashboard/components/recent-sales"
 import { Search } from "@/app/dashboard/components/search"
 import TeamSwitcher from "@/app/dashboard/components/team-switcher"
 import { UserNav } from "@/app/dashboard/components/user-nav"
+import type { Database } from "@/lib/supabase"
+import { createClient } from "@/utils/supa-server-actions"
 
 export const metadata: Metadata = {
   title: "Onyx Dashboard",
   description: "Manage your Onyx account and users.",
 }
 
-export default function DashboardPage() {
+type ChoreAssignment = Database["public"]["Tables"]["chore_assignments"]["Row"]
+type StreakRow = Database["public"]["Tables"]["chore_member_streaks"]["Row"]
+type SnapshotRow = Database["public"]["Tables"]["chore_streak_snapshots"]["Row"]
+type TenantNotification = Database["public"]["Tables"]["tenant_notifications"]["Row"]
+
+function formatDueCopy(diff: number, dueDate: Date) {
+  const dateLabel = format(dueDate, "EEE, MMM d")
+  if (diff < 0) {
+    return `Overdue by ${Math.abs(diff)} days • ${dateLabel}`
+  }
+  if (diff === 0) {
+    return `Due today • ${dateLabel}`
+  }
+  if (diff === 1) {
+    return `Due tomorrow • ${dateLabel}`
+  }
+  return `Due in ${diff} days • ${dateLabel}`
+}
+
+export default async function DashboardPage() {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/auth")
+  }
+
+  const [
+    { data: streakData, error: streakError },
+    { data: assignmentsData, error: assignmentsError },
+    { data: notificationsData, error: notificationsError },
+    { data: snapshotsData, error: snapshotsError },
+  ] = await Promise.all([
+    supabase
+      .from("chore_member_streaks")
+      .select("*")
+      .eq("member_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("chore_assignments")
+      .select("id, chore_title, due_date, completed_at, notes")
+      .eq("member_id", user.id)
+      .order("due_date", { ascending: true }),
+    supabase
+      .from("tenant_notifications")
+      .select(
+        "id, member_id, assignment_id, notification_type, title, body, metadata, scheduled_for, delivered_at, created_at"
+      )
+      .eq("member_id", user.id)
+      .order("scheduled_for", { ascending: true })
+      .limit(10),
+    supabase
+      .from("chore_streak_snapshots")
+      .select("snapshot_date, current_streak, longest_streak, total_completed, total_assignments")
+      .eq("member_id", user.id)
+      .order("snapshot_date", { ascending: true })
+      .limit(14),
+  ])
+
+  if (streakError) {
+    console.error("Failed to load streak data", streakError)
+  }
+  if (assignmentsError) {
+    console.error("Failed to load chore assignments", assignmentsError)
+  }
+  if (notificationsError) {
+    console.error("Failed to load notifications", notificationsError)
+  }
+  if (snapshotsError) {
+    console.error("Failed to load streak history", snapshotsError)
+  }
+
+  const assignments = (assignmentsData ?? []) as ChoreAssignment[]
+  const notifications = (notificationsData ?? []) as TenantNotification[]
+  const snapshots = (snapshotsData ?? []) as SnapshotRow[]
+
+  const fallbackStreak: StreakRow = {
+    member_id: user.id,
+    current_streak: 0,
+    longest_streak: 0,
+    last_completed_date: null,
+    total_completed: assignments.filter((assignment) => assignment.completed_at).length,
+    total_assignments: assignments.length,
+    updated_at: new Date().toISOString(),
+  }
+
+  const streak = (streakData as StreakRow | null) ?? fallbackStreak
+
+  const today = new Date()
+  const upcomingAssignments = assignments.filter((assignment) => {
+    const dueDate = new Date(assignment.due_date)
+    const diff = differenceInCalendarDays(dueDate, today)
+    return !assignment.completed_at && diff >= 0
+  })
+  const dueSoonAssignments = upcomingAssignments.filter((assignment) => {
+    const diff = differenceInCalendarDays(new Date(assignment.due_date), today)
+    return diff <= 7
+  })
+  const dueSoonCount = dueSoonAssignments.length
+  const dueInTwoDaysAssignments = upcomingAssignments.filter(
+    (assignment) => differenceInCalendarDays(new Date(assignment.due_date), today) === 2
+  )
+  const overdueAssignments = assignments.filter((assignment) => {
+    const diff = differenceInCalendarDays(new Date(assignment.due_date), today)
+    return !assignment.completed_at && diff < 0
+  })
+  const overdueCount = overdueAssignments.length
+
+  const upcomingAssignmentItems = dueSoonAssignments.slice(0, 5).map((assignment) => {
+    const dueDate = new Date(assignment.due_date)
+    const diff = differenceInCalendarDays(dueDate, today)
+    return {
+      id: assignment.id,
+      choreTitle: assignment.chore_title,
+      dueCopy: formatDueCopy(diff, dueDate),
+      dueIn: diff,
+    }
+  })
+
+  const chartSource =
+    snapshots.length > 0
+      ? snapshots.map((snapshot) => ({
+          snapshot_date: snapshot.snapshot_date,
+          current_streak: snapshot.current_streak,
+        }))
+      : [
+          {
+            snapshot_date: today.toISOString(),
+            current_streak: streak.current_streak,
+          },
+        ]
+
+  const streakChartData: OverviewDatum[] = chartSource.map((entry) => ({
+    label: format(new Date(entry.snapshot_date), "MMM d"),
+    value: entry.current_streak,
+  }))
+
+  const completionRate =
+    streak.total_assignments === 0
+      ? 0
+      : Math.round((streak.total_completed / streak.total_assignments) * 100)
+
+  const reminders: Reminder[] = notifications.map((notification) => {
+    const metadata = (notification.metadata ?? {}) as Record<string, unknown>
+    const dueDateValue = typeof metadata.due_date === "string" ? metadata.due_date : null
+    const choreTitleValue =
+      typeof metadata.chore_title === "string"
+        ? metadata.chore_title
+        : assignments.find((assignment) => assignment.id === notification.assignment_id)?.chore_title ?? null
+
+    return {
+      id: notification.id,
+      title: notification.title,
+      body: notification.body,
+      scheduledFor: notification.scheduled_for ?? notification.created_at,
+      deliveredAt: notification.delivered_at ?? undefined,
+      dueDate: dueDateValue,
+      choreTitle: choreTitleValue,
+    }
+  })
+
+  const lastCompletedLabel = streak.last_completed_date
+    ? format(new Date(streak.last_completed_date), "MMM d, yyyy")
+    : "No completions yet"
+  const analyticsUpdatedLabel = format(new Date(streak.updated_at), "MMM d, yyyy")
+  const dueSoonMessage = dueSoonCount
+    ? dueInTwoDaysAssignments.length
+      ? `${dueInTwoDaysAssignments.length} due in two days`
+      : `${dueSoonCount} due within seven days`
+    : "No chores due in the next seven days"
+  const upcomingCardDescription = dueSoonCount
+    ? "Stay ahead of this week's assignments."
+    : "You're all caught up for the coming week."
+  const completionInsightDescription = overdueCount
+    ? `${overdueCount} chore${overdueCount === 1 ? "" : "s"} are overdue.`
+    : "All chores are on schedule."
+
   return (
     <>
       <div className="xs:flex max-w-dvw w-full flex-col">
@@ -68,123 +254,128 @@ export default function DashboardPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Total Revenue
+                      Current streak
                     </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
+                    <Flame className="size-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">$45,231.89</div>
+                    <div className="text-2xl font-bold">{streak.current_streak} days</div>
+                    <p className="text-xs text-muted-foreground">Last completion: {lastCompletedLabel}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Longest streak</CardTitle>
+                    <Award className="size-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{streak.longest_streak} days</div>
                     <p className="text-xs text-muted-foreground">
-                      +20.1% from last month
+                      Updated {analyticsUpdatedLabel}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Subscriptions
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
+                    <CardTitle className="text-sm font-medium">Completion rate</CardTitle>
+                    <CheckCircle2 className="size-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">+2350</div>
-                    <p className="text-xs text-muted-foreground">
-                      +180.1% from last month
+                    <div className="text-2xl font-bold">{completionRate}%</div>
+                    <Progress value={completionRate} className="mt-3 h-2" />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {streak.total_completed} of {streak.total_assignments} assignments completed.
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <rect width="20" height="14" x="2" y="5" rx="2" />
-                      <path d="M2 10h20" />
-                    </svg>
+                    <CardTitle className="text-sm font-medium">Upcoming chores</CardTitle>
+                    <AlarmClock className="size-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">+12,234</div>
-                    <p className="text-xs text-muted-foreground">
-                      +19% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Active Now
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="size-4 text-muted-foreground"
-                    >
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+573</div>
-                    <p className="text-xs text-muted-foreground">
-                      +201 since last hour
-                    </p>
+                    <div className="text-2xl font-bold">{dueSoonCount}</div>
+                    <p className="text-xs text-muted-foreground">{dueSoonMessage}</p>
                   </CardContent>
                 </Card>
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
+                <Card className="lg:col-span-4">
                   <CardHeader>
-                    <CardTitle>Overview</CardTitle>
+                    <CardTitle>Streak trend</CardTitle>
+                    <CardDescription>
+                      Analytics refresh nightly to power gamification features.
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent className="pl-2">
-                    <Overview />
+                  <CardContent className="pl-2 pt-4">
+                    <Overview data={streakChartData} />
                   </CardContent>
                 </Card>
-                <Card className="col-span-3">
+                <Card className="lg:col-span-3">
                   <CardHeader>
-                    <CardTitle>Recent Sales</CardTitle>
+                    <CardTitle>Chore reminders</CardTitle>
                     <CardDescription>
-                      You made 265 sales this month.
+                      Automatic notifications send two days before each deadline.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <RecentSales />
+                    <RecentSales reminders={reminders} />
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-7">
+                <Card className="lg:col-span-4">
+                  <CardHeader>
+                    <CardTitle>Upcoming chore deadlines</CardTitle>
+                    <CardDescription>{upcomingCardDescription}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {upcomingAssignmentItems.length ? (
+                      <ul className="space-y-3">
+                        {upcomingAssignmentItems.map((item) => (
+                          <li
+                            key={item.id}
+                            className="flex items-center justify-between rounded-md border border-border p-3"
+                          >
+                            <div>
+                              <p className="text-sm font-medium leading-none">{item.choreTitle}</p>
+                              <p className="text-xs text-muted-foreground">{item.dueCopy}</p>
+                            </div>
+                            {item.dueIn <= 2 ? (
+                              <span className="text-xs font-semibold text-primary">
+                                Reminder scheduled
+                              </span>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No upcoming chores within the next week.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+                <Card className="lg:col-span-3">
+                  <CardHeader>
+                    <CardTitle>Completion insights</CardTitle>
+                    <CardDescription>{completionInsightDescription}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Assignments completed</p>
+                        <p className="text-2xl font-semibold">{streak.total_completed}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Total assignments</p>
+                        <p className="text-2xl font-semibold">{streak.total_assignments}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                      Analytics last updated {analyticsUpdatedLabel}. Historical streak snapshots
+                      are preserved for upcoming gamification features.
+                    </div>
                   </CardContent>
                 </Card>
               </div>

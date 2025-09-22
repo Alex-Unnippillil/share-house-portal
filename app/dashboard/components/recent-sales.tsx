@@ -1,71 +1,59 @@
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-  } from "@/components/ui/avatar"
-  
-  export function RecentSales() {
+import { format, formatDistanceToNow } from "date-fns"
+
+export type Reminder = {
+  id: number
+  title: string
+  body: string
+  scheduledFor: string
+  dueDate?: string | null
+  deliveredAt?: string | null
+  choreTitle?: string | null
+}
+
+export function RecentSales({ reminders }: { reminders: Reminder[] }) {
+  if (!reminders.length) {
     return (
-      <div className="space-y-8">
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/01.png" alt="Avatar" />
-            <AvatarFallback>OM</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Olivia Martin</p>
-            <p className="text-sm text-muted-foreground">
-              olivia.martin@email.com
-            </p>
-          </div>
-          <div className="ml-auto font-medium">+$1,999.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="flex size-9 items-center justify-center space-y-0 border">
-            <AvatarImage src="/avatars/02.png" alt="Avatar" />
-            <AvatarFallback>JL</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Jackson Lee</p>
-            <p className="text-sm text-muted-foreground">jackson.lee@email.com</p>
-          </div>
-          <div className="ml-auto font-medium">+$39.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/03.png" alt="Avatar" />
-            <AvatarFallback>IN</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Isabella Nguyen</p>
-            <p className="text-sm text-muted-foreground">
-              isabella.nguyen@email.com
-            </p>
-          </div>
-          <div className="ml-auto font-medium">+$299.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/04.png" alt="Avatar" />
-            <AvatarFallback>WK</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">William Kim</p>
-            <p className="text-sm text-muted-foreground">will@email.com</p>
-          </div>
-          <div className="ml-auto font-medium">+$99.00</div>
-        </div>
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src="/avatars/05.png" alt="Avatar" />
-            <AvatarFallback>SD</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">Sofia Davis</p>
-            <p className="text-sm text-muted-foreground">sofia.davis@email.com</p>
-          </div>
-          <div className="ml-auto font-medium">+$39.00</div>
-        </div>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        No chore reminders have been scheduled yet.
+      </p>
     )
   }
+
+  return (
+    <div className="space-y-4">
+      {reminders.map((reminder) => {
+        const scheduledText = formatDistanceToNow(new Date(reminder.scheduledFor), {
+          addSuffix: true,
+        })
+        const deliveredText =
+          reminder.deliveredAt && !Number.isNaN(new Date(reminder.deliveredAt).getTime())
+            ? formatDistanceToNow(new Date(reminder.deliveredAt), { addSuffix: true })
+            : null
+        const dueText =
+          reminder.dueDate && !Number.isNaN(new Date(reminder.dueDate).getTime())
+            ? format(new Date(reminder.dueDate), "MMM d, yyyy")
+            : null
+
+        return (
+          <div
+            key={reminder.id}
+            className="space-y-2 rounded-lg border border-border p-3"
+          >
+            <div>
+              <p className="text-sm font-medium leading-none">{reminder.title}</p>
+              <p className="text-sm text-muted-foreground">{reminder.body}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              {reminder.choreTitle ? (
+                <span className="font-medium text-foreground">{reminder.choreTitle}</span>
+              ) : null}
+              {dueText ? <span>Due {dueText}</span> : null}
+              <span>Scheduled {scheduledText}</span>
+              {deliveredText ? <span>Sent {deliveredText}</span> : null}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
