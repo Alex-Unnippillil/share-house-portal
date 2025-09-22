@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { createVisitorQrPayload } from "@/lib/visitors/qr";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -38,6 +39,7 @@ type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
 export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [qrPayload, setQrPayload] = useState<string | null>(null);
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
@@ -56,6 +58,7 @@ export function VisitorBookingForm() {
 
   const onSubmit = async (data: VisitorBookingFormData) => {
     setIsSubmitting(true);
+    setQrPayload(null);
 
     try {
       // Get current user info
@@ -105,6 +108,15 @@ export function VisitorBookingForm() {
         .single();
 
       if (bookingError) throw bookingError;
+      if (!booking) throw new Error("Failed to create visitor booking");
+
+      const compactQrPayload = createVisitorQrPayload({
+        inviteId: booking.id,
+        guestName: data.guestName,
+        checkInDate: data.checkInDate,
+        checkOutDate: data.checkOutDate,
+      });
+      setQrPayload(compactQrPayload);
 
       // Send notifications
       await notifyVisitorBooking({
@@ -127,7 +139,7 @@ export function VisitorBookingForm() {
 
       toast({
         title: "Visitor booking submitted",
-        description: "Your visitor booking has been submitted and notifications sent.",
+        description: "Notifications sent and QR payload generated for badge printing.",
       });
 
       form.reset();
@@ -144,11 +156,12 @@ export function VisitorBookingForm() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
+    <div className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField
+              control={form.control}
             name="guestName"
             render={({ field }) => (
               <FormItem>
@@ -326,10 +339,27 @@ export function VisitorBookingForm() {
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Submitting..." : "Submit Visitor Booking"}
-        </Button>
-      </form>
-    </Form>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? "Submitting..." : "Submit Visitor Booking"}
+          </Button>
+        </form>
+      </Form>
+
+      {qrPayload && (
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle>Latest visitor QR payload</CardTitle>
+            <CardDescription>
+              Share this compact string with your guest or security team to embed in a QR code.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <code className="block break-all rounded bg-muted p-3 text-sm font-mono">
+              {qrPayload}
+            </code>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
