@@ -3,5 +3,49 @@
     "app/api/**/*.rs": {
       "runtime": "vercel-rust@4.0.8"
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Vary",
+          "value": "Accept-Encoding"
+        },
+        {
+          "key": "Alt-Svc",
+          "value": "h2=\":443\"; ma=86400, h3=\":443\"; ma=86400"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(?:[0-9a-f]{8,})\\.(?:js|css|json|txt|svg|png|jpg|jpeg|webp|woff2?)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Vary",
+          "value": "Accept-Encoding"
+        },
+        {
+          "key": "Alt-Svc",
+          "value": "h2=\":443\"; ma=86400, h3=\":443\"; ma=86400"
+        }
+      ]
+    }
+  ]
 }
