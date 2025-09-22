@@ -43,6 +43,20 @@ export default function DashboardPage() {
             </Link>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Room assignments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Pan and zoom the shared floorplan to review who owns each storage zone and
+              weekly chore rotation.
+            </p>
+            <Link href="/dashboard/floorplans" className="mt-4 inline-block">
+              <Button variant="outline" size="sm">Open floorplan</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

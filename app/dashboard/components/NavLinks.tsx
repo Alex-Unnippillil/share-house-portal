@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
+import { PersonIcon, CrumpledPaperIcon, CubeIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -37,15 +37,17 @@ export default function NavLinks() {
 	const links = isLandlord
 		? [
 			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
-		: [
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-			{ href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
+                        { href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+                        { href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
+                        { href: "/dashboard/floorplans", text: "Floorplans", Icon: CubeIcon },
+                        { href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+                ]
+                : [
+                        { href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+                        { href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
+                        { href: "/dashboard/floorplans", text: "Floorplans", Icon: CubeIcon },
+                        { href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+                        { href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
 			{ href: "/supplies", text: "Supplies", Icon: CrumpledPaperIcon },
 		];
 
