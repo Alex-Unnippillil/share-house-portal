@@ -1,19 +1,11 @@
 "use client";
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useContextSelector } from "use-context-selector";
 
 import { cn } from "@/lib/utils";
 
-const MouseEnterContext = createContext<
-  [boolean, React.Dispatch<React.SetStateAction<boolean>>] | undefined
->(undefined);
+const MouseEnterContext = createContext<boolean | undefined>(undefined);
 
 export const CardContainer = ({
   children,
@@ -47,7 +39,7 @@ export const CardContainer = ({
     containerRef.current.style.transform = `rotateY(0deg) rotateX(0deg)`;
   };
   return (
-    <MouseEnterContext.Provider value={[isMouseEntered, setIsMouseEntered]}>
+    <MouseEnterContext.Provider value={isMouseEntered}>
       <div
         className={cn(
           "flex items-center justify-center py-20",
@@ -119,7 +111,7 @@ export const CardItem = ({
   rotateZ?: number | string;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [isMouseEntered] = useMouseEnter();
+  const isMouseEntered = useMouseEnter();
 
   const translateWithUnit = useCallback((value: number | string) => {
     return typeof value === "number" ? `${value}px` : value;
@@ -174,9 +166,12 @@ export const CardItem = ({
 
 // Create a hook to use the context
 export const useMouseEnter = () => {
-  const context = useContext(MouseEnterContext);
-  if (context === undefined) {
+  const isMouseEntered = useContextSelector(
+    MouseEnterContext,
+    value => value,
+  );
+  if (isMouseEntered === undefined) {
     throw new Error("useMouseEnter must be used within a MouseEnterProvider");
   }
-  return context;
+  return isMouseEntered;
 };
