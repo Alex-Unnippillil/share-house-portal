@@ -1665,6 +1665,62 @@ export type Database = {
         }
         Relationships: []
       }
+      household_documents: {
+        Row: {
+          id: string
+          unit_id: string
+          title: string
+          description: string | null
+          file_name: string
+          file_path: string
+          lease_start: string | null
+          lease_end: string | null
+          metadata: Json | null
+          file_size: number | null
+          content_type: string | null
+          uploaded_by: string | null
+          uploaded_at: string
+        }
+        Insert: {
+          id?: string
+          unit_id: string
+          title: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          lease_start?: string | null
+          lease_end?: string | null
+          metadata?: Json | null
+          file_size?: number | null
+          content_type?: string | null
+          uploaded_by?: string | null
+          uploaded_at?: string
+        }
+        Update: {
+          id?: string
+          unit_id?: string
+          title?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          lease_start?: string | null
+          lease_end?: string | null
+          metadata?: Json | null
+          file_size?: number | null
+          content_type?: string | null
+          uploaded_by?: string | null
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_signatures: {
         Row: {
           id: string
