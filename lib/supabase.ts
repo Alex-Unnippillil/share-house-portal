@@ -941,6 +941,75 @@ export type Database = {
         }
         Relationships: []
       }
+      household_memberships: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          profile_id: string
+          role: string | null
+          updated_at: string
+          weighting_factor: number
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          profile_id: string
+          role?: string | null
+          updated_at?: string
+          weighting_factor?: number
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          profile_id?: string
+          role?: string | null
+          updated_at?: string
+          weighting_factor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_memberships_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          default_split: Database["public"]["Enums"]["supply_split_mode"]
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_split?: Database["public"]["Enums"]["supply_split_mode"]
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_split?: Database["public"]["Enums"]["supply_split_mode"]
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inqueries: {
         Row: {
           created_at: string
@@ -1522,6 +1591,57 @@ export type Database = {
           },
         ]
       }
+      supply_purchases: {
+        Row: {
+          created_at: string
+          default_split: Database["public"]["Enums"]["supply_split_mode"]
+          description: string
+          household_id: string
+          id: string
+          purchased_at: string
+          purchaser_id: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_split?: Database["public"]["Enums"]["supply_split_mode"]
+          description: string
+          household_id: string
+          id?: string
+          purchased_at?: string
+          purchaser_id: string
+          total_cost: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_split?: Database["public"]["Enums"]["supply_split_mode"]
+          description?: string
+          household_id?: string
+          id?: string
+          purchased_at?: string
+          purchaser_id?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_purchases_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_purchases_purchaser_id_fkey"
+            columns: ["purchaser_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supply_chain_data: {
         Row: {
           created_at: string | null
@@ -1774,6 +1894,7 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      supply_split_mode: "even" | "weighted"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
@@ -2233,6 +2354,7 @@ export const Constants = {
         "North America",
         "South America",
       ],
+      supply_split_mode: ["even", "weighted"],
       user_role: ["user", "admin"],
     },
   },
