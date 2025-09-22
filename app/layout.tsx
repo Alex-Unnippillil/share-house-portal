@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
-import { Suspense } from "react"
-
+import "./globals.css"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-
-import "./globals.css"
-
-import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
-import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
+import { ThemeProvider } from "@/components/theme-provider"
 import { CookieButton } from "@/components/cookie-button"
+import { fonts } from "@/lib/font"
+import { siteConfig } from "@/config/site"
+import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
+import { Toaster } from "@/components/ui/toaster"
+import { SiteHeader } from "@/components/site-header"
+
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
@@ -17,9 +17,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
-import { siteConfig } from "@/config/site"
-import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
@@ -115,53 +112,68 @@ interface RootLayoutProps {
 
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const fontFaceCSS = fonts
+    .map(
+      (font) => `@font-face {
+  font-family: '${font.family}';
+  src: url('${font.src}') format('${font.format}');
+  font-style: ${font.style};
+  font-weight: ${font.weight};
+  font-display: ${font.display};
+}`,
+    )
+    .join("\n")
+
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
-        >
-<ThemeProvider
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          {fonts
+            .filter((font) => font.preload)
+            .map((font) => (
+              <link
+                key={`${font.family}-${font.weight}`}
+                rel="preload"
+                href={font.src}
+                as="font"
+                type={`font/${font.format}`}
+                crossOrigin="anonymous"
+              />
+            ))}
+          <style dangerouslySetInnerHTML={{ __html: fontFaceCSS }} />
+        </head>
+        <body className={cn("min-h-screen bg-background font-sans antialiased")}>
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-             <div className="relative flex min-h-screen flex-col">
+            <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
               <div className="flex-1">
-                <ErrorBoundary>
-                  <Suspense fallback={<RouteSkeleton />}>
-                    {children}
-                  </Suspense>
-                </ErrorBoundary>
+                {children}
+
                 <Toaster />
                 <Analytics />
                 <SpeedInsights />
               </div>
+            </div>
+            <SiteFooter />
+            {/*
+            enter your api info from termly.io or a provider of your choice
+            <Script
+              type="text/javascript"
+              src="https://app.termly.io/resource-blocker/123456789abcdefg"
+            />
 
-   </div>
-<SiteFooter/>
-
-
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
- */}
-   <CookieButton />
-   <TailwindIndicator />
+            */}
+            <CookieButton />
+            <TailwindIndicator />
           </ThemeProvider>
+        </body>
+      </html>
 
-
-
-</body>
-    </html>
     </ReactQueryClientProvider>
   )
 }
