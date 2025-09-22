@@ -13,6 +13,8 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { cn } from "@/lib/utils"
+import { SupabaseConnectivityProvider } from "@/components/network/supabase-connectivity-provider"
+import { SupabaseOfflineBanner } from "@/components/network/supabase-offline-banner"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -111,41 +113,45 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
+      <html lang="en" suppressHydrationWarning>
+        <head></head>
+        <body
+          className={cn(
             "min-h-screen bg-background font-sans antialiased",
             fontSans.variable
           )}
         >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-             <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
-
-
-{/*
+          <SupabaseConnectivityProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <div className="relative flex min-h-screen flex-col">
+                <SupabaseOfflineBanner />
+                <SiteHeader />
+                <div className="flex-1">
+                  {children}
+                  <Toaster />
+                  <Analytics />
+                  <SpeedInsights />
+                </div>
+                <SiteFooter />
+              </div>
+              <TailwindIndicator />
+              {/*
 enter your api info from termly.io or a provider of your choice
 <Script
   type="text/javascript"
   src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
 */}
-   <CookieButton />    
-          </ThemeProvider>
-        
-
-
-</body>
-    </html>
+              <CookieButton />
+            </ThemeProvider>
+          </SupabaseConnectivityProvider>
+        </body>
+      </html>
     </ReactQueryClientProvider>
   )
 }
