@@ -1,3 +1,4 @@
+import { MessageCenter } from "@/components/messages/message-center"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
@@ -36,7 +37,10 @@ export default function MessagingPage() {
         </div>
         <Separator />
       </header>
-      <div className="grid gap-6 md:grid-cols-2">
+
+      <MessageCenter />
+
+      <section className="grid gap-6 md:grid-cols-2">
         {messagingHighlights.map((item) => (
           <Card key={item.title}>
             <CardHeader>
@@ -45,7 +49,7 @@ export default function MessagingPage() {
             </CardHeader>
           </Card>
         ))}
-      </div>
+      </section>
     </div>
   )
 }

@@ -199,6 +199,23 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      messages: SupabaseTable<{
+        id: string
+        thread_id: string | null
+        author_id: string | null
+        author_name: string | null
+        author_role:
+          | 'tenant'
+          | 'roommate'
+          | 'property_manager'
+          | 'admin'
+          | 'user'
+          | null
+        content: string
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null
