@@ -8,6 +8,8 @@ import { DocumentWithLease } from '@/types/documents';
 import { Download, ExternalLink, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
+import { PdfStreamViewer } from './pdf-stream-viewer';
+
 interface DocumentViewerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -164,10 +166,10 @@ export function DocumentViewerDialog({
             {document.file_url ? (
               <div className="h-[600px] w-full overflow-hidden rounded-lg border">
                 {document.file_url.toLowerCase().endsWith('.pdf') ? (
-                  <iframe
-                    src={`${document.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
-                    className="size-full"
+                  <PdfStreamViewer
+                    documentId={document.id}
                     title={document.title}
+                    fallbackUrl={document.file_url}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-muted/20">
