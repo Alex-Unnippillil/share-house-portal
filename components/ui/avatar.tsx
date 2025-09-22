@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+
+import Image, { type ImageProps } from "next/image"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
 import { cn } from "@/lib/utils"
@@ -20,16 +22,38 @@ const Avatar = React.forwardRef<
 ))
 Avatar.displayName = AvatarPrimitive.Root.displayName
 
+type AvatarImageProps = {
+  onLoadingStatusChange?: React.ComponentPropsWithoutRef<
+    typeof AvatarPrimitive.Image
+  >["onLoadingStatusChange"]
+} &
+  Omit<ImageProps, "alt"> & {
+    alt?: string
+  }
+
+const DEFAULT_AVATAR_SIZE = 40
+
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square size-full", className)}
-    {...props}
-  />
-))
+  AvatarImageProps
+>(({ className, alt = "", width, height, sizes, onLoadingStatusChange, ...imageProps }, ref) => {
+  const resolvedWidth = width ?? height ?? DEFAULT_AVATAR_SIZE
+  const resolvedHeight = height ?? width ?? DEFAULT_AVATAR_SIZE
+  const resolvedSizes = sizes ?? `${resolvedWidth}px`
+
+  return (
+    <AvatarPrimitive.Image ref={ref} asChild onLoadingStatusChange={onLoadingStatusChange}>
+      <Image
+        className={cn("size-full object-cover", className)}
+        alt={alt}
+        width={resolvedWidth}
+        height={resolvedHeight}
+        sizes={resolvedSizes}
+        {...imageProps}
+      />
+    </AvatarPrimitive.Image>
+  )
+})
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
 const AvatarFallback = React.forwardRef<
