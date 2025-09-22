@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +23,17 @@ interface Notification {
   created_at: string;
 }
 
+type NotificationEventType = 'INSERT' | 'UPDATE' | 'DELETE';
+
+interface QueuedNotificationChange {
+  type: NotificationEventType;
+  payload: Notification;
+  receivedAt: number;
+  shouldAnnounce: boolean;
+}
+
+const FLUSH_INTERVAL_MS = 1000 / 60;
+
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -28,6 +41,31 @@ export function NotificationCenter() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
+  const eventQueueRef = useRef<QueuedNotificationChange[]>([]);
+  const queueIndexRef = useRef<Map<string, number>>(new Map());
+  const animationFrameRef = useRef<number>();
+  const lastFlushTimestampRef = useRef<number | null>(null);
+  const droppedFramesCounterRef = useRef(0);
+
+  const reportDroppedFrames = useCallback((framesMissed: number, delta: number) => {
+    droppedFramesCounterRef.current += framesMissed;
+
+    const detail = {
+      framesMissed,
+      delta,
+      totalDroppedFrames: droppedFramesCounterRef.current,
+      queueDepth: eventQueueRef.current.length,
+      timestamp: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+    };
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('realtime:frames-dropped', { detail }));
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[Realtime] Dropped frames detected while applying notification updates.', detail);
+    }
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -49,39 +87,163 @@ export function NotificationCenter() {
     }
   }, [supabase]);
 
+  const enqueueChange = useCallback(
+    (payload: RealtimePostgresChangesPayload<Notification>) => {
+      const { eventType } = payload;
+      if (eventType !== 'INSERT' && eventType !== 'UPDATE' && eventType !== 'DELETE') {
+        return;
+      }
+
+      const normalizedType = eventType as NotificationEventType;
+      const recordSource = normalizedType === 'DELETE' ? payload.old : payload.new;
+      if (!recordSource) {
+        return;
+      }
+
+      const record = recordSource as Notification;
+      if (!record.id) {
+        return;
+      }
+
+      const queue = eventQueueRef.current;
+      const queueIndex = queueIndexRef.current;
+      const existingIndex = queueIndex.get(record.id);
+      const queuedChange: QueuedNotificationChange = {
+        type: normalizedType,
+        payload: record,
+        receivedAt: Date.now(),
+        shouldAnnounce: normalizedType === 'INSERT',
+      };
+
+      if (existingIndex !== undefined) {
+        const existingChange = queue[existingIndex];
+        queue[existingIndex] = {
+          ...queuedChange,
+          shouldAnnounce: existingChange.shouldAnnounce || queuedChange.shouldAnnounce,
+        };
+      } else {
+        queueIndex.set(record.id, queue.length);
+        queue.push(queuedChange);
+      }
+    },
+    [],
+  );
+
+  const flushQueue = useCallback(() => {
+    if (eventQueueRef.current.length === 0) {
+      return;
+    }
+
+    const queuedEvents = eventQueueRef.current.splice(0);
+    queueIndexRef.current.clear();
+
+    const toasts: Notification[] = [];
+    let nextState: Notification[] | null = null;
+
+    setNotifications(prev => {
+      let working = [...prev];
+      let mutated = false;
+
+      for (const event of queuedEvents) {
+        if (event.type === 'INSERT') {
+          working = [event.payload, ...working.filter(n => n.id !== event.payload.id)];
+          mutated = true;
+
+          if (event.shouldAnnounce) {
+            toasts.push(event.payload);
+          }
+        } else if (event.type === 'UPDATE') {
+          const index = working.findIndex(n => n.id === event.payload.id);
+          if (index !== -1) {
+            working[index] = event.payload;
+            mutated = true;
+          }
+        } else if (event.type === 'DELETE') {
+          const beforeLength = working.length;
+          working = working.filter(n => n.id !== event.payload.id);
+          if (beforeLength !== working.length) {
+            mutated = true;
+          }
+        }
+      }
+
+      if (mutated) {
+        working.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        nextState = working;
+        return working;
+      }
+
+      return prev;
+    });
+
+    if (nextState) {
+      setUnreadCount(nextState.filter(n => !n.read).length);
+    }
+
+    if (toasts.length > 0) {
+      for (const notification of toasts) {
+        toast({
+          title: notification.title,
+          description: notification.message,
+          variant: notification.type === 'error' ? 'destructive' : 'default',
+        });
+      }
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchNotifications();
 
-    // Subscribe to real-time notifications
+    // Subscribe to realtime notification changes and buffer events before applying to UI.
     const channel = supabase
       .channel('notifications')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'notifications',
         },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-
-          // Show toast for new notification
-          toast({
-            title: newNotification.title,
-            description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' :
-                    newNotification.type === 'warning' ? 'default' : 'default',
-          });
-        }
+        enqueueChange,
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, supabase, toast]);
+  }, [enqueueChange, fetchNotifications, supabase]);
+
+  useEffect(() => {
+    const step = (timestamp: number) => {
+      if (lastFlushTimestampRef.current === null) {
+        lastFlushTimestampRef.current = timestamp;
+      }
+
+      const elapsed = timestamp - (lastFlushTimestampRef.current ?? timestamp);
+
+      if (elapsed >= FLUSH_INTERVAL_MS) {
+        const framesMissed = Math.max(0, Math.round(elapsed / FLUSH_INTERVAL_MS) - 1);
+        if (framesMissed > 0 && eventQueueRef.current.length > 0) {
+          reportDroppedFrames(framesMissed, elapsed);
+        }
+
+        lastFlushTimestampRef.current = timestamp;
+        flushQueue();
+      }
+
+      animationFrameRef.current = window.requestAnimationFrame(step);
+    };
+
+    animationFrameRef.current = window.requestAnimationFrame(step);
+
+    return () => {
+      if (animationFrameRef.current) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [flushQueue, reportDroppedFrames]);
 
   const markAsRead = async (notificationId: string) => {
     try {
