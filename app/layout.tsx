@@ -11,8 +11,9 @@ import { ReactQueryClientProvider } from '@/components/react-query-client-provid
 import { Toaster } from "@/components/ui/toaster"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { cn } from "@/lib/utils"
+import { readSupabaseSessionFromCookie } from "@/utils/supabase-session"
+import { AuthStateGate } from "@/components/auth-state-gate"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -109,42 +110,48 @@ interface RootLayoutProps {
 
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const cookieSession = readSupabaseSessionFromCookie()
+  const isAuthenticatedFromCookie = Boolean(cookieSession)
   return (
     <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
     <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+        )}
+        data-auth-ready="false"
+        data-authenticated={isAuthenticatedFromCookie ? "true" : "false"}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-             <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
+          <AuthStateGate initialIsAuthenticated={isAuthenticatedFromCookie} />
+          <div className="relative flex min-h-screen flex-col">
+            <SiteHeader initialIsAuthenticated={isAuthenticatedFromCookie} />
+            <div className="flex-1">
+              {children}
+              <Toaster />
+              <Analytics />
+              <SpeedInsights />
+            </div>
+          </div>
+          <SiteFooter />
 
-
-{/*
+          {/*
 enter your api info from termly.io or a provider of your choice
 <Script
   type="text/javascript"
   src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
 */}
-   <CookieButton />    
-          </ThemeProvider>
-        
-
-
-</body>
+          <CookieButton />
+        </ThemeProvider>
+      </body>
     </html>
     </ReactQueryClientProvider>
   )

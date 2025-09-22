@@ -10,15 +10,30 @@ import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationCenter } from "@/components/notifications/notification-center"
+import { readSupabaseSessionFromCookie } from "@/utils/supabase-session"
 
-export async function SiteHeader() {
-  const {
-    data: { session },
-  } = await readUserSession()
-  const isAuthenticated = Boolean(session)
+interface SiteHeaderProps {
+  initialIsAuthenticated?: boolean
+}
+
+export async function SiteHeader({ initialIsAuthenticated }: SiteHeaderProps = {}) {
+  const cookieSession = readSupabaseSessionFromCookie()
+
+  let isAuthenticated = initialIsAuthenticated ?? Boolean(cookieSession)
+
+  if (!isAuthenticated) {
+    const {
+      data: { session },
+    } = await readUserSession()
+
+    isAuthenticated = Boolean(session)
+  }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      data-authenticated={isAuthenticated ? "true" : "false"}
+    >
       <div className="xs:space-x0 container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <MainNav items={siteConfig.mainNav} />
         <MobileNav isAuthenticated={isAuthenticated} />
