@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { VirtualizedList } from "@/components/ui/virtualized-list";
+import { cn } from "@/lib/utils";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
@@ -140,77 +142,142 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   }
 
+  const toTitleCase = (input: string) =>
+    input
+      .split('_')
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ');
+
+  const formatFilterValue = (key: string, value: string) => {
+    if (key === 'date_from' || key === 'date_to') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+      }
+    }
+
+    return toTitleCase(value);
+  };
+
+  const activeFilterLabels = Object.entries(filter).flatMap(([key, rawValue]) => {
+    if (!rawValue || (Array.isArray(rawValue) && rawValue.length === 0)) {
+      return [];
+    }
+
+    const label = toTitleCase(key);
+
+    if (Array.isArray(rawValue)) {
+      return rawValue.map((value) => `${label}: ${formatFilterValue(key, value)}`);
+    }
+
+    return [`${label}: ${formatFilterValue(key, String(rawValue))}`];
+  });
+
+  const filterSummary = activeFilterLabels.length > 0 ? activeFilterLabels.join(' • ') : 'All documents';
+
+  const header = (
+    <div className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+      <div className="min-w-0 space-y-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filters</p>
+        <p className="truncate font-medium text-foreground">{filterSummary}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Documents</p>
+        <p className="font-semibold text-foreground">{documents.length}</p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-4">
-      {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className="mt-1">
-                  {getTypeIcon(doc.document_type)}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium leading-none">{doc.title}</h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
-                  )}
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                      </span>
+    <div className="overflow-hidden rounded-lg border bg-background/60">
+      <VirtualizedList
+        items={documents}
+        getItemKey={(doc) => doc.id}
+        className="max-h-[70vh]"
+        innerClassName="px-4"
+        staticInnerClassName="px-4"
+        itemClassName=""
+        stickyHeader={header}
+        estimateSize={() => 192}
+        minItemCountForVirtualization={8}
+        renderItem={(doc, index) => {
+          const totalSignatures = doc.signatures?.length ?? 0;
+          const signedCount =
+            doc.signatures?.reduce(
+              (count, signature) => count + (signature.status === 'signed' ? 1 : 0),
+              0,
+            ) ?? 0;
+
+          return (
+            <div className={cn('pb-4', index === 0 && 'pt-4')}>
+              <Card className="transition-shadow hover:shadow-md">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <div className="mt-1">{getTypeIcon(doc.document_type)}</div>
+                      <div className="space-y-1">
+                        <h3 className="font-medium leading-none">{doc.title}</h3>
+                        {doc.description ? (
+                          <p className="text-sm text-muted-foreground">{doc.description}</p>
+                        ) : null}
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="size-3" />
+                            <span>{formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}</span>
+                          </div>
+                          {doc.lease ? (
+                            <div className="flex items-center space-x-1">
+                              <Users className="size-3" />
+                              <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
+                            </div>
+                          ) : null}
+                          {totalSignatures > 0 ? (
+                            <div className="flex items-center space-x-1">
+                              <Eye className="size-3" />
+                              <span>
+                                {signedCount}/{totalSignatures} signed
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
-                    {doc.lease && (
-                      <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
-                        <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
-                      </div>
-                    )}
-                    {doc.signatures && doc.signatures.length > 0 && (
-                      <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
-                        <span>
-                          {doc.signatures.filter(s => s.status === 'signed').length}/
-                          {doc.signatures.length} signed
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {getStatusBadge(doc.status)}
+                      <DocumentActions document={doc} />
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {getStatusBadge(doc.status)}
-                <DocumentActions document={doc} />
-              </div>
+                </CardHeader>
+                {totalSignatures > 0 ? (
+                  <CardContent className="pt-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Signers:</span>
+                      {doc.signatures?.slice(0, 3).map((signature) => (
+                        <Badge
+                          key={signature.id}
+                          variant={signature.status === 'signed' ? 'default' : 'outline'}
+                          className="text-xs"
+                        >
+                          {signature.signer_name || signature.signer_email.split('@')[0]}
+                        </Badge>
+                      ))}
+                      {totalSignatures > 3 ? (
+                        <Badge variant="secondary" className="text-xs">
+                          +{totalSignatures - 3} more
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                ) : null}
+              </Card>
             </div>
-          </CardHeader>
-          {doc.signatures && doc.signatures.length > 0 && (
-            <CardContent className="pt-0">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground">Signers:</span>
-                {doc.signatures.slice(0, 3).map((signature) => (
-                  <Badge
-                    key={signature.id}
-                    variant={signature.status === 'signed' ? 'default' : 'outline'}
-                    className="text-xs"
-                  >
-                    {signature.signer_name || signature.signer_email.split('@')[0]}
-                  </Badge>
-                ))}
-                {doc.signatures.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{doc.signatures.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      ))}
+          );
+        }}
+      />
     </div>
   );
 }
