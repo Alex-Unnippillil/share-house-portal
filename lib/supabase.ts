@@ -483,6 +483,33 @@ export type Database = {
         }
         Relationships: []
       }
+      chore_credits: {
+        Row: {
+          assignment_id: string
+          credits_delta: number
+          created_at: string
+          id: number
+          member_id: string
+          reason: string
+        }
+        Insert: {
+          assignment_id: string
+          credits_delta: number
+          created_at?: string
+          id?: number
+          member_id: string
+          reason: string
+        }
+        Update: {
+          assignment_id?: string
+          credits_delta?: number
+          created_at?: string
+          id?: number
+          member_id?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           continent: Database["public"]["Enums"]["continents"] | null
