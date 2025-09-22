@@ -2,11 +2,13 @@
 
 import { createClient } from '@/utils/supa-server-actions';
 import { createGoogleCalendarEvent } from '@/lib/calendar-service';
-import { revalidatePath } from 'next/cache';
-import type { Database } from '@/lib/supabase';
+import { revalidateTag } from 'next/cache';
+import { invalidateTagCache } from '@/lib/cache/tags';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { formatISO, isPast } from 'date-fns'; // Import formatISO here
+
+const BOOKINGS_TAG = 'bookings';
 
 // --- Updated Zod Schema for Server Action ---
 const scheduleSchema = z.object({
@@ -135,8 +137,8 @@ export async function scheduleMeetingAction(
        console.log("Meeting details saved to database.");
     }
 
-    // 6. Revalidate the path if needed
-    // revalidatePath('/schedule');
+    invalidateTagCache([BOOKINGS_TAG]);
+    await revalidateTag(BOOKINGS_TAG);
 
     // 7. Return success state
     return {

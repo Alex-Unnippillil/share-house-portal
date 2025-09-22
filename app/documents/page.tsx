@@ -1,3 +1,6 @@
+export const fetchCache = 'force-cache';
+export const tags = ['documents', 'document-stats'];
+
 import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

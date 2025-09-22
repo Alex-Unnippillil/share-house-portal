@@ -1,3 +1,6 @@
+export const fetchCache = 'force-cache'
+export const tags = ['bookings']
+
 import { Suspense } from "react"
 import {
   Calendar,

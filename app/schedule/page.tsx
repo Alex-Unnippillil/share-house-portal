@@ -1,3 +1,6 @@
+export const fetchCache = 'force-cache'
+export const tags = ['bookings']
+
 // app/schedule/page.tsx
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';

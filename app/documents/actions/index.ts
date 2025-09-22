@@ -1,10 +1,11 @@
 'use server';
 
 import { createClient } from '@/utils/supa-server-actions';
-import { revalidatePath } from 'next/cache';
+import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
+import { fetchWithTagCache, invalidateTagCache } from '@/lib/cache/tags';
 import {
   Document,
   DocumentWithLease,
@@ -13,6 +14,9 @@ import {
   DocumentSigningRequest,
   DocumentStats
 } from '@/types/documents';
+
+const DOCUMENTS_TAG = 'documents';
+const DOCUMENT_STATS_TAG = 'document-stats';
 
 // Validation schemas
 const documentUploadSchema = z.object({
@@ -111,24 +115,37 @@ export async function getDocumentsAction(
       query = query.lte('created_at', validatedFilters.date_to);
     }
 
-    const { data: documents, error } = await query;
+    const cacheKey = `documents:${user.id}:${JSON.stringify(validatedFilters)}`;
+    const { data: documents, cacheHit } = await fetchWithTagCache<DocumentWithLease[]>(
+      cacheKey,
+      [DOCUMENTS_TAG, `${DOCUMENTS_TAG}:${user.id}`],
+      async () => {
+        const { data: docs, error } = await query;
 
-    if (error) {
-      console.error('Error fetching documents:', error);
-      return { success: false, error: 'Failed to fetch documents.' };
+        if (error) {
+          console.error('Error fetching documents:', error);
+          throw new Error('Failed to fetch documents.');
+        }
+
+        return docs || [];
+      }
+    );
+
+    if (!cacheHit) {
+      for (const doc of documents) {
+        await (supabase as any).rpc('log_document_access', {
+          p_document_id: doc.id,
+          p_action: 'view',
+          p_metadata: { source: 'documents_page' }
+        });
+      }
     }
 
-    // Log access
-    for (const doc of documents || []) {
-      await (supabase as any).rpc('log_document_access', {
-        p_document_id: doc.id,
-        p_action: 'view',
-        p_metadata: { source: 'documents_page' }
-      });
-    }
-
-    return { success: true, data: documents || [] };
+    return { success: true, data: documents };
   } catch (error) {
+    if (error instanceof Error && error.message === 'Failed to fetch documents.') {
+      return { success: false, error: error.message };
+    }
     console.error('Unexpected error in getDocumentsAction:', error);
     return {
       success: false,
@@ -229,7 +246,9 @@ export async function uploadDocumentAction(
       p_metadata: { file_name: file.name, file_size: file.size }
     });
 
-    revalidatePath('/documents');
+    invalidateTagCache([DOCUMENTS_TAG, DOCUMENT_STATS_TAG]);
+    await revalidateTag(DOCUMENTS_TAG);
+    await revalidateTag(DOCUMENT_STATS_TAG);
     return { success: true, data: document, message: 'Document uploaded successfully.' };
   } catch (error) {
     console.error('Unexpected error in uploadDocumentAction:', error);
@@ -403,7 +422,9 @@ export async function createSigningRequestAction(
       p_metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
     });
 
-    revalidatePath('/documents');
+    invalidateTagCache([DOCUMENTS_TAG, DOCUMENT_STATS_TAG]);
+    await revalidateTag(DOCUMENTS_TAG);
+    await revalidateTag(DOCUMENT_STATS_TAG);
     return {
       success: true,
       data: { envelope_id: signingResult.id },
@@ -481,7 +502,9 @@ export async function signDocumentAction(
       p_metadata: signatureData
     });
 
-    revalidatePath('/documents');
+    invalidateTagCache([DOCUMENTS_TAG, DOCUMENT_STATS_TAG]);
+    await revalidateTag(DOCUMENTS_TAG);
+    await revalidateTag(DOCUMENT_STATS_TAG);
     return { success: true, message: 'Document signed successfully.' };
   } catch (error) {
     console.error('Unexpected error in signDocumentAction:', error);
@@ -570,23 +593,33 @@ export async function getDocumentStatsAction(): Promise<ActionResult<DocumentSta
       query = query.eq('tenant_id', user.id);
     }
 
-    const { data: documents, error } = await query;
+    const cacheKey = `document-stats:${user.id}`;
+    const { data: stats } = await fetchWithTagCache<DocumentStats>(
+      cacheKey,
+      [DOCUMENT_STATS_TAG, `${DOCUMENT_STATS_TAG}:${user.id}`],
+      async () => {
+        const { data: documents, error } = await query;
 
-    if (error) {
-      console.error('Error fetching document stats:', error);
-      return { success: false, error: 'Failed to fetch document statistics.' };
-    }
+        if (error) {
+          console.error('Error fetching document stats:', error);
+          throw new Error('Failed to fetch document statistics.');
+        }
 
-    const stats: DocumentStats = {
-      total_documents: documents?.length || 0,
-      pending_signatures: documents?.filter(d => d.status === 'pending_signature').length || 0,
-      signed_documents: documents?.filter(d => d.status === 'signed').length || 0,
-      expired_documents: documents?.filter(d => d.status === 'expired').length || 0,
-      draft_documents: documents?.filter(d => d.status === 'draft').length || 0,
-    };
+        return {
+          total_documents: documents?.length || 0,
+          pending_signatures: documents?.filter(d => d.status === 'pending_signature').length || 0,
+          signed_documents: documents?.filter(d => d.status === 'signed').length || 0,
+          expired_documents: documents?.filter(d => d.status === 'expired').length || 0,
+          draft_documents: documents?.filter(d => d.status === 'draft').length || 0,
+        } satisfies DocumentStats;
+      }
+    );
 
     return { success: true, data: stats };
   } catch (error) {
+    if (error instanceof Error && error.message === 'Failed to fetch document statistics.') {
+      return { success: false, error: error.message };
+    }
     console.error('Unexpected error in getDocumentStatsAction:', error);
     return {
       success: false,
