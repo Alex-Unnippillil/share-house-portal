@@ -1,0 +1,18 @@
+[
+  {
+    "id": "DocumentsList",
+    "phase": "mount",
+    "actualDuration": 16.411143000003904,
+    "baseDuration": 8.919639000001098,
+    "startTime": 2507.619032,
+    "commitTime": 2525.40623
+  },
+  {
+    "id": "DocumentsList",
+    "phase": "update",
+    "actualDuration": 11.889624999999796,
+    "baseDuration": 5.361589000000549,
+    "startTime": 2530.280841,
+    "commitTime": 2542.37583
+  }
+]

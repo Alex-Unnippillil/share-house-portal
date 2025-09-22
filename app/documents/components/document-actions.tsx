@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,20 +21,19 @@ interface DocumentActionsProps {
   document: DocumentWithLease;
 }
 
-export function DocumentActions({ document }: DocumentActionsProps) {
+function DocumentActionsComponent({ document }: DocumentActionsProps) {
   const [showViewer, setShowViewer] = useState(false);
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const permissions = useDocumentPermissions();
 
-  const handleView = () => {
+  const handleView = useCallback(() => {
     setShowViewer(true);
-  };
+  }, []);
 
-  const handleSign = async () => {
+  const handleSign = useCallback(async () => {
     setLoading('signing');
     try {
-      // If we have an external signing flow via Documenso, open it
       const urlResult = await getSigningUrlAction(document.id);
       if (urlResult.success && urlResult.data?.signing_url) {
         window.open(urlResult.data.signing_url, '_blank');
@@ -42,7 +41,6 @@ export function DocumentActions({ document }: DocumentActionsProps) {
         return;
       }
 
-      // Fallback: mark as signed locally (only if URL not available)
       const result = await signDocumentAction(document.id);
       if (result.success) {
         toast.success('Document signed successfully');
@@ -56,38 +54,37 @@ export function DocumentActions({ document }: DocumentActionsProps) {
     } finally {
       setLoading(null);
     }
-  };
+  }, [document.id]);
 
-  const handleCreateSigningRequest = () => {
+  const handleCreateSigningRequest = useCallback(() => {
     setShowSignatureDialog(true);
-  };
+  }, []);
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (document.file_url) {
       window.open(document.file_url, '_blank');
     }
-  };
+  }, [document.file_url]);
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     if (navigator.share && document.file_url) {
       navigator.share({
         title: document.title,
         url: document.file_url,
       });
     } else {
-      // Fallback: copy URL to clipboard
       navigator.clipboard.writeText(document.file_url || '');
       toast.success('Document URL copied to clipboard');
     }
-  };
+  }, [document.file_url, document.title]);
 
-  // Permission checks
-  const canView = permissions.canViewDocument(document);
-  const canSign = permissions.canSignDocument(document);
-  const canCreateSignature = permissions.canCreateSigningRequests &&
-    document.status === 'draft' &&
-    document.requires_signature;
-  const canEdit = permissions.canEditDocument(document);
+  const canView = useMemo(() => permissions.canViewDocument(document), [permissions, document]);
+  const canSign = useMemo(() => permissions.canSignDocument(document), [permissions, document]);
+  const canCreateSignature = useMemo(
+    () => permissions.canCreateSigningRequests && document.status === 'draft' && document.requires_signature,
+    [document.requires_signature, document.status, permissions],
+  );
+  const canEdit = useMemo(() => permissions.canEditDocument(document), [permissions, document]);
 
   // Don't render anything if user can't view this document
   if (!canView) {
@@ -152,3 +149,8 @@ export function DocumentActions({ document }: DocumentActionsProps) {
     </>
   );
 }
+
+export const DocumentActions = memo(
+  DocumentActionsComponent,
+  (prev, next) => prev.document.id === next.document.id && prev.document.updated_at === next.document.updated_at,
+);

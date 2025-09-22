@@ -1,0 +1,58 @@
+[
+  {
+    "id": "CatchUpPaymentCard",
+    "phase": "mount",
+    "actualDuration": 70.7293399999985,
+    "baseDuration": 39.504838000003474,
+    "startTime": 2561.164867,
+    "commitTime": 2632.282057
+  },
+  {
+    "id": "CatchUpPaymentCard",
+    "phase": "nested-update",
+    "actualDuration": 10.763597000000573,
+    "baseDuration": 9.337174000005234,
+    "startTime": 2637.712744,
+    "commitTime": 2648.967578
+  },
+  {
+    "id": "CatchUpPaymentCard",
+    "phase": "nested-update",
+    "actualDuration": 11.448451000001114,
+    "baseDuration": 11.791153000004215,
+    "startTime": 2650.432411,
+    "commitTime": 2662.72215
+  },
+  {
+    "id": "CatchUpPaymentCard",
+    "phase": "nested-update",
+    "actualDuration": 7.348979000001236,
+    "baseDuration": 10.975577000006979,
+    "startTime": 2663.957982,
+    "commitTime": 2671.605514
+  },
+  {
+    "id": "CatchUpPaymentCard",
+    "phase": "nested-update",
+    "actualDuration": 0.6227359999975306,
+    "baseDuration": 10.84306600000491,
+    "startTime": 2672.537964,
+    "commitTime": 2673.885729
+  },
+  {
+    "id": "CatchUpPaymentCard",
+    "phase": "update",
+    "actualDuration": 8.42620300000408,
+    "baseDuration": 7.267908000003445,
+    "startTime": 2674.280215,
+    "commitTime": 2683.101584
+  },
+  {
+    "id": "CatchUpPaymentCard",
+    "phase": "nested-update",
+    "actualDuration": 0.047909000002618995,
+    "baseDuration": 7.267908000003445,
+    "startTime": 2683.678046,
+    "commitTime": 2684.589486
+  }
+]

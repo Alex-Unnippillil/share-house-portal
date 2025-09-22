@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,20 +10,187 @@ import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
 
+const STATUS_VARIANTS = {
+  draft: 'secondary',
+  pending_signature: 'outline',
+  signed: 'default',
+  expired: 'destructive',
+  cancelled: 'secondary',
+} as const;
+
+const STATUS_LABELS = {
+  draft: 'Draft',
+  pending_signature: 'Pending Signature',
+  signed: 'Signed',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
+} as const;
+
+type NormalizedFilter = DocumentListFilters | Record<string, never>;
+
+function normalizeFilter(filter: DocumentListFilters | undefined): NormalizedFilter {
+  if (!filter) {
+    return {};
+  }
+
+  const normalized: DocumentListFilters = {};
+
+  if (filter.status?.length) {
+    normalized.status = [...filter.status].sort();
+  }
+
+  if (filter.type?.length) {
+    normalized.type = [...filter.type].sort();
+  }
+
+  if (filter.tenant_id) {
+    normalized.tenant_id = filter.tenant_id;
+  }
+
+  if (filter.unit_id) {
+    normalized.unit_id = filter.unit_id;
+  }
+
+  if (filter.date_from) {
+    normalized.date_from = filter.date_from;
+  }
+
+  if (filter.date_to) {
+    normalized.date_to = filter.date_to;
+  }
+
+  return normalized;
+}
+
+function createFilterKey(filter: NormalizedFilter) {
+  return JSON.stringify(filter ?? {});
+}
+
+function areFiltersEqual(prev: DocumentsListProps, next: DocumentsListProps) {
+  const prevNormalized = normalizeFilter(prev.filter);
+  const nextNormalized = normalizeFilter(next.filter);
+  return createFilterKey(prevNormalized) === createFilterKey(nextNormalized);
+}
+
+interface DocumentCardProps {
+  document: DocumentWithLease;
+}
+
+const DocumentCard = memo(({ document }: DocumentCardProps) => {
+  const createdLabel = useMemo(
+    () => formatDistanceToNow(new Date(document.created_at), { addSuffix: true }),
+    [document.created_at],
+  );
+
+  const statusVariant = STATUS_VARIANTS[document.status as keyof typeof STATUS_VARIANTS] ?? 'secondary';
+  const statusLabel = STATUS_LABELS[document.status as keyof typeof STATUS_LABELS] ?? document.status;
+
+  const typeIcon = useMemo(() => {
+    switch (document.document_type) {
+      case 'lease':
+      case 'addendum':
+        return <FileText className="size-4" />;
+      case 'insurance':
+        return <Users className="size-4" />;
+      default:
+        return <FileText className="size-4" />;
+    }
+  }, [document.document_type]);
+
+  const signedCount = useMemo(
+    () => document.signatures?.filter((signature) => signature.status === 'signed').length ?? 0,
+    [document.signatures],
+  );
+
+  const totalSignatures = document.signatures?.length ?? 0;
+
+  const visibleSignatures = useMemo(
+    () => document.signatures?.slice(0, 3) ?? [],
+    [document.signatures],
+  );
+
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
+            <div className="mt-1">{typeIcon}</div>
+            <div className="space-y-1">
+              <h3 className="font-medium leading-none">{document.title}</h3>
+              {document.description ? (
+                <p className="text-sm text-muted-foreground">{document.description}</p>
+              ) : null}
+              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                <div className="flex items-center space-x-1">
+                  <Calendar className="size-3" />
+                  <span>{createdLabel}</span>
+                </div>
+                {document.lease ? (
+                  <div className="flex items-center space-x-1">
+                    <Users className="size-3" />
+                    <span>Lease • {document.lease.tenant_ids?.length ?? 0} tenants</span>
+                  </div>
+                ) : null}
+                {totalSignatures > 0 ? (
+                  <div className="flex items-center space-x-1">
+                    <Eye className="size-3" />
+                    <span>
+                      {signedCount}/{totalSignatures} signed
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Badge variant={statusVariant}>{statusLabel}</Badge>
+            <DocumentActions document={document} />
+          </div>
+        </div>
+      </CardHeader>
+      {totalSignatures > 0 ? (
+        <CardContent className="pt-0">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-muted-foreground">Signers:</span>
+            {visibleSignatures.map((signature) => (
+              <Badge
+                key={signature.id}
+                variant={signature.status === 'signed' ? 'default' : 'outline'}
+                className="text-xs"
+              >
+                {signature.signer_name || signature.signer_email.split('@')[0]}
+              </Badge>
+            ))}
+            {totalSignatures > visibleSignatures.length ? (
+              <Badge variant="secondary" className="text-xs">
+                +{totalSignatures - visibleSignatures.length} more
+              </Badge>
+            ) : null}
+          </div>
+        </CardContent>
+      ) : null}
+    </Card>
+  );
+}, (prev, next) => prev.document.id === next.document.id && prev.document.updated_at === next.document.updated_at);
+
+DocumentCard.displayName = 'DocumentCard';
+
 interface DocumentsListProps {
   filter: DocumentListFilters;
 }
 
-export function DocumentsList({ filter }: DocumentsListProps) {
+export const DocumentsList = memo(function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const normalizedFilter = useMemo(() => normalizeFilter(filter), [filter]);
+  const filterKey = useMemo(() => createFilterKey(normalizedFilter), [normalizedFilter]);
 
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
         setLoading(true);
-        const result = await getDocumentsAction(filter);
+        const result = await getDocumentsAction(normalizedFilter as DocumentListFilters);
         if (result.success && result.data) {
           setDocuments(result.data);
         } else {
@@ -38,44 +205,12 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     };
 
     fetchDocuments();
-  }, [filter]);
+  }, [filterKey, normalizedFilter]);
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      draft: 'secondary',
-      pending_signature: 'outline',
-      signed: 'default',
-      expired: 'destructive',
-      cancelled: 'secondary',
-    } as const;
-
-    const labels = {
-      draft: 'Draft',
-      pending_signature: 'Pending Signature',
-      signed: 'Signed',
-      expired: 'Expired',
-      cancelled: 'Cancelled',
-    };
-
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    );
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'lease':
-        return <FileText className="size-4" />;
-      case 'addendum':
-        return <FileText className="size-4" />;
-      case 'insurance':
-        return <Users className="size-4" />;
-      default:
-        return <FileText className="size-4" />;
-    }
-  };
+  const documentCards = useMemo(
+    () => documents.map((doc) => <DocumentCard key={doc.id} document={doc} />),
+    [documents],
+  );
 
   if (loading) {
     return (
@@ -140,77 +275,5 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className="mt-1">
-                  {getTypeIcon(doc.document_type)}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium leading-none">{doc.title}</h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
-                  )}
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    {doc.lease && (
-                      <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
-                        <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
-                      </div>
-                    )}
-                    {doc.signatures && doc.signatures.length > 0 && (
-                      <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
-                        <span>
-                          {doc.signatures.filter(s => s.status === 'signed').length}/
-                          {doc.signatures.length} signed
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {getStatusBadge(doc.status)}
-                <DocumentActions document={doc} />
-              </div>
-            </div>
-          </CardHeader>
-          {doc.signatures && doc.signatures.length > 0 && (
-            <CardContent className="pt-0">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground">Signers:</span>
-                {doc.signatures.slice(0, 3).map((signature) => (
-                  <Badge
-                    key={signature.id}
-                    variant={signature.status === 'signed' ? 'default' : 'outline'}
-                    className="text-xs"
-                  >
-                    {signature.signer_name || signature.signer_email.split('@')[0]}
-                  </Badge>
-                ))}
-                {doc.signatures.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{doc.signatures.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      ))}
-    </div>
-  );
-}
+  return <div className="space-y-4">{documentCards}</div>;
+}, areFiltersEqual);

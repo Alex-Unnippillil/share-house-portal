@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
+import React, { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format, parseISO } from "date-fns"
 import { useForm } from "react-hook-form"
@@ -69,7 +69,8 @@ type QuickAmount = {
   value: number
 }
 
-export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
+export const CatchUpPaymentCard = React.memo(
+  function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
   const schema = useMemo(() => createCatchUpFormSchema(balances), [balances])
   const form = useForm<CatchUpPaymentFormValues>({
     resolver: zodResolver(schema),
@@ -188,14 +189,17 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
     )
   }, [nextCharge, outstandingBalance, selectedBalance])
 
-  const handleQuickAmount = (value: number) => {
-    form.setValue("amount", value.toFixed(2), {
-      shouldDirty: true,
-      shouldValidate: true,
-    })
-  }
+  const handleQuickAmount = useCallback(
+    (value: number) => {
+      form.setValue("amount", value.toFixed(2), {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
+    },
+    [form],
+  )
 
-  const onSubmit = async (values: CatchUpPaymentFormValues) => {
+  const onSubmit = useCallback(async (values: CatchUpPaymentFormValues) => {
     const parsed = parseCurrencyInput(values.amount)
     if (!Number.isFinite(parsed) || parsed <= 0) {
       toast({
@@ -242,7 +246,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
         })
       }
     })
-  }
+  }, [form])
 
   const disableSubmit =
     !selectedBalance || outstandingBalance <= 0 || normalizedAmount <= 0 || isPending
@@ -535,4 +539,6 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
       ) : null}
     </Card>
   )
-}
+  },
+  (prev, next) => prev.balances === next.balances,
+)
