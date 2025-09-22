@@ -2,6 +2,7 @@
 
 import type { InAppNotification, NotificationData } from "@/lib/notifications"
 import { useToast } from "@/components/ui/use-toast"
+import { recordSupportFeedback } from "@/utils/support-feedback"
 
 type NotificationResult = { success: boolean; error?: string }
 type BulkNotificationResult = {
@@ -36,33 +37,100 @@ async function postNotification<T>(payload: unknown): Promise<T> {
   return data as T
 }
 
+const formatRecipients = (recipients: string | string[]) =>
+  (Array.isArray(recipients) ? recipients : [recipients]).filter(Boolean)
+
 export function useNotifications() {
   const { toast } = useToast()
 
+  const submitSupportFeedback = (
+    action: string,
+    status: "pending" | "resolved" | "escalated",
+    description?: string,
+    metadata?: Record<string, unknown>
+  ) => {
+    void recordSupportFeedback({
+      source: "notifications",
+      action,
+      status,
+      description,
+      metadata,
+    })
+  }
+
+  const showBackgroundToast = (
+    description: string,
+    seconds: number
+  ) => {
+    toast({
+      title: "Working in the background",
+      description: `${description} This typically takes about ${seconds} seconds — you can continue using the portal while we finish up.`,
+      duration: 5000,
+    })
+  }
+
   const sendEmail = async (notification: NotificationData) => {
+    const recipients = formatRecipients(notification.to)
+    const recipientList =
+      recipients.length === 1
+        ? recipients[0]
+        : recipients.join(', ')
+
     try {
+      showBackgroundToast(
+        `Sending "${notification.subject}" to ${recipientList || "the selected recipients"}.`,
+        5
+      )
+      submitSupportFeedback("email_dispatch_started", "pending", undefined, {
+        subject: notification.subject,
+        recipients,
+      })
+
       const result = await postNotification<NotificationResult>({
         type: "email",
         notification,
       })
       if (result.success) {
         toast({
-          title: "Email sent",
-          description: "Notification email has been sent successfully.",
+          title: "Email update delivered",
+          description: `"${notification.subject}" is on its way to ${recipientList || "the specified recipients"}.`,
+        })
+        submitSupportFeedback("email_dispatch_completed", "resolved", undefined, {
+          subject: notification.subject,
+          recipients,
         })
       } else {
         toast({
-          title: "Email failed",
-          description: result.error || "Failed to send email notification.",
+          title: "Email delivery issue",
+          description:
+            result.error ||
+            `We couldn't deliver "${notification.subject}" to ${recipientList || "the specified recipients"}.`,
           variant: "destructive",
         })
+        submitSupportFeedback(
+          "email_dispatch_failed",
+          "escalated",
+          result.error,
+          {
+            subject: notification.subject,
+            recipients,
+          }
+        )
       }
       return result
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred while sending email.",
+        title: "Email delivery error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred while sending the email notification.",
         variant: "destructive",
+      })
+      submitSupportFeedback("email_dispatch_error", "escalated", undefined, {
+        subject: notification.subject,
+        recipients,
+        error: error instanceof Error ? error.message : error,
       })
       return { success: false, error: "Unexpected error" }
     }
@@ -70,6 +138,20 @@ export function useNotifications() {
 
   const sendInAppNotification = async (notification: InAppNotification) => {
     try {
+      showBackgroundToast(
+        `Posting "${notification.title}" to the notification center.`,
+        3
+      )
+      submitSupportFeedback(
+        "in_app_dispatch_started",
+        "pending",
+        undefined,
+        {
+          title: notification.title,
+          userId: notification.userId,
+        }
+      )
+
       const result = await postNotification<NotificationResult>({
         type: "in-app",
         notification,
@@ -86,6 +168,10 @@ export function useNotifications() {
               ? "default"
               : "default",
         })
+        submitSupportFeedback("in_app_dispatch_completed", "resolved", undefined, {
+          title: notification.title,
+          userId: notification.userId,
+        })
       }
       return result
     } catch (error) {
@@ -93,6 +179,11 @@ export function useNotifications() {
         title: "Notification failed",
         description: "Failed to send in-app notification.",
         variant: "destructive",
+      })
+      submitSupportFeedback("in_app_dispatch_error", "escalated", undefined, {
+        title: notification.title,
+        userId: notification.userId,
+        error: error instanceof Error ? error.message : error,
       })
       return { success: false, error: "Unexpected error" }
     }
@@ -102,6 +193,14 @@ export function useNotifications() {
     notifications: (NotificationData | InAppNotification)[]
   ) => {
     try {
+      showBackgroundToast(
+        "Dispatching notifications to residents and managers.",
+        7
+      )
+      submitSupportFeedback("bulk_dispatch_started", "pending", undefined, {
+        notificationCount: notifications.length,
+      })
+
       const response = await postNotification<BulkNotificationResult>({
         type: "bulk",
         notifications,
@@ -118,25 +217,39 @@ export function useNotifications() {
             failureCount > 0 ? `, ${failureCount} failed` : ""
           }.`,
         })
+        submitSupportFeedback("bulk_dispatch_completed", "resolved", undefined, {
+          successCount,
+          failureCount,
+        })
       }
 
       if (failureCount > 0) {
         toast({
-          title: "Some notifications failed",
+          title: "Some notifications need attention",
           description: `${failureCount} notification${
             failureCount > 1 ? "s" : ""
-          } could not be sent.`,
+          } could not be sent. Review the activity log for details.`,
           variant: "destructive",
+        })
+        submitSupportFeedback("bulk_dispatch_partial_failure", "escalated", undefined, {
+          successCount,
+          failureCount,
         })
       }
 
       return response.results
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Notification dispatch error",
         description:
-          "An unexpected error occurred while sending notifications.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred while sending notifications.",
         variant: "destructive",
+      })
+      submitSupportFeedback("bulk_dispatch_error", "escalated", undefined, {
+        error: error instanceof Error ? error.message : error,
+        notificationCount: notifications.length,
       })
       return []
     }
