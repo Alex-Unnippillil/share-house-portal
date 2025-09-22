@@ -3,7 +3,6 @@
 import { createClient } from '@/utils/supa-server-actions';
 import { createGoogleCalendarEvent } from '@/lib/calendar-service';
 import { revalidatePath } from 'next/cache';
-import { Database } from '@/lib/supabase';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { formatISO, isPast } from 'date-fns'; // Import formatISO here
@@ -95,9 +94,11 @@ export async function scheduleMeetingAction(
   try {
     // 4. Create Google Calendar Event
     //    Format the validated Date objects back into ISO strings for the Google API call
+    const startTimeIso = formatISO(validatedData.startTime);
+    const endTimeIso = formatISO(validatedData.endTime);
     const calendarResult = await createGoogleCalendarEvent({
-      startTime: formatISO(validatedData.startTime), // Format Date -> ISO String
-      endTime: formatISO(validatedData.endTime),     // Format Date -> ISO String
+      startTime: startTimeIso, // Format Date -> ISO String
+      endTime: endTimeIso,     // Format Date -> ISO String
       attendeeEmail: validatedData.userEmail,
       attendeeName: validatedData.userName,
       summary: validatedData.summary,
@@ -120,10 +121,11 @@ export async function scheduleMeetingAction(
       .from('meetings')
       .insert({
         user_id: user.id,
-        start_time: validatedData.startTime, // Pass Date object
-        end_time: validatedData.endTime,     // Pass Date object
-        google_event_id: calendarResult.eventId,
+        start_time: startTimeIso,
+        end_time: endTimeIso,
+        meet_link: calendarResult.link ?? '',
         summary: validatedData.summary,
+        description: validatedData.description ?? null,
       });
 
     if (dbError) {

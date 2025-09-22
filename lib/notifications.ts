@@ -212,4 +212,18 @@ class NotificationService {
   }
 }
 
-export const notificationService = new NotificationService();
+const notificationService = new NotificationService();
+
+export async function sendEmailNotification(notification: NotificationData) {
+  return notificationService.sendEmail(notification);
+}
+
+export async function sendInAppNotification(notification: InAppNotification) {
+  return notificationService.sendInAppNotification(notification);
+}
+
+export async function sendBulkNotifications(
+  notifications: (NotificationData | InAppNotification)[],
+) {
+  return notificationService.sendBulkNotification(notifications);
+}
