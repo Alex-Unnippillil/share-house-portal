@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
+import { useMemo, useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format, parseISO } from "date-fns"
 import { useForm } from "react-hook-form"
@@ -93,12 +93,31 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
     [balances, selectedRoommateId],
   )
 
-  useEffect(() => {
-    if (!selectedBalance) {
+  const handleRoommateChange = (roommateId: string) => {
+    form.setValue("roommateId", roommateId, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
+
+    const balance = balances.find((item) => item.roommateId === roommateId)
+    if (!balance) {
+      form.setValue("amount", "", {
+        shouldDirty: false,
+        shouldValidate: true,
+      })
+      form.setValue("includePropertyManager", false, {
+        shouldDirty: false,
+        shouldValidate: false,
+      })
+      form.setValue("note", "", {
+        shouldDirty: false,
+        shouldValidate: false,
+      })
       return
     }
 
-    const outstandingValue = calculateOutstanding(selectedBalance.charges)
+    const outstandingValue = calculateOutstanding(balance.charges)
     form.setValue(
       "amount",
       outstandingValue > 0 ? outstandingValue.toFixed(2) : "0.00",
@@ -109,7 +128,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
       shouldValidate: false,
     })
     form.setValue("note", "", { shouldDirty: false, shouldValidate: false })
-  }, [selectedBalance, form])
+  }
 
   const outstandingBalance = selectedBalance
     ? calculateOutstanding(selectedBalance.charges)
@@ -274,7 +293,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Roommate</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={handleRoommateChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select roommate" />
