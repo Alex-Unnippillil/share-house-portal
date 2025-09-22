@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "profile:react": "node scripts/profile-react.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -87,6 +88,7 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.5.4",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "0x": "^5.7.1"
   }
 }
