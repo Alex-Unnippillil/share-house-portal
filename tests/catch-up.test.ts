@@ -56,6 +56,12 @@ describe("catch-up helpers", () => {
     ])
   })
 
+  it("prevents allocating more than the outstanding balance", () => {
+    expect(() => allocatePaymentToCharges(sampleCharges, 600)).toThrow(
+      "Catch-up amount exceeds outstanding charges.",
+    )
+  })
+
   it("reduces outstanding amounts after applying allocations", () => {
     const allocations = [
       { chargeId: "charge_rent", amount: 450.25 },

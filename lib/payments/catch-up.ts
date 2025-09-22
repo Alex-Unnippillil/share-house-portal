@@ -56,13 +56,6 @@ export function allocatePaymentToCharges(
     }
   }
 
-  if (remainingCents > 0 && allocations.length > 0) {
-    const adjustment = remainingCents / 100
-    const lastAllocation = allocations[allocations.length - 1]
-    lastAllocation.amount = roundToCurrency(lastAllocation.amount + adjustment)
-    remainingCents = 0
-  }
-
   if (remainingCents > 0) {
     throw new Error("Catch-up amount exceeds outstanding charges.")
   }
