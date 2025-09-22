@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Icons } from "@/components/icons";
 import { loginWithEmailAndPassword } from '@/app/auth/actions'
 import { AuthTokenResponse } from "@supabase/supabase-js";
 import { useTransition } from "react";
@@ -107,10 +107,10 @@ if (error)	{
 				className="flex w-full items-center gap-2"
 				variant="outline"
 			>
-				Sign In{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
+                                Sign In{" "}
+                                <Icons.spinner
+                                        className={cn(" animate-spin", { hidden: !isPending })}
+                                />
 			</Button>
 			</form>
 		</Form>

@@ -1,10 +1,16 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { getDocumentStatsAction } from '../actions';
-import { DocumentStats } from '@/types/documents';
+import { useEffect, useState } from "react"
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  FileTextIcon,
+} from "@/components/icons"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DocumentStats } from "@/types/documents"
+
+import { getDocumentStatsAction } from "../actions"
 
 export function DocumentsStats() {
   const [stats, setStats] = useState<DocumentStats | null>(null);
@@ -52,25 +58,25 @@ export function DocumentsStats() {
     {
       title: "Total Documents",
       value: stats.total_documents,
-      icon: FileText,
+      icon: FileTextIcon,
       color: "text-blue-600",
     },
     {
       title: "Pending Signatures",
       value: stats.pending_signatures,
-      icon: Clock,
+      icon: ClockIcon,
       color: "text-yellow-600",
     },
     {
       title: "Signed Documents",
       value: stats.signed_documents,
-      icon: CheckCircle,
+      icon: CheckCircleIcon,
       color: "text-green-600",
     },
     {
       title: "Expired Documents",
       value: stats.expired_documents,
-      icon: AlertCircle,
+      icon: AlertCircleIcon,
       color: "text-red-600",
     },
   ];

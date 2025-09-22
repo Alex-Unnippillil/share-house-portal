@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 import {
 	Form,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
+import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -70,15 +70,15 @@ export default function CreateForm() {
 						</FormItem>
 					)}
 				/>
-<Button
-				className="flex w-full items-center gap-2"
-				variant="outline"
-			>
-				Create{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
-			</Button>
+                        <Button
+                                className="flex w-full items-center gap-2"
+                                variant="outline"
+                        >
+                                Create{" "}
+                                <Icons.spinner
+                                        className={cn(" animate-spin", { hidden: !isPending })}
+                                />
+                        </Button>
 
 			</form>
 		</Form>

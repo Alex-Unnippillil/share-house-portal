@@ -1,12 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarCheck, Clock, Users } from 'lucide-react';
+import type { Icon } from "@/components/icons"
+import {
+  CalendarCheckIcon,
+  ClockIcon,
+  UsersIcon,
+} from "@/components/icons"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function BookingStats() {
-  const stats = [
-    { title: 'This week', value: '8 bookings', Icon: CalendarCheck },
-    { title: 'Avg duration', value: '1.7 hours', Icon: Clock },
-    { title: 'Participants', value: '12 roommates', Icon: Users },
-  ];
+  const stats: { title: string; value: string; Icon: Icon }[] = [
+    { title: "This week", value: "8 bookings", Icon: CalendarCheckIcon },
+    { title: "Avg duration", value: "1.7 hours", Icon: ClockIcon },
+    { title: "Participants", value: "12 roommates", Icon: UsersIcon },
+  ]
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -22,8 +27,5 @@ export function BookingStats() {
         </Card>
       ))}
     </div>
-  );
+  )
 }
-
-
-

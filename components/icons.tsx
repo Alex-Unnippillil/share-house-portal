@@ -1,19 +1,50 @@
-import {
-  LucideProps,
-  Moon,
-  SunMedium,
-  Menu,
-  Linkedin,
-  LucideIcon,
-} from "lucide-react"
+import type { LucideIcon, LucideProps } from "lucide-react"
 
 export type Icon = LucideIcon
 
+export { default as AlertCircleIcon } from "lucide-react/dist/esm/icons/alert-circle"
+export { default as BellIcon } from "lucide-react/dist/esm/icons/bell"
+export { default as CalendarIcon } from "lucide-react/dist/esm/icons/calendar"
+export { default as CalendarCheckIcon } from "lucide-react/dist/esm/icons/calendar-check"
+export { default as CalendarRangeIcon } from "lucide-react/dist/esm/icons/calendar-range"
+export { default as CarIcon } from "lucide-react/dist/esm/icons/car"
+export { default as CheckIcon } from "lucide-react/dist/esm/icons/check"
+export { default as CheckCheckIcon } from "lucide-react/dist/esm/icons/check-check"
+export { default as CheckCircleIcon } from "lucide-react/dist/esm/icons/check-circle"
+export { default as ChevronRightIcon } from "lucide-react/dist/esm/icons/chevron-right"
+export { default as ClockIcon } from "lucide-react/dist/esm/icons/clock"
+export { default as CogIcon } from "lucide-react/dist/esm/icons/cog"
+export { default as CopyIcon } from "lucide-react/dist/esm/icons/copy"
+export { default as CuboidIcon } from "lucide-react/dist/esm/icons/cuboid"
+export { default as DatabaseIcon } from "lucide-react/dist/esm/icons/database"
+export { default as DownloadIcon } from "lucide-react/dist/esm/icons/download"
+export { default as ExternalLinkIcon } from "lucide-react/dist/esm/icons/external-link"
+export { default as EyeIcon } from "lucide-react/dist/esm/icons/eye"
+export { default as FileTextIcon } from "lucide-react/dist/esm/icons/file-text"
+export { default as FilterIcon } from "lucide-react/dist/esm/icons/filter"
+export { default as Gamepad2Icon } from "lucide-react/dist/esm/icons/gamepad-2"
+export { default as LinkIcon } from "lucide-react/dist/esm/icons/link"
+export { default as MenuIcon } from "lucide-react/dist/esm/icons/menu"
+export { default as MessageSquareIcon } from "lucide-react/dist/esm/icons/message-square"
+export { default as MonitorIcon } from "lucide-react/dist/esm/icons/monitor"
+export { default as MoonIcon } from "lucide-react/dist/esm/icons/moon"
+export { default as MoreHorizontalIcon } from "lucide-react/dist/esm/icons/more-horizontal"
+export { default as PenToolIcon } from "lucide-react/dist/esm/icons/pen-tool"
+export { default as ShareIcon } from "lucide-react/dist/esm/icons/share-2"
+export { default as ShieldIcon } from "lucide-react/dist/esm/icons/shield"
+export { default as ShieldCheckIcon } from "lucide-react/dist/esm/icons/shield-check"
+export { default as SparklesIcon } from "lucide-react/dist/esm/icons/sparkles"
+export { default as StarIcon } from "lucide-react/dist/esm/icons/star"
+export { default as SunIcon } from "lucide-react/dist/esm/icons/sun-medium"
+export { default as TvIcon } from "lucide-react/dist/esm/icons/tv"
+export { default as UploadIcon } from "lucide-react/dist/esm/icons/upload"
+export { default as UsersIcon } from "lucide-react/dist/esm/icons/users"
+export { default as UtensilsIcon } from "lucide-react/dist/esm/icons/utensils-crossed"
+export { default as WalletIcon } from "lucide-react/dist/esm/icons/wallet"
+export { default as XIcon } from "lucide-react/dist/esm/icons/x"
+export { default as ZapIcon } from "lucide-react/dist/esm/icons/zap"
+
 export const Icons = {
-  sun: SunMedium,
-  moon: Moon,
-  menu: Menu,
-  linkedin: Linkedin,
   twitter: (props: LucideProps) => (
     <svg
       {...props}

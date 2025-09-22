@@ -1,12 +1,15 @@
-'use client';
+'use client'
 
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { DocumentWithLease } from '@/types/documents';
-import { Download, ExternalLink, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import {
+  DownloadIcon,
+  ExternalLinkIcon,
+  FileTextIcon,
+} from "@/components/icons"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DocumentWithLease } from "@/types/documents"
+import { format } from "date-fns"
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -69,11 +72,11 @@ export function DocumentViewerDialog({
             <div className="flex items-center space-x-2">
               {getStatusBadge(document.status)}
               <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="mr-2 size-4" />
+                <DownloadIcon className="mr-2 size-4" />
                 Download
               </Button>
               <Button variant="outline" size="sm" onClick={handleOpenExternal}>
-                <ExternalLink className="mr-2 size-4" />
+                <ExternalLinkIcon className="mr-2 size-4" />
                 Open
               </Button>
             </div>
@@ -172,12 +175,12 @@ export function DocumentViewerDialog({
                 ) : (
                   <div className="flex h-full items-center justify-center bg-muted/20">
                     <div className="text-center">
-                      <FileText className="mx-auto mb-4 size-16 text-muted-foreground" />
+                      <FileTextIcon className="mx-auto mb-4 size-16 text-muted-foreground" />
                       <p className="mb-2 text-muted-foreground">
                         Preview not available for this file type
                       </p>
                       <Button onClick={handleDownload} variant="outline">
-                        <Download className="mr-2 size-4" />
+                        <DownloadIcon className="mr-2 size-4" />
                         Download to View
                       </Button>
                     </div>
@@ -187,7 +190,7 @@ export function DocumentViewerDialog({
             ) : (
               <div className="flex h-[600px] items-center justify-center rounded-lg bg-muted/20">
                 <div className="text-center">
-                  <FileText className="mx-auto mb-4 size-16 text-muted-foreground" />
+                  <FileTextIcon className="mx-auto mb-4 size-16 text-muted-foreground" />
                   <p className="text-muted-foreground">Document file not available</p>
                 </div>
               </div>

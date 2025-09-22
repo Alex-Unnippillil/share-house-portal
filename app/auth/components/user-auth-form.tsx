@@ -13,7 +13,6 @@ import { AuthTokenResponse } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { AiOutlineLoading3Quarters } from "react-icons/ai"
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -82,13 +81,13 @@ const [isLoading, setIsLoading] = React.useState<boolean>(false)
             />
           </div>
           <Button
-				className="flex w-full items-center gap-2"
-				variant="outline"
-			>
-				Sign In{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
+                                className="flex w-full items-center gap-2"
+                                variant="outline"
+                        >
+                                Sign In{" "}
+                                <Icons.spinner
+                                        className={cn(" animate-spin", { hidden: !isPending })}
+                                />
         </Button>
         </div>
       </form>

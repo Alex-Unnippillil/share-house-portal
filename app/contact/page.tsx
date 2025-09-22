@@ -6,7 +6,6 @@ import { cookies } from 'next/headers'
 import { Contact } from "@/components/forms/contact";
 import { createClient } from "@/utils/supa-server-actions";
 import { redirect } from "next/navigation";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { type User } from '@supabase/supabase-js'
 
 export default async function ContactPage() {

@@ -5,11 +5,16 @@ import useSupabaseBrowser from '@/utils/supabase-browser'
 import { getCountryById } from '@/queries/country-by-id'
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
 
+type Country = {
+  id: number
+  name: string
+}
+
 export default function Country({ id }: { id: number }) {
   const supabase = useSupabaseBrowser()
   // This useQuery could just as well happen in some deeper
   // child to <Posts>, data will be available immediately either way
-  const { data: country } = useQuery(getCountryById(supabase, id))
+  const { data: country } = useQuery<Country>(getCountryById(supabase, id))
 
   return (
     <div>

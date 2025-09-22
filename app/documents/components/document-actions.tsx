@@ -1,21 +1,32 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import {
+  DownloadIcon,
+  EyeIcon,
+  MoreHorizontalIcon,
+  PenToolIcon,
+  ShareIcon,
+} from "@/components/icons"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { DocumentWithLease } from '@/types/documents';
-import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '../actions';
-import { DocumentViewerDialog } from './document-viewer-dialog';
-import { CreateSignatureDialog } from './create-signature-dialog';
-import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import { MoreHorizontal, Eye, PenTool, Download, Share2 } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/dropdown-menu"
+import { useDocumentPermissions } from "@/hooks/use-document-permissions"
+import { DocumentWithLease } from "@/types/documents"
+import { toast } from "sonner"
+
+import {
+  createSigningRequestAction,
+  getSigningUrlAction,
+  signDocumentAction,
+} from "../actions"
+import { CreateSignatureDialog } from "./create-signature-dialog"
+import { DocumentViewerDialog } from "./document-viewer-dialog"
 
 interface DocumentActionsProps {
   document: DocumentWithLease;
@@ -99,26 +110,26 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm">
-            <MoreHorizontal className="size-4" />
+            <MoreHorizontalIcon className="size-4" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleView}>
-            <Eye className="mr-2 size-4" />
+            <EyeIcon className="mr-2 size-4" />
             View Document
           </DropdownMenuItem>
 
           {canSign && (
             <DropdownMenuItem onClick={handleSign} disabled={loading === 'signing'}>
-              <PenTool className="mr-2 size-4" />
+              <PenToolIcon className="mr-2 size-4" />
               {loading === 'signing' ? 'Signing...' : 'Sign Document'}
             </DropdownMenuItem>
           )}
 
           {canCreateSignature && (
             <DropdownMenuItem onClick={handleCreateSigningRequest}>
-              <Share2 className="mr-2 size-4" />
+              <ShareIcon className="mr-2 size-4" />
               Create Signing Request
             </DropdownMenuItem>
           )}
@@ -126,12 +137,12 @@ export function DocumentActions({ document }: DocumentActionsProps) {
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={handleDownload}>
-            <Download className="mr-2 size-4" />
+            <DownloadIcon className="mr-2 size-4" />
             Download
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleShare}>
-            <Share2 className="mr-2 size-4" />
+            <ShareIcon className="mr-2 size-4" />
             Share
           </DropdownMenuItem>
         </DropdownMenuContent>

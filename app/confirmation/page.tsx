@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, Copy, Calendar } from "lucide-react"
+import { CalendarIcon, CheckCircleIcon, CopyIcon } from "@/components/icons"
 import { useState } from "react"
 import { toast } from "@/components/ui/use-toast"
 
@@ -53,7 +53,7 @@ export default function ConfirmationPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CheckCircle className="mx-auto mb-4 size-16 text-green-500" />
+          <CheckCircleIcon className="mx-auto mb-4 size-16 text-green-500" />
           <CardTitle>Meeting Scheduled!</CardTitle>
           <CardDescription>Your Google Meet has been created successfully</CardDescription>
         </CardHeader>
@@ -67,11 +67,11 @@ export default function ConfirmationPage() {
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={copyToClipboard} className="gap-2">
-            {copied ? <CheckCircle className="size-4" /> : <Copy className="size-4" />}
+            {copied ? <CheckCircleIcon className="size-4" /> : <CopyIcon className="size-4" />}
             {copied ? "Copied" : "Copy Link"}
           </Button>
           <Button onClick={addToCalendar} className="gap-2">
-            <Calendar className="size-4" />
+            <CalendarIcon className="size-4" />
             Open in Calendar
           </Button>
         </CardFooter>

@@ -1,18 +1,18 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { FilterIcon, XIcon } from "@/components/icons"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { DocumentListFilters, DocumentStatus, DocumentType } from '@/types/documents';
-import { Filter, X } from 'lucide-react';
+} from "@/components/ui/dropdown-menu"
+import { DocumentListFilters, DocumentStatus, DocumentType } from "@/types/documents"
 
 interface DocumentsFiltersProps {
   onFiltersChange?: (filters: DocumentListFilters) => void;
@@ -85,7 +85,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
-            <Filter className="mr-2 size-4" />
+            <FilterIcon className="mr-2 size-4" />
             Status
             {filters.status && filters.status.length > 0 && (
               <Badge variant="secondary" className="ml-2 size-4 p-0 text-xs">
@@ -144,7 +144,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
           onClick={clearFilters}
           className="text-muted-foreground hover:text-foreground"
         >
-          <X className="mr-2 size-4" />
+          <XIcon className="mr-2 size-4" />
           Clear ({activeFilterCount})
         </Button>
       )}
