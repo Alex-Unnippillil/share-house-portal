@@ -1,6 +1,7 @@
 import { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
+
+import { ResponsiveImage } from "@/components/media/ResponsiveImage"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -16,14 +17,14 @@ export default function OnboardingPage() {
   return (
     <>
       <div className="hidden">
-        <Image
+        <ResponsiveImage
           src="/images/house-portal-1.jpg"
           width={1280}
           height={843}
           alt="Roomsily household workspace"
           className="block dark:hidden"
         />
-        <Image
+        <ResponsiveImage
           src="/images/house-portal-2.jpg"
           width={1280}
           height={843}
@@ -43,14 +44,15 @@ export default function OnboardingPage() {
         </Link>
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
           <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
-          <Image
-          src="/images/house-portal-2.jpg"
-          width={2048}
-          height={2048}
-          alt="Roommate Collaboration"
-          style={{objectFit: "contain"}}
-          
-        />
+          <ResponsiveImage
+            src="/images/house-portal-2.jpg"
+            width={2048}
+            height={2048}
+            alt="Roommate Collaboration"
+            className="size-full"
+            priority
+            style={{ objectFit: "contain" }}
+          />
           </div>
           <div className="relative z-20 flex items-center text-lg font-medium">
             <svg

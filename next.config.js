@@ -70,8 +70,10 @@ const nextConfig = {
   experimental: {
     mdxRs: true,
   },
-    images : {
-      remotePatterns: [
+  images: {
+    deviceSizes: [360, 414, 640, 768, 1024, 1280, 1536],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 640],
+    remotePatterns: [
       {
         protocol: 'https',
         hostname: 'quantumone.b-cdn.net',
@@ -96,7 +98,6 @@ const nextConfig = {
         port: '',
         pathname: '/embed/HR6a2aHhY_c?si=L2O3Cf7pQ-0HHhsP',
       },
-
       {
         protocol: 'https',
         hostname: 'quantumone.b-cdn.net',
@@ -109,13 +110,10 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-
       {
-
         protocol: 'https',
         hostname: 'api.web3modal.com',
         port: '',
-      
       },
     ],
   },
