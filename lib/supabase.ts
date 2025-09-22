@@ -1236,6 +1236,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           full_name: string | null
+          household_id: string | null
           id: string
           job_title: string | null
           linkedin_url: string | null
@@ -1256,6 +1257,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string | null
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
@@ -1276,6 +1278,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string | null
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
