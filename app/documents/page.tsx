@@ -8,6 +8,11 @@ import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
 import { DocumentListFilters } from '@/types/documents';
+import { CACHE_TAGS, FETCH_CACHE_BEHAVIOR, REVALIDATION_WINDOWS } from "@/config/cache";
+
+export const fetchCache = FETCH_CACHE_BEHAVIOR.SUPABASE_MUTATIONS;
+export const revalidate = REVALIDATION_WINDOWS.DOCUMENTS;
+export const tags = [CACHE_TAGS.DOCUMENTS];
 
 export default function DocumentsPage() {
   return (
