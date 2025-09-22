@@ -1004,6 +1004,39 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          attachments: Json
+          author_id: string
+          body: string
+          created_at: string
+          household_id: string
+          id: string
+          thread_id: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          author_id: string
+          body: string
+          created_at?: string
+          household_id: string
+          id?: string
+          thread_id: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string
+          body?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          thread_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       members_table: {
         Row: {
           created_at: string
