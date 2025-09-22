@@ -19,17 +19,17 @@ const SheetPortal = ({ ...props }: SheetPrimitive.DialogPortalProps) => (
 SheetPortal.displayName = SheetPrimitive.Portal.displayName;
 
 const SheetOverlay = React.forwardRef<
-	React.ElementRef<typeof SheetPrimitive.Overlay>,
-	React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
+        React.ElementRef<typeof SheetPrimitive.Overlay>,
+        React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-	<SheetPrimitive.Overlay
-		className={cn(
-			"fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-			className
-		)}
-		{...props}
-		ref={ref}
-	/>
+        <SheetPrimitive.Overlay
+                className={cn(
+                        "fixed inset-0 z-50 bg-overlay-scrim/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+                        className
+                )}
+                {...props}
+                ref={ref}
+        />
 ));
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
