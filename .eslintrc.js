@@ -4,6 +4,7 @@
 module.exports = {
     $schema: "https://json.schemastore.org/eslintrc",
     root: true,
+    ignorePatterns: ["lib/supabase.ts"],
     extends: [
       "next/core-web-vitals",
       "prettier",

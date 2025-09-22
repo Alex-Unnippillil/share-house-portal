@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
+import { cn } from "@/lib/utils";
 
 interface Notification {
   id: string;
@@ -26,9 +27,10 @@ export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchNotifications = useCallback(async () => {
+    setLoading(true);
     try {
       const { data, error } = await (supabase as any)
         .from('notifications')
@@ -149,10 +151,14 @@ export function NotificationCenter() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success': return 'bg-green-100 text-green-800 border-green-200';
-      case 'warning': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'error': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'success':
+        return 'border-green-200 bg-green-100 text-green-800';
+      case 'warning':
+        return 'border-yellow-200 bg-yellow-100 text-yellow-800';
+      case 'error':
+        return 'border-red-200 bg-red-100 text-red-800';
+      default:
+        return 'border-blue-200 bg-blue-100 text-blue-800';
     }
   };
 
@@ -179,7 +185,7 @@ export function NotificationCenter() {
         {unreadCount > 0 && (
           <Badge
             variant="destructive"
-            className="absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 text-xs"
+            className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
@@ -187,7 +193,7 @@ export function NotificationCenter() {
       </Button>
 
       {isOpen && (
-        <Card className="absolute right-0 top-12 w-96 max-h-96 shadow-lg z-50">
+        <Card className="absolute right-0 top-12 z-50 max-h-96 w-96 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Notifications</CardTitle>
             <div className="flex gap-2">
@@ -196,7 +202,7 @@ export function NotificationCenter() {
                   variant="ghost"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="px-2 size-6 text-xs"
+                  className="size-6 px-2 text-xs"
                 >
                   <CheckCheck className="mr-1 size-3" />
                   Mark all read
@@ -227,9 +233,10 @@ export function NotificationCenter() {
                   {notifications.map((notification, index) => (
                     <div key={notification.id}>
                       <div
-                        className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors ${
-                          !notification.read ? 'bg-muted/20' : ''
-                        }`}
+                        className={cn(
+                          "cursor-pointer p-3 transition-colors hover:bg-muted/50",
+                          !notification.read && "bg-muted/20"
+                        )}
                         onClick={() => {
                           if (!notification.read) {
                             markAsRead(notification.id);
@@ -245,7 +252,7 @@ export function NotificationCenter() {
                             <div className="flex items-center gap-2">
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${getTypeColor(notification.type)}`}
+                                className={cn("text-xs", getTypeColor(notification.type))}
                               >
                                 {notification.type}
                               </Badge>
@@ -277,7 +284,7 @@ export function NotificationCenter() {
                                 e.stopPropagation();
                                 deleteNotification(notification.id);
                               }}
-                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              className="size-6 text-muted-foreground hover:text-destructive"
                             >
                               <X className="size-3" />
                             </Button>
