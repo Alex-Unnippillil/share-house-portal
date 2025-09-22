@@ -64,8 +64,10 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
-### Run  
+  - Add authorized development and production URL's to Supabase URL config.
+  - (Optional) Seed demo data after migrations with `pnpm db:seed-demo` to populate a household, residents, amenities, a lease, and starter chores.
+
+### Run
 - Development server:
 
 ```bash
@@ -79,6 +81,13 @@ bun i && bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+
+### Demo data
+
+- After configuring your environment variables, run `pnpm db:seed-demo` to insert a sample "Harbor House" household with four members, five amenities, an active lease, and pre-assigned chores. The script uses deterministic IDs and `UPSERT` logic so it can be executed repeatedly without creating duplicates.
+- The seeding command expects `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to be available (they are automatically loaded from `.env.local`).
+- Rerun the script any time you want to reset the portal to its initial demo state for walkthroughs or testing.
 
 
 ### Deploy on Vercel
