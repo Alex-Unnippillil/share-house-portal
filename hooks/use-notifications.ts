@@ -1,12 +1,18 @@
 "use client"
 
-import type { InAppNotification, NotificationData } from "@/lib/notifications"
+import type {
+  InAppNotification,
+  NotificationData,
+  NotificationPayload,
+  PushNotification,
+  TextNotification,
+} from "@/lib/notifications"
 import { useToast } from "@/components/ui/use-toast"
 
-type NotificationResult = { success: boolean; error?: string }
+type NotificationResult = { success: boolean; error?: string; skipped?: boolean }
 type BulkNotificationResult = {
   success: boolean
-  results: Array<{ index: number; success: boolean; error: unknown }>
+  results: Array<{ index: number; success: boolean; error: unknown; skipped?: boolean }>
 }
 
 async function postNotification<T>(payload: unknown): Promise<T> {
@@ -47,8 +53,11 @@ export function useNotifications() {
       })
       if (result.success) {
         toast({
-          title: "Email sent",
-          description: "Notification email has been sent successfully.",
+          title: result.skipped ? "Email skipped" : "Email sent",
+          description: result.skipped
+            ? "This recipient has email notifications disabled."
+            : "Notification email has been sent successfully.",
+          variant: result.skipped ? "default" : undefined,
         })
       } else {
         toast({
@@ -98,8 +107,78 @@ export function useNotifications() {
     }
   }
 
+  const sendTextNotification = async (notification: TextNotification) => {
+    try {
+      const result = await postNotification<NotificationResult>({
+        type: "text",
+        notification: { ...notification, channel: "sms" },
+      })
+
+      if (result.success) {
+        toast({
+          title: result.skipped ? "Text message skipped" : "Text message sent",
+          description: result.skipped
+            ? "The recipient has opted out of text alerts."
+            : "SMS notification delivered to the carrier.",
+          variant: result.skipped ? "default" : undefined,
+        })
+      } else {
+        toast({
+          title: "Text message failed",
+          description: result.error || "Failed to send text message.",
+          variant: "destructive",
+        })
+      }
+
+      return result
+    } catch (error) {
+      console.error("Text notification error", error)
+      toast({
+        title: "Notification failed",
+        description: "Failed to send text notification.",
+        variant: "destructive",
+      })
+      return { success: false, error: "Unexpected error" }
+    }
+  }
+
+  const sendPushNotification = async (notification: PushNotification) => {
+    try {
+      const result = await postNotification<NotificationResult>({
+        type: "push",
+        notification: { ...notification, channel: "push" },
+      })
+
+      if (result.success) {
+        toast({
+          title: result.skipped ? "Push skipped" : "Push sent",
+          description: result.skipped
+            ? "The recipient disabled push alerts."
+            : "Push notification dispatched successfully.",
+          variant: result.skipped ? "default" : undefined,
+        })
+      } else {
+        toast({
+          title: "Push failed",
+          description: result.error || "Failed to send push notification.",
+          variant: "destructive",
+        })
+      }
+
+      return result
+    } catch (error) {
+      console.error("Push notification error", error)
+      toast({
+        title: "Notification failed",
+        description: "Failed to send push notification.",
+        variant: "destructive",
+      })
+      return { success: false, error: "Unexpected error" }
+    }
+  }
+
   const sendBulkNotifications = async (
-    notifications: (NotificationData | InAppNotification)[]
+    notifications: NotificationPayload[]
   ) => {
     try {
       const response = await postNotification<BulkNotificationResult>({
@@ -108,6 +187,7 @@ export function useNotifications() {
       })
       const successCount = response.results.filter((r) => r.success).length
       const failureCount = response.results.length - successCount
+      const skippedCount = response.results.filter((r) => r.skipped).length
 
       if (successCount > 0) {
         toast({
@@ -115,8 +195,8 @@ export function useNotifications() {
           description: `${successCount} notification${
             successCount > 1 ? "s" : ""
           } sent successfully${
-            failureCount > 0 ? `, ${failureCount} failed` : ""
-          }.`,
+            skippedCount > 0 ? `, ${skippedCount} skipped` : ""
+          }${failureCount > 0 ? `, ${failureCount} failed` : ""}.`,
         })
       }
 
@@ -152,7 +232,7 @@ export function useNotifications() {
     roommates: Array<{ id: string; email: string; name: string }>
     propertyManager: { id: string; email: string; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
+    const notifications: NotificationPayload[] = [
       // Email to property manager
       {
         to: data.propertyManager.email,
@@ -169,6 +249,30 @@ export function useNotifications() {
         type: "info" as const,
         actionUrl: "/dashboard",
       })),
+      {
+        channel: "sms",
+        userId: data.propertyManager.id,
+        message: `${data.guestName} requested an overnight stay (${data.checkInDate} - ${data.checkOutDate}). Review in Roomsily.`,
+      },
+      {
+        channel: "push",
+        userId: data.propertyManager.id,
+        title: "New visitor booking",
+        body: `${data.guestName} is visiting ${data.checkInDate} - ${data.checkOutDate}.`,
+        data: { url: "/dashboard" },
+      },
+      ...data.roommates.map((roommate) => ({
+        channel: "sms" as const,
+        userId: roommate.id,
+        message: `${data.guestName} is visiting from ${data.checkInDate} to ${data.checkOutDate}.`,
+      })),
+      ...data.roommates.map((roommate) => ({
+        channel: "push" as const,
+        userId: roommate.id,
+        title: "Guest visit scheduled",
+        body: `${data.guestName} arrives ${data.checkInDate}.`,
+        data: { url: "/dashboard" },
+      })),
     ]
 
     return sendBulkNotifications(notifications)
@@ -181,7 +285,7 @@ export function useNotifications() {
     priority: string
     propertyManager: { id: string; email: string; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
+    const notifications: NotificationPayload[] = [
       // Email to property manager
       {
         to: data.propertyManager.email,
@@ -198,6 +302,18 @@ export function useNotifications() {
         type: "warning" as const,
         actionUrl: "/dashboard",
       },
+      {
+        channel: "sms",
+        userId: data.propertyManager.id,
+        message: `Maintenance alert: ${data.title} reported by ${data.requesterName}.`,
+      },
+      {
+        channel: "push",
+        userId: data.propertyManager.id,
+        title: "Maintenance request",
+        body: `${data.requesterName} reported "${data.title}"`,
+        data: { url: "/dashboard" },
+      },
     ]
 
     return sendBulkNotifications(notifications)
@@ -211,7 +327,7 @@ export function useNotifications() {
     tenantEmail: string
     tenantId: string
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
+    const notifications: NotificationPayload[] = [
       // Email receipt to tenant
       {
         to: data.tenantEmail,
@@ -228,6 +344,18 @@ export function useNotifications() {
         type: "success" as const,
         actionUrl: "/payments",
       },
+      {
+        channel: "sms",
+        userId: data.tenantId,
+        message: `Thanks! We received your $${data.amount} payment for ${data.description}.`,
+      },
+      {
+        channel: "push",
+        userId: data.tenantId,
+        title: "Payment processed",
+        body: `We received your $${data.amount} payment.`,
+        data: { url: "/payments" },
+      },
     ]
 
     return sendBulkNotifications(notifications)
@@ -240,7 +368,7 @@ export function useNotifications() {
     signerEmail: string
     signerId: string
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
+    const notifications: NotificationPayload[] = [
       // Email confirmation to signer
       {
         to: data.signerEmail,
@@ -257,6 +385,18 @@ export function useNotifications() {
         type: "success" as const,
         actionUrl: "/documents",
       },
+      {
+        channel: "sms",
+        userId: data.signerId,
+        message: `You signed "${data.documentTitle}" on ${data.signedAt}.`,
+      },
+      {
+        channel: "push",
+        userId: data.signerId,
+        title: "Document signed",
+        body: `"${data.documentTitle}" is complete.`,
+        data: { url: "/documents" },
+      },
     ]
 
     return sendBulkNotifications(notifications)
@@ -266,6 +406,8 @@ export function useNotifications() {
     sendEmail,
     sendInAppNotification,
     sendBulkNotifications,
+    sendPushNotification,
+    sendTextNotification,
     notifyVisitorBooking,
     notifyMaintenanceRequest,
     notifyPaymentReceipt,

@@ -3,10 +3,11 @@ import { redirect } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
 
 import AccountForm from "./supa-account-form"
+import NotificationPreferencesForm from "./notification-preferences-form"
 import { loadAccountPageData } from "./loaders"
 
 export default async function SettingsAccountPage() {
-  const { user, profile } = await loadAccountPageData()
+  const { user, profile, preferences } = await loadAccountPageData()
 
   if (!user) {
     redirect("/auth")
@@ -23,6 +24,11 @@ export default async function SettingsAccountPage() {
         </div>
         <Separator />
         <AccountForm profile={profile} user={user} />
+        <Separator />
+        <NotificationPreferencesForm
+          userId={user.id}
+          initialPreferences={preferences}
+        />
       </div>
     </div>
   )

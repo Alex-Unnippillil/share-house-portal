@@ -7,8 +7,13 @@ import {
   sendBulkNotifications,
   sendEmailNotification,
   sendInAppNotification,
+  sendPushNotification,
+  sendTextNotification,
   type InAppNotification,
   type NotificationData,
+  type NotificationPayload,
+  type PushNotification,
+  type TextNotification,
 } from "@/lib/notifications"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
@@ -222,9 +227,11 @@ export async function GET(request: NextRequest) {
 type NotificationRequest =
   | { type: "email"; notification: NotificationData }
   | { type: "in-app"; notification: InAppNotification }
+  | { type: "text"; notification: TextNotification }
+  | { type: "push"; notification: PushNotification }
   | {
       type: "bulk"
-      notifications: (NotificationData | InAppNotification)[]
+      notifications: NotificationPayload[]
     }
 
 export async function POST(request: Request) {
@@ -239,6 +246,16 @@ export async function POST(request: Request) {
       }
       case "in-app": {
         const result = await sendInAppNotification(payload.notification)
+        const status = result.success ? 200 : 400
+        return NextResponse.json(result, { status })
+      }
+      case "text": {
+        const result = await sendTextNotification(payload.notification)
+        const status = result.success ? 200 : 400
+        return NextResponse.json(result, { status })
+      }
+      case "push": {
+        const result = await sendPushNotification(payload.notification)
         const status = result.success ? 200 : 400
         return NextResponse.json(result, { status })
       }
