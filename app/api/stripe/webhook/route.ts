@@ -7,8 +7,12 @@ import {
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { createSupabaseClientLoggingConfig } from "@/utils/supabase/logging"
+import { TRACE_HEADER_NAME } from "@/utils/trace/constants"
 
-function createSupabaseAdminClient(): SupabaseClient<Database> | null {
+function createSupabaseAdminClient(
+  traceId?: string,
+): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -17,24 +21,32 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
     return null
   }
 
+  const loggingConfig = createSupabaseClientLoggingConfig({
+    traceId,
+    source: "stripe-webhook",
+  })
+
   return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
+    ...loggingConfig,
   })
 }
 
 export async function POST(req: Request) {
   const stripe = getStripe()
-  const signature = (await headers()).get("stripe-signature")
+  const requestHeaders = headers()
+  const signature = requestHeaders.get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
     return new Response("Webhook not configured", { status: 500 })
   }
 
-  const supabase = createSupabaseAdminClient()
+  const traceId = requestHeaders.get(TRACE_HEADER_NAME) ?? undefined
+  const supabase = createSupabaseAdminClient(traceId)
   if (!supabase) {
     return new Response("Supabase client not configured", { status: 500 })
   }
