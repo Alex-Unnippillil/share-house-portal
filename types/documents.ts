@@ -4,6 +4,27 @@ export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired
 
 export type SignatureStatus = 'pending' | 'signed' | 'declined' | 'expired';
 
+export interface HouseholdLeaseDocument {
+  id: string;
+  unit_id: string;
+  title: string;
+  description?: string | null;
+  file_name: string;
+  file_path: string;
+  lease_start?: string | null;
+  lease_end?: string | null;
+  metadata?: Record<string, any> | null;
+  file_size?: number | null;
+  content_type?: string | null;
+  uploaded_by?: string | null;
+  uploaded_at: string;
+  download_url?: string;
+  uploader?: {
+    full_name?: string | null;
+    email?: string | null;
+  } | null;
+}
+
 export interface Document {
   id: string;
   created_at: string;

@@ -1,170 +1,201 @@
-import { Suspense } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FileText, Users, Clock, Upload } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadDocumentDialog } from "./components/upload-document-dialog";
-import { DocumentsStats } from "./components/documents-stats";
-import { DocumentsList } from "./components/documents-list";
-import { DocumentsFilters } from "./components/documents-filters";
-import { DocumentListFilters } from '@/types/documents';
+import { redirect } from 'next/navigation';
 
-export default function DocumentsPage() {
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import type { Database } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
+
+import { HouseholdDocumentList } from './components/household-document-list';
+import { HouseholdSelector } from './components/household-selector';
+import { UploadLeaseForm } from './components/upload-lease-form';
+
+type HouseholdDocumentRow = Database['public']['Tables']['household_documents']['Row'];
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+
+type DocumentWithUploader = HouseholdDocumentRow & {
+  uploader?: Pick<ProfileRow, 'full_name' | 'email'> | null;
+};
+
+type DocumentsPageProps = {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
+
+function toSingleValue(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+function formatHouseholdLabel(unitId: string) {
+  if (!unitId) {
+    return 'Household';
+  }
+
+  return `Household ${unitId.slice(0, 8)}`;
+}
+
+export default async function DocumentsPage({ searchParams }: DocumentsPageProps) {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/auth');
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, role, unit_id, full_name, email')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return (
+      <div className="container max-w-4xl py-12">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile required</CardTitle>
+            <CardDescription>
+              We could not load your household information. Please update your profile and try again.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  const isAdmin = profile.role === 'admin';
+
+  const unitCandidates = new Set<string>();
+  if (profile.unit_id) {
+    unitCandidates.add(profile.unit_id);
+  }
+
+  const { data: knownUnits } = await supabase
+    .from('household_documents')
+    .select('unit_id')
+    .not('unit_id', 'is', null);
+
+  knownUnits?.forEach((row) => {
+    if (row.unit_id) {
+      unitCandidates.add(row.unit_id);
+    }
+  });
+
+  const availableUnitIds = Array.from(unitCandidates).filter(Boolean).sort();
+
+  const requestedUnit = toSingleValue(searchParams?.unit);
+
+  let selectedUnitId: string | undefined;
+  if (isAdmin) {
+    selectedUnitId = requestedUnit || availableUnitIds[0];
+  } else {
+    selectedUnitId = profile.unit_id ?? undefined;
+  }
+
+  if (selectedUnitId && !availableUnitIds.includes(selectedUnitId)) {
+    availableUnitIds.push(selectedUnitId);
+    availableUnitIds.sort();
+  }
+
+  const unitOptions = availableUnitIds.map((unitId) => ({
+    id: unitId,
+    label: formatHouseholdLabel(unitId),
+  }));
+
+  let documents: DocumentWithUploader[] = [];
+
+  if (selectedUnitId) {
+    const { data: rows, error: documentError } = await supabase
+      .from('household_documents')
+      .select(
+        `
+          id,
+          unit_id,
+          title,
+          description,
+          file_name,
+          file_path,
+          lease_start,
+          lease_end,
+          metadata,
+          file_size,
+          content_type,
+          uploaded_by,
+          uploaded_at,
+          uploader:profiles!household_documents_uploaded_by_fkey(full_name, email)
+        `,
+      )
+      .eq('unit_id', selectedUnitId)
+      .order('uploaded_at', { ascending: false });
+
+    if (documentError) {
+      console.error('Error loading household documents', documentError);
+    }
+
+    documents = (rows ?? []) as DocumentWithUploader[];
+  }
+
+  const showHouseholdSelector = isAdmin && unitOptions.length > 0;
+
   return (
-    <div className="container max-w-7xl space-y-8 py-8">
+    <div className="container max-w-6xl space-y-8 py-10">
       <header className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Household documents</h1>
             <p className="text-base text-muted-foreground sm:text-lg">
-              Manage leases, agreements, and household documents with secure signing and version control.
+              Review lease PDFs stored in the docs bucket and keep every roommate on the same page.
             </p>
           </div>
-          <UploadDocumentDialog />
+          {showHouseholdSelector ? (
+            <HouseholdSelector
+              availableUnits={unitOptions}
+              selectedUnit={selectedUnitId}
+              className="w-full max-w-xs"
+            />
+          ) : null}
         </div>
+        {!isAdmin && selectedUnitId ? (
+          <p className="text-sm text-muted-foreground">
+            Documents are scoped to <span className="font-medium">{formatHouseholdLabel(selectedUnitId)}</span>.
+          </p>
+        ) : null}
         <Separator />
       </header>
 
-      {/* Stats Overview */}
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 bg-muted rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-muted rounded w-1/2"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
-        <DocumentsStats />
-      </Suspense>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section className="space-y-4">
+          <HouseholdDocumentList
+            documents={documents}
+            selectedUnitId={selectedUnitId}
+            isAdmin={isAdmin}
+          />
+        </section>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="all" className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-md grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="leases">Leases</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="signed">Signed</TabsTrigger>
-          </TabsList>
-          <DocumentsFilters />
-        </div>
-
-        <TabsContent value="all" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="leases" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="pending" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['pending_signature'] }} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="signed" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['signed'] }} />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-
-      {/* Feature Highlights */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-2">
-              <FileText className="h-5 w-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Secure Storage</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-xs">
-              Encrypted document storage with access logging for compliance.
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Multi-Signature</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-xs">
-              Collect signatures from all tenants and property managers.
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Version History</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-xs">
-              Track document changes with complete audit trails.
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-2">
-              <Upload className="h-5 w-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Bulk Operations</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-xs">
-              Upload multiple documents and manage permissions at scale.
-            </CardDescription>
-          </CardContent>
-        </Card>
+        {isAdmin ? (
+          <aside>
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload lease PDF</CardTitle>
+                <CardDescription>
+                  Admin uploads are limited to PDF files and automatically scoped to the selected household.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UploadLeaseForm
+                  availableUnits={availableUnitIds}
+                  defaultUnitId={selectedUnitId}
+                />
+              </CardContent>
+            </Card>
+          </aside>
+        ) : null}
       </div>
-    </div>
-  );
-}
-
-function DocumentsListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[...Array(5)].map((_, i) => (
-        <Card key={i} className="animate-pulse">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="h-5 bg-muted rounded w-48"></div>
-                <div className="h-4 bg-muted rounded w-32"></div>
-              </div>
-              <div className="h-6 bg-muted rounded w-20"></div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="h-4 bg-muted rounded w-24"></div>
-              <div className="flex space-x-2">
-                <div className="h-8 bg-muted rounded w-16"></div>
-                <div className="h-8 bg-muted rounded w-16"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }
