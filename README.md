@@ -140,6 +140,12 @@ Deploy to Vercel with the following environment variables configured in your Ver
 4. Add tests if applicable
 5. Submit a pull request
 
+### Bundle size budgets
+
+- Run `pnpm analyze:bundle` locally before opening a PR if you touch dependencies or large UI surfaces. The command enables the Next.js bundle analyzer, writes reports to `.next/analyze`, and verifies that `/` stays under 120&nbsp;kB and `/dashboard` stays under 180&nbsp;kB of parsed JavaScript.
+- Inspect `.next/analyze/client.html` in a browser to drill into the per-route treemaps. The script also emits a sorted list of heaviest modules at `artifacts/bundle/top-modules.txt` for quick triage.
+- When a budget fails, look for outliers in that list and audit them with `pnpm why <package>` or by trimming unused exports. Prefer tree-shakeable utilities, split code with dynamic `import()`, and delete stale dependencies rather than silencing the guard.
+
 ## License
 
 This project is licensed under the MIT License.

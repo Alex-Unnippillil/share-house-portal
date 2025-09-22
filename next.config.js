@@ -2,6 +2,10 @@
 
 const withPlugins = require("next-compose-plugins")
 const withMDX = require('@next/mdx')()
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+  openAnalyzer: false,
+})
 // Temporarily disable PWA to fix build issue
 // const withPWA = require("@ducanh2912/next-pwa").default({
 //   dest: "public",
@@ -132,6 +136,6 @@ const nextConfig = {
    pageExtensions: ['ts', 'tsx', 'mdx', 'js', 'jsx', 'rs'],
 }
 
-module.exports = withMDX(nextConfig)
+module.exports = withBundleAnalyzer(withMDX(nextConfig))
 // module.exports = withPlugins([withPWA, withMDX], nextConfig)
 
