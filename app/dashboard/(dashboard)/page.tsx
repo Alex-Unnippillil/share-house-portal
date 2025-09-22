@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 
+import InsightsPanel from "./components/insights-panel"
+
 export default function DashboardPage() {
   return (
     <div className="w-full space-y-6">
@@ -59,6 +61,8 @@ export default function DashboardPage() {
           </Link>
         </CardContent>
       </Card>
+
+      <InsightsPanel />
     </div>
   )
 }
