@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useAutosaveDraft } from "@/hooks/use-autosave-draft";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -36,6 +36,11 @@ const visitorBookingSchema = z.object({
 
 type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
+type VisitorBookingDraftPayload = Omit<VisitorBookingFormData, "checkInDate" | "checkOutDate"> & {
+  checkInDate?: string | null;
+  checkOutDate?: string | null;
+};
+
 export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyVisitorBooking } = useNotifications();
@@ -53,6 +58,108 @@ export function VisitorBookingForm() {
       specialNotes: "",
     },
   });
+
+  const watchedValues = form.watch();
+
+  const serializeDraft = useCallback(
+    (values: VisitorBookingFormData): VisitorBookingDraftPayload => ({
+      guestName: values.guestName,
+      guestEmail: values.guestEmail,
+      guestPhone: values.guestPhone,
+      purpose: values.purpose,
+      emergencyContact: values.emergencyContact,
+      specialNotes: values.specialNotes,
+      checkInDate: values.checkInDate ? values.checkInDate.toISOString() : null,
+      checkOutDate: values.checkOutDate ? values.checkOutDate.toISOString() : null,
+    }),
+    [],
+  );
+
+  const deserializeDraft = useCallback(
+    (payload: VisitorBookingDraftPayload): Partial<VisitorBookingFormData> => {
+      const { checkInDate, checkOutDate, ...rest } = payload;
+
+      return {
+        ...rest,
+        checkInDate: checkInDate ? new Date(checkInDate) : undefined,
+        checkOutDate: checkOutDate ? new Date(checkOutDate) : undefined,
+      };
+    },
+    [],
+  );
+
+  const {
+    status: autosaveStatus,
+    lastSavedAt,
+    lastError,
+    hasDraft,
+    isLoadingDraft,
+    resolvedStorage,
+    clearDraft,
+    resumeDraft,
+  } = useAutosaveDraft<VisitorBookingFormData, VisitorBookingDraftPayload>(
+    "visitor-booking",
+    watchedValues,
+    {
+      storage: "supabase",
+      throttleMs: 2000,
+      isDirty: form.formState.isDirty,
+      serialize: serializeDraft,
+      deserialize: deserializeDraft,
+    },
+  );
+
+  const autosaveMessage = useMemo(() => {
+    if (autosaveStatus === "saving") {
+      return "Saving draft...";
+    }
+
+    if (autosaveStatus === "saved" && lastSavedAt) {
+      return `Draft saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}`;
+    }
+
+    if (autosaveStatus === "error") {
+      return lastError ? `Autosave failed: ${lastError}` : "Autosave failed";
+    }
+
+    if (!form.formState.isDirty) {
+      return "Autosave ready. Start typing to save your draft.";
+    }
+
+    return "Autosave idle";
+  }, [autosaveStatus, lastError, lastSavedAt, form.formState.isDirty]);
+
+  const storageMessage = resolvedStorage === "supabase" ? "Synced to Supabase" : "Stored on this device";
+
+  const handleResumeDraft = useCallback(async () => {
+    const draft = await resumeDraft();
+
+    if (!draft) {
+      toast({
+        title: "No draft found",
+        description: "There is no saved draft to restore.",
+      });
+      return;
+    }
+
+    form.reset({
+      ...form.getValues(),
+      ...draft,
+    });
+
+    toast({
+      title: "Draft restored",
+      description: "Your visitor booking draft has been loaded.",
+    });
+  }, [form, resumeDraft, toast]);
+
+  const handleDiscardDraft = useCallback(async () => {
+    await clearDraft();
+    toast({
+      title: "Draft discarded",
+      description: "Autosaved progress has been cleared.",
+    });
+  }, [clearDraft, toast]);
 
   const onSubmit = async (data: VisitorBookingFormData) => {
     setIsSubmitting(true);
@@ -131,6 +238,7 @@ export function VisitorBookingForm() {
       });
 
       form.reset();
+      await clearDraft().catch(() => undefined);
     } catch (error) {
       console.error('Error submitting visitor booking:', error);
       toast({
@@ -146,6 +254,30 @@ export function VisitorBookingForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {!isLoadingDraft && hasDraft && (
+          <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-4">
+            <div className="flex flex-col gap-2 text-sm">
+              <div>
+                <p className="font-medium text-primary">Saved draft available</p>
+                <p className="text-muted-foreground">
+                  {lastSavedAt
+                    ? `Last saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}.`
+                    : "Resume your in-progress booking."}{" "}
+                  {storageMessage}.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" size="sm" onClick={handleResumeDraft}>
+                  Resume draft
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={handleDiscardDraft}>
+                  Discard draft
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -325,6 +457,15 @@ export function VisitorBookingForm() {
             </FormItem>
           )}
         />
+
+        <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className={autosaveStatus === "error" ? "text-destructive" : "text-muted-foreground"}>
+              {autosaveMessage}
+            </span>
+            <span className="font-medium text-muted-foreground">{storageMessage}</span>
+          </div>
+        </div>
 
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Submitting..." : "Submit Visitor Booking"}
