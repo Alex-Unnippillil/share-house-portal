@@ -1,4 +1,5 @@
  import type { Metadata, Viewport } from 'next'
+import { headers } from "next/headers"
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -109,10 +110,30 @@ interface RootLayoutProps {
 
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const requestHeaders = headers()
+  const currentPath = requestHeaders.get("next-url") ?? "/"
+  const isPrimaryRoute = currentPath === "/" || currentPath.startsWith("/?")
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const preloadTargets =
+    isPrimaryRoute && supabaseUrl
+      ? [new URL("/auth/v1/session", supabaseUrl).toString()]
+      : []
+
   return (
     <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
-    <head></head>
+    <head>
+      {preloadTargets.map((href) => (
+        <link
+          key={href}
+          rel="preload"
+          as="fetch"
+          href={href}
+          crossOrigin="anonymous"
+        />
+      ))}
+    </head>
       <body className={cn(
             "min-h-screen bg-background font-sans antialiased",
             fontSans.variable
