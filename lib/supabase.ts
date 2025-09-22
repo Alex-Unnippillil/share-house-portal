@@ -1595,6 +1595,219 @@ export type Database = {
             referencedColumns: ["member_id"]
           },
         ]
+      },
+      events: {
+        Row: {
+          actor_id: string | null
+          building_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          actor_id?: string | null
+          building_id: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          actor_id?: string | null
+          building_id?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
+      poll_votes: {
+        Row: {
+          choice: Database["public"]["Enums"]["poll_vote_choice"]
+          created_at: string
+          id: string
+          poll_id: string
+          voter_id: string
+        }
+        Insert: {
+          choice: Database["public"]["Enums"]["poll_vote_choice"]
+          created_at?: string
+          id?: string
+          poll_id: string
+          voter_id: string
+        }
+        Update: {
+          choice?: Database["public"]["Enums"]["poll_vote_choice"]
+          created_at?: string
+          id?: string
+          poll_id?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_voter_id_fkey"
+            columns: ["voter_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
+      polls: {
+        Row: {
+          building_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          metadata: Json | null
+          outcome: Database["public"]["Enums"]["poll_outcome"] | null
+          question: string
+          required_votes: number
+          status: Database["public"]["Enums"]["poll_status"]
+          updated_at: string
+          visitor_request_id: string | null
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          outcome?: Database["public"]["Enums"]["poll_outcome"] | null
+          question: string
+          required_votes: number
+          status?: Database["public"]["Enums"]["poll_status"]
+          updated_at?: string
+          visitor_request_id?: string | null
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          outcome?: Database["public"]["Enums"]["poll_outcome"] | null
+          question?: string
+          required_votes?: number
+          status?: Database["public"]["Enums"]["poll_status"]
+          updated_at?: string
+          visitor_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "polls_visitor_request_id_fkey"
+            columns: ["visitor_request_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      },
+      visitor_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          arrival_date: string
+          building_id: string
+          created_at: string
+          denied_at: string | null
+          denied_by: string | null
+          departure_date: string
+          guest_name: string
+          host_profile_id: string
+          id: string
+          reason: string | null
+          requires_vote: boolean
+          status: Database["public"]["Enums"]["visitor_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_date: string
+          building_id: string
+          created_at?: string
+          denied_at?: string | null
+          denied_by?: string | null
+          departure_date: string
+          guest_name: string
+          host_profile_id: string
+          id?: string
+          reason?: string | null
+          requires_vote?: boolean
+          status?: Database["public"]["Enums"]["visitor_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_date?: string
+          building_id?: string
+          created_at?: string
+          denied_at?: string | null
+          denied_by?: string | null
+          departure_date?: string
+          guest_name?: string
+          host_profile_id?: string
+          id?: string
+          reason?: string | null
+          requires_vote?: boolean
+          status?: Database["public"]["Enums"]["visitor_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_requests_denied_by_fkey"
+            columns: ["denied_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_requests_host_profile_id_fkey"
+            columns: ["host_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
@@ -2017,7 +2230,11 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      poll_outcome: "approved" | "denied" | "tie"
+      poll_status: "open" | "closed"
+      poll_vote_choice: "approve" | "deny"
       user_role: "user" | "admin"
+      visitor_request_status: "pending_vote" | "approved" | "denied"
     }
     CompositeTypes: {
       [_ in never]: never
