@@ -1,13 +1,18 @@
-import React from "react";
-import ListOfTodo from "./ListOfTodo";
-import Table from "@/components/ui/Table";
+import React from "react"
+import ListOfTodo, { defaultTodos } from "./ListOfTodo"
+import Table from "@/components/ui/Table"
+import type { DashboardTodoRecord } from "@/types/perf"
 
-export default function TodoTable() {
-	const tableHeader = ["Title", "Status", "Created at", "Created by"];
+interface TodoTableProps {
+  todos?: DashboardTodoRecord[]
+}
 
-	return (
-		<Table headers={tableHeader}>
-			<ListOfTodo />
-		</Table>
-	);
+export default function TodoTable({ todos = defaultTodos }: TodoTableProps) {
+  const tableHeader = ["Title", "Status", "Created at", "Created by"]
+
+  return (
+    <Table headers={tableHeader}>
+      <ListOfTodo todos={todos} />
+    </Table>
+  )
 }

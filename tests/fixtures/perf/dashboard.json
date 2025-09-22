@@ -1,0 +1,70 @@
+{
+  "overview": {
+    "hero": {
+      "greeting": "Performance benchmark: Roomsily dashboard",
+      "actions": [
+        { "label": "Pay rent", "href": "/payments" },
+        { "label": "Message board", "href": "/messaging", "variant": "outline" }
+      ]
+    },
+    "rentCard": {
+      "title": "Next rent due",
+      "label": "Amount",
+      "amount": "$1,845.00",
+      "due": "Autopay scheduled for Jul 28",
+      "cta": { "label": "View details", "href": "/payments" }
+    },
+    "documentsCard": {
+      "title": "Latest documents",
+      "items": [
+        "Lease agreement 2024.pdf",
+        "House rules refresh.pdf",
+        "Washer maintenance tips.pdf",
+        "Parking rotation schedule.pdf",
+        "Visitor log template.xlsx",
+        "Emergency contacts.csv"
+      ],
+      "cta": { "label": "Open", "href": "/documents", "variant": "outline" }
+    },
+    "roommateBoard": {
+      "title": "Roommate board",
+      "items": [
+        "Jordan: Wi-Fi is back online after router reboot.",
+        "Avery: Parking spot swap confirmed for the weekend.",
+        "Taylor: Deep clean night Thursday at 7pm.",
+        "Morgan: Dryer is squeaking again, logging a ticket.",
+        "Devon: Package for Unit 4A at the lobby.",
+        "Kai: Added August supply list to the sheet.",
+        "Rowan: Hosting book club on Saturday, all welcome.",
+        "Riley: Refilled Brita pitcher and dishwasher pods."
+      ],
+      "cta": { "label": "Go to messages", "href": "/messaging", "variant": "outline" }
+    }
+  },
+  "members": [
+    { "name": "Jordan Miles", "role": "admin", "created_at": "2023-02-14", "status": "active" },
+    { "name": "Avery Chen", "role": "user", "created_at": "2023-05-01", "status": "active" },
+    { "name": "Taylor Singh", "role": "user", "created_at": "2023-06-12", "status": "active" },
+    { "name": "Morgan Patel", "role": "admin", "created_at": "2022-11-03", "status": "active" },
+    { "name": "Devon Hart", "role": "user", "created_at": "2023-07-22", "status": "active" },
+    { "name": "Kai Romero", "role": "user", "created_at": "2023-08-19", "status": "active" },
+    { "name": "Rowan Ellis", "role": "user", "created_at": "2024-01-05", "status": "active" },
+    { "name": "Riley Bennett", "role": "admin", "created_at": "2024-02-16", "status": "active" },
+    { "name": "Lennon Cruz", "role": "user", "created_at": "2024-03-02", "status": "active" },
+    { "name": "Harper Stone", "role": "user", "created_at": "2024-03-28", "status": "active" },
+    { "name": "Parker Wells", "role": "user", "created_at": "2024-04-10", "status": "resigned" },
+    { "name": "Skylar James", "role": "user", "created_at": "2024-04-22", "status": "active" }
+  ],
+  "todos": [
+    { "title": "Deep clean the kitchen", "status": "completed", "created_at": "2024-03-01", "create_by": "Jordan" },
+    { "title": "Rotate parking assignments", "status": "completed", "created_at": "2024-03-08", "create_by": "Avery" },
+    { "title": "Inventory pantry staples", "status": "pending", "created_at": "2024-03-15", "create_by": "Taylor" },
+    { "title": "Schedule maintenance for dryer", "status": "in_progress", "created_at": "2024-03-18", "create_by": "Morgan" },
+    { "title": "Update visitor log", "status": "completed", "created_at": "2024-03-20", "create_by": "Devon" },
+    { "title": "Reconcile utility receipts", "status": "pending", "created_at": "2024-03-25", "create_by": "Kai" },
+    { "title": "Plan April roommate dinner", "status": "in_progress", "created_at": "2024-03-27", "create_by": "Rowan" },
+    { "title": "Restock cleaning supplies", "status": "completed", "created_at": "2024-03-29", "create_by": "Riley" },
+    { "title": "Update emergency contact sheet", "status": "pending", "created_at": "2024-04-02", "create_by": "Harper" },
+    { "title": "Archive lease renewals", "status": "completed", "created_at": "2024-04-05", "create_by": "Lennon" }
+  ]
+}
