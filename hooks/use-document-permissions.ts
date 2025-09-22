@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase-browser';
 import { DocumentWithLease } from '@/types/documents';
 import { fetchMemberRole } from '@/lib/data/members';
+import { isManagementRole } from '@/lib/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 
 export interface UserPermissions {
@@ -61,23 +62,25 @@ export function useDocumentPermissions(): UserPermissions {
           console.error('Error loading member role:', roleError);
         }
 
-        const resolvedRole = role || 'user';
-        const isPropertyManager = resolvedRole === 'property_manager';
-        const isAdmin = resolvedRole === 'admin';
+        const resolvedRole = role ?? null;
         const isTenant = resolvedRole === 'tenant';
         const isRoommate = resolvedRole === 'roommate';
+        const isPropertyManager =
+          resolvedRole === 'property_manager' || resolvedRole === 'landlord';
+        const isAdmin = resolvedRole === 'admin';
+        const isManagement = isManagementRole(resolvedRole) || isAdmin;
 
         const userPermissions: UserPermissions = {
           isTenant,
           isRoommate,
           isPropertyManager,
           isAdmin,
-          canUploadDocuments: isPropertyManager || isAdmin,
-          canCreateSigningRequests: isPropertyManager || isAdmin,
+          canUploadDocuments: isManagement,
+          canCreateSigningRequests: isManagement,
 
           canViewDocument: (document: DocumentWithLease) => {
             // Property managers and admins can view all documents
-            if (isPropertyManager || isAdmin) return true;
+            if (isManagement) return true;
 
             // Users can view documents they're associated with
             if (document.tenant_id === user.id) return true;
@@ -99,7 +102,7 @@ export function useDocumentPermissions(): UserPermissions {
 
           canEditDocument: (document: DocumentWithLease) => {
             // Only property managers and admins can edit documents
-            return isPropertyManager || isAdmin;
+            return isManagement;
           },
         };
 

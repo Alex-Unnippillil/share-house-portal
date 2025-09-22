@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fetchMemberProfile, fetchMemberRole, fetchMembersByUnit } from '@/lib/data/members';
+import { rolesForPersona } from '@/lib/members';
 
 type SingleResult<T> = { data: T; error: { message: string } | null };
 
@@ -125,6 +126,20 @@ describe('fetchMembersByUnit', () => {
     expect(builder.neq).toHaveBeenCalledWith('id', 'user-2');
     expect(builder.in).toHaveBeenCalledWith('role', ['tenant']);
     expect(result).toEqual(members);
+  });
+
+  it('filters by persona when provided', async () => {
+    const members = [
+      { id: 'pm-1', email: 'pm@example.com', full_name: 'Manager', role: 'property_manager', unit_id: 'unit-1' },
+    ];
+    const builder = createMultiBuilder({ data: members, error: null });
+    const supabase = createProfilesStub(builder);
+
+    await fetchMembersByUnit(supabase as any, 'unit-1', {
+      persona: 'management',
+    });
+
+    expect(builder.in).toHaveBeenCalledWith('role', Array.from(rolesForPersona('management')));
   });
 
   it('throws when supabase returns an error', async () => {

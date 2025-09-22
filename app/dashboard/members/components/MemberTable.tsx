@@ -5,7 +5,7 @@ import ListOfMembers from "./ListOfMembers"
 
 export default async function MemberTable() {
         const members = await getDashboardMembers()
-        const tableHeader = ["Name", "Role", "Joined", "Status"]
+        const tableHeader = ["Name & Profile", "Role", "Joined", "Status", "Actions"]
 
         return (
                 <Table headers={tableHeader}>

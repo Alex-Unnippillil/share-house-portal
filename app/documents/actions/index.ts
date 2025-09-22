@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
+import { isManagementRole } from '@/lib/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
@@ -268,7 +269,7 @@ export async function createSigningRequestAction(
       return { success: false, error: 'You do not have permission to create signing requests for this document.' };
     }
 
-    if (role !== 'property_manager' && role !== 'admin' && document.tenant_id !== user.id) {
+    if (!isManagementRole(role) && document.tenant_id !== user.id) {
       return { success: false, error: 'You do not have permission to create signing requests for this document.' };
     }
 

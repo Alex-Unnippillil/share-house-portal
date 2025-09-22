@@ -1,9 +1,22 @@
+import 'server-only';
+
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import type { Database } from '@/lib/supabase';
+import type { MemberPersona, MemberRole } from '@/lib/members';
+import { rolesForPersona } from '@/lib/members';
 
 type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
 
-export type MemberRole = Database['public']['Tables']['profiles']['Row']['role'];
+export type { MemberRole, MemberPersona, AssignableRole } from '@/lib/members';
+export {
+  RESIDENT_ROLES,
+  MANAGEMENT_ROLES,
+  isManagementRole,
+  isResidentRole,
+  resolveMemberPersona,
+  rolesForPersona,
+  isAssignableRole,
+} from '@/lib/members';
 
 export type MemberProfile = Pick<
   Database['public']['Tables']['profiles']['Row'],
@@ -53,6 +66,7 @@ export async function fetchMemberProfile(
 interface FetchMembersByUnitOptions {
   excludeUserId?: string;
   roles?: MemberRole[];
+  persona?: Exclude<MemberPersona, 'unknown'>;
 }
 
 export async function fetchMembersByUnit(
@@ -69,7 +83,10 @@ export async function fetchMembersByUnit(
     query = query.neq('id', options.excludeUserId);
   }
 
-  if (options.roles?.length) {
+  if (options.persona) {
+    const personaRoles = Array.from(rolesForPersona(options.persona));
+    query = query.in('role', personaRoles as MemberRole[]);
+  } else if (options.roles?.length) {
     query = query.in('role', options.roles);
   }
 

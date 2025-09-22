@@ -26,7 +26,7 @@ export type Database = {
         username: string | null
         website: string | null
         avatar_url: string | null
-        role: 'tenant' | 'roommate' | 'property_manager' | 'admin' | 'user' | null
+        role: 'tenant' | 'roommate' | 'property_manager' | 'landlord' | 'admin' | 'user' | null
         unit_id: string | null
         phone: string | null
         language: string | null

@@ -93,6 +93,19 @@ describe('fetchDocumentsList', () => {
     expect(query.or).not.toHaveBeenCalled();
   });
 
+  it('skips scoping for landlords', async () => {
+    const query = createDocumentsQuery({ data: [], error: null });
+    const supabase = createSupabaseStub(query);
+
+    await fetchDocumentsList({
+      client: supabase,
+      userId: 'landlord-1',
+      role: 'landlord',
+    });
+
+    expect(query.or).not.toHaveBeenCalled();
+  });
+
   it('throws when Supabase returns an error', async () => {
     const query = createDocumentsQuery({ data: null as any, error: { message: 'boom' } });
     const supabase = createSupabaseStub(query);
@@ -136,6 +149,15 @@ describe('fetchDocumentStats', () => {
     const supabase = createSupabaseStub(query);
 
     await fetchDocumentStats({ client: supabase, userId: 'admin-1', role: 'admin' });
+
+    expect(query.eq).not.toHaveBeenCalled();
+  });
+
+  it('omits tenant filter for landlords', async () => {
+    const query = createDocumentsQuery({ data: [], error: null });
+    const supabase = createSupabaseStub(query);
+
+    await fetchDocumentStats({ client: supabase, userId: 'landlord-1', role: 'landlord' });
 
     expect(query.eq).not.toHaveBeenCalled();
   });

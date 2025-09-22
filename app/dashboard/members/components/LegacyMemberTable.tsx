@@ -5,33 +5,37 @@ import ListOfMembers from "./ListOfMembers"
 
 const LEGACY_MEMBERS: DashboardMember[] = [
         {
-                name: "Admin Member",
-                role: "admin",
+                name: "Avery Chen",
+                role: "tenant",
+                persona: "resident",
                 createdAt: new Date().toDateString(),
                 status: "active",
         },
         {
-                name: "Non Admin User",
-                role: "user",
-                createdAt: new Date().toDateString(),
-                status: "active",
-        },
-        {
-                name: "Administrator",
-                role: "admin",
+                name: "Jordan Blake",
+                role: "roommate",
+                persona: "resident",
                 createdAt: new Date().toDateString(),
                 status: "resigned",
         },
         {
-                name: "Satoshi",
-                role: "user",
+                name: "Morgan Ellis",
+                role: "property_manager",
+                persona: "management",
+                createdAt: new Date().toDateString(),
+                status: "active",
+        },
+        {
+                name: "Sonia Patel",
+                role: "landlord",
+                persona: "management",
                 createdAt: new Date().toDateString(),
                 status: "active",
         },
 ]
 
 export function LegacyMemberTable() {
-        const tableHeader = ["Name", "Role", "Joined", "Status"]
+        const tableHeader = ["Name & Profile", "Role", "Joined", "Status", "Actions"]
         return (
                 <Table headers={tableHeader}>
                         <ListOfMembers members={LEGACY_MEMBERS} />
