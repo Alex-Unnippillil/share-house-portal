@@ -41,7 +41,7 @@ export default function OnboardingPage() {
         >
           Login
         </Link>
-        <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
+        <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r md:flex">
           <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
           <Image
           src="/images/house-portal-2.jpg"

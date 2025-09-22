@@ -33,7 +33,7 @@ export function useDocumentPermissions(): UserPermissions {
   useEffect(() => {
     const checkPermissions = async () => {
       try {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {

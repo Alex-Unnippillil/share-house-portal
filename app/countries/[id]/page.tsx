@@ -1,16 +1,22 @@
 'use client'
 
-import useSupabaseBrowser from '@/utils/supabase-browser'
-import { getCountryById } from '@/queries/country-by-id'
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
 
-export default function CountryPage({ params }: { params: { id: number } }) {
+import { getCountryById } from '@/queries/country-by-id'
+import useSupabaseBrowser from '@/utils/supabase-browser'
+
+type Country = {
+  id: number
+  name: string
+}
+
+export default function CountryPage({ params }: { params: { id: string } }) {
   const supabase = useSupabaseBrowser()
   const {
     data: country,
     isLoading,
     isError,
-  } = useQuery(getCountryById(supabase, params.id))
+  } = useQuery<Country>(getCountryById(supabase, Number(params.id)))
 
   if (isLoading) {
     return <div>Loading...</div>

@@ -1,163 +1,201 @@
-'use client'
-import { buttonVariants } from "@/components/ui/button" 
-import { cn } from '@/lib/utils'   
-import { useCallback, useEffect, useState } from 'react'
-import useSupabaseBrowser from '@/utils/supabase-browser'
-import { type User } from '@supabase/supabase-js'
-import Avatar from './avatar'
-import { Input } from '@/components/ui/input'
+"use client"
+
+import { useCallback, useEffect, useState } from "react"
+import { type User } from "@supabase/supabase-js"
+
+import { buttonVariants } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import useSupabaseBrowser from "@/utils/supabase-browser"
+import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
+
+import Avatar from "./avatar"
+
+type ProfileSelection = {
+  full_name: string | null
+  username: string | null
+  website: string | null
+  avatar_url: string | null
+  email: string | null
+}
+
+const toNullable = (value: string) => (value.trim().length ? value : null)
 
 export default function AccountForm({ user }: { user: User | null }) {
-  const supabase = useSupabaseBrowser()
+  const supabase = useSupabaseBrowser() as TypedSupabaseClient
   const [loading, setLoading] = useState(true)
-  const [fullname, setFullname] = useState<string | null>(null)
-  const [username, setUsername] = useState<string | null>(null)
-  const [website, setWebsite] = useState<string | null>(null)
-  const [avatar_url, setAvatarUrl] = useState<string | null>(null)
-const [email, setEmail] = useState<string | null>(null)
-const [waddress, setWaddress] = useState<string | null>(null)
-const languages = [
-  { label: "English", value: "en" },
-  { label: "French", value: "fr" },
-  { label: "German", value: "de" },
-  { label: "Spanish", value: "es" },
-  { label: "Portuguese", value: "pt" },
-  { label: "Russian", value: "ru" },
-  { label: "Japanese", value: "ja" },
-  { label: "Korean", value: "ko" },
-  { label: "Chinese", value: "zh" },
-] as const
+  const [fullName, setFullName] = useState("")
+  const [username, setUsername] = useState("")
+  const [website, setWebsite] = useState("")
+  const [avatarUrl, setAvatarUrl] = useState("")
+  const [email, setEmail] = useState("")
 
   const getProfile = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
 
       const { data, error, status } = await supabase
-        .from('profiles')
-        .select(`full_name, username, website, avatar_url, email`)
-        .eq('id', user?.id as string)
-        .single()
+        .from("profiles")
+        .select("full_name, username, website, avatar_url, email")
+        .eq("id", user.id)
+        .maybeSingle<ProfileSelection>()
 
       if (error && status !== 406) {
-        console.log(error)
         throw error
       }
 
       if (data) {
-        setFullname(data.full_name)
-        setUsername(data.username)
-        setWebsite(data.website)
-        setAvatarUrl(data.avatar_url)
-        setEmail(data.email)
+        setFullName(data.full_name ?? "")
+        setUsername(data.username ?? "")
+        setWebsite(data.website ?? "")
+        setAvatarUrl(data.avatar_url ?? "")
+        setEmail(data.email ?? user.email ?? "")
       }
     } catch (error) {
-      alert('Error loading user data!')
+      alert("Error loading user data!")
     } finally {
       setLoading(false)
     }
-  }, [user, supabase])
+  }, [supabase, user?.id, user?.email])
 
   useEffect(() => {
-    getProfile()
-  }, [user, getProfile])
+    void getProfile()
+  }, [getProfile])
 
-  async function updateProfile({
-    username,
-    website,
-    avatar_url,
-    email,
-  }: {
-    username: string | null
-    fullname: string | null
-    website: string | null
-    avatar_url: string | null
-    email: string | null
+  const updateProfile = useCallback(
+    async (fields: ProfileSelection) => {
+      if (!user?.id) {
+        return
+      }
 
-  }) {
-    try {
-      setLoading(true)
+      try {
+        setLoading(true)
 
-      const { error } = await supabase.from('profiles').upsert({
-        id: user?.id as string,
-        full_name: fullname,
-        username,
-        website,
-        avatar_url,
-        email,
-        updated_at: new Date().toISOString(),
-      })
-      if (error) throw error
-      alert('Account updated!')
-    } catch (error) {
-      alert('Error updating the data!')
-    } finally {
-      setLoading(false)
-    }
-  }
+        const payload = {
+          id: user.id,
+          full_name: fields.full_name,
+          username: fields.username,
+          website: fields.website,
+          avatar_url: fields.avatar_url,
+          email: fields.email,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error } = await (supabase
+          .from("profiles") as any).upsert(payload)
+
+        if (error) throw error
+
+        alert("Account updated!")
+      } catch (error) {
+        alert("Error updating the data!")
+      } finally {
+        setLoading(false)
+      }
+    },
+    [supabase, user?.id],
+  )
+
+  const handleSubmit = () =>
+    updateProfile({
+      full_name: toNullable(fullName),
+      username: toNullable(username),
+      website: toNullable(website),
+      avatar_url: toNullable(avatarUrl),
+      email: toNullable(email),
+    })
 
   return (
-    <div className="                                   w-full space-y-8 px-2 py-8">
-<Avatar
+    <div className="w-full space-y-8 px-2 py-8">
+      <Avatar
+        uid={user?.id ?? null}
+        url={avatarUrl || null}
+        size={144}
+        onUpload={(url) => {
+          setAvatarUrl(url)
+          void updateProfile({
+            full_name: toNullable(fullName),
+            username: toNullable(username),
+            website: toNullable(website),
+            avatar_url: toNullable(url),
+            email: toNullable(email),
+          })
+        }}
+      />
 
-      uid={user?.id ?? null}
-      url={avatar_url}
-      size={144}
-      onUpload={(url) => {
-        setAvatarUrl(url)
-        updateProfile({ fullname, username, website, email, avatar_url: url })
-      }}
-    />
- <div className="flex flex-col">
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="email">Email</label>
-        <input className={cn("flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50")} id="email" type="text" value={user?.email} disabled />
-      </div>
       <div className="flex flex-col">
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="fullName">Full Name</label>
-        <input
-           className={cn("flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50")}
+        <label
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          htmlFor="email"
+        >
+          Email
+        </label>
+        <Input id="email" type="email" value={email || user?.email || ""} disabled />
+      </div>
+
+      <div className="flex flex-col">
+        <label
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          htmlFor="fullName"
+        >
+          Full Name
+        </label>
+        <Input
           id="fullName"
           type="text"
-          value={fullname || ''}
-          onChange={(e) => setFullname(e.target.value)}
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
         />
       </div>
+
       <div className="flex flex-col">
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="username">Username</label>
-        <input className={cn("flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50")}
+        <label
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          htmlFor="username"
+        >
+          Username
+        </label>
+        <Input
           id="username"
           type="text"
-          value={username || ''}
-          onChange={(e) => setUsername(e.target.value)}
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
         />
       </div>
+
       <div className="flex flex-col">
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="website">Website</label>
-        <input className={cn("flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50")}
+        <label
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          htmlFor="website"
+        >
+          Website
+        </label>
+        <Input
           id="website"
           type="url"
-          value={website || ''}
-          onChange={(e) => setWebsite(e.target.value)}
+          value={website}
+          onChange={(event) => setWebsite(event.target.value)}
         />
       </div>
 
-
-<div className="grid w-full grid-cols-1 justify-evenly">    
-
-
-
-
+      <div className="grid w-full grid-cols-1 justify-evenly gap-4">
         <button
+          type="button"
           className={buttonVariants({ variant: "outline" })}
-          onClick={() => updateProfile({ fullname, username, website, email, avatar_url })}
+          onClick={handleSubmit}
           disabled={loading}
         >
-          {loading ? 'Loading ...' : 'Update Account'}
+          {loading ? "Loading ..." : "Update Account"}
         </button>
-        </div>
+      </div>
 
       <div className="mb-2 flex w-full flex-col">
         <form className="items-center space-y-8" action="/auth/signout" method="post">
-          <button           className={buttonVariants({ variant: "outline" })} type="submit">
+          <button className={buttonVariants({ variant: "outline" })} type="submit">
             Sign out
           </button>
         </form>

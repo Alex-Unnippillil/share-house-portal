@@ -2,18 +2,7 @@ import { headers } from "next/headers"
 import { getStripe } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/supabase"
-import { notificationService } from "@/lib/notifications"
-
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { sendEmail as sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
 
 export async function POST(req: Request) {
   const stripe = getStripe()
@@ -60,6 +49,13 @@ export async function POST(req: Request) {
 
 async function handleCheckoutSessionCompleted(session: any) {
   try {
+    const supabase = getSupabaseServiceRoleClient()
+
+    if (!supabase) {
+      console.warn('Supabase credentials missing. Skipping checkout.session.completed handling.')
+      return
+    }
+
     // Retrieve the full session with line items
     const stripe = getStripe()
     const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
@@ -95,20 +91,20 @@ async function handleCheckoutSessionCompleted(session: any) {
           }
         };
 
-        await supabase.from('rent_payments').insert(paymentData);
+        await (supabase as any).from('rent_payments').insert(paymentData);
 
         // Send payment receipt notification if we have tenant info
         if (tenantId) {
           try {
             // Get tenant profile
-            const { data: tenantProfile } = await supabase
+            const { data: tenantProfile } = await (supabase as any)
               .from('profiles')
               .select('full_name, email')
               .eq('id', tenantId)
               .single();
 
             if (tenantProfile?.email) {
-              await notificationService.sendEmail({
+              await sendEmailNotification({
                 to: tenantProfile.email,
                 subject: `Payment Receipt - $${paymentData.amount}`,
                 template: 'payment-receipt',
@@ -122,7 +118,7 @@ async function handleCheckoutSessionCompleted(session: any) {
               });
 
               // Also send in-app notification
-              await notificationService.sendInAppNotification({
+              await sendInAppNotification({
                 userId: tenantId,
                 title: "Payment Successful",
                 message: `Your payment of $${paymentData.amount} has been processed successfully.`,
@@ -159,10 +155,17 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
     const subscription = fullInvoice.subscription as any
 
     if (subscription) {
+      const supabase = getSupabaseServiceRoleClient()
+
+      if (!supabase) {
+        console.warn('Supabase credentials missing. Skipping invoice.payment_succeeded handling.')
+        return
+      }
+
       // This is a subscription payment
       const amount = invoice.amount_paid / 100 // Convert from cents
 
-      await supabase.from('rent_payments').insert({
+      await (supabase as any).from('rent_payments').insert({
         user_id: subscription.metadata?.tenant_id || '00000000-0000-0000-0000-000000000000', // Use tenant_id as user_id, or a default UUID
         stripe_customer_id: invoice.customer as string,
         stripe_subscription_id: subscription.id,
@@ -185,7 +188,7 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
       })
 
       // Update subscription status if needed
-      await supabase.from('subscriptions').update({
+      await (supabase as any).from('subscriptions').update({
         status: subscription.status,
         current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
         current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -203,7 +206,14 @@ async function handleSubscriptionCreated(subscription: any) {
     // This handles when a subscription is first created
     const price = subscription.items.data[0]?.price
 
-    await supabase.from('subscriptions').insert({
+    const supabase = getSupabaseServiceRoleClient()
+
+    if (!supabase) {
+      console.warn('Supabase credentials missing. Skipping subscription.created handling.')
+      return
+    }
+
+    await (supabase as any).from('subscriptions').insert({
       user_id: subscription.metadata?.tenant_id || '00000000-0000-0000-0000-000000000000',
       stripe_subscription_id: subscription.id,
       stripe_customer_id: subscription.customer,
@@ -227,7 +237,14 @@ async function handleSubscriptionCreated(subscription: any) {
 
 async function handleSubscriptionUpdated(subscription: any) {
   try {
-    await supabase.from('subscriptions').update({
+    const supabase = getSupabaseServiceRoleClient()
+
+    if (!supabase) {
+      console.warn('Supabase credentials missing. Skipping subscription.updated handling.')
+      return
+    }
+
+    await (supabase as any).from('subscriptions').update({
       status: subscription.status,
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -242,7 +259,14 @@ async function handleSubscriptionUpdated(subscription: any) {
 
 async function handleSubscriptionDeleted(subscription: any) {
   try {
-    await supabase.from('subscriptions').update({
+    const supabase = getSupabaseServiceRoleClient()
+
+    if (!supabase) {
+      console.warn('Supabase credentials missing. Skipping subscription.deleted handling.')
+      return
+    }
+
+    await (supabase as any).from('subscriptions').update({
       status: 'canceled',
       ended_at: new Date().toISOString(),
       canceled_at: new Date().toISOString(),
@@ -255,7 +279,23 @@ async function handleSubscriptionDeleted(subscription: any) {
   }
 }
 
-// Export runtime config for edge runtime
-export const runtime = 'edge';
+// Stripe webhooks need the Node.js runtime for the official SDK
+export const runtime = 'nodejs';
+
+function getSupabaseServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return null
+  }
+
+  return createClient<Database>(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
 
 

@@ -1,14 +1,42 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { notificationService, NotificationData, InAppNotification } from "@/lib/notifications";
+import type { InAppNotification, NotificationData } from "@/lib/notifications";
+
+type NotificationActionResponse<T = unknown> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};
 
 export function useNotifications() {
   const { toast } = useToast();
 
+  const callNotificationAction = async <T>(action: string, payload: unknown) => {
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action, payload }),
+      });
+
+      if (!response.ok) {
+        return { success: false, error: `Request failed with status ${response.status}` } satisfies NotificationActionResponse<T>;
+      }
+
+      const result = (await response.json()) as NotificationActionResponse<T>;
+      return result;
+    } catch (error) {
+      console.error("Notification request failed", error);
+      return { success: false, error: "Network error" } satisfies NotificationActionResponse<T>;
+    }
+  };
+
   const sendEmail = async (notification: NotificationData) => {
     try {
-      const result = await notificationService.sendEmail(notification);
+      const result = await callNotificationAction("sendEmail", notification);
       if (result.success) {
         toast({
           title: "Email sent",
@@ -34,7 +62,7 @@ export function useNotifications() {
 
   const sendInAppNotification = async (notification: InAppNotification) => {
     try {
-      const result = await notificationService.sendInAppNotification(notification);
+      const result = await callNotificationAction("sendInAppNotification", notification);
       if (result.success) {
         // Show toast for immediate feedback
         toast({
@@ -57,7 +85,16 @@ export function useNotifications() {
 
   const sendBulkNotifications = async (notifications: (NotificationData | InAppNotification)[]) => {
     try {
-      const results = await notificationService.sendBulkNotification(notifications);
+      const response = await callNotificationAction<Array<{ success: boolean; error?: string }>>(
+        "sendBulkNotification",
+        notifications,
+      );
+
+      if (!response.success || !Array.isArray(response.data)) {
+        throw new Error(response.error || "Bulk notification failed");
+      }
+
+      const results = response.data;
       const successCount = results.filter(r => r.success).length;
       const failureCount = results.length - successCount;
 

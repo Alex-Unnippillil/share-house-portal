@@ -133,7 +133,7 @@ export function UploadDocumentDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Upload className="mr-2 h-4 w-4" />
+          <Upload className="mr-2 size-4" />
           Upload Document
         </Button>
       </DialogTrigger>
@@ -149,7 +149,7 @@ export function UploadDocumentDialog() {
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="file">Document File</Label>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+            <div className="rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 text-center">
               <input
                 id="file"
                 type="file"
@@ -158,7 +158,7 @@ export function UploadDocumentDialog() {
                 className="hidden"
               />
               <label htmlFor="file" className="cursor-pointer">
-                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                <FileText className="mx-auto mb-2 size-12 text-muted-foreground" />
                 <div className="text-sm text-muted-foreground">
                   {file ? (
                     <span className="font-medium text-foreground">{file.name}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +22,15 @@ interface Notification {
 
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const supabase = createClient();
+
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.read).length,
+    [notifications],
+  );
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -39,7 +43,6 @@ export function NotificationCenter() {
       if (error) throw error;
 
       setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -62,8 +65,7 @@ export function NotificationCenter() {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
+          setNotifications((prev) => [newNotification, ...prev]);
 
           // Show toast for new notification
           toast({
@@ -90,12 +92,11 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, read: true } : n,
+        ),
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
@@ -103,7 +104,7 @@ export function NotificationCenter() {
 
   const markAllAsRead = async () => {
     try {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
 
       if (unreadIds.length === 0) return;
 
@@ -114,10 +115,9 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, read: true })),
       );
-      setUnreadCount(0);
 
       toast({
         title: "All notifications marked as read",
@@ -136,12 +136,7 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
-      if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
     } catch (error) {
       console.error('Failed to delete notification:', error);
     }
@@ -179,7 +174,7 @@ export function NotificationCenter() {
         {unreadCount > 0 && (
           <Badge
             variant="destructive"
-            className="absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 text-xs"
+            className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
@@ -187,7 +182,7 @@ export function NotificationCenter() {
       </Button>
 
       {isOpen && (
-        <Card className="absolute right-0 top-12 w-96 max-h-96 shadow-lg z-50">
+        <Card className="absolute right-0 top-12 z-50 max-h-96 w-96 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Notifications</CardTitle>
             <div className="flex gap-2">
@@ -196,7 +191,7 @@ export function NotificationCenter() {
                   variant="ghost"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="px-2 size-6 text-xs"
+                  className="size-6 px-2 text-xs"
                 >
                   <CheckCheck className="mr-1 size-3" />
                   Mark all read
@@ -227,7 +222,7 @@ export function NotificationCenter() {
                   {notifications.map((notification, index) => (
                     <div key={notification.id}>
                       <div
-                        className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors ${
+                        className={`cursor-pointer p-3 transition-colors hover:bg-muted/50 ${
                           !notification.read ? 'bg-muted/20' : ''
                         }`}
                         onClick={() => {
@@ -277,7 +272,7 @@ export function NotificationCenter() {
                                 e.stopPropagation();
                                 deleteNotification(notification.id);
                               }}
-                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              className="size-6 text-muted-foreground hover:text-destructive"
                             >
                               <X className="size-3" />
                             </Button>

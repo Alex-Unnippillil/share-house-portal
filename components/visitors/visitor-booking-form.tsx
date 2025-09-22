@@ -16,8 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { createClient } from "@/utils/supabase-browser";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -35,6 +35,19 @@ const visitorBookingSchema = z.object({
 });
 
 type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
+
+type ProfileRow = {
+  full_name: string | null
+  email: string | null
+  unit_id: string | null
+};
+
+type UnitProfile = {
+  id: string
+  full_name: string | null
+  email: string | null
+  role: string | null
+};
 
 export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,24 +76,29 @@ export function VisitorBookingForm() {
       if (!user) throw new Error("Not authenticated");
 
       // Get user profile
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('full_name, email, unit_id')
         .eq('id', user.id)
         .single();
 
-      if (!profile) throw new Error("Profile not found");
+      const profileData = profile as ProfileRow | null;
+
+      if (!profileData) throw new Error("Profile not found");
 
       // Get roommates and property manager
       // This assumes there's a units table with tenant relationships
-      const { data: unitData } = await supabase
+      const { data: unitData } = await (supabase as any)
         .from('profiles')
         .select('id, full_name, email, role')
-        .eq('unit_id', profile.unit_id!)
+        .eq('unit_id', profileData.unit_id)
         .neq('id', user.id);
 
-      const roommates = unitData?.filter(p => p.role === 'tenant' || p.role === 'roommate') || [];
-      const propertyManager = unitData?.find(p => p.role === 'property_manager');
+      const unitProfiles = (unitData as UnitProfile[] | null) ?? [];
+      const roommates = unitProfiles.filter(
+        (p) => p.role === 'tenant' || p.role === 'roommate',
+      );
+      const propertyManager = unitProfiles.find((p) => p.role === 'property_manager');
 
       if (!propertyManager) {
         throw new Error("Property manager not found for this unit");
@@ -109,7 +127,7 @@ export function VisitorBookingForm() {
       // Send notifications
       await notifyVisitorBooking({
         guestName: data.guestName,
-        hostName: profile.full_name || user.email || 'Unknown',
+        hostName: profileData.full_name || user.email || 'Unknown',
         checkInDate: format(data.checkInDate, 'MMM dd, yyyy'),
         checkOutDate: format(data.checkOutDate, 'MMM dd, yyyy'),
         purpose: data.purpose,

@@ -39,6 +39,7 @@
   ],
   "exclude": [
     "node_modules",
-    ".next"
+    ".next",
+    "lib/supabase.ts"
   ]
 }

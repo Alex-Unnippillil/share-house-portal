@@ -57,7 +57,7 @@ export function DocumentViewerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -69,11 +69,11 @@ export function DocumentViewerDialog({
             <div className="flex items-center space-x-2">
               {getStatusBadge(document.status)}
               <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="mr-2 h-4 w-4" />
+                <Download className="mr-2 size-4" />
                 Download
               </Button>
               <Button variant="outline" size="sm" onClick={handleOpenExternal}>
-                <ExternalLink className="mr-2 h-4 w-4" />
+                <ExternalLink className="mr-2 size-4" />
                 Open
               </Button>
             </div>
@@ -82,8 +82,8 @@ export function DocumentViewerDialog({
 
         <div className="flex-1 overflow-hidden">
           {/* Document Metadata */}
-          <div className="mb-4 p-4 bg-muted/50 rounded-lg">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="mb-4 rounded-lg bg-muted/50 p-4">
+            <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
               <div>
                 <span className="font-medium text-muted-foreground">Type:</span>
                 <p className="capitalize">{document.document_type}</p>
@@ -105,9 +105,9 @@ export function DocumentViewerDialog({
             </div>
 
             {document.lease && (
-              <div className="mt-4 pt-4 border-t">
-                <h4 className="font-medium mb-2">Lease Information</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="mt-4 border-t pt-4">
+                <h4 className="mb-2 font-medium">Lease Information</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
                   {document.lease.start_date && (
                     <div>
                       <span className="font-medium text-muted-foreground">Start Date:</span>
@@ -137,8 +137,8 @@ export function DocumentViewerDialog({
             )}
 
             {document.signatures && document.signatures.length > 0 && (
-              <div className="mt-4 pt-4 border-t">
-                <h4 className="font-medium mb-2">Signatures</h4>
+              <div className="mt-4 border-t pt-4">
+                <h4 className="mb-2 font-medium">Signatures</h4>
                 <div className="space-y-2">
                   {document.signatures.map((signature) => (
                     <div key={signature.id} className="flex items-center justify-between text-sm">
@@ -160,24 +160,24 @@ export function DocumentViewerDialog({
           </div>
 
           {/* Document Preview */}
-          <div className="flex-1 min-h-0">
+          <div className="min-h-0 flex-1">
             {document.file_url ? (
-              <div className="w-full h-[600px] border rounded-lg overflow-hidden">
+              <div className="h-[600px] w-full overflow-hidden rounded-lg border">
                 {document.file_url.toLowerCase().endsWith('.pdf') ? (
                   <iframe
                     src={`${document.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
-                    className="w-full h-full"
+                    className="size-full"
                     title={document.title}
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-muted/20">
+                  <div className="flex h-full items-center justify-center bg-muted/20">
                     <div className="text-center">
-                      <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-2">
+                      <FileText className="mx-auto mb-4 size-16 text-muted-foreground" />
+                      <p className="mb-2 text-muted-foreground">
                         Preview not available for this file type
                       </p>
                       <Button onClick={handleDownload} variant="outline">
-                        <Download className="mr-2 h-4 w-4" />
+                        <Download className="mr-2 size-4" />
                         Download to View
                       </Button>
                     </div>
@@ -185,9 +185,9 @@ export function DocumentViewerDialog({
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-[600px] bg-muted/20 rounded-lg">
+              <div className="flex h-[600px] items-center justify-center rounded-lg bg-muted/20">
                 <div className="text-center">
-                  <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+                  <FileText className="mx-auto mb-4 size-16 text-muted-foreground" />
                   <p className="text-muted-foreground">Document file not available</p>
                 </div>
               </div>

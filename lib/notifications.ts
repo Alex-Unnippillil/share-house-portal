@@ -1,149 +1,175 @@
-"use server";
+'use server'
 
-import { Resend } from 'resend';
-import { createSupbaseServerClient } from "@/utils/supaone";
+import { Resend } from 'resend'
+import { createClient } from '@supabase/supabase-js'
 
 export interface NotificationData {
-  to: string | string[];
-  subject: string;
-  template: string;
-  data?: Record<string, any>;
-  userId?: string;
+  to: string | string[]
+  subject: string
+  template: string
+  data?: Record<string, any>
+  userId?: string
 }
 
 export interface InAppNotification {
-  userId: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  actionUrl?: string;
-  metadata?: Record<string, any>;
+  userId: string
+  title: string
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
+  actionUrl?: string
+  metadata?: Record<string, any>
 }
 
-class NotificationService {
-  private resend: Resend | null = null;
+const resend = initializeResend()
 
-  constructor() {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (apiKey && apiKey !== 're_your_resend_api_key_here') {
-      this.resend = new Resend(apiKey);
-    }
+function initializeResend() {
+  const apiKey = process.env.RESEND_API_KEY
+  if (apiKey && apiKey !== 're_your_resend_api_key_here') {
+    return new Resend(apiKey)
+  }
+  return null
+}
+
+function getEmailTemplate(template: string, data?: any) {
+  const templates: Record<string, string | undefined> = {
+    'visitor-booking': getVisitorBookingTemplate(data),
+    'maintenance-request': getMaintenanceRequestTemplate(data),
+    'payment-receipt': getPaymentReceiptTemplate(data),
+    'document-signed': getDocumentSignedTemplate(data),
+    welcome: getWelcomeTemplate(data),
   }
 
-  async sendEmail(notification: NotificationData) {
-    if (!this.resend) {
-      console.warn('Resend API key not configured. Skipping email notification.');
-      return { success: false, error: 'Email service not configured' };
-    }
+  return templates[template]
+}
 
-    try {
-      const recipients = Array.isArray(notification.to) ? notification.to : [notification.to];
-
-      const emailTemplates = {
-        'visitor-booking': this.getVisitorBookingTemplate(notification.data),
-        'maintenance-request': this.getMaintenanceRequestTemplate(notification.data),
-        'payment-receipt': this.getPaymentReceiptTemplate(notification.data),
-        'document-signed': this.getDocumentSignedTemplate(notification.data),
-        'welcome': this.getWelcomeTemplate(notification.data),
-      };
-
-      const emailContent = emailTemplates[notification.template as keyof typeof emailTemplates];
-      if (!emailContent) {
-        throw new Error(`Email template '${notification.template}' not found`);
-      }
-
-      const { data, error } = await this.resend.emails.send({
-        from: 'Shared House Portal <notifications@sharedhouseportal.com>',
-        to: recipients,
-        subject: notification.subject,
-        html: emailContent,
-      });
-
-      if (error) {
-        console.error('Failed to send email:', error);
-        return { success: false, error: error.message };
-      }
-
-      // Store email notification in database for tracking
-      if (notification.userId) {
-        await this.storeEmailNotification(notification);
-      }
-
-      return { success: true, data };
-    } catch (error) {
-      console.error('Email sending error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    }
+export async function sendEmail(notification: NotificationData) {
+  if (!resend) {
+    console.warn('Resend API key not configured. Skipping email notification.')
+    return { success: false, error: 'Email service not configured' }
   }
 
-  async sendInAppNotification(notification: InAppNotification) {
-    try {
-      const supabase = await createSupbaseServerClient();
+  try {
+    const recipients = Array.isArray(notification.to) ? notification.to : [notification.to]
+    const emailContent = getEmailTemplate(notification.template, notification.data)
 
-      const { data, error } = await (supabase as any)
-        .from('notifications')
-        .insert({
-          user_id: notification.userId,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          action_url: notification.actionUrl,
-          metadata: notification.metadata,
-          read: false,
-          created_at: new Date().toISOString(),
-        });
-
-      if (error) {
-        console.error('Failed to create in-app notification:', error);
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, data };
-    } catch (error) {
-      console.error('In-app notification error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    if (!emailContent) {
+      throw new Error(`Email template '${notification.template}' not found`)
     }
-  }
 
-  async sendBulkNotification(notifications: (NotificationData | InAppNotification)[]) {
-    const results = await Promise.allSettled(
-      notifications.map(notification => {
-        if ('to' in notification) {
-          return this.sendEmail(notification);
-        } else {
-          return this.sendInAppNotification(notification);
-        }
+    const { data, error } = await resend.emails.send({
+      from: 'Shared House Portal <notifications@sharedhouseportal.com>',
+      to: recipients,
+      subject: notification.subject,
+      html: emailContent,
+    })
+
+    if (error) {
+      console.error('Failed to send email:', error)
+      return { success: false, error: error.message }
+    }
+
+    if (notification.userId) {
+      await storeEmailNotification(notification)
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Email sending error:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+export async function sendInAppNotification(notification: InAppNotification) {
+  try {
+    const supabase = createSupabaseServiceRoleClient()
+
+    if (!supabase) {
+      console.warn('Supabase credentials not configured. Skipping in-app notification.')
+      return { success: true, data: null }
+    }
+
+    const { data, error } = await (supabase as any)
+      .from('notifications')
+      .insert({
+        user_id: notification.userId,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        action_url: notification.actionUrl,
+        metadata: notification.metadata,
+        read: false,
+        created_at: new Date().toISOString(),
       })
-    );
 
-    return results.map((result, index) => ({
-      index,
-      success: result.status === 'fulfilled' ? result.value.success : false,
-      error: result.status === 'rejected' ? result.reason : result.value.error,
-    }));
-  }
-
-  private async storeEmailNotification(notification: NotificationData) {
-    try {
-      const supabase = await createSupbaseServerClient();
-
-      await (supabase as any)
-        .from('email_notifications')
-        .insert({
-          user_id: notification.userId,
-          recipient: Array.isArray(notification.to) ? notification.to.join(', ') : notification.to,
-          subject: notification.subject,
-          template: notification.template,
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-        });
-    } catch (error) {
-      console.error('Failed to store email notification:', error);
+    if (error) {
+      console.error('Failed to create in-app notification:', error)
+      return { success: false, error: error.message }
     }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('In-app notification error:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+export async function sendBulkNotification(
+  notifications: (NotificationData | InAppNotification)[],
+) {
+  const results = await Promise.allSettled(
+    notifications.map(notification => {
+      if ('to' in notification) {
+        return sendEmail(notification)
+      }
+
+      return sendInAppNotification(notification)
+    }),
+  )
+
+  return results.map((result, index) => ({
+    index,
+    success: result.status === 'fulfilled' ? result.value.success : false,
+    error: result.status === 'rejected' ? result.reason : result.value.error,
+  }))
+}
+
+async function storeEmailNotification(notification: NotificationData) {
+  try {
+    const supabase = createSupabaseServiceRoleClient()
+
+    if (!supabase) {
+      console.warn('Supabase credentials not configured. Skipping email notification storage.')
+      return
+    }
+
+    await (supabase as any)
+      .from('email_notifications')
+      .insert({
+        user_id: notification.userId,
+        recipient: Array.isArray(notification.to) ? notification.to.join(', ') : notification.to,
+        subject: notification.subject,
+        template: notification.template,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+      })
+  } catch (error) {
+    console.error('Failed to store email notification:', error)
+  }
+}
+
+function createSupabaseServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null
   }
 
-  private getVisitorBookingTemplate(data?: any) {
-    return `
+  return createClient(supabaseUrl, supabaseKey)
+}
+
+function getVisitorBookingTemplate(data?: any) {
+  return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Overnight Visitor Booking</h2>
         <p><strong>Guest:</strong> ${data?.guestName || 'Unknown'}</p>
@@ -153,11 +179,11 @@ class NotificationService {
         <p>Please review this booking request in the dashboard.</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Dashboard</a>
       </div>
-    `;
-  }
+    `
+}
 
-  private getMaintenanceRequestTemplate(data?: any) {
-    return `
+function getMaintenanceRequestTemplate(data?: any) {
+  return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Maintenance Request</h2>
         <p><strong>Requested by:</strong> ${data?.requesterName || 'Unknown'}</p>
@@ -166,11 +192,11 @@ class NotificationService {
         <p><strong>Priority:</strong> ${data?.priority || 'Normal'}</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Request</a>
       </div>
-    `;
-  }
+    `
+}
 
-  private getPaymentReceiptTemplate(data?: any) {
-    return `
+function getPaymentReceiptTemplate(data?: any) {
+  return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Payment Receipt</h2>
         <p><strong>Tenant:</strong> ${data?.tenantName || 'Unknown'}</p>
@@ -179,11 +205,11 @@ class NotificationService {
         <p><strong>Date:</strong> ${data?.date || new Date().toLocaleDateString()}</p>
         <p>Thank you for your payment!</p>
       </div>
-    `;
-  }
+    `
+}
 
-  private getDocumentSignedTemplate(data?: any) {
-    return `
+function getDocumentSignedTemplate(data?: any) {
+  return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Document Signed</h2>
         <p><strong>Document:</strong> ${data?.documentTitle || 'Unknown'}</p>
@@ -191,11 +217,11 @@ class NotificationService {
         <p><strong>Date:</strong> ${data?.signedAt || new Date().toLocaleDateString()}</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/documents" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Document</a>
       </div>
-    `;
-  }
+    `
+}
 
-  private getWelcomeTemplate(data?: any) {
-    return `
+function getWelcomeTemplate(data?: any) {
+  return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Welcome to Shared House Portal!</h2>
         <p>Hello ${data?.firstName || 'there'}!</p>
@@ -208,8 +234,5 @@ class NotificationService {
         </ul>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Get Started</a>
       </div>
-    `;
-  }
+    `
 }
-
-export const notificationService = new NotificationService();

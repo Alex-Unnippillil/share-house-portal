@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { createClient } from "@/utils/supabase-browser";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -69,27 +69,31 @@ export function MaintenanceRequestForm() {
       if (!user) throw new Error("Not authenticated");
 
       // Get user profile
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
         .select('full_name, unit_id')
         .eq('id', user.id)
         .single();
 
-      if (!profile) throw new Error("Profile not found");
+      const profileData = profile as ProfileRow | null;
 
-      if (!profile.unit_id) {
+      if (!profileData) throw new Error("Profile not found");
+
+      if (!profileData.unit_id) {
         throw new Error("User is not assigned to a unit");
       }
 
       // Get property manager for this unit
-      const { data: propertyManager } = await supabase
+      const { data: propertyManager } = await (supabase as any)
         .from('profiles')
         .select('id, full_name, email')
-        .eq('unit_id', profile.unit_id!)
+        .eq('unit_id', profileData.unit_id)
         .eq('role', 'property_manager')
         .single();
 
-      if (!propertyManager) {
+      const propertyManagerData = propertyManager as PropertyManagerRow | null;
+
+      if (!propertyManagerData) {
         throw new Error("Property manager not found for this unit");
       }
 
@@ -103,7 +107,7 @@ export function MaintenanceRequestForm() {
           category: data.category || null,
           location: data.location || null,
           requested_by: user.id,
-          unit_id: (profile as any).unit_id,
+          unit_id: profileData.unit_id,
           status: 'pending',
         })
         .select()
@@ -113,14 +117,17 @@ export function MaintenanceRequestForm() {
 
       // Send notifications
       await notifyMaintenanceRequest({
-        requesterName: (profile as any).full_name || user.email || 'Unknown',
+        requesterName: profileData.full_name || user.email || 'Unknown',
         title: data.title,
         description: data.description,
         priority: data.priority,
         propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
+          id: propertyManagerData.id,
+          email: propertyManagerData.email || '',
+          name:
+            propertyManagerData.full_name ||
+            propertyManagerData.email ||
+            'Unknown',
         },
       });
 
@@ -250,3 +257,14 @@ export function MaintenanceRequestForm() {
     </Form>
   );
 }
+type ProfileRow = {
+  full_name: string | null
+  unit_id: string | null
+};
+
+type PropertyManagerRow = {
+  id: string
+  full_name: string | null
+  email: string | null
+};
+

@@ -99,26 +99,26 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm">
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal className="size-4" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleView}>
-            <Eye className="mr-2 h-4 w-4" />
+            <Eye className="mr-2 size-4" />
             View Document
           </DropdownMenuItem>
 
           {canSign && (
             <DropdownMenuItem onClick={handleSign} disabled={loading === 'signing'}>
-              <PenTool className="mr-2 h-4 w-4" />
+              <PenTool className="mr-2 size-4" />
               {loading === 'signing' ? 'Signing...' : 'Sign Document'}
             </DropdownMenuItem>
           )}
 
           {canCreateSignature && (
             <DropdownMenuItem onClick={handleCreateSigningRequest}>
-              <Share2 className="mr-2 h-4 w-4" />
+              <Share2 className="mr-2 size-4" />
               Create Signing Request
             </DropdownMenuItem>
           )}
@@ -126,12 +126,12 @@ export function DocumentActions({ document }: DocumentActionsProps) {
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="mr-2 size-4" />
             Download
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleShare}>
-            <Share2 className="mr-2 h-4 w-4" />
+            <Share2 className="mr-2 size-4" />
             Share
           </DropdownMenuItem>
         </DropdownMenuContent>

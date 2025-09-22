@@ -19,12 +19,13 @@ export default function NavLinks() {
 					setRole(null);
 					return;
 				}
-				const { data: profile } = await supabase
-					.from('profiles')
-					.select('role')
-					.eq('id', user.id)
-					.single();
-				setRole(profile?.role || null);
+                                const { data: profile } = await (supabase as any)
+                                        .from('profiles')
+                                        .select('role')
+                                        .eq('id', user.id)
+                                        .single();
+                                const nextRole = (profile as { role: string | null } | null)?.role ?? null;
+                                setRole(nextRole);
 			} catch (e) {
 				setRole(null);
 			}
