@@ -2,6 +2,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+
+import { siteConfig } from '@/config/site';
 import { ScheduleForm } from '@/components/schedule-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster"
@@ -9,7 +11,7 @@ import { Toaster } from "@/components/ui/toaster"
 export default async function SchedulePage() {
     const cookieStore = cookies();
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        siteConfig.thirdParty.supabase.baseUrl!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {

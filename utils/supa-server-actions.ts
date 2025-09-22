@@ -1,9 +1,11 @@
 import { type CookieOptions, createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+import { siteConfig } from '@/config/site'
+
 export function createClient(cookieStore: ReturnType<typeof cookies>) {
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    siteConfig.thirdParty.supabase.baseUrl || '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
     {
       cookies: {

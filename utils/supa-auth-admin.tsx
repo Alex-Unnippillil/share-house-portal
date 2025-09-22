@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
+
+import { siteConfig } from '@/config/site'
 import type { Database } from '@/lib/supabase'
 
-const supabase = createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!,
+const supabase = createClient<Database>(siteConfig.thirdParty.supabase.baseUrl!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!, {
   auth: {
     autoRefreshToken: false,

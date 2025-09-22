@@ -1,6 +1,8 @@
+import { siteConfig } from '@/config/site';
 import { DocumentSigningRequest, DocumentSigningResponse } from '@/types/documents';
 
-const DOCUMENSO_BASE_URL = process.env.DOCUMENSO_BASE_URL || 'https://app.documenso.com';
+const DOCUMENSO_BASE_URL =
+  siteConfig.thirdParty.documenso.baseUrl || 'https://app.documenso.com';
 const DOCUMENSO_API_KEY = process.env.DOCUMENSO_API_KEY;
 
 if (!DOCUMENSO_API_KEY) {

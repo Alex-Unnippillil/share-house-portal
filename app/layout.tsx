@@ -1,19 +1,102 @@
- import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import type { Metadata, Viewport } from 'next'
+import { headers } from 'next/headers'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+
 import './globals.css'
-import { ThemeProvider } from "@/components/theme-provider"
-import { CookieButton } from "@/components/cookie-button"
-import { fontSans } from "@/lib/font"
-import { siteConfig } from '@/config/site'
+import { CookieButton } from '@/components/cookie-button'
 import { ReactQueryClientProvider } from '@/components/react-query-client-provider'
-import { Toaster } from "@/components/ui/toaster"
-import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
-import { TailwindIndicator } from "@/components/tailwind-indicator"
-import { cn } from "@/lib/utils"
-const inter = Inter({ subsets: ['latin'] })
+import { SiteFooter } from '@/components/site-footer'
+import { SiteHeader } from '@/components/site-header'
+import { TailwindIndicator } from '@/components/tailwind-indicator'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/toaster'
+import { siteConfig } from '@/config/site'
+import { fontSans } from '@/lib/font'
+import { cn } from '@/lib/utils'
+import { readUserSession } from '@/utils/actions'
+
+type ThirdPartyKey = keyof typeof siteConfig.thirdParty
+
+type HeaderCandidate =
+  | 'x-invoke-path'
+  | 'x-matched-path'
+  | 'x-nextjs-route'
+  | 'next-url'
+
+const headerCandidates: HeaderCandidate[] = [
+  'x-invoke-path',
+  'x-matched-path',
+  'x-nextjs-route',
+  'next-url',
+]
+
+function derivePathname(headerList: Headers): string {
+  for (const candidate of headerCandidates) {
+    const value = headerList.get(candidate)
+    if (!value) continue
+
+    if (value.startsWith('/')) {
+      return value
+    }
+
+    try {
+      return new URL(value).pathname
+    } catch (error) {
+      continue
+    }
+  }
+
+  const referer = headerList.get('referer')
+  if (referer) {
+    try {
+      return new URL(referer).pathname
+    } catch (error) {
+      // Ignore parsing errors and fall back to root.
+    }
+  }
+
+  return '/'
+}
+
+function matchesRoute(route: string, pathname: string): boolean {
+  if (route === '/') {
+    return pathname === '/'
+  }
+
+  return pathname === route || pathname.startsWith(`${route}/`)
+}
+
+function resolvePreconnectOrigins(
+  pathname: string,
+  isAuthenticated: boolean
+): string[] {
+  const origins = new Set<string>()
+
+  for (const [integrationKey, integration] of Object.entries(
+    siteConfig.thirdParty
+  ) as Array<[
+    ThirdPartyKey,
+    (typeof siteConfig.thirdParty)[ThirdPartyKey]
+  ]>) {
+    const hasRouteMatch = integration.routes.some((route) =>
+      matchesRoute(route, pathname)
+    )
+    const includeForAuth =
+      integrationKey === 'supabase' && Boolean(isAuthenticated)
+    const shouldInclude = hasRouteMatch || includeForAuth
+
+    if (!shouldInclude) continue
+
+    for (const origin of integration.origins) {
+      if (origin) {
+        origins.add(origin)
+      }
+    }
+  }
+
+  return Array.from(origins)
+}
 
 export const metadata: Metadata = {
   title: {
@@ -21,8 +104,10 @@ export const metadata: Metadata = {
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
-    manifest: '/manifest.json',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.roomsily'),
+  manifest: '/manifest.json',
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || 'https://www.roomsily'
+  ),
   alternates: {
     canonical: '/',
     languages: {
@@ -37,12 +122,31 @@ export const metadata: Metadata = {
     },
   },
   referrer: 'origin-when-cross-origin',
-  keywords: ['Roomsily', 'NextJS 14 TypeScript', 'Supabase SSR', 'TanStack React Query', 'co-living software', 'rent payment portal', 'shadcn/ui', 'Tailwind CSS', 'SaaS', 'NextJS Supabase Postgres Tailwind TanStack', 'NextJS CSP',
-             'PWA', 'NextJS SaaS PWA Template', 'CRUD ops', 'secure headers', 'NextJS templates with user authentication, RBAC, and CRUD ops', 'NextJS templates with data validation and database integration',
-            'Rust API runtime for vercel serverless functions', 'NextJS secure headers', 'NextJS NextMDX'],
+  keywords: [
+    'Roomsily',
+    'NextJS 14 TypeScript',
+    'Supabase SSR',
+    'TanStack React Query',
+    'co-living software',
+    'rent payment portal',
+    'shadcn/ui',
+    'Tailwind CSS',
+    'SaaS',
+    'NextJS Supabase Postgres Tailwind TanStack',
+    'NextJS CSP',
+    'PWA',
+    'NextJS SaaS PWA Template',
+    'CRUD ops',
+    'secure headers',
+    'NextJS templates with user authentication, RBAC, and CRUD ops',
+    'NextJS templates with data validation and database integration',
+    'Rust API runtime for vercel serverless functions',
+    'NextJS secure headers',
+    'NextJS NextMDX',
+  ],
   authors: [{ name: 'Robert Mourey Jr' }],
   creator: 'Robert Mourey Jr',
-  publisher: 'Robert Mourey Jr', 
+  publisher: 'Robert Mourey Jr',
   formatDetection: {
     email: false,
     address: false,
@@ -50,11 +154,10 @@ export const metadata: Metadata = {
   },
   generator: 'NextJS',
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
   },
-
   robots: {
     index: false,
     follow: true,
@@ -72,7 +175,7 @@ export const metadata: Metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     siteName: siteConfig.name,
-    url: "https://www.roomsily",
+    url: 'https://www.roomsily',
     images: [
       {
         url: '/roomsily-og.svg',
@@ -84,18 +187,19 @@ export const metadata: Metadata = {
     locale: 'en_US',
     type: 'website',
   },
-    twitter: {
-         title: siteConfig.name,
-         description: siteConfig.description,
-         site: '@roomsily',
-         creator: '@roomsily',
-         images: ['/roomsily-og.svg'],
-   },
+  twitter: {
+    title: siteConfig.name,
+    description: siteConfig.description,
+    site: '@roomsily',
+    creator: '@roomsily',
+    images: ['/roomsily-og.svg'],
+  },
 }
-export const viewport: Viewport =  {
+
+export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: '(prefers-color-scheme: light)', color: 'white' },
+    { media: '(prefers-color-scheme: dark)', color: 'black' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -107,45 +211,65 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const headerList = headers()
+  const pathname = derivePathname(headerList)
+  const {
+    data: { session },
+  } = await readUserSession()
+  const preconnectOrigins = resolvePreconnectOrigins(
+    pathname,
+    Boolean(session)
+  )
 
-export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          {preconnectOrigins.map((origin) => (
+            <link
+              key={origin}
+              rel="preconnect"
+              href={origin}
+              crossOrigin="anonymous"
+            />
+          ))}
+        </head>
+        <body
+          className={cn(
+            'min-h-screen bg-background font-sans antialiased',
             fontSans.variable
           )}
         >
-<ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-             <div className="relative flex min-h-screen flex-col">
+            <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
+              <div className="flex-1">
+                {children}
+                <Toaster />
+                <Analytics />
+                <SpeedInsights />
+              </div>
+              <SiteFooter />
+            </div>
 
-
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
-*/}
-   <CookieButton />    
+            {/*
+              enter your api info from termly.io or a provider of your choice
+              <Script
+                type="text/javascript"
+                src="https://app.termly.io/resource-blocker/123456789abcdefg"
+              />
+            */}
+            <CookieButton />
+            <TailwindIndicator />
           </ThemeProvider>
-        
-
-
-</body>
-    </html>
+        </body>
+      </html>
     </ReactQueryClientProvider>
   )
 }

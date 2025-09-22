@@ -6,10 +6,11 @@ import {
   sendInAppNotification,
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
+import { siteConfig } from '@/config/site'
 import type { Database, TablesInsert } from "@/lib/supabase"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl = siteConfig.thirdParty.supabase.baseUrl
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {

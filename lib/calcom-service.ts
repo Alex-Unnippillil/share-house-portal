@@ -1,3 +1,5 @@
+import { siteConfig } from '@/config/site';
+
 interface CalComCreateBookingRequest {
   start: string;
   end: string;
@@ -200,7 +202,8 @@ class CalComService {
 }
 
 // Create singleton instance
-const CALCOM_BASE_URL = process.env.CALCOM_BASE_URL || 'https://api.cal.com';
+const CALCOM_BASE_URL =
+  siteConfig.thirdParty.calcom.baseUrl || 'https://api.cal.com';
 const CALCOM_API_KEY = process.env.CALCOM_API_KEY || '';
 
 if (!CALCOM_API_KEY) {
