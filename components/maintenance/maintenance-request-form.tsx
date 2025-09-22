@@ -80,13 +80,19 @@ export function MaintenanceRequestForm() {
         throw new Error("User is not assigned to a unit");
       }
 
-      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        roles: ['property_manager'],
-      });
+      const propertyManagers = await fetchMembersByUnit(
+        typedSupabase,
+        profile.unit_id,
+        {
+          roles: ['property_manager'],
+        }
+      );
 
-      if (!propertyManager) {
+      if (!propertyManagers.length) {
         throw new Error("Property manager not found for this unit");
       }
+
+      const primaryManager = propertyManagers[0];
 
       // Create maintenance request record
       const { data: request, error: requestError } = await (supabase as any)
@@ -100,6 +106,7 @@ export function MaintenanceRequestForm() {
           requested_by: user.id,
           unit_id: profile.unit_id,
           status: 'pending',
+          assigned_to: primaryManager?.id ?? null,
         })
         .select()
         .single();
@@ -112,11 +119,11 @@ export function MaintenanceRequestForm() {
         title: data.title,
         description: data.description,
         priority: data.priority,
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
-        },
+        propertyManagers: propertyManagers.map((manager) => ({
+          id: manager.id,
+          email: manager.email || '',
+          name: manager.full_name || manager.email || 'Unknown',
+        })),
       });
 
       toast({
