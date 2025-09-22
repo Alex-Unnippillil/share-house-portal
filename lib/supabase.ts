@@ -411,6 +411,45 @@ export type Database = {
         }
         Relationships: []
       }
+      amenities: {
+        Row: {
+          active: boolean
+          calcom_event_type_id: number | null
+          calcom_event_type_slug: string | null
+          created_at: string
+          description: string | null
+          id: number
+          metadata: Json | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          calcom_event_type_id?: number | null
+          calcom_event_type_slug?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          metadata?: Json | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          calcom_event_type_id?: number | null
+          calcom_event_type_slug?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          metadata?: Json | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
