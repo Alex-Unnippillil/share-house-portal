@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Link, { LinkProps } from "next/link"
+import SmartLink, { SmartLinkProps } from "@/components/navigation/SmartLink"
 import { useRouter } from "next/navigation"
 
 import { docsConfig } from "@/config/docs"
@@ -32,10 +32,10 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
         </Button>
       </SheetTrigger>
       <div className="xs:items-center ml-1 gap-4 md:hidden">
-        <Link href="/" className="flex items-center space-x-2">
+        <SmartLink href="/" className="flex items-center space-x-2" intent="navigation">
           <Icons.logo className="size-6" />
           <span className="font-bold">{siteConfig.name}</span>
-        </Link>
+        </SmartLink>
       </div>
 
       <SheetContent side="left" className="pr-0">
@@ -139,7 +139,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
   )
 }
 
-interface MobileLinkProps extends LinkProps {
+interface MobileLinkProps extends SmartLinkProps {
   onOpenChange?: (open: boolean) => void
   children: React.ReactNode
   className?: string
@@ -154,16 +154,17 @@ function MobileLink({
 }: MobileLinkProps) {
   const router = useRouter()
   return (
-    <Link
+    <SmartLink
       href={href}
       onClick={() => {
         router.push(href.toString())
         onOpenChange?.(false)
       }}
       className={cn(className)}
+      intent="navigation"
       {...props}
     >
       {children}
-    </Link>
+    </SmartLink>
   )
 }

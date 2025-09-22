@@ -1,5 +1,5 @@
 import React from "react";
-import Link from 'next/link'
+import SmartLink from "@/components/navigation/SmartLink"
 import { siteConfig } from '@/config/site'
 import { Icons } from '@/components/icons'
 import { cookies } from 'next/headers'
@@ -24,10 +24,10 @@ export default async function ContactPage() {
                         <div className="mt-10 px-2 lg:p-8">
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <div className="flex flex-col items-center space-y-2 text-center">
-      <Link href="/" className="mb-8 flex items-center space-x-2">
+      <SmartLink href="/" className="mb-8 flex items-center space-x-2">
         <Icons.logo className="size-6" />
         <span className="inline-block font-bold">{siteConfig.name}</span>
-      </Link>
+      </SmartLink>
               <h1 className="text-2xl font-semibold tracking-tight">
                 Contact Us
               </h1>

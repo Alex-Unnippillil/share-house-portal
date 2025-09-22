@@ -1,4 +1,4 @@
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 import { readUserSession } from "@/utils/actions"
 
 import { siteConfig } from "@/config/site"
@@ -26,15 +26,16 @@ export async function SiteHeader() {
           <div className="hidden items-center gap-2 md:flex">
             {isAuthenticated ? (
               <>
-                <Link
+                <SmartLink
                   href="/dashboard"
                   className={cn(
                     buttonVariants({ variant: "ghost", size: "sm" }),
                     "justify-center"
                   )}
+                  intent="navigation"
                 >
                   Dashboard
-                </Link>
+                </SmartLink>
                 <SignOutButton
                   variant="outline"
                   size="sm"
@@ -43,24 +44,26 @@ export async function SiteHeader() {
               </>
             ) : (
               <>
-                <Link
+                <SmartLink
                   href="/auth"
                   className={cn(
                     buttonVariants({ variant: "ghost", size: "sm" }),
                     "justify-center"
                   )}
+                  intent="navigation"
                 >
                   Log in
-                </Link>
-                <Link
+                </SmartLink>
+                <SmartLink
                   href="/onboarding"
                   className={cn(
                     buttonVariants({ size: "sm" }),
                     "justify-center"
                   )}
+                  intent="navigation"
                 >
                   Sign up
-                </Link>
+                </SmartLink>
               </>
             )}
           </div>
