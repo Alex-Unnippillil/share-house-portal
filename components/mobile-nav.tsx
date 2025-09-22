@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Icons } from "@/components/icons"
+import { Icon } from "@/components/icons"
 import { SignOutButton } from "@/components/sign-out-button"
 
 interface MobileNavProps {
@@ -27,13 +27,13 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           variant="ghost"
           className="mr-0 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
         >
-          <Icons.menu className="size-6" />
+          <Icon name="menu" className="size-6" aria-hidden />
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>
       <div className="xs:items-center ml-1 gap-4 md:hidden">
         <Link href="/" className="flex items-center space-x-2">
-          <Icons.logo className="size-6" />
+          <Icon name="logo" className="size-6" aria-hidden />
           <span className="font-bold">{siteConfig.name}</span>
         </Link>
       </div>
@@ -44,7 +44,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           className="flex items-center"
           onOpenChange={setOpen}
         >
-          <Icons.logo className="mr-1 size-6" />
+          <Icon name="logo" className="mr-1 size-6" aria-hidden />
           <span className="font-bold">{siteConfig.name}</span>
         </MobileLink>
         <div className="px-6 py-4">

@@ -1,12 +1,11 @@
 import React from "react";
 import Link from 'next/link'
 import { siteConfig } from '@/config/site'
-import { Icons } from '@/components/icons'
+import { Icon } from '@/components/icons'
 import { cookies } from 'next/headers'
 import { Contact } from "@/components/forms/contact";
 import { createClient } from "@/utils/supa-server-actions";
 import { redirect } from "next/navigation";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { type User } from '@supabase/supabase-js'
 
 export default async function ContactPage() {
@@ -25,7 +24,7 @@ export default async function ContactPage() {
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <div className="flex flex-col items-center space-y-2 text-center">
       <Link href="/" className="mb-8 flex items-center space-x-2">
-        <Icons.logo className="size-6" />
+        <Icon name="logo" className="size-6" aria-hidden />
         <span className="inline-block font-bold">{siteConfig.name}</span>
       </Link>
               <h1 className="text-2xl font-semibold tracking-tight">

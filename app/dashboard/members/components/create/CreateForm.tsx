@@ -25,7 +25,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { createMember, updateMemberById } from "../../actions";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z
@@ -228,9 +228,11 @@ export default function MemberForm() {
 					variant="outline"
 				>
 					Submit{" "}
-					<AiOutlineLoading3Quarters
-						className={cn("animate-spin", { hidden: true })}
-					/>
+                                        <Icon
+                                                name="spinner"
+                                                className={cn("animate-spin", { hidden: true })}
+                                                aria-hidden
+                                        />
 				</Button>
 			</form>
 		</Form>

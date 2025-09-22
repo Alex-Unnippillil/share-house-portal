@@ -2,7 +2,7 @@ import React from "react";
 import AuthForm from "./components/AuthForm";
 import { readUserSession } from "@/utils/actions";
 import { redirect } from "next/navigation";
-import { Icons } from '@/components/icons'
+import { Icon } from '@/components/icons'
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { siteConfig } from "@/config/site"
@@ -19,7 +19,7 @@ export default async function page() {
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <div className="flex flex-col items-center space-y-2 text-center">
       <Link href="/" className="mb-8 flex items-center space-x-2">
-        <Icons.logo className="size-8" />
+        <Icon name="logo" className="size-8" aria-hidden />
         <span className="inline-block font-bold">{siteConfig.name}</span>
       </Link>
               <h1 className="text-2xl font-semibold tracking-tight">

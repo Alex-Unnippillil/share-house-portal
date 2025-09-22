@@ -17,7 +17,7 @@ import {
 import * as THREE from "three"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CuboidIcon, Shield, Zap, Link, Cog, Database } from "lucide-react"
+import { Icon } from "@/components/icons"
 
 // Add this after the imports
 class ErrorBoundary extends React.Component {
@@ -62,7 +62,7 @@ class ErrorBoundary extends React.Component {
 const features = [
   {
     name: "Traceability",
-    icon: CuboidIcon,
+    icon: "cuboid" as const,
     description:
       "End-to-end visibility of products throughout the supply chain, ensuring authenticity and origin verification.",
     color: "#3b82f6",
@@ -71,7 +71,7 @@ const features = [
   },
   {
     name: "Security",
-    icon: Shield,
+    icon: "shield" as const,
     description:
       "Immutable and encrypted data storage protecting sensitive information across the entire logistics network.",
     color: "#10b981",
@@ -80,7 +80,7 @@ const features = [
   },
   {
     name: "Efficiency",
-    icon: Zap,
+    icon: "zap" as const,
     description:
       "Streamlined processes and reduced costs through optimized routing and real-time inventory management.",
     color: "#f59e0b",
@@ -89,7 +89,7 @@ const features = [
   },
   {
     name: "Integration",
-    icon: Link,
+    icon: "link" as const,
     description:
       "Seamless connection with existing systems including ERP, WMS, and other supply chain management tools.",
     color: "#8b5cf6",
@@ -98,7 +98,7 @@ const features = [
   },
   {
     name: "Automation",
-    icon: Cog,
+    icon: "cog" as const,
     description: "AI-driven decision making and operations that reduce human error and increase operational speed.",
     color: "#ec4899",
     icon3D: "Gear",
@@ -106,7 +106,7 @@ const features = [
   },
   {
     name: "Data",
-    icon: Database,
+    icon: "database" as const,
     description: "Comprehensive analytics and insights derived from blockchain-secured supply chain data.",
     color: "#06b6d4",
     icon3D: "Database",
@@ -869,7 +869,6 @@ function EnhancedNorthernLights({ active, intensity = 1 }) {
 
 // Hexagonal face component with golden ratio proportions and pulsating inner light
 function HexagonalFace({ index, position, rotation, feature, onClick, hovered }) {
-  const IconComponent = feature.icon
   const hexRadius = 1 // Base radius
   const innerRadius = hexRadius / PHI // Golden ratio for inner elements
   const depth = 0.2 // Depth of the hexagonal prism
@@ -1264,10 +1263,12 @@ export default function FeaturePrism() {
               <DialogTitle className="flex items-center gap-2 text-xl">
                 {selectedFeature && (
                   <>
-                    {React.createElement(selectedFeature.icon, {
-                      className: "h-6 w-6",
-                      style: { color: selectedFeature.color },
-                    })}
+                    <Icon
+                      name={selectedFeature.icon}
+                      className="h-6 w-6"
+                      style={{ color: selectedFeature.color }}
+                      aria-hidden
+                    />
                     <span style={{ color: selectedFeature.color }}>{selectedFeature.name}</span>
                   </>
                 )}

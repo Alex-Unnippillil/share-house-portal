@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Users, Clock, Upload } from 'lucide-react';
+import { Icon } from "@/components/icons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadDocumentDialog } from "./components/upload-document-dialog";
 import { DocumentsStats } from "./components/documents-stats";
@@ -83,7 +83,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <FileText className="size-5 text-primary" />
+              <Icon name="file-text" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">Secure Storage</CardTitle>
             </div>
           </CardHeader>
@@ -97,7 +97,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Users className="size-5 text-primary" />
+              <Icon name="users" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">Multi-Signature</CardTitle>
             </div>
           </CardHeader>
@@ -111,7 +111,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Clock className="size-5 text-primary" />
+              <Icon name="clock" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">Version History</CardTitle>
             </div>
           </CardHeader>
@@ -125,7 +125,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Upload className="size-5 text-primary" />
+              <Icon name="upload" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">Bulk Operations</CardTitle>
             </div>
           </CardHeader>

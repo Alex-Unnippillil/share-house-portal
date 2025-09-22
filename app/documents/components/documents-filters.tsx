@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { DocumentListFilters, DocumentStatus, DocumentType } from '@/types/documents';
-import { Filter, X } from 'lucide-react';
+import { Icon } from '@/components/icons';
 
 interface DocumentsFiltersProps {
   onFiltersChange?: (filters: DocumentListFilters) => void;
@@ -85,7 +85,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
-            <Filter className="mr-2 size-4" />
+            <Icon name="filter" className="mr-2 size-4" aria-hidden />
             Status
             {filters.status && filters.status.length > 0 && (
               <Badge variant="secondary" className="ml-2 size-4 p-0 text-xs">
@@ -144,7 +144,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
           onClick={clearFilters}
           className="text-muted-foreground hover:text-foreground"
         >
-          <X className="mr-2 size-4" />
+          <Icon name="x" className="mr-2 size-4" aria-hidden />
           Clear ({activeFilterCount})
         </Button>
       )}

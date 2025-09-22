@@ -14,7 +14,7 @@ import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } f
 import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import { MoreHorizontal, Eye, PenTool, Download, Share2 } from 'lucide-react';
+import { Icon } from '@/components/icons';
 import { toast } from 'sonner';
 
 interface DocumentActionsProps {
@@ -99,26 +99,26 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm">
-            <MoreHorizontal className="size-4" />
+            <Icon name="more-horizontal" className="size-4" aria-hidden />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleView}>
-            <Eye className="mr-2 size-4" />
+            <Icon name="eye" className="mr-2 size-4" aria-hidden />
             View Document
           </DropdownMenuItem>
 
           {canSign && (
             <DropdownMenuItem onClick={handleSign} disabled={loading === 'signing'}>
-              <PenTool className="mr-2 size-4" />
+              <Icon name="pen-tool" className="mr-2 size-4" aria-hidden />
               {loading === 'signing' ? 'Signing...' : 'Sign Document'}
             </DropdownMenuItem>
           )}
 
           {canCreateSignature && (
             <DropdownMenuItem onClick={handleCreateSigningRequest}>
-              <Share2 className="mr-2 size-4" />
+              <Icon name="share-2" className="mr-2 size-4" aria-hidden />
               Create Signing Request
             </DropdownMenuItem>
           )}
@@ -126,12 +126,12 @@ export function DocumentActions({ document }: DocumentActionsProps) {
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={handleDownload}>
-            <Download className="mr-2 size-4" />
+            <Icon name="download" className="mr-2 size-4" aria-hidden />
             Download
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleShare}>
-            <Share2 className="mr-2 size-4" />
+            <Icon name="share-2" className="mr-2 size-4" aria-hidden />
             Share
           </DropdownMenuItem>
         </DropdownMenuContent>

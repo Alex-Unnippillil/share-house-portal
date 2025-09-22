@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import { HamburgerMenuIcon } from "@radix-ui/react-icons";
+import { Icon } from "@/components/icons";
 export default function ToggleSidebar() {
 	return (
 		<Button
@@ -9,7 +9,7 @@ export default function ToggleSidebar() {
 			className="block lg:hidden"
 			onClick={() => document.getElementById("toggle-sidebar")?.click()}
 		>
-			<HamburgerMenuIcon />
+                        <Icon name="menu" aria-hidden />
 		</Button>
 	);
 }

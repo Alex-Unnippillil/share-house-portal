@@ -1,5 +1,5 @@
 import { siteConfig } from '@/config/site'
-import { Icons } from '@/components/icons'
+import { Icon } from '@/components/icons'
 import { buttonVariants } from '@/components/ui/button'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -19,7 +19,7 @@ return (
 
        <a href="#" className={cn("yourConsentManager")}>
 
-                <Icons.cookie className="size-5" />
+                <Icon name="cookie" className="size-5" aria-hidden />
 </a>
                 <span className="sr-only">Cookie Preferences</span>
               </div>

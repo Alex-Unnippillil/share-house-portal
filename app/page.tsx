@@ -1,13 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import {
-  CalendarRange,
-  FileText,
-  MessageSquare,
-  ShieldCheck,
-  Sparkles,
-  Wallet,
-} from "lucide-react"
+import { Icon } from "@/components/icons"
 
 import { readUserSession } from "@/utils/actions"
 import { siteConfig } from "@/config/site"
@@ -33,42 +26,42 @@ const features = [
     title: "Clarity for every payment",
     description:
       "Split rent by roommate, automate autopay, and keep a clean ledger backed by Stripe and Supabase.",
-    icon: Wallet,
+    icon: "wallet",
     href: "/payments",
   },
   {
     title: "Effortless amenity booking",
     description:
       "Reserve kitchen time, game nights, or parking with conflict-aware scheduling powered by Cal.com.",
-    icon: CalendarRange,
+    icon: "calendar-range",
     href: "/bookings",
   },
   {
     title: "Organized document vault",
     description:
       "Store leases, addenda, and move-in checklists with Documenso signing flows and version history.",
-    icon: FileText,
+    icon: "file-text",
     href: "/documents",
   },
   {
     title: "Roommate messaging feed",
     description:
       "Keep conversations on-topic with realtime threads, polls, and alerts that sync across every device.",
-    icon: MessageSquare,
+    icon: "message-square",
     href: "/messaging",
   },
   {
     title: "Visitor & guest controls",
     description:
       "Approve overnight guests, capture details, and notify every roommate without leaving the dashboard.",
-    icon: ShieldCheck,
+    icon: "shield-check",
     href: "/visitors",
   },
   {
     title: "Smart household insights",
     description:
       "See upcoming renewals, chores, and maintenance timelines at a glance with proactive reminders.",
-    icon: Sparkles,
+    icon: "sparkles",
     href: "/dashboard",
   },
 ]
@@ -193,7 +186,7 @@ export default async function IndexPage() {
             <Card key={feature.title} className="h-full border-border/70 bg-card/80 backdrop-blur">
               <CardHeader className="space-y-4">
                 <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <feature.icon className="size-5" />
+                  <Icon name={feature.icon} className="size-5" aria-hidden />
                 </div>
                 <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
                 <CardDescription>{feature.description}</CardDescription>

@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
+import { IconSprite } from "@/components/icons"
 import { cn } from "@/lib/utils"
 const inter = Inter({ subsets: ['latin'] })
 
@@ -118,6 +119,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             fontSans.variable
           )}
         >
+        <IconSprite />
 <ThemeProvider
             attribute="class"
             defaultTheme="system"

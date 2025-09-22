@@ -1,11 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-  CheckIcon,
-  ChevronRightIcon,
-  DotFilledIcon,
-} from "@radix-ui/react-icons"
+import { Icon } from "@/components/icons"
 import * as MenubarPrimitive from "@radix-ui/react-menubar"
 
 import { cn } from "@/lib/utils"
@@ -66,7 +62,7 @@ const MenubarSubTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <ChevronRightIcon className="ml-auto size-4" />
+    <Icon name="chevron-right" className="ml-auto size-4" aria-hidden />
   </MenubarPrimitive.SubTrigger>
 ))
 MenubarSubTrigger.displayName = MenubarPrimitive.SubTrigger.displayName
@@ -144,7 +140,7 @@ const MenubarCheckboxItem = React.forwardRef<
   >
     <span className="absolute left-2 flex size-3.5 items-center justify-center">
       <MenubarPrimitive.ItemIndicator>
-        <CheckIcon className="size-4" />
+        <Icon name="check" className="size-4" aria-hidden />
       </MenubarPrimitive.ItemIndicator>
     </span>
     {children}
@@ -166,7 +162,7 @@ const MenubarRadioItem = React.forwardRef<
   >
     <span className="absolute left-2 flex size-3.5 items-center justify-center">
       <MenubarPrimitive.ItemIndicator>
-        <DotFilledIcon className="size-4 fill-current" />
+        <span className="size-2 rounded-full bg-current" />
       </MenubarPrimitive.ItemIndicator>
     </span>
     {children}

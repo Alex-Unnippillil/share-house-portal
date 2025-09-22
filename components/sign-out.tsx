@@ -3,7 +3,7 @@ import { signOut } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import React, { useTransition } from "react";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Icon } from "@/components/icons";
 
 export function SignOut() {
         const [isPending, startTransition] = useTransition();
@@ -20,8 +20,10 @@ export function SignOut() {
                                 variant="outline"
                         >
                                 SignOut{" "}
-                                <AiOutlineLoading3Quarters
-                                        className={cn(" animate-spin", { hidden: !isPending })}
+                                <Icon
+                                        name="spinner"
+                                        className={cn("animate-spin", { hidden: !isPending })}
+                                        aria-hidden
                                 />
                         </Button>
                 </form>
