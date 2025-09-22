@@ -941,6 +941,108 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_updates: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          id: string
+          incident_id: string
+          message: string
+          severity: string
+          status: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          incident_id: string
+          message: string
+          severity: string
+          status: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          id?: string
+          incident_id?: string
+          message?: string
+          severity?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_updates_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          assigned_member_id: string | null
+          created_at: string
+          description: string
+          household_id: string
+          id: string
+          landlord_notified_at: string | null
+          reported_by: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_member_id?: string | null
+          created_at?: string
+          description: string
+          household_id: string
+          id?: string
+          landlord_notified_at?: string | null
+          reported_by?: string | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_member_id?: string | null
+          created_at?: string
+          description?: string
+          household_id?: string
+          id?: string
+          landlord_notified_at?: string | null
+          reported_by?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_assigned_member_id_fkey"
+            columns: ["assigned_member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inqueries: {
         Row: {
           created_at: string
