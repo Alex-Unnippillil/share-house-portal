@@ -1289,6 +1289,334 @@ export type Database = {
         }
         Relationships: []
       }
+      unit_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          membership_role: string
+          profile_id: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          membership_role?: string
+          profile_id: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          membership_role?: string
+          profile_id?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_memberships_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          building_name: string
+          created_at: string
+          id: string
+          manager_profile_id: string | null
+          timezone: string | null
+          unit_number: string
+          updated_at: string
+        }
+        Insert: {
+          building_name: string
+          created_at?: string
+          id?: string
+          manager_profile_id?: string | null
+          timezone?: string | null
+          unit_number: string
+          updated_at?: string
+        }
+        Update: {
+          building_name?: string
+          created_at?: string
+          id?: string
+          manager_profile_id?: string | null
+          timezone?: string | null
+          unit_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_manager_profile_id_fkey"
+            columns: ["manager_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_audit_events: {
+        Row: {
+          created_at: string
+          event_status: Database["public"]["Enums"]["visitor_status"] | null
+          event_type: string
+          id: string
+          log_id: string
+          message: string | null
+          performed_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_status?: Database["public"]["Enums"]["visitor_status"] | null
+          event_type: string
+          id?: string
+          log_id: string
+          message?: string | null
+          performed_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_status?: Database["public"]["Enums"]["visitor_status"] | null
+          event_type?: string
+          id?: string
+          log_id?: string
+          message?: string | null
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_audit_events_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_audit_events_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_logs: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          arrival_date: string
+          cancellation_by: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          denial_reason: string | null
+          denied_at: string | null
+          denied_by: string | null
+          departure_date: string
+          expected_guests: number
+          guest_email: string | null
+          guest_full_name: string
+          host_profile_id: string
+          id: string
+          last_notification_at: string | null
+          property_manager_notified: boolean
+          reason: string | null
+          roommate_recipient_ids: string[]
+          rule_id: string | null
+          status: Database["public"]["Enums"]["visitor_status"]
+          stay_summary: string | null
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_date: string
+          cancellation_by?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          denial_reason?: string | null
+          denied_at?: string | null
+          denied_by?: string | null
+          departure_date: string
+          expected_guests?: number
+          guest_email?: string | null
+          guest_full_name: string
+          host_profile_id: string
+          id?: string
+          last_notification_at?: string | null
+          property_manager_notified?: boolean
+          reason?: string | null
+          roommate_recipient_ids?: string[]
+          rule_id?: string | null
+          status?: Database["public"]["Enums"]["visitor_status"]
+          stay_summary?: string | null
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          arrival_date?: string
+          cancellation_by?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          denial_reason?: string | null
+          denied_at?: string | null
+          denied_by?: string | null
+          departure_date?: string
+          expected_guests?: number
+          guest_email?: string | null
+          guest_full_name?: string
+          host_profile_id?: string
+          id?: string
+          last_notification_at?: string | null
+          property_manager_notified?: boolean
+          reason?: string | null
+          roommate_recipient_ids?: string[]
+          rule_id?: string | null
+          status?: Database["public"]["Enums"]["visitor_status"]
+          stay_summary?: string | null
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_logs_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_cancellation_by_fkey"
+            columns: ["cancellation_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_denied_by_fkey"
+            columns: ["denied_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_host_profile_id_fkey"
+            columns: ["host_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_rules: {
+        Row: {
+          approval_required: boolean
+          created_at: string
+          created_by: string
+          effective_end_date: string | null
+          effective_start_date: string
+          id: string
+          lead_time_hours: number
+          max_active_requests: number | null
+          max_consecutive_nights: number
+          max_guests_per_stay: number | null
+          max_visitors_per_month: number | null
+          notes: string | null
+          unit_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approval_required?: boolean
+          created_at?: string
+          created_by: string
+          effective_end_date?: string | null
+          effective_start_date?: string
+          id?: string
+          lead_time_hours?: number
+          max_active_requests?: number | null
+          max_consecutive_nights?: number
+          max_guests_per_stay?: number | null
+          max_visitors_per_month?: number | null
+          notes?: string | null
+          unit_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approval_required?: boolean
+          created_at?: string
+          created_by?: string
+          effective_end_date?: string | null
+          effective_start_date?: string
+          id?: string
+          lead_time_hours?: number
+          max_active_requests?: number | null
+          max_consecutive_nights?: number
+          max_guests_per_stay?: number | null
+          max_visitors_per_month?: number | null
+          notes?: string | null
+          unit_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_rules_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_rules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reusable_packages: {
         Row: {
           created_at: string | null
@@ -1775,6 +2103,12 @@ export type Database = {
         | "North America"
         | "South America"
       user_role: "user" | "admin"
+      visitor_status:
+        | "pending"
+        | "approved"
+        | "denied"
+        | "cancelled"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2234,6 +2568,13 @@ export const Constants = {
         "South America",
       ],
       user_role: ["user", "admin"],
+      visitor_status: [
+        "pending",
+        "approved",
+        "denied",
+        "cancelled",
+        "completed",
+      ],
     },
   },
   storage: {
