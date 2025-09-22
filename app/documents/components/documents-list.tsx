@@ -9,6 +9,7 @@ import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -141,9 +142,19 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
+    <VirtualizedList
+      items={documents}
+      estimateSize={(item) => (item.signatures && item.signatures.length > 0 ? 228 : 188)}
+      getKey={(item) => item.id}
+      overscan={6}
+      itemClassName="pb-4"
+      role="list"
+      itemRole="listitem"
+      parentProps={{ className: 'relative' }}
+      useWindowScroll
+    >
+      {({ item: doc }) => (
+        <Card className="transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-3">
@@ -210,7 +221,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
             </CardContent>
           )}
         </Card>
-      ))}
-    </div>
+      )}
+    </VirtualizedList>
   );
 }
