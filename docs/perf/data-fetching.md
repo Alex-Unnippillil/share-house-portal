@@ -7,8 +7,9 @@ Roomsily consolidates common Supabase queries into shared helpers to minimize ne
 ### `fetchDocumentsList`
 - **Purpose:** Returns the document list with leases, signatures, and access logs joined in a single round trip.
 - **Role-aware:** Automatically limits tenants/roommates to documents they own or must sign while allowing property managers and admins to view everything.
+- **Bulk permissions aware:** Includes documents shared via metadata (`shared_member_ids`, `shared_roles`, `shared_unit_ids`) so bulk uploads honour their audience.
 - **Filters:** Supports status, type, tenant, unit, and created-at range filters.
-- **Usage:** Pass a Supabase client along with the requesting user id, their role (or `null`), and optional filters. The helper throws on Supabase errors so wrap calls in `try/catch` inside server actions or client hooks.
+- **Usage:** Pass a Supabase client along with the requesting user id, their role (or `null`), the user’s unit id when available, and optional filters. The helper throws on Supabase errors so wrap calls in `try/catch` inside server actions or client hooks.
 
 ### `fetchDocumentStats`
 - **Purpose:** Computes document counts (total, signed, pending signatures, expired, drafts).

@@ -67,11 +67,18 @@ describe('fetchDocumentsList', () => {
       client: supabase,
       userId: 'user-123',
       role: 'tenant',
+      userUnitId: 'unit-456',
       filters,
     });
 
     expect(documents).toEqual([{ id: 'doc-1' }]);
-    expect(query.or).toHaveBeenCalledWith('tenant_id.eq.user-123,signatures.signer_id.eq.user-123');
+    expect(query.or).toHaveBeenCalled();
+    const orFilters = query.or.mock.calls[0]?.[0];
+    expect(orFilters).toContain('tenant_id.eq.user-123');
+    expect(orFilters).toContain('signatures.signer_id.eq.user-123');
+    expect(orFilters).toContain('metadata->shared_member_ids.cs.{"user-123"}');
+    expect(orFilters).toContain('metadata->shared_roles.cs.{"tenant"}');
+    expect(orFilters).toContain('metadata->shared_unit_ids.cs.{"unit-456"}');
     expect(query.in).toHaveBeenCalledWith('status', filters.status);
     expect(query.in).toHaveBeenCalledWith('document_type', filters.type);
     expect(query.eq).toHaveBeenCalledWith('tenant_id', filters.tenant_id);

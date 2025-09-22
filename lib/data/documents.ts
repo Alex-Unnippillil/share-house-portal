@@ -10,6 +10,7 @@ type FetchDocumentsParams = {
   client: SupabaseClientLike;
   userId: string;
   role: MemberRole | null | undefined;
+  userUnitId?: string | null;
   filters?: DocumentListFilters;
 };
 
@@ -36,6 +37,7 @@ export async function fetchDocumentsList({
   client,
   userId,
   role,
+  userUnitId,
   filters = {},
 }: FetchDocumentsParams): Promise<DocumentWithLease[]> {
   let query = (client as any)
@@ -44,7 +46,22 @@ export async function fetchDocumentsList({
     .order('created_at', { ascending: false });
 
   if (role !== 'property_manager' && role !== 'admin') {
-    query = query.or(`tenant_id.eq.${userId},signatures.signer_id.eq.${userId}`);
+    const escapeValue = (value: string) => value.replace(/"/g, '\\"');
+    const orFilters = [
+      `tenant_id.eq.${userId}`,
+      `signatures.signer_id.eq.${userId}`,
+      `metadata->shared_member_ids.cs.{"${escapeValue(userId)}"}`,
+    ];
+
+    if (role) {
+      orFilters.push(`metadata->shared_roles.cs.{"${escapeValue(role)}"}`);
+    }
+
+    if (userUnitId) {
+      orFilters.push(`metadata->shared_unit_ids.cs.{"${escapeValue(userUnitId)}"}`);
+    }
+
+    query = query.or(orFilters.join(','));
   }
 
   if (filters.status?.length) {
