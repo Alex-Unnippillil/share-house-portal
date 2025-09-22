@@ -57,7 +57,7 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>
 const defaultValues: Partial<ProfileFormValues> = {
   bio: "MVP Boilerplate and RBAC ready admin dashboard built with NextJS, Supabase, Tanstack React Query & Table, Zod, Shadcn-UI, and more.",
   urls: [
-    { value: "https://onyx-rho-pink.vercel.app" },
+    { value: "https://roomsily.app" },
     { value: "http://twitter.com/r_mourey_jr" },
   ],
 }

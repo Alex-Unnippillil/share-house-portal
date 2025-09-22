@@ -148,7 +148,7 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
   currency,
   paymentDate,
   items,
-  businessName = 'Onyx',
+  businessName = 'Roomsily',
   supportEmail,
   billingAddress,
   notes,
