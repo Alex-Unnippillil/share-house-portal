@@ -3,5 +3,11 @@
     "app/api/**/*.rs": {
       "runtime": "vercel-rust@4.0.8"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/chore-rotation",
+      "schedule": "0 9 * * 1"
+    }
+  ]
 }

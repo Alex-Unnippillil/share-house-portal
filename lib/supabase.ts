@@ -1202,6 +1202,91 @@ export type Database = {
         }
         Relationships: []
       }
+      chore_assignments: {
+        Row: {
+          assigned_to: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          fairness_score: number
+          id: number
+          load_before: number
+          missed_count: number
+          notes: string | null
+          week_start: string
+          weight: number
+        }
+        Insert: {
+          assigned_to: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          fairness_score?: number
+          id?: number
+          load_before?: number
+          missed_count?: number
+          notes?: string | null
+          week_start: string
+          weight?: number
+        }
+        Update: {
+          assigned_to?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          fairness_score?: number
+          id?: number
+          load_before?: number
+          missed_count?: number
+          notes?: string | null
+          week_start?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_assignments_assigned_to_fkey",
+            columns: ["assigned_to"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      },
+      member_vacations: {
+        Row: {
+          created_at: string
+          ends_on: string
+          id: number
+          profile_id: string
+          reason: string | null
+          starts_on: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on: string
+          id?: number
+          profile_id: string
+          reason?: string | null
+          starts_on: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string
+          id?: number
+          profile_id?: string
+          reason?: string | null
+          starts_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_vacations_profile_id_fkey",
+            columns: ["profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      },
       permission_table: {
         Row: {
           created_at: string
@@ -1874,6 +1959,10 @@ export type Database = {
       }
     }
     Functions: {
+      publish_chore_rotation: {
+        Args: { assignments: Json }
+        Returns: undefined
+      },
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
