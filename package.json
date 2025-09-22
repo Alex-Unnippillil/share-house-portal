@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "uptime:check": "node scripts/uptime-check.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

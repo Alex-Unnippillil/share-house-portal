@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "requestTimeoutMs": 8000,
+  "responseExcerptLength": 256,
+  "consecutiveFailureThreshold": 3,
+  "failWorkflowOnAlert": true,
+  "endpoints": [
+    { "path": "/health", "method": "GET" },
+    { "path": "/dashboard", "method": "GET" },
+    { "path": "/bookings", "method": "GET" }
+  ],
+  "regions": [
+    {
+      "id": "americas",
+      "label": "Americas Edge",
+      "baseUrlEnv": "UPTIME_BASE_URL_AMERICAS"
+    },
+    {
+      "id": "emea",
+      "label": "EMEA Edge",
+      "baseUrlEnv": "UPTIME_BASE_URL_EMEA"
+    },
+    {
+      "id": "apac",
+      "label": "APAC Edge",
+      "baseUrlEnv": "UPTIME_BASE_URL_APAC"
+    }
+  ]
+}
