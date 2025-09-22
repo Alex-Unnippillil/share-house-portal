@@ -1,5 +1,6 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { ThreadFeed } from "./components/thread-feed"
 
 const messagingHighlights = [
   {
@@ -46,6 +47,16 @@ export default function MessagingPage() {
           </Card>
         ))}
       </div>
+
+      <section className="space-y-4">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold">Recent threads</h2>
+          <p className="text-sm text-muted-foreground">
+            Lightweight Supabase-generated thumbnails keep attachments scannable while fallbacks ensure every roommate can still download the file.
+          </p>
+        </div>
+        <ThreadFeed />
+      </section>
     </div>
   )
 }

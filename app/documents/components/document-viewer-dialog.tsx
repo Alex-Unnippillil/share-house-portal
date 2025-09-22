@@ -1,6 +1,6 @@
 'use client';
 
-
+import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,33 @@ export function DocumentViewerDialog({
   onOpenChange,
   document
 }: DocumentViewerDialogProps) {
+  const metadata = document.metadata ?? null;
+  const contentType = typeof metadata?.content_type === 'string' ? metadata.content_type : null;
+  const previewUrl = typeof metadata?.preview_url === 'string' && metadata.preview_url
+    ? metadata.preview_url
+    : null;
+  const thumbnailUrl = typeof metadata?.thumbnail_url === 'string' && metadata.thumbnail_url
+    ? metadata.thumbnail_url
+    : null;
+  const sizeBytes = typeof metadata?.size_bytes === 'number' ? metadata.size_bytes : null;
+  const isImageContent = !!contentType && contentType.startsWith('image/');
+  const isPdf = contentType === 'application/pdf' || document.file_url?.toLowerCase().endsWith('.pdf');
+  const previewGenerating = isImageContent && !previewUrl;
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return null;
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let value = bytes;
+    let unitIndex = 0;
+
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex += 1;
+    }
+
+    return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  };
+
   const handleDownload = () => {
     if (document.file_url) {
       window.open(document.file_url, '_blank');
@@ -104,6 +131,26 @@ export function DocumentViewerDialog({
               )}
             </div>
 
+            {(contentType || sizeBytes) && (
+              <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {contentType && (
+                  <span className="rounded-full bg-background px-2 py-0.5 font-medium text-muted-foreground">
+                    {contentType}
+                  </span>
+                )}
+                {formatFileSize(sizeBytes) && (
+                  <span className="rounded-full bg-background px-2 py-0.5">
+                    {formatFileSize(sizeBytes)}
+                  </span>
+                )}
+                {thumbnailUrl && (
+                  <span className="rounded-full bg-background px-2 py-0.5">
+                    Preview ready
+                  </span>
+                )}
+              </div>
+            )}
+
             {document.lease && (
               <div className="mt-4 border-t pt-4">
                 <h4 className="mb-2 font-medium">Lease Information</h4>
@@ -161,30 +208,51 @@ export function DocumentViewerDialog({
 
           {/* Document Preview */}
           <div className="min-h-0 flex-1">
-            {document.file_url ? (
-              <div className="h-[600px] w-full overflow-hidden rounded-lg border">
-                {document.file_url.toLowerCase().endsWith('.pdf') ? (
-                  <iframe
-                    src={`${document.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
-                    className="size-full"
-                    title={document.title}
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center bg-muted/20">
-                    <div className="text-center">
-                      <FileText className="mx-auto mb-4 size-16 text-muted-foreground" />
-                      <p className="mb-2 text-muted-foreground">
-                        Preview not available for this file type
-                      </p>
-                      <Button onClick={handleDownload} variant="outline">
-                        <Download className="mr-2 size-4" />
-                        Download to View
-                      </Button>
-                    </div>
-                  </div>
-                )}
+            {isImageContent && previewUrl && (
+              <div className="flex h-[600px] w-full items-center justify-center overflow-hidden rounded-lg border bg-muted/10">
+                <Image
+                  src={previewUrl}
+                  alt={`${document.title} preview`}
+                  width={960}
+                  height={600}
+                  className="size-full object-contain"
+                  sizes="(max-width: 768px) 100vw, 960px"
+                />
               </div>
-            ) : (
+            )}
+
+            {previewGenerating && (
+              <div className="flex h-[600px] flex-col items-center justify-center rounded-lg border bg-muted/20 text-center">
+                <FileText className="mb-4 size-16 text-muted-foreground" />
+                <p className="text-muted-foreground">Generating a fresh preview…</p>
+                <p className="text-xs text-muted-foreground/80">Refresh in a moment if the thumbnail hasn&apos;t appeared yet.</p>
+              </div>
+            )}
+
+            {!isImageContent && document.file_url && isPdf && (
+              <div className="h-[600px] w-full overflow-hidden rounded-lg border">
+                <iframe
+                  src={`${document.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
+                  className="size-full"
+                  title={document.title}
+                />
+              </div>
+            )}
+
+            {!isImageContent && document.file_url && !isPdf && (
+              <div className="flex h-[600px] flex-col items-center justify-center rounded-lg border bg-muted/20 text-center">
+                <FileText className="mb-4 size-16 text-muted-foreground" />
+                <p className="mb-2 text-muted-foreground">
+                  Preview not available for this file type
+                </p>
+                <Button onClick={handleDownload} variant="outline">
+                  <Download className="mr-2 size-4" />
+                  Download to View
+                </Button>
+              </div>
+            )}
+
+            {!document.file_url && (
               <div className="flex h-[600px] items-center justify-center rounded-lg bg-muted/20">
                 <div className="text-center">
                   <FileText className="mx-auto mb-4 size-16 text-muted-foreground" />

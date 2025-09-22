@@ -179,6 +179,12 @@ export async function uploadDocumentAction(
         description: validatedData.description,
         document_type: validatedData.document_type,
         file_url: publicUrl,
+        metadata: {
+          content_type: file.type || null,
+          size_bytes: file.size,
+          thumbnail_url: null,
+          preview_url: null,
+        },
         tenant_id: validatedData.tenant_id,
         unit_id: validatedData.unit_id,
         requires_signature: validatedData.requires_signature,

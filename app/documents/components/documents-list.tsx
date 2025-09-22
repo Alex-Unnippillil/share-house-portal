@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from "next/image";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,17 +65,43 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: string, className = "size-4") => {
     switch (type) {
       case 'lease':
-        return <FileText className="size-4" />;
+        return <FileText className={className} />;
       case 'addendum':
-        return <FileText className="size-4" />;
+        return <FileText className={className} />;
       case 'insurance':
-        return <Users className="size-4" />;
+        return <Users className={className} />;
       default:
-        return <FileText className="size-4" />;
+        return <FileText className={className} />;
     }
+  };
+
+  const renderPreview = (doc: DocumentWithLease) => {
+    const thumbnailUrl = typeof doc.metadata?.thumbnail_url === 'string' && doc.metadata.thumbnail_url
+      ? doc.metadata.thumbnail_url
+      : null;
+
+    if (thumbnailUrl) {
+      return (
+        <div className="relative mt-1 flex size-14 shrink-0 overflow-hidden rounded-md border bg-background">
+          <Image
+            src={thumbnailUrl}
+            alt={`${doc.title} preview`}
+            width={56}
+            height={56}
+            className="size-full object-cover"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-1 flex size-14 shrink-0 items-center justify-center rounded-md border bg-muted">
+        {getTypeIcon(doc.document_type, "size-6 text-muted-foreground")}
+      </div>
+    );
   };
 
   if (loading) {
@@ -147,9 +174,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-3">
-                <div className="mt-1">
-                  {getTypeIcon(doc.document_type)}
-                </div>
+                {renderPreview(doc)}
                 <div className="space-y-1">
                   <h3 className="font-medium leading-none">{doc.title}</h3>
                   {doc.description && (

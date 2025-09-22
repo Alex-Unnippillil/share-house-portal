@@ -4,6 +4,15 @@ export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired
 
 export type SignatureStatus = 'pending' | 'signed' | 'declined' | 'expired';
 
+export interface DocumentMetadata {
+  thumbnail_url?: string | null;
+  preview_url?: string | null;
+  content_type?: string | null;
+  size_bytes?: number | null;
+  last_generated_at?: string | null;
+  [key: string]: unknown;
+}
+
 export interface Document {
   id: string;
   created_at: string;
@@ -15,7 +24,7 @@ export interface Document {
   file_url?: string;
   documenso_envelope_id?: string;
   documenso_template_id?: string;
-  metadata: Record<string, any>;
+  metadata?: DocumentMetadata | null;
   created_by?: string;
   property_id?: string;
   tenant_id?: string;
