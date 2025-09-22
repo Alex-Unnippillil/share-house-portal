@@ -2,7 +2,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 
+import { RoommateBoardList } from "../components/roommate-board-list"
+
 export default function DashboardPage() {
+  const roommateBoardMessages = [
+    { id: "jordan-wifi", content: "Jordan: Wi-Fi is down, rebooted router." },
+    { id: "avery-parking", content: "Avery: Parking spot swap this weekend?" },
+  ]
+
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -50,10 +57,7 @@ export default function DashboardPage() {
           <CardTitle>Roommate board</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-sm">
-            <li>Jordan: Wi-Fi is down, rebooted router.</li>
-            <li>Avery: Parking spot swap this weekend?</li>
-          </ul>
+          <RoommateBoardList messages={roommateBoardMessages} />
           <Link href="/messaging" className="mt-4 inline-block">
             <Button variant="outline" size="sm">Go to messages</Button>
           </Link>
