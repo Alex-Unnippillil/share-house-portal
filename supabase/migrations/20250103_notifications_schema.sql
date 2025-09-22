@@ -37,6 +37,16 @@ CREATE TABLE public.visitor_logs (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create chores table for household chore tracking
+CREATE TABLE public.chores (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  cadence TEXT NOT NULL DEFAULT 'weekly' CHECK (cadence IN ('daily', 'weekly', 'biweekly', 'monthly', 'one_time')),
+  points INTEGER NOT NULL DEFAULT 1 CHECK (points >= 0),
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 -- Create notifications table for in-app notifications
 CREATE TABLE public.notifications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -76,6 +86,10 @@ CREATE INDEX idx_visitor_logs_host_id ON public.visitor_logs(host_id);
 CREATE INDEX idx_visitor_logs_status ON public.visitor_logs(status);
 CREATE INDEX idx_visitor_logs_check_in_date ON public.visitor_logs(check_in_date);
 CREATE INDEX idx_visitor_logs_created_at ON public.visitor_logs(created_at DESC);
+
+CREATE INDEX idx_chores_household_id ON public.chores(household_id);
+CREATE INDEX idx_chores_active ON public.chores(active);
+CREATE INDEX idx_chores_cadence ON public.chores(cadence);
 
 CREATE INDEX idx_notifications_user_id ON public.notifications(user_id);
 CREATE INDEX idx_notifications_read ON public.notifications(read);
