@@ -4,16 +4,18 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 
+import { AmenityBookingForm } from "./_components/amenity-booking-form"
+
 const bookingHighlights = [
   {
     title: "Amenity scheduling",
     description:
-      "Reserve the kitchen, TV lounge, parking spot, or gaming nook without double-booking roommates.",
+      "Reserve the kitchen, TV lounge, parking spot, or gaming nook with live visibility into remaining slots.",
   },
   {
     title: "Recurring reservations",
     description:
-      "Set weekly chore slots or study sessions with automatic conflict detection and notifications.",
+      "Set weekly chore slots or study sessions with automatic capacity checks and notifications.",
   },
   {
     title: "Visitor management",
@@ -42,7 +44,9 @@ export default function BookingsPage() {
           <Link href="/schedule">Open amenity calendar</Link>
         </Button>
       </header>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6">
+        <AmenityBookingForm />
+        <div className="grid gap-6 md:grid-cols-2">
         {bookingHighlights.map((item) => (
           <Card key={item.title}>
             <CardHeader>
@@ -51,6 +55,7 @@ export default function BookingsPage() {
             </CardHeader>
           </Card>
         ))}
+        </div>
       </div>
     </div>
   )
