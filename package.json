@@ -2,12 +2,14 @@
   "name": "roomsily",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.5.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:framework": "node ./scripts/verify-framework-versions.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -86,7 +88,17 @@
     "eslint-plugin-tailwindcss": "^3.14.2",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.5.4",
+    "typescript": "5.5.4",
     "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": "20.14.0",
+    "pnpm": "9.5.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "next": "14.2.4",
+      "typescript": "5.5.4"
+    }
   }
 }
