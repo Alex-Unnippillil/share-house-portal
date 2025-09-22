@@ -483,6 +483,33 @@ export type Database = {
         }
         Relationships: []
       }
+      chores: {
+        Row: {
+          cadence: string
+          created_at: string
+          id: number
+          point_value: number
+          requires_proof: boolean
+          title: string
+        }
+        Insert: {
+          cadence?: string
+          created_at?: string
+          id?: number
+          point_value?: number
+          requires_proof?: boolean
+          title: string
+        }
+        Update: {
+          cadence?: string
+          created_at?: string
+          id?: number
+          point_value?: number
+          requires_proof?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           continent: Database["public"]["Enums"]["continents"] | null

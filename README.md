@@ -27,7 +27,7 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - RBAC configured admin dashboard with data visualization, members administration and todo lists
     - Contact form with toast, Zod validation, server side table insert  
 - TanStack React Query, Table, and Dev Tools
-  - Demo SSR with Supabase DB & cache helpers 
+  - Demo SSR with Supabase DB & cache helpers
 - Zod data validation, schemas, event handling.
 - Shadcn-UI, Radix-UI primitives, Tailwind CSS
 - Markdown pages with Next/MDX - create page.mdx and layout.tsx for each markdown page
@@ -64,8 +64,22 @@ complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Qu
     - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
 
   - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
-### Run  
+- Add authorized development and production URL's to Supabase URL config.
+### Demo
+
+The Supabase migration seeds a default set of chore templates that appear in the admin chore template manager. These templates power the demo experience out of the box:
+
+| Title                          | Cadence  | Points | Proof required |
+| ------------------------------ | -------- | ------ | -------------- |
+| Take out trash & recycling     | Daily    | 10     | No             |
+| Sanitize kitchen surfaces      | Weekly   | 25     | Yes            |
+| Deep clean shared bathroom     | Weekly   | 30     | Yes            |
+| Vacuum and mop common areas    | Weekly   | 20     | No             |
+| Restock household supplies     | Biweekly | 15     | No             |
+| Coordinate shared grocery run  | Biweekly | 20     | Yes            |
+| Water shared plants            | Weekly   | 10     | No             |
+
+### Run
 - Development server:
 
 ```bash
