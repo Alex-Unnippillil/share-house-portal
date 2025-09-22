@@ -70,8 +70,8 @@ export default function OnboardingPage() {
           <div className="relative z-20 mt-auto">
             <blockquote className="space-y-2">
               <p className="text-lg">
-                &ldquo;In 6 months, Onyx has increased our conversions and NPS by 68% and
-                58% respectively.&rdquo;
+                &ldquo;In 6 months, Roomsily has increased our conversions and NPS by 68%
+                and 58% respectively.&rdquo;
               </p>
               <footer className="text-sm">Sofia Davis</footer>
             </blockquote>
