@@ -1561,6 +1561,148 @@ export type Database = {
         }
         Relationships: []
       }
+      supply_share_audit_events: {
+        Row: {
+          context: Json
+          created_at: string
+          created_by: string | null
+          event_type: Database["public"]["Enums"]["supply_share_event_type"]
+          id: string
+          new_status: Database["public"]["Enums"]["supply_share_status"] | null
+          note: string | null
+          previous_status: Database["public"]["Enums"]["supply_share_status"] | null
+          settlement_invoice_id: string | null
+          settlement_method:
+            | Database["public"]["Enums"]["supply_share_settlement_method"]
+            | null
+          share_id: string
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          created_by?: string | null
+          event_type: Database["public"]["Enums"]["supply_share_event_type"]
+          id?: string
+          new_status?: Database["public"]["Enums"]["supply_share_status"] | null
+          note?: string | null
+          previous_status?: Database["public"]["Enums"]["supply_share_status"] | null
+          settlement_invoice_id?: string | null
+          settlement_method?:
+            | Database["public"]["Enums"]["supply_share_settlement_method"]
+            | null
+          share_id: string
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          created_by?: string | null
+          event_type?: Database["public"]["Enums"]["supply_share_event_type"]
+          id?: string
+          new_status?: Database["public"]["Enums"]["supply_share_status"] | null
+          note?: string | null
+          previous_status?: Database["public"]["Enums"]["supply_share_status"] | null
+          settlement_invoice_id?: string | null
+          settlement_method?:
+            | Database["public"]["Enums"]["supply_share_settlement_method"]
+            | null
+          share_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_share_audit_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_share_audit_events_share_id_fkey"
+            columns: ["share_id"]
+            isOneToOne: false
+            referencedRelation: "supply_shares"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_shares: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string
+          id: string
+          roommate_id: string
+          settled_at: string | null
+          settled_by: string | null
+          settlement_invoice_id: string | null
+          settlement_method:
+            | Database["public"]["Enums"]["supply_share_settlement_method"]
+            | null
+          settlement_note: string | null
+          status: Database["public"]["Enums"]["supply_share_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description: string
+          id?: string
+          roommate_id: string
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_invoice_id?: string | null
+          settlement_method?:
+            | Database["public"]["Enums"]["supply_share_settlement_method"]
+            | null
+          settlement_note?: string | null
+          status?: Database["public"]["Enums"]["supply_share_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string
+          id?: string
+          roommate_id?: string
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_invoice_id?: string | null
+          settlement_method?:
+            | Database["public"]["Enums"]["supply_share_settlement_method"]
+            | null
+          settlement_note?: string | null
+          status?: Database["public"]["Enums"]["supply_share_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_shares_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_shares_roommate_id_fkey"
+            columns: ["roommate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_shares_settled_by_fkey"
+            columns: ["settled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           created_at: string
@@ -2465,6 +2607,9 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      supply_share_event_type: "created" | "settled" | "reopened"
+      supply_share_settlement_method: "off_app" | "rent_roll_in"
+      supply_share_status: "open" | "settled"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
