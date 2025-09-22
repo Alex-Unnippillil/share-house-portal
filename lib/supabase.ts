@@ -283,6 +283,51 @@ export type Database = {
           },
         ]
       }
+      bookings: {
+        Row: {
+          attendee_email: string | null
+          attendee_name: string | null
+          calcom_booking_id: string
+          created_at: string | null
+          end_time: string
+          event_slug: string | null
+          id: string
+          metadata: Json
+          start_time: string
+          status: string | null
+          uid: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attendee_email?: string | null
+          attendee_name?: string | null
+          calcom_booking_id: string
+          created_at?: string | null
+          end_time: string
+          event_slug?: string | null
+          id?: string
+          metadata?: Json
+          start_time: string
+          status?: string | null
+          uid?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attendee_email?: string | null
+          attendee_name?: string | null
+          calcom_booking_id?: string
+          created_at?: string | null
+          end_time?: string
+          event_slug?: string | null
+          id?: string
+          metadata?: Json
+          start_time?: string
+          status?: string | null
+          uid?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_models: {
         Row: {
           capabilities: Json | null
