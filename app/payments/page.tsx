@@ -19,6 +19,11 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import { catchUpBalances } from "@/lib/payments/mock-data"
 import type { CatchUpBalance } from "@/types/payments"
+import { CACHE_TAGS, FETCH_CACHE_BEHAVIOR, REVALIDATION_WINDOWS } from "@/config/cache"
+
+export const fetchCache = FETCH_CACHE_BEHAVIOR.SUPABASE_MUTATIONS
+export const revalidate = REVALIDATION_WINDOWS.PAYMENTS
+export const tags = [CACHE_TAGS.PAYMENTS]
 
 const paymentHighlights = [
   {

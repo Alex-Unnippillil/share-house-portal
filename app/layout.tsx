@@ -3,6 +3,15 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import './globals.css'
+
+/*
+ * Route caching playbook
+ * - Static marketing routes should `export const dynamic = 'force-static'` and
+ *   reuse `REVALIDATION_WINDOWS.MARKETING` from `config/cache`.
+ * - Supabase-backed dashboards should `export const fetchCache = FETCH_CACHE_BEHAVIOR.SUPABASE_MUTATIONS`
+ *   and `tags = [CACHE_TAGS.RESOURCE]` so server actions can call `revalidateTag` with the same scope.
+ * See `docs/perf/caching-policy.md` for expected logging and window details.
+ */
 import { ThemeProvider } from "@/components/theme-provider"
 import { CookieButton } from "@/components/cookie-button"
 import { fontSans } from "@/lib/font"

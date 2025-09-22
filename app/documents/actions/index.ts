@@ -1,10 +1,11 @@
 'use server';
 
 import { createClient } from '@/utils/supa-server-actions';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
+import { CACHE_TAGS } from '@/config/cache';
 import {
   Document,
   DocumentWithLease,
@@ -230,6 +231,7 @@ export async function uploadDocumentAction(
     });
 
     revalidatePath('/documents');
+    revalidateTag(CACHE_TAGS.DOCUMENTS);
     return { success: true, data: document, message: 'Document uploaded successfully.' };
   } catch (error) {
     console.error('Unexpected error in uploadDocumentAction:', error);
@@ -404,6 +406,7 @@ export async function createSigningRequestAction(
     });
 
     revalidatePath('/documents');
+    revalidateTag(CACHE_TAGS.DOCUMENTS);
     return {
       success: true,
       data: { envelope_id: signingResult.id },
@@ -482,6 +485,7 @@ export async function signDocumentAction(
     });
 
     revalidatePath('/documents');
+    revalidateTag(CACHE_TAGS.DOCUMENTS);
     return { success: true, message: 'Document signed successfully.' };
   } catch (error) {
     console.error('Unexpected error in signDocumentAction:', error);
