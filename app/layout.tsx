@@ -110,42 +110,43 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
+      <head></head>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-             <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
+          <div className="relative flex min-h-screen flex-col">
+            <SiteHeader />
+            <main className="flex-1">
+              <ReactQueryClientProvider>{children}</ReactQueryClientProvider>
+            </main>
+            <SiteFooter />
+          </div>
 
+          <Toaster />
+          <Analytics />
+          <SpeedInsights />
 
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
+          {/*
+          enter your api info from termly.io or a provider of your choice
+          <Script
+            type="text/javascript"
+            src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
-*/}
-   <CookieButton />    
-          </ThemeProvider>
-        
-
-
-</body>
+          */}
+          <CookieButton />
+          <TailwindIndicator />
+        </ThemeProvider>
+      </body>
     </html>
-    </ReactQueryClientProvider>
   )
 }

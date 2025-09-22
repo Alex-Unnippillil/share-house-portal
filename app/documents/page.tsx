@@ -9,6 +9,16 @@ import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
 import { DocumentListFilters } from '@/types/documents';
 
+const DOCUMENTS_STATS_SKELETON_INDICES = [0, 1, 2, 3];
+const DOCUMENT_LIST_SKELETON_INDICES = [0, 1, 2, 3, 4];
+
+const ALL_DOCUMENTS_FILTER: DocumentListFilters = {};
+const LEASE_DOCUMENTS_FILTER: DocumentListFilters = { type: ['lease'] };
+const PENDING_SIGNATURES_FILTER: DocumentListFilters = {
+  status: ['pending_signature'],
+};
+const SIGNED_DOCUMENTS_FILTER: DocumentListFilters = { status: ['signed'] };
+
 export default function DocumentsPage() {
   return (
     <div className="container max-w-7xl space-y-8 py-8">
@@ -27,8 +37,8 @@ export default function DocumentsPage() {
 
       {/* Stats Overview */}
       <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
+        {DOCUMENTS_STATS_SKELETON_INDICES.map((index) => (
+          <Card key={index} className="animate-pulse">
             <CardHeader className="pb-2">
               <div className="h-4 w-3/4 rounded bg-muted"></div>
             </CardHeader>
@@ -55,25 +65,25 @@ export default function DocumentsPage() {
 
         <TabsContent value="all" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
+            <DocumentsList filter={ALL_DOCUMENTS_FILTER} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="leases" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
+            <DocumentsList filter={LEASE_DOCUMENTS_FILTER} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['pending_signature'] }} />
+            <DocumentsList filter={PENDING_SIGNATURES_FILTER} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="signed" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['signed'] }} />
+            <DocumentsList filter={SIGNED_DOCUMENTS_FILTER} />
           </Suspense>
         </TabsContent>
       </Tabs>
@@ -143,8 +153,8 @@ export default function DocumentsPage() {
 function DocumentsListSkeleton() {
   return (
     <div className="space-y-4">
-      {[...Array(5)].map((_, i) => (
-        <Card key={i} className="animate-pulse">
+      {DOCUMENT_LIST_SKELETON_INDICES.map((index) => (
+        <Card key={index} className="animate-pulse">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-2">
