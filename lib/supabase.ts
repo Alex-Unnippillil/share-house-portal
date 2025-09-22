@@ -483,6 +483,66 @@ export type Database = {
         }
         Relationships: []
       }
+      chore_assignments: {
+        Row: {
+          assigned_by: string | null
+          chore_title: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          point_awarded: boolean
+          points: number
+          proof_url: string | null
+          status: Database["public"]["Enums"]["chore_assignment_status"]
+          tenant_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          chore_title: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          point_awarded?: boolean
+          points?: number
+          proof_url?: string | null
+          status?: Database["public"]["Enums"]["chore_assignment_status"]
+          tenant_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          chore_title?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          point_awarded?: boolean
+          points?: number
+          proof_url?: string | null
+          status?: Database["public"]["Enums"]["chore_assignment_status"]
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           continent: Database["public"]["Enums"]["continents"] | null
@@ -1766,6 +1826,11 @@ export type Database = {
       }
     }
     Enums: {
+      chore_assignment_status:
+        | "pending"
+        | "completed"
+        | "approved"
+        | "rejected"
       continents:
         | "Africa"
         | "Antarctica"

@@ -1,5 +1,6 @@
+import { cookies } from "next/headers"
 import { Metadata } from "next"
-import Image from "next/image"
+import { redirect } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,13 +23,30 @@ import { RecentSales } from "@/app/dashboard/components/recent-sales"
 import { Search } from "@/app/dashboard/components/search"
 import TeamSwitcher from "@/app/dashboard/components/team-switcher"
 import { UserNav } from "@/app/dashboard/components/user-nav"
+import { createClient } from "@/utils/supa-server-actions"
 
 export const metadata: Metadata = {
   title: "Onyx Dashboard",
   description: "Manage your Onyx account and users.",
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error) {
+    console.error("Failed to fetch authenticated user for dashboard", error)
+  }
+
+  if (!user) {
+    redirect("/auth")
+  }
+
   return (
     <>
       <div className="xs:flex max-w-dvw w-full flex-col">
@@ -173,7 +191,7 @@ export default function DashboardPage() {
                     <CardTitle>Overview</CardTitle>
                   </CardHeader>
                   <CardContent className="pl-2">
-                    <Overview />
+                    <Overview tenantId={user?.id} />
                   </CardContent>
                 </Card>
                 <Card className="col-span-3">
