@@ -2,10 +2,17 @@
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+
 import type { Database } from '@/lib/supabase';
+import { createSupabaseClientLoggingConfig } from '@/utils/supabase/logging';
+import { getCurrentTraceId } from '@/utils/trace/server';
 
 export async function createActionClient() {
   const cookieStore = cookies();
+  const loggingConfig = createSupabaseClientLoggingConfig({
+    traceId: getCurrentTraceId(),
+    source: 'server-action',
+  });
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +29,7 @@ export async function createActionClient() {
           cookieStore.set({ name, value: '', ...options });
         },
       },
+      ...loggingConfig,
     }
   );
 }

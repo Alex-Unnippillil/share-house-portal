@@ -3,11 +3,24 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { createSupabaseClientLoggingConfig } from '@/utils/supabase/logging'
+import { TRACE_HEADER_NAME } from '@/utils/trace/constants'
+
 export async function middleware(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers)
+  const traceId = requestHeaders.get(TRACE_HEADER_NAME) ?? crypto.randomUUID()
+  requestHeaders.set(TRACE_HEADER_NAME, traceId)
+
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
+  })
+  response.headers.set(TRACE_HEADER_NAME, traceId)
+
+  const loggingConfig = createSupabaseClientLoggingConfig({
+    traceId,
+    source: 'middleware',
   })
 
   const supabase = createServerClient(
@@ -26,9 +39,10 @@ export async function middleware(request: NextRequest) {
           })
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers: requestHeaders,
             },
           })
+          response.headers.set(TRACE_HEADER_NAME, traceId)
           response.cookies.set({
             name,
             value,
@@ -43,9 +57,10 @@ export async function middleware(request: NextRequest) {
           })
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers: requestHeaders,
             },
           })
+          response.headers.set(TRACE_HEADER_NAME, traceId)
           response.cookies.set({
             name,
             value: '',
@@ -53,6 +68,7 @@ export async function middleware(request: NextRequest) {
           })
         },
       },
+      ...loggingConfig,
     }
   )
 
