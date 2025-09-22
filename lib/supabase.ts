@@ -1031,6 +1031,51 @@ export type Database = {
         }
         Relationships: []
       }
+      members: {
+        Row: {
+          auto_pay_enabled: boolean
+          created_at: string
+          id: string
+          pad_enrolled_at: string | null
+          pad_last_error: string | null
+          pad_mandate_id: string | null
+          pad_mandate_reference: string | null
+          pad_payment_method_id: string | null
+          pad_status: 'not_enrolled' | 'pending' | 'active' | 'action_required'
+          stripe_customer_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_pay_enabled?: boolean
+          created_at?: string
+          id?: string
+          pad_enrolled_at?: string | null
+          pad_last_error?: string | null
+          pad_mandate_id?: string | null
+          pad_mandate_reference?: string | null
+          pad_payment_method_id?: string | null
+          pad_status?: 'not_enrolled' | 'pending' | 'active' | 'action_required'
+          stripe_customer_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_pay_enabled?: boolean
+          created_at?: string
+          id?: string
+          pad_enrolled_at?: string | null
+          pad_last_error?: string | null
+          pad_mandate_id?: string | null
+          pad_mandate_reference?: string | null
+          pad_payment_method_id?: string | null
+          pad_status?: 'not_enrolled' | 'pending' | 'active' | 'action_required'
+          stripe_customer_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       moralis_users: {
         Row: {
           created_at: string
@@ -1593,6 +1638,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members_table"
             referencedColumns: ["member_id"]
+          },
+        ]
+      }
+      rent_ledger_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          due_date: string
+          failure_reason: string | null
+          id: string
+          mandate_id: string | null
+          member_id: string
+          metadata: Json | null
+          payment_intent_id: string | null
+          processed_at: string | null
+          status: 'pending' | 'processing' | 'paid' | 'failed'
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          due_date: string
+          failure_reason?: string | null
+          id?: string
+          mandate_id?: string | null
+          member_id: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          processed_at?: string | null
+          status?: 'pending' | 'processing' | 'paid' | 'failed'
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          due_date?: string
+          failure_reason?: string | null
+          id?: string
+          mandate_id?: string | null
+          member_id?: string
+          metadata?: Json | null
+          payment_intent_id?: string | null
+          processed_at?: string | null
+          status?: 'pending' | 'processing' | 'paid' | 'failed'
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_ledger_entries_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
           },
         ]
       }
