@@ -203,9 +203,9 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
           )}
         </p>
       )}
-       {serverState?.error && (
-        <p className="rounded bg-red-100 p-3 text-sm text-red-800">
-          Server Error: {serverState.error}
+      {serverState?.error && (
+        <p role="alert" className="rounded bg-red-100 p-3 text-sm text-red-800">
+          {serverState.error}
         </p>
       )}
 

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supa-server-actions';
 import { createGoogleCalendarEvent } from '@/lib/calendar-service';
+import { translateBookingQuotaError } from '@/lib/booking-quota';
 import { revalidatePath } from 'next/cache';
 import { Database } from '@/lib/supabase';
 import { z } from 'zod';
@@ -127,10 +128,20 @@ export async function scheduleMeetingAction(
       });
 
     if (dbError) {
-      // Log the error, but don't necessarily fail if calendar event succeeded
-      console.error('Error saving meeting to database:', dbError);
-      // Optional: Return a partial success message or specific DB error
-      // return { success: false, message: null, error: 'Meeting scheduled, but failed to save record.', googleEventLink: calendarResult.link };
+      const quotaMessage = translateBookingQuotaError(dbError)
+
+      if (quotaMessage) {
+        console.warn('Booking quota prevented meeting insert:', dbError)
+        return { success: false, message: null, error: quotaMessage, googleEventLink: null }
+      }
+
+      console.error('Error saving meeting to database:', dbError)
+      return {
+        success: false,
+        message: null,
+        error: dbError.message || 'Failed to save meeting to the portal. Please try again.',
+        googleEventLink: null,
+      }
     } else {
        console.log("Meeting details saved to database.");
     }
