@@ -1,0 +1,212 @@
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.households (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  name TEXT NOT NULL,
+  timezone TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE TABLE IF NOT EXISTS public.members (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'roommate',
+  display_name TEXT,
+  email TEXT,
+  phone_number TEXT,
+  UNIQUE (household_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.amenities (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  location TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  UNIQUE (household_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS public.threads (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  member_id BIGINT REFERENCES public.members(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  last_activity_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.messages (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  thread_id BIGINT NOT NULL REFERENCES public.threads(id) ON DELETE CASCADE,
+  member_id BIGINT NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  edited_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE IF NOT EXISTS public.bookings (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  amenity_id BIGINT NOT NULL REFERENCES public.amenities(id) ON DELETE CASCADE,
+  member_id BIGINT NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  notes TEXT,
+  CHECK (end_time > start_time)
+);
+
+CREATE TABLE IF NOT EXISTS public.chores (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  frequency TEXT,
+  recurrence_rule TEXT,
+  UNIQUE (household_id, title)
+);
+
+CREATE TABLE IF NOT EXISTS public.chore_assignments (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  chore_id BIGINT NOT NULL REFERENCES public.chores(id) ON DELETE CASCADE,
+  member_id BIGINT NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+  due_at TIMESTAMP WITH TIME ZONE,
+  completed_at TIMESTAMP WITH TIME ZONE,
+  status TEXT NOT NULL DEFAULT 'assigned'
+);
+
+CREATE TABLE IF NOT EXISTS public.supply_items (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  restock_interval_days INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS public.supply_purchases (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  supply_item_id BIGINT NOT NULL REFERENCES public.supply_items(id) ON DELETE CASCADE,
+  member_id BIGINT NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+  purchased_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  total_cost NUMERIC(12, 2) NOT NULL,
+  receipt_url TEXT,
+  notes TEXT,
+  CHECK (total_cost >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS public.supply_shares (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  supply_purchase_id BIGINT NOT NULL REFERENCES public.supply_purchases(id) ON DELETE CASCADE,
+  member_id BIGINT NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+  amount NUMERIC(12, 2) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  CHECK (amount >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS public.leases (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  member_id BIGINT REFERENCES public.members(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  document_url TEXT,
+  start_date DATE NOT NULL,
+  end_date DATE,
+  status TEXT NOT NULL DEFAULT 'draft'
+);
+
+CREATE TABLE IF NOT EXISTS public.invoices (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  lease_id BIGINT REFERENCES public.leases(id) ON DELETE SET NULL,
+  member_id BIGINT REFERENCES public.members(id) ON DELETE SET NULL,
+  amount NUMERIC(12, 2) NOT NULL,
+  due_date DATE NOT NULL,
+  issued_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  status TEXT NOT NULL DEFAULT 'draft',
+  description TEXT,
+  CHECK (amount >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS public.payments (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  invoice_id BIGINT NOT NULL REFERENCES public.invoices(id) ON DELETE CASCADE,
+  member_id BIGINT NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+  amount NUMERIC(12, 2) NOT NULL,
+  paid_at TIMESTAMP WITH TIME ZONE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  provider_payment_id TEXT,
+  method TEXT,
+  CHECK (amount >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS public.floorplans (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  storage_path TEXT NOT NULL,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS public.overlay_shapes (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  floorplan_id BIGINT NOT NULL REFERENCES public.floorplans(id) ON DELETE CASCADE,
+  member_id BIGINT REFERENCES public.members(id) ON DELETE SET NULL,
+  label TEXT NOT NULL,
+  geometry JSONB NOT NULL,
+  color TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE TABLE IF NOT EXISTS public.garbage_events (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  household_id BIGINT NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  member_id BIGINT REFERENCES public.members(id) ON DELETE SET NULL,
+  scheduled_for TIMESTAMP WITH TIME ZONE NOT NULL,
+  status TEXT NOT NULL DEFAULT 'scheduled',
+  notes TEXT
+);
+
+COMMIT;

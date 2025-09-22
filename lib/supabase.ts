@@ -183,6 +183,870 @@ export type Database = {
   }
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          created_at: string
+          description: string | null
+          household_id: number
+          id: number
+          is_active: boolean
+          location: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          household_id: number
+          id?: number
+          is_active?: boolean
+          location?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          household_id?: number
+          id?: number
+          is_active?: boolean
+          location?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenities_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          amenity_id: number
+          created_at: string
+          end_time: string
+          household_id: number
+          id: number
+          member_id: number
+          notes: string | null
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amenity_id: number
+          created_at?: string
+          end_time: string
+          household_id: number
+          id?: number
+          member_id: number
+          notes?: string | null
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amenity_id?: number
+          created_at?: string
+          end_time?: string
+          household_id?: number
+          id?: number
+          member_id?: number
+          notes?: string | null
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_amenity_id_fkey",
+            columns: ["amenity_id"],
+            isOneToOne: false,
+            referencedRelation: "amenities",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "bookings_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "bookings_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      chore_assignments: {
+        Row: {
+          chore_id: number
+          completed_at: string | null
+          created_at: string
+          due_at: string | null
+          household_id: number
+          id: number
+          member_id: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          chore_id: number
+          completed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          household_id: number
+          id?: number
+          member_id: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          chore_id?: number
+          completed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          household_id?: number
+          id?: number
+          member_id?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_assignments_chore_id_fkey",
+            columns: ["chore_id"],
+            isOneToOne: false,
+            referencedRelation: "chores",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "chore_assignments_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "chore_assignments_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      chores: {
+        Row: {
+          created_at: string
+          description: string | null
+          frequency: string | null
+          household_id: number
+          id: number
+          recurrence_rule: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          frequency?: string | null
+          household_id: number
+          id?: number
+          recurrence_rule?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          frequency?: string | null
+          household_id?: number
+          id?: number
+          recurrence_rule?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chores_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      floorplans: {
+        Row: {
+          created_at: string
+          description: string | null
+          household_id: number
+          id: number
+          name: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          household_id: number
+          id?: number
+          name: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          household_id?: number
+          id?: number
+          name?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floorplans_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      garbage_events: {
+        Row: {
+          created_at: string
+          household_id: number
+          id: number
+          member_id: number | null
+          notes: string | null
+          scheduled_for: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: number
+          id?: number
+          member_id?: number | null
+          notes?: string | null
+          scheduled_for: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: number
+          id?: number
+          member_id?: number | null
+          notes?: string | null
+          scheduled_for?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garbage_events_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "garbage_events_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          id: number
+          metadata: Json
+          name: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          metadata?: Json
+          name: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          metadata?: Json
+          name?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          due_date: string
+          household_id: number
+          id: number
+          issued_date: string
+          lease_id: number | null
+          member_id: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          due_date: string
+          household_id: number
+          id?: number
+          issued_date?: string
+          lease_id?: number | null
+          member_id?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          household_id?: number
+          id?: number
+          issued_date?: string
+          lease_id?: number | null
+          member_id?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "invoices_lease_id_fkey",
+            columns: ["lease_id"],
+            isOneToOne: false,
+            referencedRelation: "leases",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "invoices_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      leases: {
+        Row: {
+          created_at: string
+          document_url: string | null
+          end_date: string | null
+          household_id: number
+          id: number
+          member_id: number | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_url?: string | null
+          end_date?: string | null
+          household_id: number
+          id?: number
+          member_id?: number | null
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_url?: string | null
+          end_date?: string | null
+          household_id?: number
+          id?: number
+          member_id?: number | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "leases_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      members: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          household_id: number
+          id: number
+          phone_number: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          household_id: number
+          id?: number
+          phone_number?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          household_id?: number
+          id?: number
+          phone_number?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          edited_at: string | null
+          household_id: number
+          id: number
+          member_id: number
+          metadata: Json
+          thread_id: number
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          edited_at?: string | null
+          household_id: number
+          id?: number
+          member_id: number
+          metadata?: Json
+          thread_id: number
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          edited_at?: string | null
+          household_id?: number
+          id?: number
+          member_id?: number
+          metadata?: Json
+          thread_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_thread_id_fkey",
+            columns: ["thread_id"],
+            isOneToOne: false,
+            referencedRelation: "threads",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      overlay_shapes: {
+        Row: {
+          color: string | null
+          created_at: string
+          floorplan_id: number
+          geometry: Json
+          household_id: number
+          id: number
+          label: string
+          member_id: number | null
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          floorplan_id: number
+          geometry: Json
+          household_id: number
+          id?: number
+          label: string
+          member_id?: number | null
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          floorplan_id?: number
+          geometry?: Json
+          household_id?: number
+          id?: number
+          label?: string
+          member_id?: number | null
+          metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overlay_shapes_floorplan_id_fkey",
+            columns: ["floorplan_id"],
+            isOneToOne: false,
+            referencedRelation: "floorplans",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "overlay_shapes_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "overlay_shapes_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          household_id: number
+          id: number
+          invoice_id: number
+          member_id: number
+          method: string | null
+          paid_at: string | null
+          provider_payment_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          household_id: number
+          id?: number
+          invoice_id: number
+          member_id: number
+          method?: string | null
+          paid_at?: string | null
+          provider_payment_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          household_id?: number
+          id?: number
+          invoice_id?: number
+          member_id?: number
+          method?: string | null
+          paid_at?: string | null
+          provider_payment_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "payments_invoice_id_fkey",
+            columns: ["invoice_id"],
+            isOneToOne: false,
+            referencedRelation: "invoices",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "payments_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      supply_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          household_id: number
+          id: number
+          name: string
+          restock_interval_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          household_id: number
+          id?: number
+          name: string
+          restock_interval_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          household_id?: number
+          id?: number
+          name?: string
+          restock_interval_days?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_items_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      supply_purchases: {
+        Row: {
+          created_at: string
+          household_id: number
+          id: number
+          member_id: number
+          notes: string | null
+          purchased_at: string
+          receipt_url: string | null
+          supply_item_id: number
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: number
+          id?: number
+          member_id: number
+          notes?: string | null
+          purchased_at?: string
+          receipt_url?: string | null
+          supply_item_id: number
+          total_cost: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: number
+          id?: number
+          member_id?: number
+          notes?: string | null
+          purchased_at?: string
+          receipt_url?: string | null
+          supply_item_id?: number
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_purchases_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "supply_purchases_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "supply_purchases_supply_item_id_fkey",
+            columns: ["supply_item_id"],
+            isOneToOne: false,
+            referencedRelation: "supply_items",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      supply_shares: {
+        Row: {
+          amount: number
+          created_at: string
+          household_id: number
+          id: number
+          member_id: number
+          status: string
+          supply_purchase_id: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          household_id: number
+          id?: number
+          member_id: number
+          status?: string
+          supply_purchase_id: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          household_id?: number
+          id?: number
+          member_id?: number
+          status?: string
+          supply_purchase_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_shares_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "supply_shares_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "supply_shares_supply_purchase_id_fkey",
+            columns: ["supply_purchase_id"],
+            isOneToOne: false,
+            referencedRelation: "supply_purchases",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      threads: {
+        Row: {
+          created_at: string
+          description: string | null
+          household_id: number
+          id: number
+          last_activity_at: string
+          member_id: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          household_id: number
+          id?: number
+          last_activity_at?: string
+          member_id?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          household_id?: number
+          id?: number
+          last_activity_at?: string
+          member_id?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threads_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_member_id_fkey",
+            columns: ["member_id"],
+            isOneToOne: false,
+            referencedRelation: "members",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       ai_agents: {
         Row: {
           created_at: string | null
