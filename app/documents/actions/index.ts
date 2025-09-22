@@ -5,9 +5,6 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
-import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
-import { fetchMemberRole } from '@/lib/data/members';
-import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
   DocumentWithLease,
@@ -59,7 +56,6 @@ export async function getDocumentsAction(
 ): Promise<ActionResult<DocumentWithLease[]>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -70,29 +66,60 @@ export async function getDocumentsAction(
 
     // Validate filters
     const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
-    let role: Awaited<ReturnType<typeof fetchMemberRole>>;
-    try {
-      role = await fetchMemberRole(typedSupabase, user.id);
-    } catch (roleError) {
-      console.error('Error resolving member role:', roleError);
-      return { success: false, error: 'Failed to fetch documents.' };
+
+    // Determine role for scoping
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    let query = (supabase as any)
+      .from('documents')
+      .select(`
+        *,
+        lease:leases(*),
+        signatures:document_signatures(*),
+        access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
+      `)
+      .order('created_at', { ascending: false });
+
+    // Scope non-admin/property_manager users to their own documents or ones they need to sign
+    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
+      query = query.or(
+        `tenant_id.eq.${user.id},signatures.signer_id.eq.${user.id}`
+      );
     }
 
-    let documents: DocumentWithLease[];
-    try {
-      documents = await fetchDocumentsList({
-        client: typedSupabase,
-        userId: user.id,
-        role,
-        filters: validatedFilters,
-      });
-    } catch (documentsError) {
-      console.error('Error fetching documents:', documentsError);
+    // Apply filters
+    if (validatedFilters.status?.length) {
+      query = query.in('status', validatedFilters.status);
+    }
+    if (validatedFilters.type?.length) {
+      query = query.in('document_type', validatedFilters.type);
+    }
+    if (validatedFilters.tenant_id) {
+      query = query.eq('tenant_id', validatedFilters.tenant_id);
+    }
+    if (validatedFilters.unit_id) {
+      query = query.eq('unit_id', validatedFilters.unit_id);
+    }
+    if (validatedFilters.date_from) {
+      query = query.gte('created_at', validatedFilters.date_from);
+    }
+    if (validatedFilters.date_to) {
+      query = query.lte('created_at', validatedFilters.date_to);
+    }
+
+    const { data: documents, error } = await query;
+
+    if (error) {
+      console.error('Error fetching documents:', error);
       return { success: false, error: 'Failed to fetch documents.' };
     }
 
     // Log access
-    for (const doc of documents) {
+    for (const doc of documents || []) {
       await (supabase as any).rpc('log_document_access', {
         p_document_id: doc.id,
         p_action: 'view',
@@ -100,7 +127,7 @@ export async function getDocumentsAction(
       });
     }
 
-    return { success: true, data: documents };
+    return { success: true, data: documents || [] };
   } catch (error) {
     console.error('Unexpected error in getDocumentsAction:', error);
     return {
@@ -219,7 +246,6 @@ export async function createSigningRequestAction(
 ): Promise<ActionResult<{ signing_url?: string; envelope_id?: string }>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -260,15 +286,13 @@ export async function createSigningRequestAction(
     }
 
     // Check permissions (user must be property manager or admin, or document owner)
-    let role: Awaited<ReturnType<typeof fetchMemberRole>>;
-    try {
-      role = await fetchMemberRole(typedSupabase, user.id);
-    } catch (roleError) {
-      console.error('Error resolving member role for signing request:', roleError);
-      return { success: false, error: 'You do not have permission to create signing requests for this document.' };
-    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-    if (role !== 'property_manager' && role !== 'admin' && document.tenant_id !== user.id) {
+    if (profile?.role !== 'property_manager' && profile?.role !== 'admin' && document.tenant_id !== user.id) {
       return { success: false, error: 'You do not have permission to create signing requests for this document.' };
     }
 
@@ -524,7 +548,6 @@ export async function getSigningUrlAction(
 export async function getDocumentStatsAction(): Promise<ActionResult<DocumentStats>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -533,25 +556,34 @@ export async function getDocumentStatsAction(): Promise<ActionResult<DocumentSta
       return { success: false, error: 'You must be logged in to view document statistics.' };
     }
 
-    let role: Awaited<ReturnType<typeof fetchMemberRole>>;
-    try {
-      role = await fetchMemberRole(typedSupabase, user.id);
-    } catch (roleError) {
-      console.error('Error resolving member role for stats:', roleError);
+    // Get stats based on user role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    let query = supabase.from('documents').select('status');
+
+    // If not admin/property manager, filter by tenant_id
+    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
+      query = query.eq('tenant_id', user.id);
+    }
+
+    const { data: documents, error } = await query;
+
+    if (error) {
+      console.error('Error fetching document stats:', error);
       return { success: false, error: 'Failed to fetch document statistics.' };
     }
 
-    let stats: DocumentStats;
-    try {
-      stats = await fetchDocumentStats({
-        client: typedSupabase,
-        userId: user.id,
-        role,
-      });
-    } catch (statsError) {
-      console.error('Error fetching document stats:', statsError);
-      return { success: false, error: 'Failed to fetch document statistics.' };
-    }
+    const stats: DocumentStats = {
+      total_documents: documents?.length || 0,
+      pending_signatures: documents?.filter(d => d.status === 'pending_signature').length || 0,
+      signed_documents: documents?.filter(d => d.status === 'signed').length || 0,
+      expired_documents: documents?.filter(d => d.status === 'expired').length || 0,
+      draft_documents: documents?.filter(d => d.status === 'draft').length || 0,
+    };
 
     return { success: true, data: stats };
   } catch (error) {

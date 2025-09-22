@@ -1,40 +1,27 @@
-# Data Fetching Utilities
+# Data Fetching Performance Playbook
 
-Roomsily consolidates common Supabase queries into shared helpers to minimize network chatter and keep client components lean. Use these modules whenever you need document or member data so filters and role-based scoping stay consistent across the app.
+Server components should own data loading so that client bundles stay light and hydration work is minimal. These are the guardrails we follow when wiring new features:
 
-## `lib/data/documents.ts`
+## Prefer server loaders/actions
 
-### `fetchDocumentsList`
-- **Purpose:** Returns the document list with leases, signatures, and access logs joined in a single round trip.
-- **Role-aware:** Automatically limits tenants/roommates to documents they own or must sign while allowing property managers and admins to view everything.
-- **Filters:** Supports status, type, tenant, unit, and created-at range filters.
-- **Usage:** Pass a Supabase client along with the requesting user id, their role (or `null`), and optional filters. The helper throws on Supabase errors so wrap calls in `try/catch` inside server actions or client hooks.
+- Fetch data with route-level loaders (`app/**/loaders.ts`) or server actions so React can stream HTML with the requested state baked in.
+- Pass the resulting data into client components via props instead of letting them issue their own queries.
+- Reuse the same loader inside related server actions (for example, `submitCatchUpPayment`) to avoid diverging data sources.
 
-### `fetchDocumentStats`
-- **Purpose:** Computes document counts (total, signed, pending signatures, expired, drafts).
-- **Role-aware:** Applies the same tenant scoping rules as the list helper before aggregating.
-- **Usage:** Provide the Supabase client, user id, and role. Handle thrown errors to surface friendly feedback.
+## Keep client effects for secondary work
 
-## `lib/data/members.ts`
+- Avoid `useEffect` for bootstrapping primary data; it delays first paint and duplicates fetches.
+- Reserve effects for event subscriptions, realtime listeners, and other progressive enhancements.
+- When client state depends on server data, seed it from props (or reset via transitions) rather than re-fetching inside the component.
 
-### `fetchMemberRole`
-- **Purpose:** Looks up a profile’s role from the `profiles` table and normalizes the result to `MemberRole | null`.
-- **Usage:** Ideal for navigation guards and permission hooks. Wrap in `try/catch` if you want to recover gracefully when the profile is missing.
+## Co-locate derived computations on the server
 
-### `fetchMemberProfile`
-- **Purpose:** Fetches a condensed profile record (`id`, `email`, `full_name`, `role`, `unit_id`).
-- **Usage:** Use in forms and actions that need the current member’s unit/identity without repeating column lists.
+- Perform expensive aggregations (totals, summaries, counts) alongside the loader so only lightweight props cross the server/client boundary.
+- Memoize or cache loader results if multiple components reuse the same dataset within a request.
+- Keep loaders deterministic—accept any inputs explicitly and avoid reading from global mutable state.
 
-### `fetchMembersByUnit`
-- **Purpose:** Returns members attached to a unit with optional filters for roles and users to exclude.
-- **Usage:** Power roommate/property manager lookups for maintenance requests, visitor bookings, or any dashboard member table. Errors bubble as exceptions so caller code can present a single “failed to load members” message.
+## Test with server boundaries in mind
 
-## Testing Strategy
-
-Vitest unit tests (`tests/lib/data/*.test.ts`) mock the Supabase client chain to confirm that each helper:
-- Calls the expected tables/filters.
-- Applies tenant scoping correctly.
-- Throws when Supabase returns an error.
-
-Run `pnpm test` after modifying these utilities to ensure behavior stays locked in.
-
+- Write unit tests that call loaders/actions directly to verify the shape of SSR data.
+- Mock downstream services at the loader/action level rather than inside client components.
+- Ensure tests assert both the returned data and any guardrails (e.g., authorization fallbacks) before rendering client UI.
