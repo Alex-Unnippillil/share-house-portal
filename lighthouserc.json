@@ -1,0 +1,21 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "pnpm exec next start -p 3000",
+      "startServerReadyPattern": "http://localhost:3000",
+      "url": [
+        "http://localhost:3000"
+      ],
+      "numberOfRuns": 1,
+      "settings": {
+        "formFactor": "desktop",
+        "emulatedFormFactor": "desktop"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "uses-text-compression": ["error", { "minScore": 1 }]
+      }
+    }
+  }
+}

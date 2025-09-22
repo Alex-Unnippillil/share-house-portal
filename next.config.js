@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 const withPlugins = require("next-compose-plugins")
+const CompressionPlugin = require('compression-webpack-plugin')
 const withMDX = require('@next/mdx')()
 // Temporarily disable PWA to fix build issue
 // const withPWA = require("@ducanh2912/next-pwa").default({
@@ -63,8 +64,32 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
-  webpack: config => {
+  webpack: (config, { isServer }) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
+
+    if (!isServer && process.env.NODE_ENV === 'production') {
+      const compressionTest = /\.(js|css|html|svg|json|txt|xml|wasm|map)$/i
+
+      config.plugins.push(
+        new CompressionPlugin({
+          filename: '[path][base].br',
+          algorithm: 'brotliCompress',
+          test: compressionTest,
+          threshold: 0,
+          minRatio: 1,
+          deleteOriginalAssets: false,
+        }),
+        new CompressionPlugin({
+          filename: '[path][base].gz',
+          algorithm: 'gzip',
+          test: compressionTest,
+          threshold: 0,
+          minRatio: 1,
+          deleteOriginalAssets: false,
+        }),
+      )
+    }
+
     return config
   },
   experimental: {
