@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { FileText, Users, Clock, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CardSkeleton, ListSkeleton } from "@/components/ui/skeletons";
 import { UploadDocumentDialog } from "./components/upload-document-dialog";
 import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
@@ -26,18 +27,15 @@ export default function DocumentsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
+      <Suspense
+        fallback={
+          <div className="grid gap-4 md:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <CardSkeleton key={index} variant="metric" />
+            ))}
+          </div>
+        }
+      >
         <DocumentsStats />
       </Suspense>
 
@@ -54,25 +52,25 @@ export default function DocumentsPage() {
         </div>
 
         <TabsContent value="all" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
+          <Suspense fallback={<ListSkeleton count={5} />}>
             <DocumentsList filter={{}} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="leases" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
+          <Suspense fallback={<ListSkeleton count={5} />}>
             <DocumentsList filter={{ type: ['lease'] }} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
+          <Suspense fallback={<ListSkeleton count={5} />}>
             <DocumentsList filter={{ status: ['pending_signature'] }} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="signed" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
+          <Suspense fallback={<ListSkeleton count={5} />}>
             <DocumentsList filter={{ status: ['signed'] }} />
           </Suspense>
         </TabsContent>
@@ -140,31 +138,3 @@ export default function DocumentsPage() {
   );
 }
 
-function DocumentsListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[...Array(5)].map((_, i) => (
-        <Card key={i} className="animate-pulse">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="h-5 w-48 rounded bg-muted"></div>
-                <div className="h-4 w-32 rounded bg-muted"></div>
-              </div>
-              <div className="h-6 w-20 rounded bg-muted"></div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="h-4 w-24 rounded bg-muted"></div>
-              <div className="flex space-x-2">
-                <div className="h-8 w-16 rounded bg-muted"></div>
-                <div className="h-8 w-16 rounded bg-muted"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
