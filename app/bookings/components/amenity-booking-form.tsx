@@ -1,34 +1,30 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 
-interface Amenity {
-  id: string;
+import { Button } from '@/components/ui/button';
+import type { AmenityId } from './amenities';
+
+interface AmenitySummary {
+  id: AmenityId;
   name: string;
-  description: string;
-  duration: string;
-  maxAdvance: string;
 }
 
-export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
-  const [loading, setLoading] = useState(false);
+export function AmenityBookingForm({ amenity }: { amenity: AmenitySummary }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const handleBook = async () => {
-    setLoading(true);
-    try {
-      // Placeholder: open Cal.com or show a toast
-      toast.success(`Opening booking flow for ${amenity.name}`);
-    } finally {
-      setLoading(false);
-    }
+  const handleBook = () => {
+    startTransition(() => {
+      router.push(`/bookings/${amenity.id}?modal=book`, { scroll: false });
+    });
   };
 
   return (
     <div className="flex items-center justify-between">
-      <Button onClick={handleBook} disabled={loading}>
-        {loading ? 'Booking…' : 'Book now'}
+      <Button onClick={handleBook} disabled={isPending}>
+        {isPending ? 'Opening…' : 'Book now'}
       </Button>
     </div>
   );

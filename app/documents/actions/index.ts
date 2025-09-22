@@ -14,7 +14,8 @@ import {
   DocumentListFilters,
   DocumentUploadRequest,
   DocumentSigningRequest,
-  DocumentStats
+  DocumentStats,
+  DocumentSignature
 } from '@/types/documents';
 
 // Validation schemas
@@ -103,6 +104,69 @@ export async function getDocumentsAction(
     return { success: true, data: documents };
   } catch (error) {
     console.error('Unexpected error in getDocumentsAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function getDocumentByIdAction(
+  id: string
+): Promise<ActionResult<DocumentWithLease>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to view this document.' };
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    const { data: document, error } = await (supabase as any)
+      .from('documents')
+      .select(`
+        *,
+        lease:leases(*),
+        signatures:document_signatures(*),
+        access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !document) {
+      console.error('Error fetching document:', error);
+      return { success: false, error: 'Document not found.' };
+    }
+
+    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
+      const isOwner = document.tenant_id === user.id;
+      const isSigner = Array.isArray(document.signatures)
+        ? (document.signatures as DocumentSignature[]).some(
+            (signature) => signature.signer_id === user.id
+          )
+        : false;
+
+      if (!isOwner && !isSigner) {
+        return { success: false, error: 'Document not found.' };
+      }
+    }
+
+    await (supabase as any).rpc('log_document_access', {
+      p_document_id: document.id,
+      p_action: 'view',
+      p_metadata: { source: 'documents_modal' }
+    });
+
+    return { success: true, data: document };
+  } catch (error) {
+    console.error('Unexpected error in getDocumentByIdAction:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
