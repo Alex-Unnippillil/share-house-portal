@@ -1202,6 +1202,57 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          invoice_id: string
+          method: string
+          notes: string | null
+          received_at: string | null
+          recorded_by: string | null
+          reference_code: string | null
+          status: string | null
+          tenant_id: string
+          tenant_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_id: string
+          method?: string
+          notes?: string | null
+          received_at: string | null
+          recorded_by?: string | null
+          reference_code?: string | null
+          status?: string | null
+          tenant_id: string
+          tenant_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_id?: string
+          method?: string
+          notes?: string | null
+          received_at?: string | null
+          recorded_by?: string | null
+          reference_code?: string | null
+          status?: string | null
+          tenant_id?: string
+          tenant_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       permission_table: {
         Row: {
           created_at: string
