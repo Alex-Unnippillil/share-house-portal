@@ -32,7 +32,21 @@ export default async function ContactPage() {
                 Contact Us
               </h1>
               <p className="text-sm text-muted-foreground">
-                Rather talk? Call us at +1-555-867-5309.
+                Need help with the Share House Portal? Reach Alex Unni at{" "}
+                <a
+                  className="font-medium underline"
+                  href="mailto:alex@myunni.com"
+                >
+                  alex@myunni.com
+                </a>{" "}
+                or call{" "}
+                <a
+                  className="font-medium underline"
+                  href="tel:+14167063586"
+                >
+                  +1-416-706-3586
+                </a>
+                .
               </p>
             </div>
                         <Contact/>
