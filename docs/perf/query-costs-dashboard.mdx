@@ -1,0 +1,68 @@
+---
+title: Query Cost Dashboard
+description: Snapshot of the heaviest Supabase queries captured in observability.query_costs.
+---
+
+# Query Cost Dashboard
+
+The **observability.query_costs** table records every Supabase REST call performed by the application.  
+Each record captures the request path, HTTP method, status code, response row count, and the measured `total_exec_time_ms`.
+
+## Alert Thresholds
+
+| Level | Threshold | Recommended Action |
+| ----- | --------- | ------------------ |
+| Info | `< 500ms` | No action required. Continue to observe trends. |
+| Warning | `>= 500ms` | Investigate query shape, add indexes, and verify pagination. |
+| Critical | `>= 1000ms` | Trigger on-call alert, capture EXPLAIN plans, and prioritize remediation. |
+
+> The thresholds mirror the constants used by the runtime instrumentation (`warning: 500ms`, `critical: 1000ms`).
+
+## Top Slow Queries (24h Rolling)
+
+| Rank | Route | Entity | Avg Duration (ms) | Row Count | Alert Level |
+| ---- | ----- | ------ | ----------------- | --------- | ----------- |
+| 1 | `/app/api/stripe/webhook#POST` | `rent_payments` | 1285 | 1 | Critical |
+| 2 | `/app/api/notifications#POST` | `notifications` | 740 | 1 | Warning |
+| 3 | `/app/documents/actions/download` | `documents` | 512 | 1 | Warning |
+| 4 | `/app/dashboard/members` | `profiles` | 305 | 25 | Info |
+| 5 | `/app/auth/signout#POST` | `auth` | 110 | 0 | Info |
+
+The table above is generated from the [query-costs-sample.csv](./query-costs-sample.csv) extract included with this repository.  
+Update the CSV via scheduled jobs or ad-hoc exports to refresh the dashboard content.
+
+## Helpful Queries
+
+```sql
+-- Top 10 slowest calls in the last 24 hours
+select
+  route,
+  entity,
+  method,
+  avg(total_exec_time_ms) as avg_ms,
+  max(total_exec_time_ms) as p95_ms,
+  count(*) as call_count,
+  max(alert_level) as worst_alert
+from observability.query_costs
+where recorded_at > now() - interval '24 hours'
+group by 1, 2, 3
+order by avg_ms desc
+limit 10;
+```
+
+```sql
+-- Percent of requests breaching critical threshold per route
+select
+  route,
+  100.0 * sum(case when alert_level = 'critical' then 1 else 0 end) / count(*) as critical_rate
+from observability.query_costs
+group by 1
+order by critical_rate desc;
+```
+
+## Automation Checklist
+
+1. Schedule a daily export of aggregated metrics into `docs/perf/query-costs-sample.csv`.
+2. Wire the CSV into your analytics tooling (Metabase, Looker Studio, Excel) for richer visualizations.
+3. Configure alerting (PagerDuty, Slack) when `alert_level = 'critical'` appears more than three times within five minutes.
+4. Close the loop by linking `trace_id` back to request or user context when triaging incidents.
