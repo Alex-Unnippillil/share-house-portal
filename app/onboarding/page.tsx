@@ -43,14 +43,16 @@ export default function OnboardingPage() {
         </Link>
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
           <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
-          <Image
-          src="/images/house-portal-2.jpg"
-          width={2048}
-          height={2048}
-          alt="Roommate Collaboration"
-          style={{objectFit: "contain"}}
-          
-        />
+            <Image
+              src="/images/house-portal-2.jpg"
+              width={2048}
+              height={2048}
+              alt="Roommate Collaboration"
+              priority
+              fetchPriority="high"
+              sizes="(min-width: 1024px) 50vw, (min-width: 768px) 100vw, 100vw"
+              style={{ objectFit: "contain" }}
+            />
           </div>
           <div className="relative z-20 flex items-center text-lg font-medium">
             <svg
