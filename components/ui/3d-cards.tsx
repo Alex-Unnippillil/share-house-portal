@@ -50,12 +50,9 @@ export const CardContainer = ({
     <MouseEnterContext.Provider value={[isMouseEntered, setIsMouseEntered]}>
       <div
         className={cn(
-          "flex items-center justify-center py-20",
+          "flex items-center justify-center py-20 [perspective:1000px]",
           containerClassName,
         )}
-        style={{
-          perspective: "1000px",
-        }}
       >
         <div
           ref={containerRef}
@@ -63,12 +60,9 @@ export const CardContainer = ({
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           className={cn(
-            "relative flex items-center justify-center transition-all duration-200 ease-linear",
+            "relative flex items-center justify-center transition-all duration-200 ease-linear [transform-style:preserve-3d]",
             className,
           )}
-          style={{
-            transformStyle: "preserve-3d",
-          }}
         >
           {children}
         </div>

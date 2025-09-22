@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import useSupabaseBrowser from '@/utils/supabase-browser'
 import Image from 'next/image'
 
@@ -62,6 +62,9 @@ export default function Avatar({
     }
   }
 
+  const avatarDimensions = useMemo(() => ({ height: size, width: size }), [size])
+  const controlWidthStyle = useMemo(() => ({ width: size }), [size])
+
   return (
     <div>
       {avatarUrl ? (
@@ -71,20 +74,17 @@ export default function Avatar({
           src={avatarUrl}
           alt="Avatar"
           className="relative flex size-10 shrink-0 overflow-hidden rounded-full"
-          style={{ height: size, width: size }}
+          style={avatarDimensions}
         />
       ) : (
-        <div className="avatar no-image" style={{ height: size, width: size }} />
+        <div className="avatar no-image" style={avatarDimensions} />
       )}
-      <div style={{ width: size }}>
+      <div style={controlWidthStyle}>
         <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="single">
           {uploading ? 'Uploading ...' : 'Upload Image'}
         </label>
         <input
-          style={{
-            visibility: 'hidden',
-            position: 'absolute',
-          }}
+          className="sr-only"
           type="file"
           id="single"
           accept="image/*"

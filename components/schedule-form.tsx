@@ -185,13 +185,6 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
   // Get specific client-side error message for date/time selection
   const dateTimeClientError = clientErrors?.startDateTime?.[0];
 
-  // CSS for DayPicker (remains the same)
-  const css = `
-    .rdp { /* ... same styles ... */ }
-    /* ... other rdp styles ... */
-  `;
-
-
   return (
     <form onSubmit={handleSubmit} className="max-w-md space-y-6">
       {/* Display messages from server action state */}
@@ -219,7 +212,6 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
       {/* Date Selection */}
       <div>
          <h3 className="mb-2 text-lg font-semibold text-gray-800">1. Select a Date</h3>
-         <style>{css}</style>
          <DayPicker
             mode="single"
             required // Keep required for accessibility, Zod handles actual logic
