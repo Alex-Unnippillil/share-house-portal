@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DocumentWithLease } from '@/types/documents';
 import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '../actions';
-import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { MoreHorizontal, Eye, PenTool, Download, Share2 } from 'lucide-react';
@@ -22,13 +22,14 @@ interface DocumentActionsProps {
 }
 
 export function DocumentActions({ document }: DocumentActionsProps) {
-  const [showViewer, setShowViewer] = useState(false);
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const permissions = useDocumentPermissions();
+  const router = useRouter();
 
   const handleView = () => {
-    setShowViewer(true);
+    const url = `/documents/${document.id}?modal=preview`;
+    router.push(url, { scroll: false });
   };
 
   const handleSign = async () => {
@@ -138,12 +139,6 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       </DropdownMenu>
 
       {/* Dialogs */}
-      <DocumentViewerDialog
-        open={showViewer}
-        onOpenChange={setShowViewer}
-        document={document}
-      />
-
       <CreateSignatureDialog
         open={showSignatureDialog}
         onOpenChange={setShowSignatureDialog}

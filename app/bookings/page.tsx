@@ -1,12 +1,5 @@
 import { Suspense } from "react"
-import {
-  Calendar,
-  Car,
-  Gamepad2,
-  Monitor,
-  Tv,
-  UtensilsCrossed,
-} from "lucide-react"
+import { Calendar, Car, Gamepad2, Monitor, Tv, UtensilsCrossed } from "lucide-react"
 
 import {
   Card,
@@ -21,49 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
 import { BookingStats } from "./components/booking-stats"
-
-const amenities = [
-  {
-    id: "kitchen",
-    name: "Kitchen",
-    description: "Book the kitchen for cooking or meal prep",
-    icon: UtensilsCrossed,
-    duration: "2 hours",
-    maxAdvance: "7 days",
-  },
-  {
-    id: "tv-room",
-    name: "TV Room",
-    description: "Reserve the living room TV for movies or gaming",
-    icon: Tv,
-    duration: "3 hours",
-    maxAdvance: "7 days",
-  },
-  {
-    id: "playstation",
-    name: "PlayStation Nook",
-    description: "Book the gaming area for console gaming",
-    icon: Gamepad2,
-    duration: "2 hours",
-    maxAdvance: "7 days",
-  },
-  {
-    id: "parking",
-    name: "Parking Spot",
-    description: "Reserve a visitor parking spot",
-    icon: Car,
-    duration: "24 hours",
-    maxAdvance: "14 days",
-  },
-  {
-    id: "computer",
-    name: "Shared Computer",
-    description: "Use the shared computer workstation",
-    icon: Monitor,
-    duration: "1 hour",
-    maxAdvance: "3 days",
-  },
-]
+import { amenities } from "./components/amenities"
 
 export default function BookingsPage() {
   return (
