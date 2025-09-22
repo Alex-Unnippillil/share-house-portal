@@ -7,6 +7,7 @@ import {
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { createCompressedTextResponse } from "@/lib/http/compression"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -31,12 +32,14 @@ export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
-    return new Response("Webhook not configured", { status: 500 })
+    return createCompressedTextResponse(req, "Webhook not configured", { status: 500 })
   }
 
   const supabase = createSupabaseAdminClient()
   if (!supabase) {
-    return new Response("Supabase client not configured", { status: 500 })
+    return createCompressedTextResponse(req, "Supabase client not configured", {
+      status: 500,
+    })
   }
 
   const rawBody = await req.text()
@@ -69,11 +72,13 @@ export async function POST(req: Request) {
         break
     }
 
-    return new Response("ok", { status: 200 })
+    return createCompressedTextResponse(req, "ok", { status: 200 })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid payload"
     console.error("Webhook error:", message)
-    return new Response(`Webhook error: ${message}`, { status: 400 })
+    return createCompressedTextResponse(req, `Webhook error: ${message}`, {
+      status: 400,
+    })
   }
 }
 

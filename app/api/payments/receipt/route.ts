@@ -2,6 +2,8 @@ import { PaymentReceiptEmail } from '@/components/emails/payment-receipt';
 import { Resend } from 'resend';
 import { z } from 'zod';
 
+import { createCompressedJsonResponse } from '@/lib/http/compression';
+
 const lineItemSchema = z.object({
   description: z.string().min(1, "Line item description is required."),
   quantity: z.number().positive().optional(),
@@ -30,7 +32,8 @@ const paymentReceiptSchema = z.object({
 export async function POST(request: Request) {
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
-    return Response.json(
+    return createCompressedJsonResponse(
+      request,
       { error: "Resend API key is not configured." },
       { status: 500 },
     );
@@ -40,7 +43,8 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch (error) {
-    return Response.json(
+    return createCompressedJsonResponse(
+      request,
       { error: "Invalid JSON payload." },
       { status: 400 },
     );
@@ -49,7 +53,8 @@ export async function POST(request: Request) {
   const parsed = paymentReceiptSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return Response.json(
+    return createCompressedJsonResponse(
+      request,
       {
         error: "Invalid payment receipt payload.",
         details: parsed.error.flatten(),
@@ -105,12 +110,20 @@ export async function POST(request: Request) {
 
     if (error) {
       const message = error instanceof Error ? error.message : String(error);
-      return Response.json({ error: message }, { status: 502 });
+      return createCompressedJsonResponse(
+        request,
+        { error: message },
+        { status: 502 },
+      );
     }
 
-    return Response.json({ id: data?.id ?? null });
+    return createCompressedJsonResponse(request, { id: data?.id ?? null });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return Response.json({ error: message }, { status: 500 });
+    return createCompressedJsonResponse(
+      request,
+      { error: message },
+      { status: 500 },
+    );
   }
 }
