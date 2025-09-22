@@ -19,15 +19,25 @@ export function DocumentViewerDialog({
   onOpenChange,
   document
 }: DocumentViewerDialogProps) {
+  const appendQueryParam = (url: string, param: string) =>
+    url.includes('?') ? `${url}&${param}` : `${url}?${param}`;
+
+  const metadata = (document.metadata || {}) as Record<string, any>;
+  const fileMetadata = (metadata.file || {}) as Record<string, any>;
+  const mimeType = typeof fileMetadata.mimeType === 'string' ? fileMetadata.mimeType : '';
+  const isPdf = mimeType.toLowerCase().includes('pdf');
+  const previewUrl = document.file_url ? appendQueryParam(document.file_url, 'preview=1') : null;
+  const downloadUrl = document.file_url ? appendQueryParam(document.file_url, 'download=1') : null;
+
   const handleDownload = () => {
-    if (document.file_url) {
-      window.open(document.file_url, '_blank');
+    if (downloadUrl) {
+      window.open(downloadUrl, '_blank');
     }
   };
 
   const handleOpenExternal = () => {
-    if (document.file_url) {
-      window.open(document.file_url, '_blank');
+    if (previewUrl) {
+      window.open(previewUrl, '_blank');
     }
   };
 
@@ -163,9 +173,9 @@ export function DocumentViewerDialog({
           <div className="min-h-0 flex-1">
             {document.file_url ? (
               <div className="h-[600px] w-full overflow-hidden rounded-lg border">
-                {document.file_url.toLowerCase().endsWith('.pdf') ? (
+                {isPdf && previewUrl ? (
                   <iframe
-                    src={`${document.file_url}#toolbar=0&navpanes=0&scrollbar=0`}
+                    src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                     className="size-full"
                     title={document.title}
                   />

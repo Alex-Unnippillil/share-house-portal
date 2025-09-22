@@ -4,9 +4,11 @@ import { createClient } from '@/utils/supa-server-actions';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { Buffer } from 'node:buffer';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
+import { decryptBuffer, encryptBuffer } from '@/lib/encryption';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
@@ -91,16 +93,27 @@ export async function getDocumentsAction(
       return { success: false, error: 'Failed to fetch documents.' };
     }
 
-    // Log access
-    for (const doc of documents) {
+    const documentsWithSecureUrl = documents.map(doc => {
+      const metadata = (doc.metadata || {}) as Record<string, any>;
+      return {
+        ...doc,
+        metadata,
+        file_url: doc.storage_path ? `/api/documents/${doc.id}/download` : doc.file_url || null,
+      };
+    });
+
+    for (const doc of documentsWithSecureUrl) {
       await (supabase as any).rpc('log_document_access', {
         p_document_id: doc.id,
         p_action: 'view',
-        p_metadata: { source: 'documents_page' }
+        p_metadata: {
+          source: 'documents_page',
+          storage_path: doc.storage_path || null,
+        },
       });
     }
 
-    return { success: true, data: documents };
+    return { success: true, data: documentsWithSecureUrl };
   } catch (error) {
     console.error('Unexpected error in getDocumentsAction:', error);
     return {
@@ -152,33 +165,53 @@ export async function uploadDocumentAction(
 
     const validatedData = validationResult.data;
 
-    // Upload file to Supabase Storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const fileExt = file.name.includes('.') ? file.name.split('.').pop() : undefined;
+    const randomName = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    const fileName = fileExt ? `${randomName}.${fileExt}` : randomName;
     const filePath = `documents/${fileName}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const encryptedPayload = encryptBuffer(fileBuffer);
+
+    const { error: uploadError } = await supabase.storage
       .from('documents')
-      .upload(filePath, file);
+      .upload(filePath, encryptedPayload.cipherText, {
+        contentType: 'application/octet-stream',
+        cacheControl: '0',
+      });
 
     if (uploadError) {
       console.error('Error uploading file:', uploadError);
       return { success: false, error: 'Failed to upload file.' };
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('documents')
-      .getPublicUrl(filePath);
-
     // Create document record
+    const metadata = {
+      ...(validatedData.requires_signature ? { requires_signature: true } : {}),
+      file: {
+        originalName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        size: file.size,
+        extension: fileExt || null,
+      },
+      encryption: {
+        algorithm: encryptedPayload.algorithm,
+      },
+    };
+
     const { data: document, error: dbError } = await (supabase as any)
       .from('documents')
       .insert({
         title: validatedData.title,
         description: validatedData.description,
         document_type: validatedData.document_type,
-        file_url: publicUrl,
+        file_url: null,
+        storage_path: filePath,
+        encryption_iv: encryptedPayload.iv,
+        encryption_tag: encryptedPayload.authTag,
+        encryption_algorithm: encryptedPayload.algorithm,
+        encrypted_at: new Date().toISOString(),
+        metadata,
         tenant_id: validatedData.tenant_id,
         unit_id: validatedData.unit_id,
         requires_signature: validatedData.requires_signature,
@@ -199,11 +232,21 @@ export async function uploadDocumentAction(
     await (supabase as any).rpc('log_document_access', {
       p_document_id: document.id,
       p_action: 'upload',
-      p_metadata: { file_name: file.name, file_size: file.size }
+      p_metadata: {
+        file_name: file.name,
+        file_size: file.size,
+        storage_path: filePath,
+        encryption_algorithm: encryptedPayload.algorithm,
+      },
     });
 
     revalidatePath('/documents');
-    return { success: true, data: document, message: 'Document uploaded successfully.' };
+    const documentWithUrl = {
+      ...document,
+      file_url: document.storage_path ? `/api/documents/${document.id}/download` : null,
+    };
+
+    return { success: true, data: documentWithUrl, message: 'Document uploaded successfully.' };
   } catch (error) {
     console.error('Unexpected error in uploadDocumentAction:', error);
     return {
@@ -272,14 +315,33 @@ export async function createSigningRequestAction(
       return { success: false, error: 'You do not have permission to create signing requests for this document.' };
     }
 
-    // Download file from Supabase Storage
-    const fileResponse = await fetch(document.file_url!);
-    if (!fileResponse.ok) {
+    if (!document.storage_path || !document.encryption_iv || !document.encryption_tag) {
+      return { success: false, error: 'Document file metadata is incomplete.' };
+    }
+
+    const { data: downloadData, error: downloadError } = await supabase.storage
+      .from('documents')
+      .download(document.storage_path);
+
+    if (downloadError || !downloadData) {
+      console.error('Error downloading document for signing request:', downloadError);
       return { success: false, error: 'Failed to download document file.' };
     }
 
-    const fileBlob = await fileResponse.blob();
-    const file = new File([fileBlob], `${document.title}.pdf`, { type: 'application/pdf' });
+    const encryptedBuffer = Buffer.from(await downloadData.arrayBuffer());
+    const decryptedBuffer = decryptBuffer({
+      cipherText: encryptedBuffer,
+      iv: document.encryption_iv,
+      authTag: document.encryption_tag,
+      algorithm: document.encryption_algorithm,
+    });
+
+    const documentMetadata = (document.metadata || {}) as Record<string, any>;
+    const fileMetadata = (documentMetadata.file || {}) as Record<string, any>;
+    const originalFileName = (fileMetadata.originalName as string) || `${document.title}.pdf`;
+    const mimeType = (fileMetadata.mimeType as string) || 'application/pdf';
+
+    const file = new File([decryptedBuffer], originalFileName, { type: mimeType });
 
     // Upload file to Documenso to obtain documentDataId
     const uploadResult = await documensoService.uploadDocument(file);

@@ -43,6 +43,11 @@ export type Database = {
         document_type: 'lease' | 'addendum' | 'insurance' | 'maintenance' | 'other'
         status: 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled'
         file_url: string | null
+        storage_path: string | null
+        encryption_iv: string | null
+        encryption_tag: string | null
+        encryption_algorithm: string | null
+        encrypted_at: string | null
         documenso_envelope_id: string | null
         documenso_template_id: string | null
         metadata: Json | null
