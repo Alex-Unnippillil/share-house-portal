@@ -2,18 +2,24 @@ import { headers } from "next/headers"
 import { getStripe } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/supabase"
-import { notificationService } from "@/lib/notifications"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import { sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
 
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+function createSupabaseAdminClient(): SupabaseClient<Database> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !serviceKey) {
+    throw new Error('Supabase admin credentials are not configured')
+  }
+
+  return createClient<Database>(url, serviceKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+      persistSession: false,
+    },
+  })
+}
 
 export async function POST(req: Request) {
   const stripe = getStripe()
@@ -26,24 +32,32 @@ export async function POST(req: Request) {
 
   const rawBody = await req.text()
 
+  let supabase: SupabaseClient<Database>
+  try {
+    supabase = createSupabaseAdminClient()
+  } catch (error) {
+    console.error('Supabase configuration error:', error)
+    return new Response('Server configuration error', { status: 500 })
+  }
+
   try {
     const event = stripe.webhooks.constructEvent(rawBody, signature ?? "", webhookSecret)
 
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(event.data.object)
+        await handleCheckoutSessionCompleted(event.data.object, supabase)
         break
       case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(event.data.object)
+        await handleInvoicePaymentSucceeded(event.data.object, supabase)
         break
       case "customer.subscription.created":
-        await handleSubscriptionCreated(event.data.object)
+        await handleSubscriptionCreated(event.data.object, supabase)
         break
       case "customer.subscription.updated":
-        await handleSubscriptionUpdated(event.data.object)
+        await handleSubscriptionUpdated(event.data.object, supabase)
         break
       case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object)
+        await handleSubscriptionDeleted(event.data.object, supabase)
         break
       default:
         console.log(`Unhandled event type: ${event.type}`)
@@ -58,7 +72,7 @@ export async function POST(req: Request) {
   }
 }
 
-async function handleCheckoutSessionCompleted(session: any) {
+async function handleCheckoutSessionCompleted(session: any, supabase: SupabaseClient<Database>) {
   try {
     // Retrieve the full session with line items
     const stripe = getStripe()
@@ -108,7 +122,7 @@ async function handleCheckoutSessionCompleted(session: any) {
               .single();
 
             if (tenantProfile?.email) {
-              await notificationService.sendEmail({
+              await sendEmailNotification({
                 to: tenantProfile.email,
                 subject: `Payment Receipt - $${paymentData.amount}`,
                 template: 'payment-receipt',
@@ -122,7 +136,7 @@ async function handleCheckoutSessionCompleted(session: any) {
               });
 
               // Also send in-app notification
-              await notificationService.sendInAppNotification({
+              await sendInAppNotification({
                 userId: tenantId,
                 title: "Payment Successful",
                 message: `Your payment of $${paymentData.amount} has been processed successfully.`,
@@ -147,7 +161,7 @@ async function handleCheckoutSessionCompleted(session: any) {
   }
 }
 
-async function handleInvoicePaymentSucceeded(invoice: any) {
+async function handleInvoicePaymentSucceeded(invoice: any, supabase: SupabaseClient<Database>) {
   try {
     const stripe = getStripe()
 
@@ -198,7 +212,7 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
   }
 }
 
-async function handleSubscriptionCreated(subscription: any) {
+async function handleSubscriptionCreated(subscription: any, supabase: SupabaseClient<Database>) {
   try {
     // This handles when a subscription is first created
     const price = subscription.items.data[0]?.price
@@ -225,7 +239,7 @@ async function handleSubscriptionCreated(subscription: any) {
   }
 }
 
-async function handleSubscriptionUpdated(subscription: any) {
+async function handleSubscriptionUpdated(subscription: any, supabase: SupabaseClient<Database>) {
   try {
     await supabase.from('subscriptions').update({
       status: subscription.status,
@@ -240,7 +254,7 @@ async function handleSubscriptionUpdated(subscription: any) {
   }
 }
 
-async function handleSubscriptionDeleted(subscription: any) {
+async function handleSubscriptionDeleted(subscription: any, supabase: SupabaseClient<Database>) {
   try {
     await supabase.from('subscriptions').update({
       status: 'canceled',
@@ -254,8 +268,4 @@ async function handleSubscriptionDeleted(subscription: any) {
     throw error
   }
 }
-
-// Export runtime config for edge runtime
-export const runtime = 'edge';
-
 

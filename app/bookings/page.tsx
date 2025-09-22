@@ -104,7 +104,15 @@ export default function BookingsPage() {
                     <span>Duration: {amenity.duration}</span>
                     <span>Max advance: {amenity.maxAdvance}</span>
                   </div>
-                  <AmenityBookingForm amenity={amenity} />
+                  <AmenityBookingForm
+                    amenity={{
+                      id: amenity.id,
+                      name: amenity.name,
+                      description: amenity.description,
+                      duration: amenity.duration,
+                      maxAdvance: amenity.maxAdvance,
+                    }}
+                  />
                 </CardContent>
               </Card>
             ))}

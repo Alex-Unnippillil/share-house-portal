@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supa-server-actions";
 import { revalidatePath } from "next/cache";
-import { cookies } from 'next/headers';
+import { cookies } from "next/headers";
 
 type formData = {
     name: string;
@@ -20,8 +20,8 @@ export async function submitInquiry(data: formData) {
       .insert({
         name: data.name,
         email: data.email,
-        message: data.message
-      } as any);
+        message: data.message,
+      });
 
     if (error) throw error;
 
