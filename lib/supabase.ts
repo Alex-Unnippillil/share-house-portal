@@ -239,6 +239,116 @@ export type Database = {
           },
         ]
       }
+      amenities: {
+        Row: {
+          cal_event_type_id: number | null
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          cal_event_type_id?: number | null
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          cal_event_type_id?: number | null
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          amenity_id: string
+          attendee_emails: string[] | null
+          created_at: string | null
+          description: string | null
+          end_time: string
+          external_id: string
+          id: string
+          location: string | null
+          metadata: Json | null
+          organizer_email: string | null
+          start_time: string
+          status: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amenity_id: string
+          attendee_emails?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          external_id: string
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          organizer_email?: string | null
+          start_time: string
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amenity_id?: string
+          attendee_emails?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          external_id?: string
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          organizer_email?: string | null
+          start_time?: string
+          status?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_amenity_id_fkey",
+            columns: ["amenity_id"],
+            isOneToOne: false,
+            referencedRelation: "amenities",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       ai_analysis_results: {
         Row: {
           agent_id: string | null
