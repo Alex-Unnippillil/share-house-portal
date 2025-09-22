@@ -1,4 +1,4 @@
-import type { CatchUpBalance } from "@/types/payments"
+import type { CatchUpBalance, PaymentReceiptHistoryEntry } from "@/types/payments"
 
 export const catchUpBalances: CatchUpBalance[] = [
   {
@@ -145,5 +145,125 @@ export const catchUpBalances: CatchUpBalance[] = [
         email: "morgan.ellis@sharehouse.example",
       },
     },
+  },
+]
+
+export const receiptHistory: PaymentReceiptHistoryEntry[] = [
+  {
+    id: "rcpt_avery_2024_06",
+    issuedTo: "Avery Chen",
+    paymentDate: "2024-06-01",
+    periodStart: "2024-06-01",
+    periodEnd: "2024-06-30",
+    currency: "USD",
+    amount: 1335,
+    status: "paid",
+    paymentMethod: "Visa •••• 4242 (Autopay)",
+    receiptUrl: "https://receipts.roomsily.dev/rcpt_avery_2024_06.pdf",
+    invoiceUrl: "https://receipts.roomsily.dev/invoice_avery_2024_06",
+    memo: "Includes rent share plus reimbursable Wi-Fi and maintenance fees.",
+    lineItems: [
+      {
+        id: "avery_rent_june",
+        description: "June rent share",
+        category: "rent",
+        quantity: 1,
+        unitAmount: 1260,
+        totalAmount: 1260,
+      },
+      {
+        id: "avery_wifi_june",
+        description: "Wi-Fi reimbursement",
+        category: "utilities",
+        quantity: 1,
+        unitAmount: 45,
+        totalAmount: 45,
+      },
+      {
+        id: "avery_maintenance_june",
+        description: "Community maintenance fee",
+        category: "maintenance",
+        quantity: 1,
+        unitAmount: 30,
+        totalAmount: 30,
+      },
+    ],
+  },
+  {
+    id: "rcpt_jordan_2024_05",
+    issuedTo: "Jordan Blake",
+    paymentDate: "2024-05-12",
+    periodStart: "2024-05-01",
+    periodEnd: "2024-05-31",
+    currency: "USD",
+    amount: 880,
+    status: "paid",
+    paymentMethod: "ACH checking •••• 1100",
+    receiptUrl: "https://receipts.roomsily.dev/rcpt_jordan_2024_05.pdf",
+    invoiceUrl: "https://receipts.roomsily.dev/invoice_jordan_2024_05",
+    memo: "Manual catch-up payment covering parking and partial rent.",
+    lineItems: [
+      {
+        id: "jordan_rent_may",
+        description: "May rent share (partial)",
+        category: "rent",
+        quantity: 1,
+        unitAmount: 800,
+        totalAmount: 800,
+      },
+      {
+        id: "jordan_parking_may",
+        description: "Parking spot 17",
+        category: "parking",
+        quantity: 1,
+        unitAmount: 80,
+        totalAmount: 80,
+      },
+    ],
+  },
+  {
+    id: "rcpt_priya_2024_04",
+    issuedTo: "Priya Desai",
+    paymentDate: "2024-04-30",
+    periodStart: "2024-04-01",
+    periodEnd: "2024-04-30",
+    currency: "USD",
+    amount: 1260,
+    status: "paid",
+    paymentMethod: "Visa •••• 3188",
+    receiptUrl: "https://receipts.roomsily.dev/rcpt_priya_2024_04.pdf",
+    invoiceUrl: "https://receipts.roomsily.dev/invoice_priya_2024_04",
+    memo: "Autopay rent receipt for April billing period.",
+    lineItems: [
+      {
+        id: "priya_rent_april",
+        description: "April rent share",
+        category: "rent",
+        quantity: 1,
+        unitAmount: 1260,
+        totalAmount: 1260,
+      },
+    ],
+  },
+  {
+    id: "rcpt_unit_refund_2024_03",
+    issuedTo: "Unit 3B",
+    paymentDate: "2024-03-18",
+    currency: "USD",
+    amount: -60,
+    status: "refunded",
+    paymentMethod: "Roomsily credit",
+    receiptUrl: "https://receipts.roomsily.dev/rcpt_unit_refund_2024_03.pdf",
+    memo: "Refund issued after duplicate community maintenance charge.",
+    lineItems: [
+      {
+        id: "unit_maintenance_refund",
+        description: "Maintenance fee adjustment",
+        category: "maintenance",
+        quantity: 1,
+        unitAmount: -60,
+        totalAmount: -60,
+      },
+    ],
   },
 ]

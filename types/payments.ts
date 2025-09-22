@@ -75,3 +75,30 @@ export interface CatchUpPaymentFormValues {
   includePropertyManager: boolean
   note?: string
 }
+
+export type PaymentReceiptStatus = "paid" | "processing" | "refunded"
+
+export interface PaymentReceiptLineItem {
+  id: string
+  description: string
+  category: CatchUpChargeCategory
+  quantity?: number
+  unitAmount?: number
+  totalAmount: number
+}
+
+export interface PaymentReceiptHistoryEntry {
+  id: string
+  issuedTo: string
+  paymentDate: string
+  currency: string
+  amount: number
+  status: PaymentReceiptStatus
+  paymentMethod: string
+  periodStart?: string
+  periodEnd?: string
+  receiptUrl: string
+  invoiceUrl?: string
+  memo?: string
+  lineItems: PaymentReceiptLineItem[]
+}

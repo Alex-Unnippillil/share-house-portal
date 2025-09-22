@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import {
@@ -19,7 +18,8 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import type { CatchUpBalance } from "@/types/payments"
 
-import { loadCatchUpBalances } from "./loaders"
+import { loadCatchUpBalances, loadReceiptHistory } from "./loaders"
+import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 
 const paymentHighlights = [
   {
@@ -64,7 +64,10 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
-  const catchUpBalances = await loadCatchUpBalances()
+  const [catchUpBalances, receiptHistory] = await Promise.all([
+    loadCatchUpBalances(),
+    loadReceiptHistory(),
+  ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
     const nextCharge = getNextOutstandingCharge(balance.charges)
@@ -218,6 +221,7 @@ export default async function PaymentsPage() {
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
       </section>
+      <ReceiptHistoryCard receipts={receiptHistory} />
     </div>
   )
 }
