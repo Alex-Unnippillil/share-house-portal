@@ -1,0 +1,10 @@
+{
+  "thresholdBytes": 51200,
+  "packages": {
+    "next": {
+      "limitBytes": 72000,
+      "owner": "Platform Infra",
+      "notes": "Core Next.js runtime required for App Router; monitor as we lean into server components and React Compiler."
+    }
+  }
+}

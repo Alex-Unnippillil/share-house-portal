@@ -2,6 +2,8 @@
 
 const withPlugins = require("next-compose-plugins")
 const withMDX = require('@next/mdx')()
+
+const isBundleAnalyze = process.env.BUNDLE_ANALYZE === 'true'
 // Temporarily disable PWA to fix build issue
 // const withPWA = require("@ducanh2912/next-pwa").default({
 //   dest: "public",
@@ -63,8 +65,24 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
-  webpack: config => {
+  webpack: (config, { isServer }) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
+
+    if (isBundleAnalyze) {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'json',
+          reportFilename: isServer ? 'analyze/server-report.json' : 'analyze/client-report.json',
+          statsFilename: isServer ? 'analyze/server-stats.json' : 'analyze/client-stats.json',
+          openAnalyzer: false,
+          generateStatsFile: true,
+          defaultSizes: 'gzip',
+          logLevel: 'warn',
+        })
+      )
+    }
     return config
   },
   experimental: {
