@@ -115,6 +115,10 @@ Deploy to Vercel with the following environment variables configured in your Ver
 - Stripe keys (use live keys for production)
 - Document and calendar service URLs/keys
 
+## Operations & Reliability
+
+Review the [Performance & Availability Playbook](docs/perf/playbook.md) for service level objectives, monitoring dashboards, alert channels, and rollback procedures across Next.js, Supabase, and Stripe integrations.
+
 ## Project Structure
 
 ```

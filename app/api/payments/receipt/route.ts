@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
   const resend = new Resend(resendApiKey);
 
-  const fromAddress = process.env.RESEND_RECEIPTS_FROM ?? 'Onyx Receipts <receipts@resend.dev>';
+  const fromAddress = process.env.RESEND_RECEIPTS_FROM ?? 'Roomsily Receipts <receipts@resend.dev>';
   const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])];
 
   try {

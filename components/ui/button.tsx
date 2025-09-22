@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Icons } from "../icons"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:active:translate-y-px motion-safe:active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none",
   {
     variants: {
       variant: {
@@ -43,7 +43,19 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading, disabled:buttonDisabled, asChild = false,  children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      isLoading,
+      disabled: buttonDisabled,
+      asChild = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button"
     const disabled = isLoading || buttonDisabled
 
@@ -56,7 +68,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading && <Icons.spinner className="mr-2 size-4 animate-spin" />}
         {children}
-</Comp>
+      </Comp>
     )
   }
 )

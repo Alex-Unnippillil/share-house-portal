@@ -1,0 +1,45 @@
+# Skeleton Patterns
+
+Skeletons provide progressive disclosure while route data loads. The shared `RouteSkeleton` component keeps route transitions consistent and accessible across the portal.
+
+## When to Use
+
+- Wrap every route segment in `<Suspense fallback={<RouteSkeleton />}>` to provide immediate visual feedback while server components stream.
+- Export a `loading.tsx` file from the segment that returns `<RouteSkeleton />` so client-side transitions reuse the same treatment.
+- Pair skeletons with the shared `<ErrorBoundary>` to guarantee an error fallback when the suspense boundary rejects.
+
+## Layout Example
+
+```tsx
+import { Suspense } from "react"
+
+import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
+import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
+
+type LayoutProps = {
+  children: React.ReactNode
+}
+
+export default function ExampleLayout({ children }: LayoutProps) {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<RouteSkeleton />}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
+  )
+}
+```
+
+## Loading Exports
+
+```tsx
+// app/example/loading.tsx
+import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
+
+export default function Loading() {
+  return <RouteSkeleton />
+}
+```
+
+Skeletons should hint at the final layout without mirroring every pixel. Keep shapes simple, rely on the neutral `muted` palette, and reserve motion for the `animate-pulse` utility to avoid distracting shimmer effects.
