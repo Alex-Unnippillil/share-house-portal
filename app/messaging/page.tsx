@@ -1,3 +1,4 @@
+import ModerationControls from "@/components/messaging/moderation-controls"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
@@ -46,6 +47,7 @@ export default function MessagingPage() {
           </Card>
         ))}
       </div>
+      <ModerationControls />
     </div>
   )
 }
