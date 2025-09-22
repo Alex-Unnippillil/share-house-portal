@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  memo,
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +29,134 @@ interface Notification {
   created_at: string;
 }
 
+type NotificationType = Notification["type"];
+
+const TYPE_COLOR_CLASSES: Record<NotificationType, string> = {
+  success: "border-green-200 bg-green-100 text-green-800",
+  warning: "border-yellow-200 bg-yellow-100 text-yellow-800",
+  error: "border-red-200 bg-red-100 text-red-800",
+  info: "border-blue-200 bg-blue-100 text-blue-800",
+};
+
+function getTypeColor(type: NotificationType) {
+  return TYPE_COLOR_CLASSES[type] ?? TYPE_COLOR_CLASSES.info;
+}
+
+function formatNotificationTime(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMinutes = Math.floor(
+    (now.getTime() - date.getTime()) / (1000 * 60)
+  );
+
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+  return date.toLocaleDateString();
+}
+
+interface NotificationItemProps {
+  notification: Notification;
+  onDelete: (notificationId: string) => void;
+  onMarkAsRead: (notificationId: string) => void;
+  onNavigate: (url: string) => void;
+  showSeparator: boolean;
+}
+
+const NotificationItem = memo(function NotificationItem({
+  notification,
+  onDelete,
+  onMarkAsRead,
+  onNavigate,
+  showSeparator,
+}: NotificationItemProps) {
+  const formattedTime = useMemo(
+    () => formatNotificationTime(notification.created_at),
+    [notification.created_at]
+  );
+
+  const handleMarkAsRead = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      onMarkAsRead(notification.id);
+    },
+    [notification.id, onMarkAsRead]
+  );
+
+  const handleDelete = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      onDelete(notification.id);
+    },
+    [notification.id, onDelete]
+  );
+
+  const handleClick = useCallback(() => {
+    if (!notification.read) {
+      onMarkAsRead(notification.id);
+    }
+
+    if (notification.action_url) {
+      onNavigate(notification.action_url);
+    }
+  }, [notification, onMarkAsRead, onNavigate]);
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "cursor-pointer p-3 transition-colors hover:bg-muted/50",
+          !notification.read && "bg-muted/20"
+        )}
+        onClick={handleClick}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className={cn("text-xs", getTypeColor(notification.type))}
+              >
+                {notification.type}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {formattedTime}
+              </span>
+            </div>
+            <p className="text-sm font-medium">{notification.title}</p>
+            <p className="text-xs text-muted-foreground">
+              {notification.message}
+            </p>
+          </div>
+          <div className="flex gap-1">
+            {!notification.read && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleMarkAsRead}
+                className="size-6"
+              >
+                <Check className="size-3" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              className="size-6 text-muted-foreground hover:text-destructive"
+            >
+              <X className="size-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+      {showSeparator && <Separator />}
+    </div>
+  );
+});
+
+NotificationItem.displayName = "NotificationItem";
+
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -28,6 +164,19 @@ export function NotificationCenter() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
+
+  const notificationsRef = useRef<Notification[]>([]);
+
+  const updateNotifications = useCallback(
+    (updater: (previous: Notification[]) => Notification[]) => {
+      setNotifications(prev => {
+        const next = updater(prev);
+        notificationsRef.current = next;
+        return next;
+      });
+    },
+    []
+  );
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -40,19 +189,18 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(data || []);
+      updateNotifications(() => data || []);
       setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, updateNotifications]);
 
   useEffect(() => {
     fetchNotifications();
 
-    // Subscribe to real-time notifications
     const channel = supabase
       .channel('notifications')
       .on(
@@ -64,15 +212,16 @@ export function NotificationCenter() {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
+          updateNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
 
-          // Show toast for new notification
           toast({
             title: newNotification.title,
             description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' :
-                    newNotification.type === 'warning' ? 'default' : 'default',
+            variant:
+              newNotification.type === 'error'
+                ? 'destructive'
+                : 'default',
           });
         }
       )
@@ -81,31 +230,36 @@ export function NotificationCenter() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, supabase, toast]);
+  }, [fetchNotifications, supabase, toast, updateNotifications]);
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        const { error } = await (supabase as any)
+          .from('notifications')
+          .update({ read: true })
+          .eq('id', notificationId);
+
+        if (error) throw error;
+
+        updateNotifications(prev =>
+          prev.map(n =>
+            n.id === notificationId ? { ...n, read: true } : n
+          )
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    },
+    [supabase, updateNotifications]
+  );
+
+  const markAllAsRead = useCallback(async () => {
     try {
-      const { error } = await (supabase as any)
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      const unreadIds = notificationsRef.current
+        .filter(n => !n.read)
+        .map(n => n.id);
 
       if (unreadIds.length === 0) return;
 
@@ -116,9 +270,7 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
+      updateNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
 
       toast({
@@ -127,51 +279,38 @@ export function NotificationCenter() {
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
-  };
+  }, [supabase, toast, updateNotifications]);
 
-  const deleteNotification = async (notificationId: string) => {
-    try {
-      const { error } = await (supabase as any)
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
+  const deleteNotification = useCallback(
+    async (notificationId: string) => {
+      try {
+        const { error } = await (supabase as any)
+          .from('notifications')
+          .delete()
+          .eq('id', notificationId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        const deletedNotification = notificationsRef.current.find(
+          n => n.id === notificationId
+        );
 
-      if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        updateNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+        if (deletedNotification && !deletedNotification.read) {
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+      } catch (error) {
+        console.error('Failed to delete notification:', error);
       }
-    } catch (error) {
-      console.error('Failed to delete notification:', error);
-    }
-  };
+    },
+    [supabase, updateNotifications]
+  );
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'border-green-200 bg-green-100 text-green-800';
-      case 'warning':
-        return 'border-yellow-200 bg-yellow-100 text-yellow-800';
-      case 'error':
-        return 'border-red-200 bg-red-100 text-red-800';
-      default:
-        return 'border-blue-200 bg-blue-100 text-blue-800';
-    }
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return date.toLocaleDateString();
-  };
+  const navigateToAction = useCallback((url: string) => {
+    window.location.href = url;
+    setIsOpen(false);
+  }, []);
 
   return (
     <div className="relative">
@@ -231,68 +370,14 @@ export function NotificationCenter() {
               ) : (
                 <div className="space-y-1">
                   {notifications.map((notification, index) => (
-                    <div key={notification.id}>
-                      <div
-                        className={cn(
-                          "cursor-pointer p-3 transition-colors hover:bg-muted/50",
-                          !notification.read && "bg-muted/20"
-                        )}
-                        onClick={() => {
-                          if (!notification.read) {
-                            markAsRead(notification.id);
-                          }
-                          if (notification.action_url) {
-                            window.location.href = notification.action_url;
-                            setIsOpen(false);
-                          }
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant="outline"
-                                className={cn("text-xs", getTypeColor(notification.type))}
-                              >
-                                {notification.type}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {formatTime(notification.created_at)}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.message}</p>
-                          </div>
-                          <div className="flex gap-1">
-                            {!notification.read && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markAsRead(notification.id);
-                                }}
-                                className="size-6"
-                              >
-                                <Check className="size-3" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNotification(notification.id);
-                              }}
-                              className="size-6 text-muted-foreground hover:text-destructive"
-                            >
-                              <X className="size-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      {index < notifications.length - 1 && <Separator />}
-                    </div>
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onMarkAsRead={markAsRead}
+                      onDelete={deleteNotification}
+                      onNavigate={navigateToAction}
+                      showSeparator={index < notifications.length - 1}
+                    />
                   ))}
                 </div>
               )}

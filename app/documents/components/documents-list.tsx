@@ -1,14 +1,161 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import {
+  memo,
+  type ComponentProps,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
+import type { LucideIcon } from 'lucide-react';
+import {
+  DocumentListFilters,
+  DocumentSignature,
+  DocumentStatus,
+  DocumentType,
+  DocumentWithLease,
+} from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
+
+const LOADING_SKELETON_INDICES = [0, 1, 2];
+
+type BadgeVariant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
+
+const STATUS_VARIANTS: Record<DocumentStatus, BadgeVariant> = {
+  draft: 'secondary',
+  pending_signature: 'outline',
+  signed: 'default',
+  expired: 'destructive',
+  cancelled: 'secondary',
+};
+
+const STATUS_LABELS: Record<DocumentStatus, string> = {
+  draft: 'Draft',
+  pending_signature: 'Pending Signature',
+  signed: 'Signed',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
+};
+
+const DOCUMENT_TYPE_ICONS: Record<DocumentType, LucideIcon> = {
+  lease: FileText,
+  addendum: FileText,
+  insurance: Users,
+  maintenance: FileText,
+  other: FileText,
+};
+
+const EMPTY_SIGNATURES: DocumentSignature[] = [];
+
+function renderStatusBadge(status: DocumentStatus) {
+  return (
+    <Badge variant={STATUS_VARIANTS[status] ?? 'secondary'}>
+      {STATUS_LABELS[status] ?? status}
+    </Badge>
+  );
+}
+
+interface DocumentCardItemProps {
+  document: DocumentWithLease;
+}
+
+const DocumentCardItem = memo(function DocumentCardItem({
+  document,
+}: DocumentCardItemProps) {
+  const IconComponent = DOCUMENT_TYPE_ICONS[document.document_type] ?? FileText;
+  const signatures = document.signatures ?? EMPTY_SIGNATURES;
+  const formattedCreatedAt = useMemo(
+    () =>
+      formatDistanceToNow(new Date(document.created_at), {
+        addSuffix: true,
+      }),
+    [document.created_at]
+  );
+  const signedCount = signatures.filter(
+    signature => signature.status === 'signed'
+  ).length;
+  const hasSignatures = signatures.length > 0;
+
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
+            <div className="mt-1">
+              <IconComponent className="size-4" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-medium leading-none">{document.title}</h3>
+              {document.description && (
+                <p className="text-sm text-muted-foreground">
+                  {document.description}
+                </p>
+              )}
+              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                <div className="flex items-center space-x-1">
+                  <Calendar className="size-3" />
+                  <span>{formattedCreatedAt}</span>
+                </div>
+                {document.lease && (
+                  <div className="flex items-center space-x-1">
+                    <Users className="size-3" />
+                    <span>
+                      Lease • {document.lease.tenant_ids?.length || 0} tenants
+                    </span>
+                  </div>
+                )}
+                {hasSignatures && (
+                  <div className="flex items-center space-x-1">
+                    <Eye className="size-3" />
+                    <span>
+                      {signedCount}/{signatures.length} signed
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            {renderStatusBadge(document.status)}
+            <DocumentActions document={document} />
+          </div>
+        </div>
+      </CardHeader>
+      {hasSignatures && (
+        <CardContent className="pt-0">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-muted-foreground">Signers:</span>
+            {signatures.slice(0, 3).map((signature) => (
+              <Badge
+                key={signature.id}
+                variant={
+                  signature.status === 'signed' ? 'default' : 'outline'
+                }
+                className="text-xs"
+              >
+                {signature.signer_name ||
+                  signature.signer_email.split('@')[0]}
+              </Badge>
+            ))}
+            {signatures.length > 3 && (
+              <Badge variant="secondary" className="text-xs">
+                +{signatures.length - 3} more
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+});
+
+DocumentCardItem.displayName = 'DocumentCardItem';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -23,6 +170,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     const fetchDocuments = async () => {
       try {
         setLoading(true);
+        setError(null);
         const result = await getDocumentsAction(filter);
         if (result.success && result.data) {
           setDocuments(result.data);
@@ -40,48 +188,11 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     fetchDocuments();
   }, [filter]);
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      draft: 'secondary',
-      pending_signature: 'outline',
-      signed: 'default',
-      expired: 'destructive',
-      cancelled: 'secondary',
-    } as const;
-
-    const labels = {
-      draft: 'Draft',
-      pending_signature: 'Pending Signature',
-      signed: 'Signed',
-      expired: 'Expired',
-      cancelled: 'Cancelled',
-    };
-
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    );
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'lease':
-        return <FileText className="size-4" />;
-      case 'addendum':
-        return <FileText className="size-4" />;
-      case 'insurance':
-        return <Users className="size-4" />;
-      default:
-        return <FileText className="size-4" />;
-    }
-  };
-
   if (loading) {
     return (
       <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
+        {LOADING_SKELETON_INDICES.map((index) => (
+          <Card key={index} className="animate-pulse">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
@@ -143,73 +254,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   return (
     <div className="space-y-4">
       {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className="mt-1">
-                  {getTypeIcon(doc.document_type)}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium leading-none">{doc.title}</h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
-                  )}
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    {doc.lease && (
-                      <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
-                        <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
-                      </div>
-                    )}
-                    {doc.signatures && doc.signatures.length > 0 && (
-                      <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
-                        <span>
-                          {doc.signatures.filter(s => s.status === 'signed').length}/
-                          {doc.signatures.length} signed
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {getStatusBadge(doc.status)}
-                <DocumentActions document={doc} />
-              </div>
-            </div>
-          </CardHeader>
-          {doc.signatures && doc.signatures.length > 0 && (
-            <CardContent className="pt-0">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground">Signers:</span>
-                {doc.signatures.slice(0, 3).map((signature) => (
-                  <Badge
-                    key={signature.id}
-                    variant={signature.status === 'signed' ? 'default' : 'outline'}
-                    className="text-xs"
-                  >
-                    {signature.signer_name || signature.signer_email.split('@')[0]}
-                  </Badge>
-                ))}
-                {doc.signatures.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{doc.signatures.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          )}
-        </Card>
+        <DocumentCardItem key={doc.id} document={doc} />
       ))}
     </div>
   );

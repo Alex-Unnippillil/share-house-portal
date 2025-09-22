@@ -14,28 +14,28 @@ import { Badge } from "@/components/ui/badge";
 import { DocumentListFilters, DocumentStatus, DocumentType } from '@/types/documents';
 import { Filter, X } from 'lucide-react';
 
+const STATUS_OPTIONS: { value: DocumentStatus; label: string }[] = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending_signature', label: 'Pending Signature' },
+  { value: 'signed', label: 'Signed' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+const TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
+  { value: 'lease', label: 'Lease' },
+  { value: 'addendum', label: 'Addendum' },
+  { value: 'insurance', label: 'Insurance' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'other', label: 'Other' },
+];
+
 interface DocumentsFiltersProps {
   onFiltersChange?: (filters: DocumentListFilters) => void;
 }
 
 export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
   const [filters, setFilters] = useState<DocumentListFilters>({});
-
-  const statusOptions: { value: DocumentStatus; label: string }[] = [
-    { value: 'draft', label: 'Draft' },
-    { value: 'pending_signature', label: 'Pending Signature' },
-    { value: 'signed', label: 'Signed' },
-    { value: 'expired', label: 'Expired' },
-    { value: 'cancelled', label: 'Cancelled' },
-  ];
-
-  const typeOptions: { value: DocumentType; label: string }[] = [
-    { value: 'lease', label: 'Lease' },
-    { value: 'addendum', label: 'Addendum' },
-    { value: 'insurance', label: 'Insurance' },
-    { value: 'maintenance', label: 'Maintenance' },
-    { value: 'other', label: 'Other' },
-  ];
 
   const updateFilters = (newFilters: DocumentListFilters) => {
     setFilters(newFilters);
@@ -97,7 +97,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {statusOptions.map((option) => (
+          {STATUS_OPTIONS.map((option) => (
             <DropdownMenuCheckboxItem
               key={option.value}
               checked={filters.status?.includes(option.value) || false}
@@ -124,7 +124,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel>Filter by Type</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {typeOptions.map((option) => (
+          {TYPE_OPTIONS.map((option) => (
             <DropdownMenuCheckboxItem
               key={option.value}
               checked={filters.type?.includes(option.value) || false}
