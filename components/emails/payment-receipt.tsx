@@ -42,6 +42,158 @@ const formatDate = (date: Date) => {
   }).format(date);
 };
 
+const styles = {
+  container: {
+    fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    backgroundColor: '#f8fafc',
+    padding: '24px',
+  },
+  card: {
+    maxWidth: '600px',
+    margin: '0 auto',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: '0 10px 25px rgba(15, 23, 42, 0.08)',
+  },
+  header: {
+    backgroundColor: '#111827',
+    color: '#f8fafc',
+    padding: '24px',
+  },
+  headerTitle: {
+    margin: 0,
+    fontSize: '24px',
+  },
+  headerSubtitle: {
+    margin: '8px 0 0',
+    color: '#cbd5f5',
+  },
+  content: {
+    padding: '24px',
+  },
+  greeting: {
+    margin: '0 0 16px',
+    fontSize: '16px',
+    color: '#0f172a',
+  },
+  summaryText: {
+    margin: '0 0 24px',
+    color: '#475569',
+    lineHeight: 1.6,
+  },
+  summaryGrid: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: '10px',
+    padding: '16px',
+    marginBottom: '24px',
+    display: 'grid',
+    gap: '8px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  },
+  summaryLabel: {
+    margin: 0,
+    color: '#64748b',
+    fontSize: '12px',
+    textTransform: 'uppercase',
+  },
+  summaryValue: {
+    margin: '4px 0 0',
+    color: '#0f172a',
+    fontWeight: 600,
+  },
+  lineItemsTable: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginTop: '16px',
+  },
+  lineItemsHeaderLeft: {
+    textAlign: 'left' as const,
+    padding: '8px 0',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  lineItemsHeaderRight: {
+    textAlign: 'right' as const,
+    padding: '8px 0',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  lineItemCell: {
+    padding: '8px 0',
+    borderBottom: '1px solid #f1f5f9',
+  },
+  lineItemCellRight: {
+    padding: '8px 0',
+    textAlign: 'right' as const,
+    borderBottom: '1px solid #f1f5f9',
+  },
+  totalText: {
+    textAlign: 'right' as const,
+    fontWeight: 600,
+    marginTop: '16px',
+  },
+  totalsWrapper: {
+    marginTop: '16px',
+  },
+  totalsTable: {
+    width: '100%',
+    borderCollapse: 'collapse',
+  },
+  totalsLabel: {
+    padding: '4px 0',
+    textAlign: 'right' as const,
+    color: '#475569',
+  },
+  totalsValue: {
+    padding: '4px 0',
+    textAlign: 'right' as const,
+    fontWeight: 500,
+  },
+  totalsStrongLabel: {
+    padding: '8px 0',
+    textAlign: 'right' as const,
+    fontWeight: 600,
+  },
+  totalsStrongValue: {
+    padding: '8px 0',
+    textAlign: 'right' as const,
+    fontWeight: 600,
+  },
+  section: {
+    marginTop: '24px',
+  },
+  sectionHeading: {
+    margin: '0 0 8px',
+    fontSize: '16px',
+    color: '#0f172a',
+  },
+  sectionParagraph: {
+    margin: 0,
+    color: '#475569',
+  },
+  address: {
+    margin: 0,
+    whiteSpace: 'pre-line' as const,
+    color: '#475569',
+  },
+  notice: {
+    marginTop: '32px',
+    color: '#475569',
+    fontSize: '14px',
+    lineHeight: 1.6,
+  },
+  noticeParagraph: {
+    margin: 0,
+  },
+  noticeLink: {
+    color: '#2563eb',
+    textDecoration: 'none',
+    marginLeft: '4px',
+  },
+  noticeThanks: {
+    margin: '16px 0 0',
+  },
+} satisfies Record<string, React.CSSProperties>;
+
 const renderLineItems = (
   items: PaymentReceiptLineItem[] | undefined,
   currency: string,
@@ -49,26 +201,26 @@ const renderLineItems = (
   if (!items?.length) return null;
 
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
+    <table style={styles.lineItemsTable}>
       <thead>
         <tr>
-          <th style={{ textAlign: 'left', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Item</th>
-          <th style={{ textAlign: 'right', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Qty</th>
-          <th style={{ textAlign: 'right', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Unit</th>
-          <th style={{ textAlign: 'right', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>Total</th>
+          <th style={styles.lineItemsHeaderLeft}>Item</th>
+          <th style={styles.lineItemsHeaderRight}>Qty</th>
+          <th style={styles.lineItemsHeaderRight}>Unit</th>
+          <th style={styles.lineItemsHeaderRight}>Total</th>
         </tr>
       </thead>
       <tbody>
         {items.map((item, index) => (
           <tr key={`${item.description}-${index}`}>
-            <td style={{ padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>{item.description}</td>
-            <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
+            <td style={styles.lineItemCell}>{item.description}</td>
+            <td style={styles.lineItemCellRight}>
               {item.quantity ?? '-'}
             </td>
-            <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
+            <td style={styles.lineItemCellRight}>
               {item.unitAmount != null ? formatCurrency(item.unitAmount, currency) : '—'}
             </td>
-            <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
+            <td style={styles.lineItemCellRight}>
               {item.totalAmount != null
                 ? formatCurrency(item.totalAmount, currency)
                 : item.unitAmount != null && item.quantity != null
@@ -95,43 +247,43 @@ const renderTotals = (
 
   if (!hasAdjustments) {
     return (
-      <p style={{ textAlign: 'right', fontWeight: 600, marginTop: '16px' }}>
+      <p style={styles.totalText}>
         Total: {formatCurrency(amountPaid, currency)}
       </p>
     );
   }
 
   return (
-    <div style={{ marginTop: '16px' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div style={styles.totalsWrapper}>
+      <table style={styles.totalsTable}>
         <tbody>
           {subtotalAmount != null && (
             <tr>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: '#475569' }}>Subtotal</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
+              <td style={styles.totalsLabel}>Subtotal</td>
+              <td style={styles.totalsValue}>
                 {formatCurrency(subtotalAmount, currency)}
               </td>
             </tr>
           )}
           {taxAmount != null && (
             <tr>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: '#475569' }}>Tax</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
+              <td style={styles.totalsLabel}>Tax</td>
+              <td style={styles.totalsValue}>
                 {formatCurrency(taxAmount, currency)}
               </td>
             </tr>
           )}
           {discountAmount != null && (
             <tr>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: '#475569' }}>Discount</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
+              <td style={styles.totalsLabel}>Discount</td>
+              <td style={styles.totalsValue}>
                 -{formatCurrency(discountAmount, currency)}
               </td>
             </tr>
           )}
           <tr>
-            <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 600 }}>Total Paid</td>
-            <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 600 }}>
+            <td style={styles.totalsStrongLabel}>Total Paid</td>
+            <td style={styles.totalsStrongValue}>
               {formatCurrency(amountPaid, currency)}
             </td>
           </tr>
@@ -157,67 +309,42 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
   discountAmount,
 }) => {
   return (
-    <div
-      style={{
-        fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        backgroundColor: '#f8fafc',
-        padding: '24px',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: '600px',
-          margin: '0 auto',
-          backgroundColor: '#ffffff',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: '0 10px 25px rgba(15, 23, 42, 0.08)',
-        }}
-      >
-        <div style={{ backgroundColor: '#111827', color: '#f8fafc', padding: '24px' }}>
-          <h1 style={{ margin: 0, fontSize: '24px' }}>{businessName}</h1>
-          <p style={{ margin: '8px 0 0', color: '#cbd5f5' }}>Payment Receipt</p>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <h1 style={styles.headerTitle}>{businessName}</h1>
+          <p style={styles.headerSubtitle}>Payment Receipt</p>
         </div>
 
-        <div style={{ padding: '24px' }}>
-          <p style={{ margin: '0 0 16px', fontSize: '16px', color: '#0f172a' }}>
+        <div style={styles.content}>
+          <p style={styles.greeting}>
             Hi {customerName},
           </p>
-          <p style={{ margin: '0 0 24px', color: '#475569', lineHeight: 1.6 }}>
+          <p style={styles.summaryText}>
             Thank you for your payment. This email is a receipt for your recent transaction. A
             summary of the payment is included below for your records.
           </p>
 
-          <div
-            style={{
-              backgroundColor: '#f1f5f9',
-              borderRadius: '10px',
-              padding: '16px',
-              marginBottom: '24px',
-              display: 'grid',
-              gap: '8px',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            }}
-          >
+          <div style={styles.summaryGrid}>
             <div>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+              <p style={styles.summaryLabel}>
                 Payment ID
               </p>
-              <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>{paymentId}</p>
+              <p style={styles.summaryValue}>{paymentId}</p>
             </div>
             <div>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+              <p style={styles.summaryLabel}>
                 Paid On
               </p>
-              <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
+              <p style={styles.summaryValue}>
                 {formatDate(paymentDate)}
               </p>
             </div>
             <div>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+              <p style={styles.summaryLabel}>
                 Amount Paid
               </p>
-              <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
+              <p style={styles.summaryValue}>
                 {formatCurrency(amountPaid, currency)}
               </p>
             </div>
@@ -234,24 +361,24 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
           })}
 
           {billingAddress && (
-            <div style={{ marginTop: '24px' }}>
-              <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#0f172a' }}>Billing Address</h3>
-              <p style={{ margin: 0, whiteSpace: 'pre-line', color: '#475569' }}>{billingAddress}</p>
+            <div style={styles.section}>
+              <h3 style={styles.sectionHeading}>Billing Address</h3>
+              <p style={styles.address}>{billingAddress}</p>
             </div>
           )}
 
           {notes && (
-            <div style={{ marginTop: '24px' }}>
-              <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#0f172a' }}>Notes</h3>
-              <p style={{ margin: 0, color: '#475569' }}>{notes}</p>
+            <div style={styles.section}>
+              <h3 style={styles.sectionHeading}>Notes</h3>
+              <p style={styles.sectionParagraph}>{notes}</p>
             </div>
           )}
 
-          <div style={{ marginTop: '32px', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
-            <p style={{ margin: 0 }}>
+          <div style={styles.notice}>
+            <p style={styles.noticeParagraph}>
               If you have any questions about this payment, please contact
               {supportEmail ? (
-                <a href={`mailto:${supportEmail}`} style={{ color: '#2563eb', textDecoration: 'none', marginLeft: '4px' }}>
+                <a href={`mailto:${supportEmail}`} style={styles.noticeLink}>
                   {supportEmail}
                 </a>
               ) : (
@@ -259,7 +386,7 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
               )}
               .
             </p>
-            <p style={{ margin: '16px 0 0' }}>Thank you for choosing {businessName}.</p>
+            <p style={styles.noticeThanks}>Thank you for choosing {businessName}.</p>
           </div>
         </div>
       </div>

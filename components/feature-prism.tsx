@@ -1206,6 +1206,16 @@ export default function FeaturePrism() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [cameraPosition, setCameraPosition] = useState([0, 0, 8])
 
+  const selectedFeatureColor = selectedFeature?.color ?? null
+  const accentStyle = useMemo<React.CSSProperties | undefined>(() => {
+    return selectedFeatureColor ? { color: selectedFeatureColor } : undefined
+  }, [selectedFeatureColor])
+  const featureButtonStyle = useMemo<React.CSSProperties | undefined>(() => {
+    return selectedFeatureColor
+      ? { backgroundColor: selectedFeatureColor, borderColor: selectedFeatureColor }
+      : undefined
+  }, [selectedFeatureColor])
+
   // Responsive camera position
   useEffect(() => {
     const handleResize = () => {
@@ -1266,9 +1276,9 @@ export default function FeaturePrism() {
                   <>
                     {React.createElement(selectedFeature.icon, {
                       className: "h-6 w-6",
-                      style: { color: selectedFeature.color },
+                      style: accentStyle,
                     })}
-                    <span style={{ color: selectedFeature.color }}>{selectedFeature.name}</span>
+                    <span style={accentStyle}>{selectedFeature.name}</span>
                   </>
                 )}
               </DialogTitle>
@@ -1281,10 +1291,7 @@ export default function FeaturePrism() {
             <DialogFooter>
               <Button
                 onClick={() => setSelectedFeature(null)}
-                style={{
-                  backgroundColor: selectedFeature?.color,
-                  borderColor: selectedFeature?.color,
-                }}
+                style={featureButtonStyle}
                 className="hover:opacity-90"
               >
                 Close
