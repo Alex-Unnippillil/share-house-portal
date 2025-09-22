@@ -1,82 +1,103 @@
-import { Suspense } from "react";
+import { Suspense } from "react"
+import {
+  Calendar,
+  Car,
+  Gamepad2,
+  Monitor,
+  Tv,
+  UtensilsCrossed,
+} from "lucide-react"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AmenityBookingForm } from './components/amenity-booking-form';
-import { BookingHistory } from './components/booking-history';
-import { BookingStats } from './components/booking-stats';
-import { UtensilsCrossed, Tv, Gamepad2, Car, Monitor, Calendar } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+import { AmenityBookingForm } from "./components/amenity-booking-form"
+import { BookingHistory } from "./components/booking-history"
+import { BookingStats } from "./components/booking-stats"
 
 const amenities = [
   {
-    id: 'kitchen',
-    name: 'Kitchen',
-    description: 'Book the kitchen for cooking or meal prep',
+    id: "kitchen",
+    name: "Kitchen",
+    description: "Book the kitchen for cooking or meal prep",
     icon: UtensilsCrossed,
-    duration: '2 hours',
-    maxAdvance: '7 days',
+    duration: "2 hours",
+    maxAdvance: "7 days",
   },
   {
-    id: 'tv-room',
-    name: 'TV Room',
-    description: 'Reserve the living room TV for movies or gaming',
+    id: "tv-room",
+    name: "TV Room",
+    description: "Reserve the living room TV for movies or gaming",
     icon: Tv,
-    duration: '3 hours',
-    maxAdvance: '7 days',
+    duration: "3 hours",
+    maxAdvance: "7 days",
   },
   {
-    id: 'playstation',
-    name: 'PlayStation Nook',
-    description: 'Book the gaming area for console gaming',
+    id: "playstation",
+    name: "PlayStation Nook",
+    description: "Book the gaming area for console gaming",
     icon: Gamepad2,
-    duration: '2 hours',
-    maxAdvance: '7 days',
+    duration: "2 hours",
+    maxAdvance: "7 days",
   },
   {
-    id: 'parking',
-    name: 'Parking Spot',
-    description: 'Reserve a visitor parking spot',
+    id: "parking",
+    name: "Parking Spot",
+    description: "Reserve a visitor parking spot",
     icon: Car,
-    duration: '24 hours',
-    maxAdvance: '14 days',
+    duration: "24 hours",
+    maxAdvance: "14 days",
   },
   {
-    id: 'computer',
-    name: 'Shared Computer',
-    description: 'Use the shared computer workstation',
+    id: "computer",
+    name: "Shared Computer",
+    description: "Use the shared computer workstation",
     icon: Monitor,
-    duration: '1 hour',
-    maxAdvance: '3 days',
+    duration: "1 hour",
+    maxAdvance: "3 days",
   },
-];
+]
 
 export default function BookingsPage() {
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Amenity Bookings</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Amenity Bookings
+          </h1>
           <p className="text-base text-muted-foreground sm:text-lg">
-            Reserve shared amenities like the kitchen, TV room, parking, and more. Bookings are managed through our Cal.com integration.
+            Reserve shared amenities like the kitchen, TV room, parking, and
+            more. Bookings are managed through our Cal.com integration.
           </p>
         </div>
         <Separator />
       </header>
 
       {/* Stats Overview */}
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
+      <Suspense
+        fallback={
+          <div className="grid gap-4 md:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="pb-2">
+                  <div className="h-4 w-3/4 rounded bg-muted"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-8 w-1/2 rounded bg-muted"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        }
+      >
         <BookingStats />
       </Suspense>
 
@@ -89,11 +110,14 @@ export default function BookingsPage() {
 
         <TabsContent value="book" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {amenities.map((amenity) => (
-              <Card key={amenity.id} className="transition-shadow hover:shadow-md">
+            {amenities.map(({ icon: Icon, ...amenity }) => (
+              <Card
+                key={amenity.id}
+                className="transition-shadow hover:shadow-md"
+              >
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <amenity.icon className="size-6 text-primary" />
+                    <Icon className="size-6 text-primary" />
                     <div>
                       <CardTitle className="text-lg">{amenity.name}</CardTitle>
                       <CardDescription>{amenity.description}</CardDescription>
@@ -123,7 +147,9 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Calendar className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Smart Scheduling</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Smart Scheduling
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -137,7 +163,9 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Tv className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Real-time Availability</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Real-time Availability
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -156,7 +184,8 @@ export default function BookingsPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="text-xs">
-              Booking limits prevent overuse while ensuring everyone gets access.
+              Booking limits prevent overuse while ensuring everyone gets
+              access.
             </CardDescription>
           </CardContent>
         </Card>
@@ -165,7 +194,9 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Car className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Mobile Friendly</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Mobile Friendly
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -176,5 +207,5 @@ export default function BookingsPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }
