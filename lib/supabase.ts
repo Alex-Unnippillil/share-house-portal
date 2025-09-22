@@ -914,6 +914,53 @@ export type Database = {
         }
         Relationships: []
       }
+      floorplans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          height: number
+          household_id: string | null
+          id: number
+          name: string
+          overlays: Json
+          storage_path: string
+          updated_at: string | null
+          width: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          height: number
+          household_id: string
+          id?: number
+          name: string
+          overlays?: Json
+          storage_path: string
+          updated_at?: string | null
+          width: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          height?: number
+          household_id?: string
+          id?: number
+          name?: string
+          overlays?: Json
+          storage_path?: string
+          updated_at?: string | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floorplans_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gpt_one: {
         Row: {
           created_at: string
@@ -938,6 +985,30 @@ export type Database = {
           messages?: string | null
           user_input?: string | null
           vector_one?: string | null
+        }
+        Relationships: []
+      }
+      households: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
