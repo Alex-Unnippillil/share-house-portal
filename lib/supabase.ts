@@ -1,3 +1,8 @@
+import type {
+  AppEnvironment,
+  FeatureFlagName,
+} from '@/config/feature-flags'
+
 export type Json =
   | string
   | number
@@ -196,6 +201,17 @@ export type Database = {
         action_url: string | null
         metadata: Json | null
         read: boolean | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      feature_flags: SupabaseTable<{
+        id: string
+        slug: FeatureFlagName
+        environment: AppEnvironment
+        description: string | null
+        enabled: boolean
+        rollout_percentage: number | null
+        targeting: Json | null
         created_at: string | null
         updated_at: string | null
       }>

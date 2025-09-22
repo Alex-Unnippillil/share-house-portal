@@ -1,23 +1,59 @@
-import { Suspense } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FileText, Users, Clock, Upload } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadDocumentDialog } from "./components/upload-document-dialog";
-import { DocumentsStats } from "./components/documents-stats";
-import { DocumentsList } from "./components/documents-list";
-import { DocumentsFilters } from "./components/documents-filters";
-import { DocumentListFilters } from '@/types/documents';
+import { Suspense } from "react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { FileText, Users, Clock, Upload } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UploadDocumentDialog } from "./components/upload-document-dialog"
+import { DocumentsStats } from "./components/documents-stats"
+import { DocumentsList } from "./components/documents-list"
+import { DocumentsFilters } from "./components/documents-filters"
+import { DocumentListFilters } from "@/types/documents"
+import { resolveFeatureFlags } from "@/lib/feature-flags"
 
-export default function DocumentsPage() {
+export default async function DocumentsPage() {
+  const { streamingSsr } = await resolveFeatureFlags()
+
+  const statsFallback = (
+    <div className="grid gap-4 md:grid-cols-4">
+      {[...Array(4)].map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardHeader className="pb-2">
+            <div className="h-4 w-3/4 rounded bg-muted"></div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-8 w-1/2 rounded bg-muted"></div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+
+  const renderDocumentsList = (filter: DocumentListFilters) =>
+    streamingSsr ? (
+      <Suspense fallback={<DocumentsListSkeleton />}>
+        <DocumentsList filter={filter} />
+      </Suspense>
+    ) : (
+      <DocumentsList filter={filter} />
+    )
+
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Documents
+            </h1>
             <p className="text-base text-muted-foreground sm:text-lg">
-              Manage leases, agreements, and household documents with secure signing and version control.
+              Manage leases, agreements, and household documents with secure
+              signing and version control.
             </p>
           </div>
           <UploadDocumentDialog />
@@ -26,20 +62,13 @@ export default function DocumentsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
+      {streamingSsr ? (
+        <Suspense fallback={statsFallback}>
+          <DocumentsStats />
+        </Suspense>
+      ) : (
         <DocumentsStats />
-      </Suspense>
+      )}
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="all" className="space-y-6">
@@ -54,27 +83,19 @@ export default function DocumentsPage() {
         </div>
 
         <TabsContent value="all" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
-          </Suspense>
+          {renderDocumentsList({})}
         </TabsContent>
 
         <TabsContent value="leases" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
-          </Suspense>
+          {renderDocumentsList({ type: ["lease"] })}
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['pending_signature'] }} />
-          </Suspense>
+          {renderDocumentsList({ status: ["pending_signature"] })}
         </TabsContent>
 
         <TabsContent value="signed" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['signed'] }} />
-          </Suspense>
+          {renderDocumentsList({ status: ["signed"] })}
         </TabsContent>
       </Tabs>
 
@@ -137,7 +158,7 @@ export default function DocumentsPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }
 
 function DocumentsListSkeleton() {
@@ -166,5 +187,5 @@ function DocumentsListSkeleton() {
         </Card>
       ))}
     </div>
-  );
+  )
 }

@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
 import { BookingStats } from "./components/booking-stats"
+import { resolveFeatureFlags } from '@/lib/feature-flags'
 
 const amenities = [
   {
@@ -65,7 +66,24 @@ const amenities = [
   },
 ]
 
-export default function BookingsPage() {
+export default async function BookingsPage() {
+  const { streamingSsr } = await resolveFeatureFlags()
+
+  const statsFallback = (
+    <div className="grid gap-4 md:grid-cols-4">
+      {[...Array(4)].map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardHeader className="pb-2">
+            <div className="h-4 w-3/4 rounded bg-muted"></div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-8 w-1/2 rounded bg-muted"></div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
@@ -82,24 +100,13 @@ export default function BookingsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-4 w-3/4 rounded bg-muted"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-1/2 rounded bg-muted"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        }
-      >
+      {streamingSsr ? (
+        <Suspense fallback={statsFallback}>
+          <BookingStats />
+        </Suspense>
+      ) : (
         <BookingStats />
-      </Suspense>
+      )}
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="book" className="space-y-6">
