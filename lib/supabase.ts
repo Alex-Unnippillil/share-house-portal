@@ -483,6 +483,56 @@ export type Database = {
         }
         Relationships: []
       }
+      chore_assignments: {
+        Row: {
+          assigned_to: string
+          completed_at: string | null
+          created_at: string
+          credit_value: number
+          description: string | null
+          due_date: string | null
+          id: string
+          proof_url: string | null
+          status: Database["public"]["Enums"]["chore_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          completed_at?: string | null
+          created_at?: string
+          credit_value?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          proof_url?: string | null
+          status?: Database["public"]["Enums"]["chore_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          completed_at?: string | null
+          created_at?: string
+          credit_value?: number
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          proof_url?: string | null
+          status?: Database["public"]["Enums"]["chore_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_assignments_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "members_table"
+            referencedColumns: ["member_id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           continent: Database["public"]["Enums"]["continents"] | null
@@ -1012,6 +1062,7 @@ export type Database = {
           member_id: string
           name: string | null
           password: string
+          credit_balance: number
         }
         Insert: {
           created_at?: string
@@ -1020,6 +1071,7 @@ export type Database = {
           member_id: string
           name?: string | null
           password?: string
+          credit_balance?: number
         }
         Update: {
           created_at?: string
@@ -1028,6 +1080,7 @@ export type Database = {
           member_id?: string
           name?: string | null
           password?: string
+          credit_balance?: number
         }
         Relationships: []
       }
@@ -1766,6 +1819,7 @@ export type Database = {
       }
     }
     Enums: {
+      chore_status: "assigned" | "in_progress" | "completed"
       continents:
         | "Africa"
         | "Antarctica"
@@ -2224,6 +2278,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      chore_status: ["assigned", "in_progress", "completed"],
       continents: [
         "Africa",
         "Antarctica",
