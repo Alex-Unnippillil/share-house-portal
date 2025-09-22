@@ -1,3 +1,5 @@
+import { CACHE_TAGS, createCachedLoader, invalidateCacheTag } from '@/lib/cache';
+
 interface CalComCreateBookingRequest {
   start: string;
   end: string;
@@ -26,6 +28,109 @@ interface CalComEventType {
   hidden: boolean;
 }
 
+type EventTypesLoaderParams = {
+  baseUrl: string;
+  apiKey: string;
+  userSlug?: string;
+};
+
+type BookingListParams = {
+  baseUrl: string;
+  apiKey: string;
+  userEmail: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+type BookingDetailParams = {
+  baseUrl: string;
+  apiKey: string;
+  bookingId: string;
+};
+
+const fetchEventTypesCached = createCachedLoader<[EventTypesLoaderParams], CalComEventType[]>(
+  async ({ baseUrl, apiKey, userSlug }) => {
+    const endpoint = userSlug
+      ? `${baseUrl}/api/v1/event-types/${userSlug}`
+      : `${baseUrl}/api/v1/event-types`;
+
+    const response = await fetch(endpoint, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch event types: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.eventTypes || [];
+  },
+  {
+    keyParts: ['calcom', 'event-types'],
+    tags: [CACHE_TAGS.bookings],
+    ttl: 300,
+    getCacheKey: ({ userSlug }) => userSlug ?? 'all',
+  }
+);
+
+const fetchUserBookingsCached = createCachedLoader<[BookingListParams], any[]>(
+  async ({ baseUrl, apiKey, userEmail: _userEmail, startDate, endDate }) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    const response = await fetch(
+      `${baseUrl}/api/v1/bookings?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user bookings: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.bookings || [];
+  },
+  {
+    keyParts: ['calcom', 'bookings'],
+    tags: [CACHE_TAGS.bookings],
+    ttl: 120,
+    getCacheKey: ({ userEmail, startDate, endDate }) =>
+      JSON.stringify({ userEmail, startDate, endDate }),
+  }
+);
+
+const fetchBookingCached = createCachedLoader<[BookingDetailParams], any>(
+  async ({ baseUrl, apiKey, bookingId }) => {
+    const response = await fetch(`${baseUrl}/api/v1/bookings/${bookingId}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch booking: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+  {
+    keyParts: ['calcom', 'booking-detail'],
+    tags: [CACHE_TAGS.bookings],
+    ttl: 120,
+    getCacheKey: ({ bookingId }) => bookingId,
+  }
+);
+
 class CalComService {
   private baseUrl: string;
   private apiKey: string;
@@ -39,24 +144,12 @@ class CalComService {
    * Get event types for a specific user or team
    */
   async getEventTypes(userSlug?: string): Promise<CalComEventType[]> {
-    const endpoint = userSlug
-      ? `${this.baseUrl}/api/v1/event-types/${userSlug}`
-      : `${this.baseUrl}/api/v1/event-types`;
-
     try {
-      const response = await fetch(endpoint, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
+      return await fetchEventTypesCached({
+        baseUrl: this.baseUrl,
+        apiKey: this.apiKey,
+        userSlug,
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch event types: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.eventTypes || [];
     } catch (error) {
       console.error('Error fetching Cal.com event types:', error);
       return [];
@@ -100,6 +193,8 @@ class CalComService {
 
       const data = await response.json();
 
+      await invalidateCacheTag(CACHE_TAGS.bookings, 'booking-created');
+
       return {
         success: true,
         bookingId: data.booking?.id?.toString(),
@@ -130,7 +225,13 @@ class CalComService {
         }
       );
 
-      return response.ok;
+      const ok = response.ok;
+
+      if (ok) {
+        await invalidateCacheTag(CACHE_TAGS.bookings, 'booking-cancelled');
+      }
+
+      return ok;
     } catch (error) {
       console.error('Error canceling Cal.com booking:', error);
       return false;
@@ -142,21 +243,11 @@ class CalComService {
    */
   async getBooking(bookingId: string): Promise<any> {
     try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings/${bookingId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch booking: ${response.statusText}`);
-      }
-
-      return await response.json();
+      return await fetchBookingCached({
+        baseUrl: this.baseUrl,
+        apiKey: this.apiKey,
+        bookingId,
+      });
     } catch (error) {
       console.error('Error fetching Cal.com booking:', error);
       return null;
@@ -172,26 +263,13 @@ class CalComService {
     endDate?: string
   ): Promise<any[]> {
     try {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings?${params.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user bookings: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.bookings || [];
+      return await fetchUserBookingsCached({
+        baseUrl: this.baseUrl,
+        apiKey: this.apiKey,
+        userEmail,
+        startDate,
+        endDate,
+      });
     } catch (error) {
       console.error('Error fetching Cal.com user bookings:', error);
       return [];

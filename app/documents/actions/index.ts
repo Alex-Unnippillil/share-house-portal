@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/utils/supa-server-actions';
+import { createClient as createServerClient } from '@/utils/supa-server-actions';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
@@ -13,6 +13,7 @@ import {
   DocumentSigningRequest,
   DocumentStats
 } from '@/types/documents';
+import { createCachedLoader, CACHE_TAGS, createSupabaseClientWithToken, invalidateCacheTag } from '@/lib/cache';
 
 // Validation schemas
 const documentUploadSchema = z.object({
@@ -50,29 +51,28 @@ interface ActionResult<T = any> {
   message?: string;
 }
 
-// Get documents with optional filters
-export async function getDocumentsAction(
-  filters?: DocumentListFilters
-): Promise<ActionResult<DocumentWithLease[]>> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+type DocumentQueryContext = {
+  accessToken: string;
+  userId: string;
+  role: string | null;
+  filters: DocumentListFilters;
+};
 
-  try {
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return { success: false, error: 'You must be logged in to view documents.' };
-    }
+type DocumentStatsContext = {
+  accessToken: string;
+  userId: string;
+  role: string | null;
+};
 
-    // Validate filters
-    const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
+const normaliseDocumentFilters = (filters: DocumentListFilters = {}): DocumentListFilters => ({
+  ...filters,
+  status: filters.status ? [...filters.status].sort() : undefined,
+  type: filters.type ? [...filters.type].sort() : undefined,
+});
 
-    // Determine role for scoping
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+const fetchDocumentsCached = createCachedLoader<DocumentQueryContext, DocumentWithLease[]>(
+  async ({ accessToken, userId, role, filters }) => {
+    const supabase = createSupabaseClientWithToken(accessToken);
 
     let query = (supabase as any)
       .from('documents')
@@ -84,42 +84,127 @@ export async function getDocumentsAction(
       `)
       .order('created_at', { ascending: false });
 
-    // Scope non-admin/property_manager users to their own documents or ones they need to sign
-    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
+    if (role !== 'property_manager' && role !== 'admin') {
       query = query.or(
-        `tenant_id.eq.${user.id},signatures.signer_id.eq.${user.id}`
+        `tenant_id.eq.${userId},signatures.signer_id.eq.${userId}`
       );
     }
 
-    // Apply filters
-    if (validatedFilters.status?.length) {
-      query = query.in('status', validatedFilters.status);
+    if (filters.status?.length) {
+      query = query.in('status', filters.status);
     }
-    if (validatedFilters.type?.length) {
-      query = query.in('document_type', validatedFilters.type);
+    if (filters.type?.length) {
+      query = query.in('document_type', filters.type);
     }
-    if (validatedFilters.tenant_id) {
-      query = query.eq('tenant_id', validatedFilters.tenant_id);
+    if (filters.tenant_id) {
+      query = query.eq('tenant_id', filters.tenant_id);
     }
-    if (validatedFilters.unit_id) {
-      query = query.eq('unit_id', validatedFilters.unit_id);
+    if (filters.unit_id) {
+      query = query.eq('unit_id', filters.unit_id);
     }
-    if (validatedFilters.date_from) {
-      query = query.gte('created_at', validatedFilters.date_from);
+    if (filters.date_from) {
+      query = query.gte('created_at', filters.date_from);
     }
-    if (validatedFilters.date_to) {
-      query = query.lte('created_at', validatedFilters.date_to);
+    if (filters.date_to) {
+      query = query.lte('created_at', filters.date_to);
     }
 
-    const { data: documents, error } = await query;
+    const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching documents:', error);
-      return { success: false, error: 'Failed to fetch documents.' };
+      throw new Error(error.message);
     }
 
-    // Log access
-    for (const doc of documents || []) {
+    return data || [];
+  },
+  {
+    keyParts: ['documents', 'list'],
+    tags: [CACHE_TAGS.documents],
+    ttl: 120,
+    getCacheKey: ({ userId, role, filters }) =>
+      JSON.stringify({ userId, role, filters: normaliseDocumentFilters(filters) }),
+  }
+);
+
+const fetchDocumentStatsCached = createCachedLoader<DocumentStatsContext, DocumentStats>(
+  async ({ accessToken, userId, role }) => {
+    const supabase = createSupabaseClientWithToken(accessToken);
+
+    let query = supabase.from('documents').select('status');
+
+    if (role !== 'property_manager' && role !== 'admin') {
+      query = query.eq('tenant_id', userId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const documents = data || [];
+
+    return {
+      total_documents: documents.length,
+      pending_signatures: documents.filter(d => d.status === 'pending_signature').length,
+      signed_documents: documents.filter(d => d.status === 'signed').length,
+      expired_documents: documents.filter(d => d.status === 'expired').length,
+      draft_documents: documents.filter(d => d.status === 'draft').length,
+    };
+  },
+  {
+    keyParts: ['documents', 'stats'],
+    tags: [CACHE_TAGS.documentStats],
+    ttl: 60,
+    getCacheKey: ({ userId, role }) => JSON.stringify({ userId, role }),
+  }
+);
+
+const revalidateDocumentCaches = async (reason: string) => {
+  await Promise.all([
+    invalidateCacheTag(CACHE_TAGS.documents, reason),
+    invalidateCacheTag(CACHE_TAGS.documentStats, reason),
+  ]);
+};
+
+// Get documents with optional filters
+export async function getDocumentsAction(
+  filters?: DocumentListFilters
+): Promise<ActionResult<DocumentWithLease[]>> {
+  const cookieStore = cookies();
+  const supabase = createServerClient(cookieStore);
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to view documents.' };
+    }
+
+    const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
+    const normalisedFilters = normaliseDocumentFilters(validatedFilters);
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    const { data: session, error: sessionError } = await supabase.auth.getSession();
+    const accessToken = session?.session?.access_token;
+
+    if (sessionError || !accessToken) {
+      console.error('Error retrieving access token for documents:', sessionError);
+      return { success: false, error: 'Unable to authenticate documents request.' };
+    }
+
+    const documents = await fetchDocumentsCached({
+      accessToken,
+      userId: user.id,
+      role: profile?.role ?? null,
+      filters: normalisedFilters,
+    });
+
+    for (const doc of documents) {
       await (supabase as any).rpc('log_document_access', {
         p_document_id: doc.id,
         p_action: 'view',
@@ -127,7 +212,7 @@ export async function getDocumentsAction(
       });
     }
 
-    return { success: true, data: documents || [] };
+    return { success: true, data: documents };
   } catch (error) {
     console.error('Unexpected error in getDocumentsAction:', error);
     return {
@@ -142,7 +227,7 @@ export async function uploadDocumentAction(
   formData: FormData
 ): Promise<ActionResult<Document>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -229,6 +314,7 @@ export async function uploadDocumentAction(
       p_metadata: { file_name: file.name, file_size: file.size }
     });
 
+      await revalidateDocumentCaches('upload-document');
     revalidatePath('/documents');
     return { success: true, data: document, message: 'Document uploaded successfully.' };
   } catch (error) {
@@ -245,7 +331,7 @@ export async function createSigningRequestAction(
   formData: FormData
 ): Promise<ActionResult<{ signing_url?: string; envelope_id?: string }>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -403,6 +489,7 @@ export async function createSigningRequestAction(
       p_metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
     });
 
+    await revalidateDocumentCaches('create-signing-request');
     revalidatePath('/documents');
     return {
       success: true,
@@ -424,7 +511,7 @@ export async function signDocumentAction(
   signatureData?: Record<string, any>
 ): Promise<ActionResult> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -481,6 +568,7 @@ export async function signDocumentAction(
       p_metadata: signatureData
     });
 
+    await revalidateDocumentCaches('sign-document');
     revalidatePath('/documents');
     return { success: true, message: 'Document signed successfully.' };
   } catch (error) {
@@ -497,7 +585,7 @@ export async function getSigningUrlAction(
   documentId: string
 ): Promise<ActionResult<{ signing_url: string }>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -547,43 +635,33 @@ export async function getSigningUrlAction(
 // Get document statistics
 export async function getDocumentStatsAction(): Promise<ActionResult<DocumentStats>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
-    // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return { success: false, error: 'You must be logged in to view document statistics.' };
     }
 
-    // Get stats based on user role
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    let query = supabase.from('documents').select('status');
+    const { data: session, error: sessionError } = await supabase.auth.getSession();
+    const accessToken = session?.session?.access_token;
 
-    // If not admin/property manager, filter by tenant_id
-    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
-      query = query.eq('tenant_id', user.id);
+    if (sessionError || !accessToken) {
+      console.error('Error retrieving access token for document stats:', sessionError);
+      return { success: false, error: 'Unable to authenticate document statistics request.' };
     }
 
-    const { data: documents, error } = await query;
-
-    if (error) {
-      console.error('Error fetching document stats:', error);
-      return { success: false, error: 'Failed to fetch document statistics.' };
-    }
-
-    const stats: DocumentStats = {
-      total_documents: documents?.length || 0,
-      pending_signatures: documents?.filter(d => d.status === 'pending_signature').length || 0,
-      signed_documents: documents?.filter(d => d.status === 'signed').length || 0,
-      expired_documents: documents?.filter(d => d.status === 'expired').length || 0,
-      draft_documents: documents?.filter(d => d.status === 'draft').length || 0,
-    };
+    const stats = await fetchDocumentStatsCached({
+      accessToken,
+      userId: user.id,
+      role: profile?.role ?? null,
+    });
 
     return { success: true, data: stats };
   } catch (error) {
