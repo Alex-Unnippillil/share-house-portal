@@ -3,7 +3,74 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const staticAssetExtension =
+  /\.(?:avif|css|gif|ico|jpg|jpeg|js|json|map|mjs|png|svg|txt|webp|woff2|woff|xml|wasm)$/
+
+function resolveStaticEncoding(header: string | null) {
+  if (!header) {
+    return 'br'
+  }
+
+  const lowered = header.toLowerCase()
+
+  if (lowered.includes('br')) {
+    return 'br'
+  }
+
+  if (lowered.includes('gzip')) {
+    return 'gzip'
+  }
+
+  return null
+}
+
+function appendVaryHeader(current: string | null, value: string) {
+  if (!current) {
+    return value
+  }
+
+  const segments = new Set(
+    current
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  )
+  segments.add(value)
+  return Array.from(segments).join(', ')
+}
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (
+    pathname.startsWith('/_next/static/') ||
+    staticAssetExtension.test(pathname)
+  ) {
+    const requestHeaders = new Headers(request.headers)
+    const acceptEncoding = requestHeaders.get('accept-encoding')
+
+    if (!acceptEncoding || !acceptEncoding.toLowerCase().includes('br')) {
+      requestHeaders.set('accept-encoding', 'br, gzip;q=0.5')
+    }
+
+    const encoding = resolveStaticEncoding(requestHeaders.get('accept-encoding'))
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+
+    if (encoding) {
+      response.headers.set('Content-Encoding', encoding)
+      response.headers.set(
+        'Vary',
+        appendVaryHeader(response.headers.get('Vary'), 'Accept-Encoding')
+      )
+    }
+
+    return response
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -63,13 +130,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
+    '/_next/static/:path*',
+    '/(.*\.(?:avif|css|gif|ico|jpg|jpeg|js|json|map|mjs|png|svg|txt|webp|woff2|woff|xml|wasm))',
     {
       source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
       missing: [

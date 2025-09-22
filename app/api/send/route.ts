@@ -1,14 +1,20 @@
-import { EmailTemplate } from "@/components/email-template";
-import { Resend } from 'resend';
+import { Resend } from 'resend'
 
-export async function POST() {
-  const resendApiKey = process.env.RESEND_API_KEY;
+import { EmailTemplate } from '@/components/email-template'
+import { createCompressedJsonResponse } from '@/lib/http/compression'
+
+export async function POST(request: Request) {
+  const resendApiKey = process.env.RESEND_API_KEY
 
   if (!resendApiKey) {
-    return Response.json({ error: "Resend API key is not configured." }, { status: 500 });
+    return createCompressedJsonResponse(
+      request,
+      { error: 'Resend API key is not configured.' },
+      { status: 500 }
+    )
   }
 
-  const resend = new Resend(resendApiKey);
+  const resend = new Resend(resendApiKey)
 
   try {
     const { data, error } = await resend.emails.send({
@@ -21,20 +27,36 @@ export async function POST() {
     if (error) {
       // Type guard to ensure 'error' is an Error object
       if (error instanceof Error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        return createCompressedJsonResponse(
+          request,
+          { error: error.message },
+          { status: 500 }
+        )
       } else {
         // Handle cases where 'error' is not an Error object (e.g., a string or object)
-        return Response.json({ error: String(error) }, { status: 500 });
+        return createCompressedJsonResponse(
+          request,
+          { error: String(error) },
+          { status: 500 }
+        )
       }
     }
 
-    return Response.json(data);
+    return createCompressedJsonResponse(request, data)
   } catch (error) {
     // Type guard for the catch block 'error' as well.
     if (error instanceof Error) {
-      return Response.json({ error: error.message }, { status: 500 });
+      return createCompressedJsonResponse(
+        request,
+        { error: error.message },
+        { status: 500 }
+      )
     } else {
-      return Response.json({ error: String(error) }, { status: 500 });
+      return createCompressedJsonResponse(
+        request,
+        { error: String(error) },
+        { status: 500 }
+      )
     }
   }
 }

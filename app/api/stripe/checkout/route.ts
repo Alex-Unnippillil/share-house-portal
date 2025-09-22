@@ -1,5 +1,7 @@
-import { NextRequest } from "next/server"
-import { getStripe, getAppBaseUrl } from "@/lib/stripe"
+import { NextRequest } from 'next/server'
+
+import { getStripe, getAppBaseUrl } from '@/lib/stripe'
+import { createCompressedJsonResponse } from '@/lib/http/compression'
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +9,11 @@ export async function POST(req: NextRequest) {
     const { priceId, quantity = 1, mode = "payment", metadata } = await req.json()
 
     if (!priceId || typeof priceId !== "string") {
-      return Response.json({ error: "priceId is required" }, { status: 400 })
+      return createCompressedJsonResponse(
+        req,
+        { error: 'priceId is required' },
+        { status: 400 }
+      )
     }
 
     const baseUrl = getAppBaseUrl()
@@ -31,11 +37,11 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create(sessionConfig)
 
-    return Response.json({ id: session.id, url: session.url })
+    return createCompressedJsonResponse(req, { id: session.id, url: session.url })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error"
     const status = message.includes("Stripe is not configured") ? 500 : 500
-    return Response.json({ error: message }, { status })
+    return createCompressedJsonResponse(req, { error: message }, { status })
   }
 }
 

@@ -1,40 +1,43 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supa-server-actions';
-import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
+import { createCompressedJsonResponse } from '@/lib/http/compression'
+import { createClient } from '@/utils/supa-server-actions'
 
 export async function GET(req: Request) {
-  
- const { searchParams } = new URL(req.url);
- const accessToken = searchParams.get('access_token');
- const refreshToken = searchParams.get('refresh_token');
-  
-// Get the user from Supabase
+  const { searchParams } = new URL(req.url)
+  const refreshToken = searchParams.get('refresh_token')
 
-const cookieStore = cookies();
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
 
-const supabase = createClient(cookieStore);
-  
-const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
- if (userError || !user) {
-    
-  return NextResponse.json({ error: 'User not found' }, { status: 401});
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return createCompressedJsonResponse(
+      req,
+      { error: 'User not found' },
+      { status: 401 }
+    )
   }
-  
-// Store the refresh token in the user_tokens table
 
-const { error: tokenError } = await supabase
+  const { error: tokenError } = await supabase
     .from('user_tokens')
-    .upsert({ user_id: user.id, refresh_token: refreshToken});
- 
-  if (tokenError ) {
-    
-   return NextResponse.json({ error: tokenError.message }, { status: 500});
+    .upsert({ user_id: user.id, refresh_token: refreshToken })
+
+  if (tokenError) {
+    return createCompressedJsonResponse(
+      req,
+      { error: tokenError.message },
+      { status: 500 }
+    )
   }
- else {
-  
-  return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_BASE_URL)); 
-// Adjust the redirect URL as necessary
- }
+
+  const redirectBase = process.env.NEXT_PUBLIC_BASE_URL ?? req.url
+  const redirectUrl = new URL('/', redirectBase)
+
+  return NextResponse.redirect(redirectUrl)
 }
