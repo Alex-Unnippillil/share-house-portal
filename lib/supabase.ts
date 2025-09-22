@@ -1226,6 +1226,128 @@ export type Database = {
         }
         Relationships: []
       }
+      household_purchases: {
+        Row: {
+          household_id: string
+          id: string
+          notes: string | null
+          purchased_at: string
+          purchased_by: string
+          supply_item_id: string
+        }
+        Insert: {
+          household_id: string
+          id?: string
+          notes?: string | null
+          purchased_at?: string
+          purchased_by: string
+          supply_item_id: string
+        }
+        Update: {
+          household_id?: string
+          id?: string
+          notes?: string | null
+          purchased_at?: string
+          purchased_by?: string
+          supply_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_purchases_purchased_by_fkey"
+            columns: ["purchased_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_purchases_supply_item_id_fkey"
+            columns: ["supply_item_id"]
+            isOneToOne: false
+            referencedRelation: "supply_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_items: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          household_id: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      to_buy_items: {
+        Row: {
+          added_by: string
+          created_at: string
+          fulfilled_at: string | null
+          household_id: string
+          id: string
+          priority: string
+          supply_item_id: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          fulfilled_at?: string | null
+          household_id: string
+          id?: string
+          priority: string
+          supply_item_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          fulfilled_at?: string | null
+          household_id?: string
+          id?: string
+          priority?: string
+          supply_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "to_buy_items_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "to_buy_items_supply_item_id_fkey"
+            columns: ["supply_item_id"]
+            isOneToOne: false
+            referencedRelation: "supply_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1236,6 +1358,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           full_name: string | null
+          household_id: string
           id: string
           job_title: string | null
           linkedin_url: string | null
@@ -1256,6 +1379,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
@@ -1276,6 +1400,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
