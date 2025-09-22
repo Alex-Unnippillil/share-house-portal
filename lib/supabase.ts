@@ -1226,6 +1226,42 @@ export type Database = {
         }
         Relationships: []
       }
+      visitor_requests: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          date_range: string
+          guest_name: string
+          id: number
+          member_id: string
+          reason: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          date_range: string
+          guest_name: string
+          id?: number
+          member_id: string
+          reason: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          date_range?: string
+          guest_name?: string
+          id?: number
+          member_id?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
