@@ -50,8 +50,6 @@ export function NotificationCenter() {
   }, [supabase]);
 
   useEffect(() => {
-    fetchNotifications();
-
     // Subscribe to real-time notifications
     const channel = supabase
       .channel('notifications')
@@ -81,7 +79,25 @@ export function NotificationCenter() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, supabase, toast]);
+  }, [supabase, toast]);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchNotifications();
+    };
+
+    window.addEventListener('notifications:refresh', handleRefresh);
+
+    return () => {
+      window.removeEventListener('notifications:refresh', handleRefresh);
+    };
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
+    }
+  }, [fetchNotifications, isOpen]);
 
   const markAsRead = async (notificationId: string) => {
     try {
