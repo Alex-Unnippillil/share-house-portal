@@ -1,0 +1,40 @@
+export const metadata = {
+  title: "Roomsily Documentation",
+  description:
+    "Reference guides covering tenant onboarding, amenities, messaging, and administrative workflows.",
+}
+
+export const revalidate = 86400
+export const runtime = "edge"
+export const dynamic = "force-static"
+export const preferredRegion = "auto"
+
+# Roomsily product documentation
+
+Roomsily keeps co-living households running smoothly with a tight integration between payments, amenity scheduling, messaging, and visitor controls. This guide distills the most frequently referenced workflows for residents and property managers.
+
+## Quick links
+
+- **Resident portal**: Track ledgers, sign leases, and monitor amenity bookings in one place.
+- **Amenity scheduling**: Cal.com powered booking flows avoid double-booking shared resources.
+- **Messaging hub**: Supabase Realtime powers threaded conversations with polling, reactions, and moderation tools.
+- **Maintenance tickets**: Submit structured requests with attachments and follow progress inside the dashboard.
+
+## Operational guardrails
+
+Roomsily automatically enforces the guardrails defined by building managers:
+
+1. **Role-aware permissions** using Supabase RLS protect every tenant's data.
+2. **Automated reminders** highlight upcoming rent, renewals, and guest approvals.
+3. **Documenso signing** maintains a tamper-evident history of agreements and addenda.
+4. **Visitor workflows** notify the full household whenever someone stays overnight.
+
+## Support channels
+
+For additional help:
+
+- Review the [Help Center](/help) for triage guides and common fixes.
+- Contact managers through the in-app messaging feed for context-rich collaboration.
+- Reach the Roomsily support desk at `support@roomsily.com` for escalations.
+
+Caching for this documentation route is configured for a 24-hour revalidation window so content is always served from the Vercel Edge cache with `stale-while-revalidate` fallbacks.

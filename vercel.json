@@ -3,5 +3,40 @@
     "app/api/**/*.rs": {
       "runtime": "vercel-rust@4.0.8"
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/docs", "destination": "/docs" },
+    { "source": "/help", "destination": "/help" },
+    { "source": "/docs/:path*", "destination": "/docs/:path*" },
+    { "source": "/help/:path*", "destination": "/help/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/(docs|help)(/.*)?",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=86400, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/(about|privacy|terms)(/.*)?",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=86400, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=3600, stale-while-revalidate=86400"
+        }
+      ]
+    }
+  ]
 }

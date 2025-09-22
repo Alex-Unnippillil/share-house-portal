@@ -1,0 +1,43 @@
+export const metadata = {
+  title: "Roomsily Help Center",
+  description: "Self-service troubleshooting playbooks for residents, roommates, and property managers.",
+}
+
+export const revalidate = 86400
+export const runtime = "edge"
+export const dynamic = "force-static"
+export const preferredRegion = "auto"
+
+# Help Center
+
+Welcome to the Roomsily Help Center. Our goal is to unblock shared households quickly while keeping everyone aligned.
+
+## Start with status
+
+- Review the [status dashboard](/dashboard) for open maintenance tickets, pending visitor approvals, and payment holds.
+- Check the notification center for new activity or requests from roommates and property managers.
+- Confirm rent payment status inside the **Payments** tab before submitting follow-up inquiries.
+
+## Quick resolutions
+
+### Amenity bookings
+
+- Conflicts are surfaced in real time. Edit or cancel overlapping reservations from the **Schedule** view.
+- If a Supabase sync error occurs, retry the booking after refreshing—cached availability revalidates within a minute.
+
+### Messaging and announcements
+
+- Mentions trigger push notifications so the right roommates are alerted.
+- Archive resolved threads to keep the shared feed tidy.
+
+### Visitor management
+
+- Overnight visitor approvals expire automatically when departure dates pass.
+- Property managers can override or reinstate access within the **Visitors** tab.
+
+## Need more help?
+
+- Submit a support ticket by emailing `support@roomsily.com` with context, screenshots, and affected roommates.
+- Escalate urgent building issues via the property manager hotline at `+1 (415) 555-0137`.
+
+Help content is cached at the edge with a 24-hour `s-maxage` window and `stale-while-revalidate` policy so residents always receive a fast response globally.
