@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supa-server-actions';
 import { createGoogleCalendarEvent } from '@/lib/calendar-service';
 import { revalidatePath } from 'next/cache';
-import { Database } from '@/lib/supabase';
+import type { Database } from '@/lib/supabase';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { formatISO, isPast } from 'date-fns'; // Import formatISO here
