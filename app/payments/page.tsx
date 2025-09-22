@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
+import { PaymentStatusOverview } from "./_components/payment-status-overview"
 import {
   calculateOutstanding,
   formatAutopayDay,
@@ -215,6 +216,9 @@ export default function PaymentsPage() {
           </Card>
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
+      </section>
+      <section>
+        <PaymentStatusOverview />
       </section>
     </div>
   )

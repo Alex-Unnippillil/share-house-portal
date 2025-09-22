@@ -112,7 +112,7 @@ export type Database = {
         stripe_subscription_id: string | null
         amount: number
         currency: string
-        status: 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'completed'
+        status: 'pending' | 'succeeded' | 'failed' | 'cancelled'
         payment_method: string | null
         payment_method_type: string | null
         description: string | null
@@ -123,6 +123,20 @@ export type Database = {
         processed_at: string | null
         billing_period_start: string | null
         billing_period_end: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      stripe_webhook_events: SupabaseTable<{
+        id: string
+        event_id: string
+        event_type: string
+        status: 'received' | 'processed' | 'failed' | 'ignored'
+        stripe_created_at: string | null
+        processed_at: string | null
+        last_error: string | null
+        payload: Json
+        alert_count: number
+        last_alert_at: string | null
         created_at: string | null
         updated_at: string | null
       }>
