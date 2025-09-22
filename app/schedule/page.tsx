@@ -37,9 +37,9 @@ export default async function SchedulePage() {
         <div className="container mx-auto flex justify-center p-4 pt-10">
             <Card className="w-full max-w-2xl">
                 <CardHeader>
-                    <CardTitle>Schedule a New Meeting</CardTitle>
+                    <CardTitle>Reserve a Shared Amenity</CardTitle>
                     <CardDescription>
-                        Fill in the details below to create a Google Calendar event with a Meet link.
+                        Choose the space, time, and spacing buffer to keep rotations calm for everyone. We&apos;ll apply the buffer window to the booking and send a calendar invite.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
