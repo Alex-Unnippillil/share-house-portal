@@ -1,10 +1,11 @@
 'use server';
 
 import { createClient } from '@/utils/supa-server-actions';
-import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
+import { withCache } from '@/lib/cache/store';
+import { CACHE_TAGS, CACHE_TTL, getTagsForTables, revalidateTables } from '@/lib/cache/tags';
 import {
   Document,
   DocumentWithLease,
@@ -74,60 +75,84 @@ export async function getDocumentsAction(
       .eq('id', user.id)
       .single();
 
-    let query = (supabase as any)
-      .from('documents')
-      .select(`
-        *,
-        lease:leases(*),
-        signatures:document_signatures(*),
-        access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
-      `)
-      .order('created_at', { ascending: false });
+    const normalizedFilters = normalizeDocumentFilters(validatedFilters);
+    const cacheKey = [
+      'documents',
+      'list',
+      user.id,
+      profile?.role ?? 'user',
+      JSON.stringify(normalizedFilters),
+    ].join(':');
+    const tags = [
+      CACHE_TAGS.documents.list,
+      ...getTagsForTables('documents', 'document_signatures', 'document_access_logs', 'leases'),
+    ];
 
-    // Scope non-admin/property_manager users to their own documents or ones they need to sign
-    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
-      query = query.or(
-        `tenant_id.eq.${user.id},signatures.signer_id.eq.${user.id}`
-      );
-    }
+    const documents = await withCache<DocumentWithLease[]>(
+      cacheKey,
+      { ttl: CACHE_TTL.documentsList, tags },
+      async () => {
+        let query = (supabase as any)
+          .from('documents')
+          .select(`
+            *,
+            lease:leases(*),
+            signatures:document_signatures(*),
+            access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
+          `)
+          .order('created_at', { ascending: false });
 
-    // Apply filters
-    if (validatedFilters.status?.length) {
-      query = query.in('status', validatedFilters.status);
-    }
-    if (validatedFilters.type?.length) {
-      query = query.in('document_type', validatedFilters.type);
-    }
-    if (validatedFilters.tenant_id) {
-      query = query.eq('tenant_id', validatedFilters.tenant_id);
-    }
-    if (validatedFilters.unit_id) {
-      query = query.eq('unit_id', validatedFilters.unit_id);
-    }
-    if (validatedFilters.date_from) {
-      query = query.gte('created_at', validatedFilters.date_from);
-    }
-    if (validatedFilters.date_to) {
-      query = query.lte('created_at', validatedFilters.date_to);
-    }
+        if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
+          query = query.or(
+            `tenant_id.eq.${user.id},signatures.signer_id.eq.${user.id}`
+          );
+        }
 
-    const { data: documents, error } = await query;
+        if (normalizedFilters.status?.length) {
+          query = query.in('status', normalizedFilters.status);
+        }
+        if (normalizedFilters.type?.length) {
+          query = query.in('document_type', normalizedFilters.type);
+        }
+        if (normalizedFilters.tenant_id) {
+          query = query.eq('tenant_id', normalizedFilters.tenant_id);
+        }
+        if (normalizedFilters.unit_id) {
+          query = query.eq('unit_id', normalizedFilters.unit_id);
+        }
+        if (normalizedFilters.date_from) {
+          query = query.gte('created_at', normalizedFilters.date_from);
+        }
+        if (normalizedFilters.date_to) {
+          query = query.lte('created_at', normalizedFilters.date_to);
+        }
 
-    if (error) {
-      console.error('Error fetching documents:', error);
-      return { success: false, error: 'Failed to fetch documents.' };
-    }
+        const { data: documentsData, error } = await query;
 
-    // Log access
-    for (const doc of documents || []) {
-      await (supabase as any).rpc('log_document_access', {
-        p_document_id: doc.id,
-        p_action: 'view',
-        p_metadata: { source: 'documents_page' }
-      });
-    }
+        if (error) {
+          console.error('Error fetching documents:', error);
+          throw new Error('Failed to fetch documents.');
+        }
 
-    return { success: true, data: documents || [] };
+        const resolvedDocuments = documentsData || [];
+
+        for (const doc of resolvedDocuments) {
+          try {
+            await (supabase as any).rpc('log_document_access', {
+              p_document_id: doc.id,
+              p_action: 'view',
+              p_metadata: { source: 'documents_page' }
+            });
+          } catch (logError) {
+            console.error('Failed to log document access:', logError);
+          }
+        }
+
+        return resolvedDocuments;
+      }
+    );
+
+    return { success: true, data: documents };
   } catch (error) {
     console.error('Unexpected error in getDocumentsAction:', error);
     return {
@@ -229,7 +254,7 @@ export async function uploadDocumentAction(
       p_metadata: { file_name: file.name, file_size: file.size }
     });
 
-    revalidatePath('/documents');
+    revalidateTables('documents', 'document_access_logs');
     return { success: true, data: document, message: 'Document uploaded successfully.' };
   } catch (error) {
     console.error('Unexpected error in uploadDocumentAction:', error);
@@ -403,7 +428,7 @@ export async function createSigningRequestAction(
       p_metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
     });
 
-    revalidatePath('/documents');
+    revalidateTables('documents', 'document_signatures');
     return {
       success: true,
       data: { envelope_id: signingResult.id },
@@ -481,7 +506,7 @@ export async function signDocumentAction(
       p_metadata: signatureData
     });
 
-    revalidatePath('/documents');
+    revalidateTables('documents', 'document_signatures');
     return { success: true, message: 'Document signed successfully.' };
   } catch (error) {
     console.error('Unexpected error in signDocumentAction:', error);
@@ -563,27 +588,40 @@ export async function getDocumentStatsAction(): Promise<ActionResult<DocumentSta
       .eq('id', user.id)
       .single();
 
-    let query = supabase.from('documents').select('status');
+    const cacheKey = ['documents', 'stats', user.id, profile?.role ?? 'user'].join(':');
+    const tags = [
+      CACHE_TAGS.documents.stats,
+      ...getTagsForTables('documents', 'document_signatures', 'document_access_logs', 'leases'),
+    ];
 
-    // If not admin/property manager, filter by tenant_id
-    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
-      query = query.eq('tenant_id', user.id);
-    }
+    const stats = await withCache<DocumentStats>(
+      cacheKey,
+      { ttl: CACHE_TTL.documentsStats, tags },
+      async () => {
+        let query = supabase.from('documents').select('status');
 
-    const { data: documents, error } = await query;
+        if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
+          query = query.eq('tenant_id', user.id);
+        }
 
-    if (error) {
-      console.error('Error fetching document stats:', error);
-      return { success: false, error: 'Failed to fetch document statistics.' };
-    }
+        const { data: documents, error } = await query;
 
-    const stats: DocumentStats = {
-      total_documents: documents?.length || 0,
-      pending_signatures: documents?.filter(d => d.status === 'pending_signature').length || 0,
-      signed_documents: documents?.filter(d => d.status === 'signed').length || 0,
-      expired_documents: documents?.filter(d => d.status === 'expired').length || 0,
-      draft_documents: documents?.filter(d => d.status === 'draft').length || 0,
-    };
+        if (error) {
+          console.error('Error fetching document stats:', error);
+          throw new Error('Failed to fetch document statistics.');
+        }
+
+        const safeDocuments = documents || [];
+
+        return {
+          total_documents: safeDocuments.length,
+          pending_signatures: safeDocuments.filter(d => d.status === 'pending_signature').length,
+          signed_documents: safeDocuments.filter(d => d.status === 'signed').length,
+          expired_documents: safeDocuments.filter(d => d.status === 'expired').length,
+          draft_documents: safeDocuments.filter(d => d.status === 'draft').length,
+        } satisfies DocumentStats;
+      }
+    );
 
     return { success: true, data: stats };
   } catch (error) {
@@ -591,6 +629,21 @@ export async function getDocumentStatsAction(): Promise<ActionResult<DocumentSta
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
-    };
+  };
+}
+
+function normalizeDocumentFilters(filters?: DocumentListFilters) {
+  if (!filters) return {} as DocumentListFilters;
+
+  const normalized: DocumentListFilters = { ...filters };
+
+  if (filters.status) {
+    normalized.status = [...filters.status].sort();
   }
+  if (filters.type) {
+    normalized.type = [...filters.type].sort();
+  }
+
+  return normalized;
+}
 }
