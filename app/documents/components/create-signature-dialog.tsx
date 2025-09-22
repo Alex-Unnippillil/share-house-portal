@@ -106,6 +106,9 @@ export function CreateSignatureDialog({
           <DialogDescription>
             Send a signature request for &quot;{document.title}&quot; via Documenso. The signer will receive an email with a link to sign the document.
           </DialogDescription>
+          <p className="text-sm text-muted-foreground">
+            All tenants and assigned property managers for this unit will automatically receive the request alongside the contact you add below.
+          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
