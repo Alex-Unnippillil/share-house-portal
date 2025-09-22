@@ -1475,6 +1475,74 @@ export type Database = {
         }
         Relationships: []
       }
+      households: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "households_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          created_at: string
+          default_supply_split: number
+          household_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_supply_split?: number
+          household_id: string
+          id?: string
+          profile_id?: string
+        }
+        Update: {
+          created_at?: string
+          default_supply_split?: number
+          household_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sui_nfts: {
         Row: {
           avatar_url: string
@@ -1518,6 +1586,99 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string
+          household_id: string
+          id: string
+          item_name: string
+          price_cad: number
+          purchased_at: string
+          receipt_url: string | null
+        }
+        Insert: {
+          amount?: number
+          buyer_id: string
+          created_at?: string
+          household_id: string
+          id?: string
+          item_name: string
+          price_cad: number
+          purchased_at?: string
+          receipt_url?: string | null
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          item_name?: string
+          price_cad?: number
+          purchased_at?: string
+          receipt_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_purchases_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_purchases_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_shares: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          purchase_id: string
+          share_amount: number
+          share_ratio: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          purchase_id: string
+          share_amount: number
+          share_ratio: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          purchase_id?: string
+          share_amount?: number
+          share_ratio?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_shares_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_shares_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "supply_purchases"
             referencedColumns: ["id"]
           },
         ]
