@@ -244,6 +244,47 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      properties: SupabaseTable<{
+        id: string
+        name: string
+        address_line1: string
+        address_line2: string | null
+        city: string
+        state: string | null
+        postal_code: string | null
+        country: string
+        timezone: string | null
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
+      units: SupabaseTable<{
+        id: string
+        property_id: string
+        unit_number: string
+        bedrooms: number | null
+        bathrooms: number | null
+        floor_area: number | null
+        rent: number | null
+        currency: string | null
+        available_from: string | null
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
+      household_invites: SupabaseTable<{
+        id: string
+        token: string
+        email: string
+        status: 'pending' | 'accepted' | 'expired' | 'revoked'
+        invited_by: string | null
+        property_id: string
+        unit_id: string
+        message: string | null
+        created_at: string | null
+        expires_at: string | null
+        metadata: Json | null
+      }>
     }
     Views: Record<string, never>
     Functions: {
