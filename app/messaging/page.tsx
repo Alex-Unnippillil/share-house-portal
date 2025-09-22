@@ -1,5 +1,9 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { PRODUCT_MARKETING_REVALIDATE_SECONDS } from '@/config/isr'
+
+export const dynamic = 'force-static'
+export const revalidate = PRODUCT_MARKETING_REVALIDATE_SECONDS
 
 const messagingHighlights = [
   {
