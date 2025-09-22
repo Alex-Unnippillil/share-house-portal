@@ -1,4 +1,4 @@
- import type { Metadata, Viewport } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -8,6 +8,7 @@ import { CookieButton } from "@/components/cookie-button"
 import { fontSans } from "@/lib/font"
 import { siteConfig } from '@/config/site'
 import { ReactQueryClientProvider } from '@/components/react-query-client-provider'
+import { ServiceWorkerManager } from '@/components/service-worker-manager'
 import { Toaster } from "@/components/ui/toaster"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -111,41 +112,45 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body
+          className={cn(
+            'min-h-screen bg-background font-sans antialiased',
+            fontSans.variable,
           )}
         >
-<ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-             <div className="relative flex min-h-screen flex-col">
+            <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
+              <div className="flex-1">
+                {children}
+                <Toaster />
+                <Analytics />
+                <SpeedInsights />
+              </div>
+              <SiteFooter />
+            </div>
 
+            {/*
+            enter your api info from termly.io or a provider of your choice
+            <Script
+              type="text/javascript"
+              src="https://app.termly.io/resource-blocker/123456789abcdefg"
+            />
 
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
-*/}
-   <CookieButton />    
+            */}
+            <CookieButton />
+            <TailwindIndicator />
+            <ServiceWorkerManager />
           </ThemeProvider>
-        
-
-
-</body>
-    </html>
+        </body>
+      </html>
     </ReactQueryClientProvider>
   )
 }
