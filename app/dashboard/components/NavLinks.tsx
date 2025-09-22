@@ -1,78 +1,52 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
-import { createClient } from "@/utils/supabase-browser";
+"use client"
 
-export default function NavLinks() {
-	const pathname = usePathname();
-	const [role, setRole] = useState<string | null>(null);
+import type { ComponentType } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { CrumpledPaperIcon, PersonIcon } from "@radix-ui/react-icons"
 
-	useEffect(() => {
-		const load = async () => {
-			try {
-				const supabase = createClient();
-				const { data: { user } } = await supabase.auth.getUser();
-				if (!user) {
-					setRole(null);
-					return;
-				}
-				const { data: profile } = await supabase
-					.from('profiles')
-					.select('role')
-					.eq('id', user.id)
-					.single();
-				setRole(profile?.role || null);
-			} catch (e) {
-				setRole(null);
-			}
-		};
-		load();
-	}, []);
+import { cn } from "@/lib/utils"
+import type { DashboardNavItem } from "@/lib/data/dashboard-nav"
+import { getDashboardNavLinks } from "@/lib/data/dashboard-nav"
+import type { UserRole } from "@/lib/data/users"
 
-	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
+interface NavLinksProps {
+  role: UserRole
+}
 
-	const links = isLandlord
-		? [
-			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
-		: [
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-			{ href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
-			{ href: "/supplies", text: "Supplies", Icon: CrumpledPaperIcon },
-		];
+const iconComponents: Record<DashboardNavItem["icon"], ComponentType<{ className?: string }>> = {
+  members: PersonIcon,
+  payments: CrumpledPaperIcon,
+  documents: CrumpledPaperIcon,
+  messaging: CrumpledPaperIcon,
+  chores: CrumpledPaperIcon,
+  supplies: CrumpledPaperIcon,
+}
 
-	return (
-		<div className="space-y-5">
-			{links.map((link, index) => {
-				const Icon = link.Icon;
-				return (
-					<Link
-						onClick={() =>
-							document.getElementById("sidebar-close")?.click()
-						}
-						href={link.href}
-						key={index}
-						className={cn(
-							"flex items-center gap-2 rounded-sm p-2",
-							{
-								" bg-gray-500 dark:bg-gray-700 text-white ":
-									pathname === link.href,
-							}
-						)}
-					>
-						<Icon />
-						{link.text}
-					</Link>
-				);
-			})}
-		</div>
-	);
+export default function NavLinks({ role }: NavLinksProps) {
+  const pathname = usePathname()
+  const links = getDashboardNavLinks(role)
+
+  return (
+    <div className="space-y-5">
+      {links.map((link) => {
+        const Icon = iconComponents[link.icon]
+        const isActive = pathname === link.href
+
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            onClick={() => document.getElementById("sidebar-close")?.click()}
+            className={cn("flex items-center gap-2 rounded-sm p-2", {
+              " bg-gray-500 text-white dark:bg-gray-700": isActive,
+            })}
+          >
+            <Icon />
+            {link.text}
+          </Link>
+        )
+      })}
+    </div>
+  )
 }

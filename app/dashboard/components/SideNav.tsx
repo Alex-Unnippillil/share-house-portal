@@ -1,40 +1,30 @@
-import React from "react";
-import NavLinks from "./NavLinks";
-
-import { cn } from "@/lib/utils";
-import ModeToggle from '../todo/components/ToggleDarkMode'
-import { Button } from "@/components/ui/button";
-import SignOut from "./SignOut";
+import NavLinks from "./NavLinks"
+import SignOut from "./SignOut"
 import { ThemeToggle } from "@/components/theme-toggle"
-export default function SideNav() {
-	return (
-		<SideBar className=" dark:bg-gradient-dark hidden flex-1 lg:block" />
-	);
+import type { UserRole } from "@/lib/data/users"
+
+interface SideNavProps {
+  role: UserRole
 }
 
-export const SideBar = ({ className }: { className?: string }) => {
-	return (
-		<div className={className}>
-			<div
-				className={cn(
-					"flex size-full flex-col space-y-5 lg:w-96 lg:border-r lg:p-10 "
-				)}
-			>
-				<div className="flex-1 space-y-5">
-					<div className="flex flex-1 items-center gap-2">
-                                        <div>
-                                                <h1 className="text-3xl font-semibold">Roomsily</h1>
-                                                <p className="text-sm text-muted-foreground">www.roomsily household hub</p>
-                                        </div>
-
-						<ThemeToggle />
-					</div>
-					<NavLinks />
-				</div>
-				<div className="">
-					<SignOut />
-				</div>
-			</div>
-		</div>
-	);
-};
+export default function SideNav({ role }: SideNavProps) {
+  return (
+    <div className="hidden flex-1 lg:block">
+      <div className="flex size-full flex-col space-y-5 lg:w-96 lg:border-r lg:p-10">
+        <div className="flex-1 space-y-5">
+          <div className="flex items-center gap-2">
+            <div>
+              <h1 className="text-3xl font-semibold">Roomsily</h1>
+              <p className="text-sm text-muted-foreground">www.roomsily household hub</p>
+            </div>
+            <ThemeToggle />
+          </div>
+          <NavLinks role={role} />
+        </div>
+        <div>
+          <SignOut />
+        </div>
+      </div>
+    </div>
+  )
+}
