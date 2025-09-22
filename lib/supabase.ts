@@ -510,6 +510,76 @@ export type Database = {
         }
         Relationships: []
       }
+      household_settings: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          policy_message: string
+          quiet_hours_end: string
+          quiet_hours_start: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          policy_message?: string
+          quiet_hours_end: string
+          quiet_hours_start: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          policy_message?: string
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_settings_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: true
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "households_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_activities: {
         Row: {
           completed_date: string | null
@@ -1236,6 +1306,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           full_name: string | null
+          household_id: string | null
           id: string
           job_title: string | null
           linkedin_url: string | null
@@ -1256,6 +1327,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string | null
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
@@ -1276,6 +1348,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string | null
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
@@ -1287,7 +1360,15 @@ export type Database = {
           website?: string | null
           xhandle?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reusable_packages: {
         Row: {
@@ -1593,6 +1674,57 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "members_table"
             referencedColumns: ["member_id"]
+          },
+        ]
+      }
+      visitor_requests: {
+        Row: {
+          arrival_at: string
+          created_at: string
+          departure_at: string
+          household_id: string
+          host_profile_id: string
+          id: string
+          reason: string | null
+          status: string
+          visitor_name: string
+        }
+        Insert: {
+          arrival_at: string
+          created_at?: string
+          departure_at: string
+          household_id: string
+          host_profile_id: string
+          id?: string
+          reason?: string | null
+          status?: string
+          visitor_name: string
+        }
+        Update: {
+          arrival_at?: string
+          created_at?: string
+          departure_at?: string
+          household_id?: string
+          host_profile_id?: string
+          id?: string
+          reason?: string | null
+          status?: string
+          visitor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_requests_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_requests_host_profile_id_fkey"
+            columns: ["host_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
