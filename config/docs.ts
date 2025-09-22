@@ -28,6 +28,10 @@ export const docsConfig: DocsConfig = {
       href: "/documents",
     },
     {
+      title: "House Rules",
+      href: "/house-rules",
+    },
+    {
       title: "Messaging",
       href: "/messaging",
     },

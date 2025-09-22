@@ -7,6 +7,7 @@ const expectedEntries = [
   { title: "Payments", href: "/payments" },
   { title: "Bookings", href: "/bookings" },
   { title: "Documents", href: "/documents" },
+  { title: "House Rules", href: "/house-rules" },
   { title: "Messaging", href: "/messaging" },
 ]
 

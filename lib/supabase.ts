@@ -968,6 +968,35 @@ export type Database = {
         }
         Relationships: []
       }
+      house_rules: {
+        Row: {
+          content: string
+          created_by: string
+          published_at: string
+          version: number
+        }
+        Insert: {
+          content: string
+          created_by?: string
+          published_at?: string
+          version: number
+        }
+        Update: {
+          content?: string
+          created_by?: string
+          published_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "house_rules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           created_at: string | null
