@@ -1,38 +1,70 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useMemo, useState } from 'react'
+import { format, parseISO } from 'date-fns'
+
+import { Button } from '@/components/ui/button'
+import type { AmenitySlot } from '@/types/supabase'
+import { toast } from 'sonner'
 
 interface Amenity {
-  id: string;
-  name: string;
-  description: string;
-  duration: string;
-  maxAdvance: string;
+  slug: string
+  name: string
+  durationLabel: string
+  maxAdvanceLabel: string
 }
 
-export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
-  const [loading, setLoading] = useState(false);
+interface AmenityBookingFormProps {
+  amenity: Amenity
+  nextAvailableSlot: AmenitySlot | null
+}
+
+function formatSlot(slot: AmenitySlot): string {
+  return `${format(parseISO(slot.start), 'EEE MMM d · p')} → ${format(parseISO(slot.end), 'p')}`
+}
+
+export function AmenityBookingForm({
+  amenity,
+  nextAvailableSlot,
+}: AmenityBookingFormProps) {
+  const [loading, setLoading] = useState(false)
+
+  const nextSlotLabel = useMemo(() => {
+    if (!nextAvailableSlot) {
+      return null
+    }
+    return formatSlot(nextAvailableSlot)
+  }, [nextAvailableSlot])
 
   const handleBook = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      // Placeholder: open Cal.com or show a toast
-      toast.success(`Opening booking flow for ${amenity.name}`);
+      if (nextAvailableSlot) {
+        toast.success(
+          `Launching booking flow for ${amenity.name} on ${format(
+            parseISO(nextAvailableSlot.start),
+            'MMM d @ p',
+          )}`,
+        )
+      } else {
+        toast.success(`We'll alert the household when a ${amenity.name} slot opens up.`)
+      }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const buttonLabel = nextAvailableSlot ? 'Book next slot' : 'Notify me'
 
   return (
-    <div className="flex items-center justify-between">
-      <Button onClick={handleBook} disabled={loading}>
-        {loading ? 'Booking…' : 'Book now'}
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span className="font-medium">Next availability</span>
+        <span>{nextSlotLabel ?? 'None in window'}</span>
+      </div>
+      <Button onClick={handleBook} disabled={loading} className="w-full">
+        {loading ? 'Checking…' : buttonLabel}
       </Button>
     </div>
-  );
+  )
 }
-
-
-

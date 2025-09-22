@@ -10,8 +10,8 @@ import {
   generateMockPaymentIntentId,
 } from "@/lib/payments/catch-up"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
-import { catchUpBalances } from "@/lib/payments/mock-data"
 import type { CatchUpPaymentSubmissionResult } from "@/types/payments"
+import { loadCatchUpOverview } from "./loaders"
 
 const catchUpPaymentActionSchema = z.object({
   roommateId: z.string().min(1),
@@ -36,7 +36,8 @@ export async function submitCatchUpPayment(
     note,
   } = parsed.data
 
-  const balance = findCatchUpBalance(catchUpBalances, roommateId)
+  const { balances } = await loadCatchUpOverview()
+  const balance = findCatchUpBalance(balances, roommateId)
   if (!balance) {
     throw new Error("Selected roommate is not available for catch-up payments.")
   }

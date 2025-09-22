@@ -1,4 +1,3 @@
-import { Suspense } from "react"
 import {
   Calendar,
   Car,
@@ -21,51 +20,63 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
 import { BookingStats } from "./components/booking-stats"
+import { loadBookingOverview } from "./loaders"
 
 const amenities = [
   {
-    id: "kitchen",
+    slug: "kitchen",
     name: "Kitchen",
     description: "Book the kitchen for cooking or meal prep",
     icon: UtensilsCrossed,
-    duration: "2 hours",
-    maxAdvance: "7 days",
+    durationLabel: "2 hours",
+    maxAdvanceLabel: "7 days",
   },
   {
-    id: "tv-room",
+    slug: "tv-room",
     name: "TV Room",
     description: "Reserve the living room TV for movies or gaming",
     icon: Tv,
-    duration: "3 hours",
-    maxAdvance: "7 days",
+    durationLabel: "3 hours",
+    maxAdvanceLabel: "7 days",
   },
   {
-    id: "playstation",
+    slug: "playstation",
     name: "PlayStation Nook",
     description: "Book the gaming area for console gaming",
     icon: Gamepad2,
-    duration: "2 hours",
-    maxAdvance: "7 days",
+    durationLabel: "2 hours",
+    maxAdvanceLabel: "7 days",
   },
   {
-    id: "parking",
+    slug: "parking",
     name: "Parking Spot",
     description: "Reserve a visitor parking spot",
     icon: Car,
-    duration: "24 hours",
-    maxAdvance: "14 days",
+    durationLabel: "24 hours",
+    maxAdvanceLabel: "14 days",
   },
   {
-    id: "computer",
+    slug: "computer",
     name: "Shared Computer",
     description: "Use the shared computer workstation",
     icon: Monitor,
-    duration: "1 hour",
-    maxAdvance: "3 days",
+    durationLabel: "1 hour",
+    maxAdvanceLabel: "3 days",
   },
 ]
 
-export default function BookingsPage() {
+export default async function BookingsPage() {
+  const overview = await loadBookingOverview(amenities.map((amenity) => amenity.slug))
+
+  const amenityCards = amenities.map((amenity) => {
+    const slots = overview.availability[amenity.slug] ?? []
+    return {
+      ...amenity,
+      slots,
+      nextSlot: slots[0] ?? null,
+    }
+  })
+
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
@@ -74,34 +85,19 @@ export default function BookingsPage() {
             Amenity Bookings
           </h1>
           <p className="text-base text-muted-foreground sm:text-lg">
-            Reserve shared amenities like the kitchen, TV room, parking, and
-            more. Bookings are managed through our Cal.com integration.
+            Reserve shared amenities like the kitchen, TV room, parking, and more.
+            Live availability is powered by our Supabase-backed scheduling RPCs.
           </p>
         </div>
         <Separator />
       </header>
 
-      {/* Stats Overview */}
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-4 w-3/4 rounded bg-muted"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-1/2 rounded bg-muted"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        }
-      >
-        <BookingStats />
-      </Suspense>
+      <BookingStats
+        metrics={overview.metrics}
+        totalAmenities={amenities.length}
+        range={overview.range}
+      />
 
-      {/* Main Content Tabs */}
       <Tabs defaultValue="book" className="space-y-6">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="book">Book Amenity</TabsTrigger>
@@ -110,11 +106,8 @@ export default function BookingsPage() {
 
         <TabsContent value="book" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {amenities.map(({ icon: Icon, ...amenity }) => (
-              <Card
-                key={amenity.id}
-                className="transition-shadow hover:shadow-md"
-              >
+            {amenityCards.map(({ icon: Icon, slots, nextSlot, ...amenity }) => (
+              <Card key={amenity.slug} className="transition-shadow hover:shadow-md">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
                     <Icon className="size-6 text-primary" />
@@ -125,11 +118,18 @@ export default function BookingsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Duration: {amenity.duration}</span>
-                    <span>Max advance: {amenity.maxAdvance}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+                    <span>Duration: {amenity.durationLabel}</span>
+                    <span>Max advance: {amenity.maxAdvanceLabel}</span>
                   </div>
-                  <AmenityBookingForm amenity={amenity} />
+                  <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    {slots.length > 0 ? (
+                      <span>{slots.length} open slot{slots.length === 1 ? '' : 's'} in the next week.</span>
+                    ) : (
+                      <span>No availability detected in the next week.</span>
+                    )}
+                  </div>
+                  <AmenityBookingForm amenity={amenity} nextAvailableSlot={nextSlot} />
                 </CardContent>
               </Card>
             ))}
@@ -137,19 +137,16 @@ export default function BookingsPage() {
         </TabsContent>
 
         <TabsContent value="history" className="space-y-6">
-          <BookingHistory />
+          <BookingHistory items={overview.history} />
         </TabsContent>
       </Tabs>
 
-      {/* Feature Highlights */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Calendar className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">
-                Smart Scheduling
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Smart Scheduling</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -163,9 +160,7 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Tv className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">
-                Real-time Availability
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Real-time Availability</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -184,8 +179,7 @@ export default function BookingsPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="text-xs">
-              Booking limits prevent overuse while ensuring everyone gets
-              access.
+              Booking limits prevent overuse while ensuring everyone gets access.
             </CardDescription>
           </CardContent>
         </Card>
@@ -194,9 +188,7 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Car className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">
-                Mobile Friendly
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Mobile Friendly</CardTitle>
             </div>
           </CardHeader>
           <CardContent>

@@ -8,17 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
-import {
-  calculateOutstanding,
-  formatAutopayDay,
-  getNextOutstandingCharge,
-} from "@/lib/payments/catch-up"
+import { formatAutopayDay } from "@/lib/payments/catch-up"
 import { formatCurrency } from "@/lib/payments/currency"
-import { catchUpBalances } from "@/lib/payments/mock-data"
 import type { CatchUpBalance } from "@/types/payments"
+import { loadCatchUpOverview } from "./loaders"
 
 const paymentHighlights = [
   {
@@ -43,38 +38,6 @@ const paymentHighlights = [
   },
 ]
 
-const outstandingSummaries = catchUpBalances.map((balance) => {
-  const outstanding = calculateOutstanding(balance.charges)
-  const nextCharge = getNextOutstandingCharge(balance.charges)
-  return { balance, outstanding, nextCharge }
-})
-
-const totalOutstanding = outstandingSummaries.reduce(
-  (sum, item) => sum + item.outstanding,
-  0,
-)
-
-const activeAutopays = catchUpBalances.filter(
-  (balance) => balance.autopayStatus === "active",
-).length
-const pausedAutopays = catchUpBalances.filter(
-  (balance) => balance.autopayStatus === "paused",
-).length
-const disabledAutopays = catchUpBalances.filter(
-  (balance) => balance.autopayStatus === "disabled",
-).length
-
-const autopCoveragePercentage =
-  catchUpBalances.length > 0
-    ? Math.round((activeAutopays / catchUpBalances.length) * 100)
-    : 0
-
-const defaultCurrency = catchUpBalances[0]?.currency ?? "USD"
-
-const roommateSummaries = [...outstandingSummaries].sort(
-  (a, b) => b.outstanding - a.outstanding,
-)
-
 function describeAutopayStatus(balance: CatchUpBalance) {
   const autopayDay = formatAutopayDay(balance.autopayDay)
 
@@ -94,7 +57,21 @@ function formatFullDate(date: string) {
   return format(parseISO(date), "MMM d, yyyy")
 }
 
-export default function PaymentsPage() {
+export default async function PaymentsPage() {
+  const {
+    balances,
+    roommateSummaries: roommateSummariesSorted,
+    outstandingTotal,
+    autopay,
+    defaultCurrency,
+  } = await loadCatchUpOverview()
+
+  const roommateCount = balances.length
+  const autopCoveragePercentage = autopay.coverage
+  const activeAutopays = autopay.active
+  const pausedAutopays = autopay.paused
+  const disabledAutopays = autopay.disabled
+
   return (
     <div className="container max-w-5xl space-y-10 py-12">
       <header className="space-y-4">
@@ -135,7 +112,7 @@ export default function PaymentsPage() {
                     {formatCurrency(totalOutstanding, defaultCurrency)}
                   </dd>
                   <p className="text-xs text-muted-foreground">
-                    {catchUpBalances.length} roommates tracked
+                    {roommateCount} roommate{roommateCount === 1 ? '' : 's'} tracked
                   </p>
                 </div>
                 <div className="space-y-1 rounded-lg border bg-muted/40 p-4">
@@ -143,7 +120,7 @@ export default function PaymentsPage() {
                     Autopay coverage
                   </dt>
                   <dd className="text-lg font-semibold">
-                    {activeAutopays}/{catchUpBalances.length}
+                    {activeAutopays}/{roommateCount}
                   </dd>
                   <p className="text-xs text-muted-foreground">
                     {autopCoveragePercentage}% of roommates on autopay
@@ -171,7 +148,7 @@ export default function PaymentsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {roommateSummaries.map(({ balance, outstanding, nextCharge }) => (
+              {roommateSummariesSorted.map(({ balance, outstanding, nextCharge }) => (
                 <div
                   key={balance.roommateId}
                   className="flex flex-wrap items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4"
@@ -214,7 +191,7 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
         </div>
-        <CatchUpPaymentCard balances={catchUpBalances} />
+        <CatchUpPaymentCard balances={balances} />
       </section>
     </div>
   )
