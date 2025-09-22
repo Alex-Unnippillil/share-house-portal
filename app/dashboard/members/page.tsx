@@ -1,19 +1,26 @@
 import React from "react";
 import MemberTable from "./components/MemberTable";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import SearchMembers from "./components/SearchMembers";
 import CreateMember from "./components/create/CreateMember";
+import { BulkAdminActions } from "./components/BulkAdminActions";
+import { listRecentAdminJobs } from "./actions/admin-jobs";
 
-export default function Members() {
-	return (
-		<div className="w-full space-y-5 overflow-y-auto px-3">
-			<h1 className="text-3xl font-bold">Members</h1>
-			<div className="flex gap-2">
-				<SearchMembers />
-				<CreateMember />
-			</div>
-			<MemberTable />
-		</div>
-	);
+export default async function Members() {
+        const jobs = await listRecentAdminJobs();
+
+        return (
+                <div className="w-full space-y-6 overflow-y-auto px-3 pb-10">
+                        <h1 className="text-3xl font-bold">Members</h1>
+                        <p className="text-sm text-muted-foreground">
+                                Manage individual members or schedule large updates with the admin
+                                queue.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                                <SearchMembers />
+                                <CreateMember />
+                        </div>
+                        <BulkAdminActions initialJobs={jobs} />
+                        <MemberTable />
+                </div>
+        );
 }
