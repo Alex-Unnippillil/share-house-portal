@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react'
 import useSupabaseBrowser from '@/utils/supabase-browser'
 import Image from 'next/image'
+import { useSupabaseConnectivity } from '@/components/network/supabase-connectivity-provider'
+import { stableHash } from '@/lib/utils'
 
 export default function Avatar({
   uid,
@@ -17,6 +19,7 @@ export default function Avatar({
   const supabase = useSupabaseBrowser()
   const [avatarUrl, setAvatarUrl] = useState<string | null>(url)
   const [uploading, setUploading] = useState(false)
+  const { enqueueMutation, status } = useSupabaseConnectivity()
 
   useEffect(() => {
     async function downloadImage(path: string) {
@@ -48,14 +51,36 @@ export default function Avatar({
       const fileExt = file.name.split('.').pop()
       const filePath = `${uid}-${Math.random()}.${fileExt}`
 
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file)
+      const mutationKey = `avatar-upload:${stableHash({
+        uid,
+        name: file.name,
+        modified: file.lastModified,
+        size: file.size,
+      })}`
 
-      if (uploadError) {
-        throw uploadError
+      const mutationPromise = enqueueMutation(mutationKey, async () => {
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file)
+
+        if (uploadError) {
+          throw uploadError
+        }
+
+        onUpload(filePath)
+      })
+
+      if (status === 'online') {
+        await mutationPromise
+      } else {
+        alert('You are offline. We will upload your avatar when the connection returns.')
+        mutationPromise.catch(error => {
+          console.error('Error uploading avatar: ', error)
+          alert('Error uploading avatar!')
+        })
       }
-
-      onUpload(filePath)
     } catch (error) {
+      console.log('Error uploading avatar: ', error)
       alert('Error uploading avatar!')
     } finally {
       setUploading(false)

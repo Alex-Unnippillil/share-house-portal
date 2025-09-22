@@ -6,6 +6,8 @@ import useSupabaseBrowser from '@/utils/supabase-browser'
 import { type User } from '@supabase/supabase-js'
 import Avatar from './avatar'
 import { Input } from '@/components/ui/input'
+import { useSupabaseConnectivity } from '@/components/network/supabase-connectivity-provider'
+import { stableHash } from '@/lib/utils'
 
 export default function AccountForm({ user }: { user: User | null }) {
   const supabase = useSupabaseBrowser()
@@ -16,6 +18,7 @@ export default function AccountForm({ user }: { user: User | null }) {
   const [avatar_url, setAvatarUrl] = useState<string | null>(null)
 const [email, setEmail] = useState<string | null>(null)
 const [waddress, setWaddress] = useState<string | null>(null)
+  const { enqueueMutation, status } = useSupabaseConnectivity()
 const languages = [
   { label: "English", value: "en" },
   { label: "French", value: "fr" },
@@ -61,39 +64,74 @@ const languages = [
     getProfile()
   }, [user, getProfile])
 
-  async function updateProfile({
-    username,
-    website,
-    avatar_url,
-    email,
-  }: {
-    username: string | null
-    fullname: string | null
-    website: string | null
-    avatar_url: string | null
-    email: string | null
-
-  }) {
-    try {
+  const updateProfile = useCallback(
+    async ({
+      username,
+      fullname: fullNameValue,
+      website,
+      avatar_url,
+      email,
+    }: {
+      username: string | null
+      fullname: string | null
+      website: string | null
+      avatar_url: string | null
+      email: string | null
+    }) => {
       setLoading(true)
 
-      const { error } = await supabase.from('profiles').upsert({
+      const profilePayload = {
         id: user?.id as string,
-        full_name: fullname,
+        full_name: fullNameValue ?? fullname,
         username,
         website,
         avatar_url,
         email,
         updated_at: new Date().toISOString(),
+      }
+
+      const mutationKey = `profile-update:${stableHash({
+        id: user?.id ?? 'unknown',
+        full_name: profilePayload.full_name,
+        username,
+        website,
+        avatar_url,
+        email,
+      })}`
+
+      const mutationPromise = enqueueMutation(mutationKey, async () => {
+        const { error } = await supabase.from('profiles').upsert(profilePayload)
+
+        if (error) throw error
       })
-      if (error) throw error
-      alert('Account updated!')
-    } catch (error) {
-      alert('Error updating the data!')
-    } finally {
+
+      if (status === 'online') {
+        try {
+          await mutationPromise
+          alert('Account updated!')
+        } catch (error) {
+          console.error('Error updating the data!', error)
+          alert('Error updating the data!')
+        } finally {
+          setLoading(false)
+        }
+        return
+      }
+
+      alert('You are offline. We saved your changes and will sync when you reconnect.')
+      mutationPromise
+        .then(() => {
+          alert('Account updated!')
+        })
+        .catch(error => {
+          console.error('Error updating the data!', error)
+          alert('Error updating the data!')
+        })
+
       setLoading(false)
-    }
-  }
+    },
+    [enqueueMutation, fullname, status, supabase, user?.id]
+  )
 
   return (
     <div className="                                   w-full space-y-8 px-2 py-8">
@@ -104,7 +142,7 @@ const languages = [
       size={144}
       onUpload={(url) => {
         setAvatarUrl(url)
-        updateProfile({ fullname, username, website, email, avatar_url: url })
+        void updateProfile({ fullname, username, website, email, avatar_url: url })
       }}
     />
  <div className="flex flex-col">
@@ -148,7 +186,7 @@ const languages = [
 
         <button
           className={buttonVariants({ variant: "outline" })}
-          onClick={() => updateProfile({ fullname, username, website, email, avatar_url })}
+          onClick={() => void updateProfile({ fullname, username, website, email, avatar_url })}
           disabled={loading}
         >
           {loading ? 'Loading ...' : 'Update Account'}

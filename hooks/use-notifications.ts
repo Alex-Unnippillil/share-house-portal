@@ -2,6 +2,7 @@
 
 import type { InAppNotification, NotificationData } from "@/lib/notifications"
 import { useToast } from "@/components/ui/use-toast"
+import { fetcher, stableHash } from "@/lib/utils"
 
 type NotificationResult = { success: boolean; error?: string }
 type BulkNotificationResult = {
@@ -10,27 +11,22 @@ type BulkNotificationResult = {
 }
 
 async function postNotification<T>(payload: unknown): Promise<T> {
-  const response = await fetch("/api/notifications", {
+  const idempotencyKey = `notifications:${stableHash(payload)}`
+
+  const data = (await fetcher<T | { error?: string }>("/api/notifications", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  })
+    idempotencyKey,
+  })) as T | { error?: string }
 
-  const data = (await response.json().catch(() => null)) as
-    | T
-    | { error?: string }
-    | null
-
-  if (!response.ok || !data) {
-    const message =
-      data &&
-      typeof data === "object" &&
-      "error" in data &&
-      typeof data.error === "string"
-        ? data.error
-        : "Failed to send notification"
-
-    throw new Error(message)
+  if (
+    data &&
+    typeof data === "object" &&
+    "error" in data &&
+    typeof (data as { error?: unknown }).error === "string"
+  ) {
+    throw new Error((data as { error: string }).error)
   }
 
   return data as T

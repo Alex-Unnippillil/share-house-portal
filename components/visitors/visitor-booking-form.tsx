@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { useSupabaseConnectivity } from "@/components/network/supabase-connectivity-provider";
+import { stableHash } from "@/lib/utils";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -41,6 +43,8 @@ export function VisitorBookingForm() {
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
+  const { enqueueMutation, status } = useSupabaseConnectivity();
+  const isOnline = status === "online";
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
@@ -57,91 +61,123 @@ export function VisitorBookingForm() {
   const onSubmit = async (data: VisitorBookingFormData) => {
     setIsSubmitting(true);
 
-    try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+    const mutationKey = `visitor-booking:${stableHash({
+      guestEmail: data.guestEmail.toLowerCase(),
+      checkIn: data.checkInDate.toISOString(),
+      checkOut: data.checkOutDate.toISOString(),
+      purpose: data.purpose.trim().toLowerCase(),
+    })}`
 
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, email, unit_id')
-        .eq('id', user.id)
-        .single();
+    const mutationPromise = enqueueMutation(mutationKey, async () => {
+      try {
+        const {
+          data: { user }
+        } = await supabase.auth.getUser()
 
-      if (!profile) throw new Error("Profile not found");
+        if (!user) throw new Error("Not authenticated")
 
-      // Get roommates and property manager
-      // This assumes there's a units table with tenant relationships
-      const { data: unitData } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role')
-        .eq('unit_id', profile.unit_id!)
-        .neq('id', user.id);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, email, unit_id')
+          .eq('id', user.id)
+          .single()
 
-      const roommates = unitData?.filter(p => p.role === 'tenant' || p.role === 'roommate') || [];
-      const propertyManager = unitData?.find(p => p.role === 'property_manager');
+        if (!profile) throw new Error("Profile not found")
 
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
-      }
+        const { data: unitData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role')
+          .eq('unit_id', profile.unit_id!)
+          .neq('id', user.id)
 
-      // Create visitor booking record
-      const { data: booking, error: bookingError } = await (supabase as any)
-        .from('visitor_logs')
-        .insert({
-          guest_name: data.guestName,
-          guest_email: data.guestEmail,
-          guest_phone: data.guestPhone,
-          host_id: user.id,
-          check_in_date: data.checkInDate.toISOString(),
-          check_out_date: data.checkOutDate.toISOString(),
+        const roommates = unitData?.filter(
+          (p: any) => p.role === 'tenant' || p.role === 'roommate'
+        ) || []
+        const propertyManager = unitData?.find((p: any) => p.role === 'property_manager')
+
+        if (!propertyManager) {
+          throw new Error("Property manager not found for this unit")
+        }
+
+        const { error: bookingError } = await (supabase as any)
+          .from('visitor_logs')
+          .insert({
+            guest_name: data.guestName,
+            guest_email: data.guestEmail,
+            guest_phone: data.guestPhone,
+            host_id: user.id,
+            check_in_date: data.checkInDate.toISOString(),
+            check_out_date: data.checkOutDate.toISOString(),
+            purpose: data.purpose,
+            emergency_contact: data.emergencyContact,
+            special_notes: data.specialNotes,
+            status: 'pending',
+          })
+          .select()
+          .single()
+
+        if (bookingError) throw bookingError
+
+        await notifyVisitorBooking({
+          guestName: data.guestName,
+          hostName: profile.full_name || user.email || 'Unknown',
+          checkInDate: format(data.checkInDate, 'MMM dd, yyyy'),
+          checkOutDate: format(data.checkOutDate, 'MMM dd, yyyy'),
           purpose: data.purpose,
-          emergency_contact: data.emergencyContact,
-          special_notes: data.specialNotes,
-          status: 'pending',
+          roommates: roommates.map((r: any) => ({
+            id: r.id,
+            email: r.email || '',
+            name: r.full_name || r.email || 'Unknown',
+          })),
+          propertyManager: {
+            id: propertyManager.id,
+            email: propertyManager.email || '',
+            name: propertyManager.full_name || propertyManager.email || 'Unknown',
+          },
         })
-        .select()
-        .single();
 
-      if (bookingError) throw bookingError;
+        toast({
+          title: "Visitor booking submitted",
+          description: "Your visitor booking has been submitted and notifications sent.",
+        })
 
-      // Send notifications
-      await notifyVisitorBooking({
-        guestName: data.guestName,
-        hostName: profile.full_name || user.email || 'Unknown',
-        checkInDate: format(data.checkInDate, 'MMM dd, yyyy'),
-        checkOutDate: format(data.checkOutDate, 'MMM dd, yyyy'),
-        purpose: data.purpose,
-        roommates: roommates.map(r => ({
-          id: r.id,
-          email: r.email || '',
-          name: r.full_name || r.email || 'Unknown',
-        })),
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
-        },
-      });
+        form.reset()
+      } catch (error) {
+        console.error('Error submitting visitor booking:', error)
+        toast({
+          title: "Error",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Failed to submit visitor booking",
+          variant: "destructive",
+        })
+        throw error
+      }
+    })
 
-      toast({
-        title: "Visitor booking submitted",
-        description: "Your visitor booking has been submitted and notifications sent.",
-      });
-
-      form.reset();
-    } catch (error) {
-      console.error('Error submitting visitor booking:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit visitor booking",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    if (isOnline) {
+      try {
+        await mutationPromise
+      } catch (error) {
+        console.error('Visitor booking submission failed:', error)
+      } finally {
+        setIsSubmitting(false)
+      }
+      return
     }
-  };
+
+    toast({
+      title: "Working offline",
+      description: "We'll submit your visitor booking once you're back online.",
+    })
+
+    mutationPromise.catch(error => {
+      console.error('Queued visitor booking failed:', error)
+    })
+
+    setIsSubmitting(false)
+  }
 
   return (
     <Form {...form}>

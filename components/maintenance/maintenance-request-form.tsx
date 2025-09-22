@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { useSupabaseConnectivity } from "@/components/network/supabase-connectivity-provider";
+import { stableHash } from "@/lib/utils";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -48,6 +50,8 @@ export function MaintenanceRequestForm() {
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
+  const { enqueueMutation, status } = useSupabaseConnectivity();
+  const isOnline = status === "online";
 
   const form = useForm<MaintenanceRequestFormData>({
     resolver: zodResolver(maintenanceRequestSchema),
@@ -63,84 +67,115 @@ export function MaintenanceRequestForm() {
   const onSubmit = async (data: MaintenanceRequestFormData) => {
     setIsSubmitting(true);
 
-    try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+    const mutationKey = `maintenance-request:${stableHash({
+      title: data.title.trim().toLowerCase(),
+      description: data.description.trim().toLowerCase(),
+      priority: data.priority,
+      location: (data.location || '').trim().toLowerCase(),
+    })}`
 
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, unit_id')
-        .eq('id', user.id)
-        .single();
+    const mutationPromise = enqueueMutation(mutationKey, async () => {
+      try {
+        const {
+          data: { user }
+        } = await supabase.auth.getUser()
 
-      if (!profile) throw new Error("Profile not found");
+        if (!user) throw new Error("Not authenticated")
 
-      if (!profile.unit_id) {
-        throw new Error("User is not assigned to a unit");
-      }
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, unit_id')
+          .eq('id', user.id)
+          .single()
 
-      // Get property manager for this unit
-      const { data: propertyManager } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .eq('unit_id', profile.unit_id!)
-        .eq('role', 'property_manager')
-        .single();
+        if (!profile) throw new Error("Profile not found")
 
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
-      }
+        if (!profile.unit_id) {
+          throw new Error("User is not assigned to a unit")
+        }
 
-      // Create maintenance request record
-      const { data: request, error: requestError } = await (supabase as any)
-        .from('maintenance_requests')
-        .insert({
+        const { data: propertyManager } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .eq('unit_id', profile.unit_id!)
+          .eq('role', 'property_manager')
+          .single()
+
+        if (!propertyManager) {
+          throw new Error("Property manager not found for this unit")
+        }
+
+        const { error: requestError } = await (supabase as any)
+          .from('maintenance_requests')
+          .insert({
+            title: data.title,
+            description: data.description,
+            priority: data.priority,
+            category: data.category || null,
+            location: data.location || null,
+            requested_by: user.id,
+            unit_id: (profile as any).unit_id,
+            status: 'pending',
+          })
+          .select()
+          .single()
+
+        if (requestError) throw requestError
+
+        await notifyMaintenanceRequest({
+          requesterName: (profile as any).full_name || user.email || 'Unknown',
           title: data.title,
           description: data.description,
           priority: data.priority,
-          category: data.category || null,
-          location: data.location || null,
-          requested_by: user.id,
-          unit_id: (profile as any).unit_id,
-          status: 'pending',
+          propertyManager: {
+            id: propertyManager.id,
+            email: propertyManager.email || '',
+            name: propertyManager.full_name || propertyManager.email || 'Unknown',
+          },
         })
-        .select()
-        .single();
 
-      if (requestError) throw requestError;
+        toast({
+          title: "Maintenance request submitted",
+          description: "Your maintenance request has been submitted and notifications sent.",
+        })
 
-      // Send notifications
-      await notifyMaintenanceRequest({
-        requesterName: (profile as any).full_name || user.email || 'Unknown',
-        title: data.title,
-        description: data.description,
-        priority: data.priority,
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
-        },
-      });
+        form.reset()
+      } catch (error) {
+        console.error('Error submitting maintenance request:', error)
+        toast({
+          title: "Error",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Failed to submit maintenance request",
+          variant: "destructive",
+        })
+        throw error
+      }
+    })
 
-      toast({
-        title: "Maintenance request submitted",
-        description: "Your maintenance request has been submitted and notifications sent.",
-      });
-
-      form.reset();
-    } catch (error) {
-      console.error('Error submitting maintenance request:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit maintenance request",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    if (isOnline) {
+      try {
+        await mutationPromise
+      } catch (error) {
+        console.error('Maintenance request submission failed:', error)
+      } finally {
+        setIsSubmitting(false)
+      }
+      return
     }
-  };
+
+    toast({
+      title: "Working offline",
+      description: "We'll submit your maintenance request once you're back online.",
+    })
+
+    mutationPromise.catch(error => {
+      console.error('Queued maintenance request failed:', error)
+    })
+
+    setIsSubmitting(false)
+  }
 
   return (
     <Form {...form}>

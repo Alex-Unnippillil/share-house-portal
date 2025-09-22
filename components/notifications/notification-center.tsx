@@ -9,7 +9,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
-import { cn } from "@/lib/utils";
+import { cn, stableHash } from "@/lib/utils";
+import { useSupabaseConnectivity } from "@/components/network/supabase-connectivity-provider";
 
 interface Notification {
   id: string;
@@ -28,6 +29,7 @@ export function NotificationCenter() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
+  const { enqueueMutation } = useSupabaseConnectivity();
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -83,71 +85,99 @@ export function NotificationCenter() {
     };
   }, [fetchNotifications, supabase, toast]);
 
-  const markAsRead = async (notificationId: string) => {
-    try {
+  const markAsRead = (notificationId: string) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
+    )
+    setUnreadCount(prev => Math.max(0, prev - 1))
+
+    const mutationKey = `notifications:mark-read:${notificationId}`
+
+    const mutation = enqueueMutation(mutationKey, async () => {
       const { error } = await (supabase as any)
         .from('notifications')
         .update({ read: true })
-        .eq('id', notificationId);
+        .eq('id', notificationId)
 
-      if (error) throw error;
+      if (error) throw error
+    })
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-
-      if (unreadIds.length === 0) return;
-
-      const { error } = await (supabase as any)
-        .from('notifications')
-        .update({ read: true })
-        .in('id', unreadIds);
-
-      if (error) throw error;
-
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
-
+    mutation.catch(error => {
+      console.error('Failed to mark notification as read:', error)
       toast({
-        title: "All notifications marked as read",
-      });
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
-    }
-  };
+        title: "Sync failed",
+        description: "We couldn't update that notification. We'll refresh your inbox.",
+        variant: "destructive",
+      })
+      fetchNotifications()
+    })
+  }
 
-  const deleteNotification = async (notificationId: string) => {
-    try {
+  const markAllAsRead = () => {
+    const unreadIds = notifications.filter(n => !n.read).map(n => n.id)
+
+    if (unreadIds.length === 0) return
+
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    setUnreadCount(0)
+
+    const mutationKey = `notifications:mark-all:${stableHash(unreadIds)}`
+
+    const mutation = enqueueMutation(mutationKey, async () => {
+      const { error } = await (supabase as any)
+        .from('notifications')
+        .update({ read: true })
+        .in('id', unreadIds)
+
+      if (error) throw error
+    })
+
+    mutation
+      .then(() => {
+        toast({
+          title: "All notifications marked as read",
+        })
+      })
+      .catch(error => {
+        console.error('Failed to mark all notifications as read:', error)
+        toast({
+          title: "Sync failed",
+          description: "We couldn't update notifications. We'll refresh your inbox.",
+          variant: "destructive",
+        })
+        fetchNotifications()
+      })
+  }
+
+  const deleteNotification = (notificationId: string) => {
+    const deletedNotification = notifications.find(n => n.id === notificationId)
+    setNotifications(prev => prev.filter(n => n.id !== notificationId))
+
+    if (deletedNotification && !deletedNotification.read) {
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    }
+
+    const mutationKey = `notifications:delete:${notificationId}`
+
+    const mutation = enqueueMutation(mutationKey, async () => {
       const { error } = await (supabase as any)
         .from('notifications')
         .delete()
-        .eq('id', notificationId);
+        .eq('id', notificationId)
 
-      if (error) throw error;
+      if (error) throw error
+    })
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
-      if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error('Failed to delete notification:', error);
-    }
-  };
+    mutation.catch(error => {
+      console.error('Failed to delete notification:', error)
+      toast({
+        title: "Sync failed",
+        description: "We couldn't delete that notification. We'll refresh your inbox.",
+        variant: "destructive",
+      })
+      fetchNotifications()
+    })
+  }
 
   const getTypeColor = (type: string) => {
     switch (type) {
