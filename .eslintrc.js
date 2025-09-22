@@ -10,7 +10,7 @@ module.exports = {
       "prettier",
       "plugin:tailwindcss/recommended",
     ],
-    plugins: ["tailwindcss"],
+    plugins: ["tailwindcss", "react"],
     rules: {
       "@next/next/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
@@ -29,6 +29,20 @@ module.exports = {
       {
         files: ["*.ts", "*.tsx"],
         parser: "@typescript-eslint/parser",
+      },
+      {
+        files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}"],
+        rules: {
+          "react/jsx-no-bind": [
+            "warn",
+            {
+              allowArrowFunctions: false,
+              allowBind: false,
+              allowFunctions: false,
+              ignoreRefs: true,
+            },
+          ],
+        },
       },
     ],
   }

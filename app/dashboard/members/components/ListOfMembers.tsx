@@ -2,44 +2,48 @@ import React from "react";
 import { TrashIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import EditMember from "./edit/EditMember";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+const SAMPLE_MEMBERS = [
+        {
+                id: "member-admin",
+                name: "Admin Member",
+                role: "admin",
+                created_at: new Date().toDateString(),
+                status: "active",
+        },
+        {
+                id: "member-user",
+                name: "Non Admin User",
+                role: "user",
+                created_at: new Date().toDateString(),
+                status: "active",
+        },
+        {
+                id: "member-administrator",
+                name: "Administrator",
+                role: "admin",
+                created_at: new Date().toDateString(),
+                status: "resigned",
+        },
+        {
+                id: "member-satoshi",
+                name: "Satoshi",
+                role: "user",
+                created_at: new Date().toDateString(),
+                status: "active",
+        },
+];
+
 export default function ListOfMembers() {
-	const members = [
-		{
-			name: "Admin Member",
-			role: "admin",
-			created_at: new Date().toDateString(),
-			status: "active",
-		},
-		{
-			name: "Non Admin User",
-			role: "user",
-			created_at: new Date().toDateString(),
-			status: "active",
-		},
-		{
-			name: "Administrator",
-			role: "admin",
-			created_at: new Date().toDateString(),
-			status: "resigned",
-		},
-		{
-			name: "Satoshi",
-			role: "user",
-			created_at: new Date().toDateString(),
-			status: "active",
-		},
-	];
-	return (
-		<div className="mx-2 rounded-sm bg-white dark:bg-inherit">
-			{members.map((member, index) => {
-				return (
-					<div
-						className=" grid grid-cols-5  rounded-sm  p-3 align-middle font-normal"
-						key={index}
-					>
+        return (
+                <div className="mx-2 rounded-sm bg-white dark:bg-inherit">
+                        {SAMPLE_MEMBERS.map((member) => {
+                                return (
+                                        <div
+                                                className=" grid grid-cols-5  rounded-sm  p-3 align-middle font-normal"
+                                                key={member.id}
+                                        >
 						<h1>{member.name}</h1>
 
 						<div>

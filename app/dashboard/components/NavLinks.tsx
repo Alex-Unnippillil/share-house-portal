@@ -1,10 +1,32 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase-browser";
+
+type DashboardLink = {
+        id: string;
+        href: string;
+        text: string;
+        Icon: typeof PersonIcon;
+};
+
+const LANDLORD_LINKS: DashboardLink[] = [
+        { id: "members", href: "/dashboard/members", text: "Members", Icon: PersonIcon },
+        { id: "payments", href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+        { id: "documents", href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
+        { id: "messaging", href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+];
+
+const TENANT_LINKS: DashboardLink[] = [
+        { id: "payments", href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+        { id: "documents", href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
+        { id: "messaging", href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+        { id: "chores", href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
+        { id: "supplies", href: "/supplies", text: "Supplies", Icon: CrumpledPaperIcon },
+];
 
 export default function NavLinks() {
 	const pathname = usePathname();
@@ -32,34 +54,22 @@ export default function NavLinks() {
 		load();
 	}, []);
 
-	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
-
-	const links = isLandlord
-		? [
-			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
-		: [
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-			{ href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
-			{ href: "/supplies", text: "Supplies", Icon: CrumpledPaperIcon },
-		];
+        const isLandlord =
+                role === "property_manager" || role === "admin" || role === "landlord";
+        const links = isLandlord ? LANDLORD_LINKS : TENANT_LINKS;
+        const handleSidebarClose = useCallback(() => {
+                document.getElementById("sidebar-close")?.click();
+        }, []);
 
 	return (
 		<div className="space-y-5">
-			{links.map((link, index) => {
-				const Icon = link.Icon;
-				return (
-					<Link
-						onClick={() =>
-							document.getElementById("sidebar-close")?.click()
-						}
-						href={link.href}
-						key={index}
+                        {links.map((link) => {
+                                const Icon = link.Icon;
+                                return (
+                                        <Link
+                                                onClick={handleSidebarClose}
+                                                href={link.href}
+                                                key={link.id}
 						className={cn(
 							"flex items-center gap-2 rounded-sm p-2",
 							{

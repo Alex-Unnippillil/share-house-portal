@@ -25,18 +25,18 @@ import { toast } from "@/components/ui/use-toast";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 
+const ROLE_OPTIONS = ["admin", "user"] as const;
+const STATUS_OPTIONS = ["active", "resigned"] as const;
+
 const FormSchema = z.object({
-	role: z.enum(["admin", "user"]),
-	status: z.enum(["active", "resigned"]),
+        role: z.enum(["admin", "user"]),
+        status: z.enum(["active", "resigned"]),
 });
 
 export default function AdvanceForm() {
-	const roles = ["admin", "user"];
-	const status = ["active", "resigned"];
-
-	const form = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
-		defaultValues: {
+        const form = useForm<z.infer<typeof FormSchema>>({
+                resolver: zodResolver(FormSchema),
+                defaultValues: {
 			role: "user",
 			status: "active",
 		},
@@ -77,14 +77,14 @@ export default function AdvanceForm() {
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									{roles.map((role, index) => {
-										return (
-											<SelectItem
-												value={role}
-												key={index}
-											>
-												{role}
-											</SelectItem>
+                                                                        {ROLE_OPTIONS.map((role) => {
+                                                                                return (
+                                                                                        <SelectItem
+                                                                                                value={role}
+                                                                                                key={role}
+                                                                                        >
+                                                                                                {role}
+                                                                                        </SelectItem>
 										);
 									})}
 								</SelectContent>
@@ -110,14 +110,14 @@ export default function AdvanceForm() {
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									{status.map((status, index) => {
-										return (
-											<SelectItem
-												value={status}
-												key={index}
-											>
-												{status}
-											</SelectItem>
+                                                                        {STATUS_OPTIONS.map((status) => {
+                                                                                return (
+                                                                                        <SelectItem
+                                                                                                value={status}
+                                                                                                key={status}
+                                                                                        >
+                                                                                                {status}
+                                                                                        </SelectItem>
 										);
 									})}
 								</SelectContent>

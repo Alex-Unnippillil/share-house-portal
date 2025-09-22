@@ -23,10 +23,10 @@ export function MainNav({ items }: MainNavProps) {
       {items?.length ? (
         <nav className="flex gap-6">
           {items?.map(
-            (item, index) =>
+            (item) =>
               item.href && (
                 <Link
-                  key={index}
+                  key={item.href ?? item.title}
                   href={item.href}
                   className={cn(
                     "flex items-center text-sm font-medium text-muted-foreground",
