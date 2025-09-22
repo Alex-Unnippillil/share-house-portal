@@ -1522,6 +1522,44 @@ export type Database = {
           },
         ]
       }
+      purchases: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          purchased_at: string | null
+          quantity: number | null
+          supply_item_id: string
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          purchased_at?: string | null
+          quantity?: number | null
+          supply_item_id: string
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          purchased_at?: string | null
+          quantity?: number | null
+          supply_item_id?: string
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_supply_item_id_fkey",
+            columns: ["supply_item_id"],
+            isOneToOne: false,
+            referencedRelation: "supply_items",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       supply_chain_data: {
         Row: {
           created_at: string | null
@@ -1557,6 +1595,71 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      supply_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          unit_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      to_buy_items: {
+        Row: {
+          created_at: string | null
+          fulfilled_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          quantity: number | null
+          supply_item_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          quantity?: number | null
+          supply_item_id: string
+        }
+        Update: {
+          created_at?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          quantity?: number | null
+          supply_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "to_buy_items_supply_item_id_fkey",
+            columns: ["supply_item_id"],
+            isOneToOne: false,
+            referencedRelation: "supply_items",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       todos: {
         Row: {
