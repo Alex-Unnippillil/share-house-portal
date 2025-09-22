@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronRight, Star, Zap, Shield } from "lucide-react"
 import { Contact } from '@/components/forms/contact'
+import { POLICY_PAGE_REVALIDATE_SECONDS } from '@/config/isr'
+
+export const dynamic = 'error'
+export const revalidate = POLICY_PAGE_REVALIDATE_SECONDS
 
 export default function AboutPage() {
   return (

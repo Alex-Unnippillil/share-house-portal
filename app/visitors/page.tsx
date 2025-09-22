@@ -1,5 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VisitorBookingForm } from "@/components/visitors/visitor-booking-form";
+import { PRODUCT_MARKETING_REVALIDATE_SECONDS } from '@/config/isr'
+
+export const dynamic = 'force-static'
+export const revalidate = PRODUCT_MARKETING_REVALIDATE_SECONDS
 
 const visitorHighlights = [
   {

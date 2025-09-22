@@ -19,6 +19,10 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import { catchUpBalances } from "@/lib/payments/mock-data"
 import type { CatchUpBalance } from "@/types/payments"
+import { PRODUCT_MARKETING_REVALIDATE_SECONDS } from '@/config/isr'
+
+export const dynamic = 'force-static'
+export const revalidate = PRODUCT_MARKETING_REVALIDATE_SECONDS
 
 const paymentHighlights = [
   {

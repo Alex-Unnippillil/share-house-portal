@@ -1,4 +1,4 @@
- import type { Metadata, Viewport } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -13,7 +13,11 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { cn } from "@/lib/utils"
+import { DEFAULT_DYNAMIC, DEFAULT_REVALIDATE } from '@/config/isr'
 const inter = Inter({ subsets: ['latin'] })
+
+export const dynamic = DEFAULT_DYNAMIC
+export const revalidate = DEFAULT_REVALIDATE
 
 export const metadata: Metadata = {
   title: {
