@@ -1,62 +1,86 @@
 "use client"
 
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
-const data = [
-  {
-    name: "Jan",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Feb",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Mar",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Apr",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "May",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jun",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jul",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Aug",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Sep",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Oct",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Nov",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Dec",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-]
+import type { Database } from "@/lib/supabase"
+import useSupabaseBrowser from "@/utils/supabase-browser"
 
-export function Overview() {
+type ChoreStatus = Database["public"]["Enums"]["chore_assignment_status"]
+type StatusRow = Pick<Database["public"]["Tables"]["chore_assignments"]["Row"], "status">
+
+type ChartDatum = {
+  name: string
+  total: number
+}
+
+const statusOrder: ChoreStatus[] = ["pending", "completed", "approved", "rejected"]
+
+const statusLabels: Record<ChoreStatus, string> = {
+  pending: "Pending",
+  completed: "Completed",
+  approved: "Approved",
+  rejected: "Rejected",
+}
+
+export function Overview({ tenantId }: { tenantId?: string | null }) {
+  const supabase = useSupabaseBrowser()
+  const [data, setData] = useState<ChartDatum[]>(() =>
+    statusOrder.map((status) => ({ name: statusLabels[status], total: 0 })),
+  )
+
+  const loadStatusBreakdown = useCallback(async () => {
+    let query = supabase.from("chore_assignments").select("status")
+    if (tenantId) {
+      query = query.eq("tenant_id", tenantId)
+    }
+
+    const { data: rows, error } = await query
+
+    if (error) {
+      console.error("Failed to load chore assignment breakdown", error)
+      return
+    }
+
+    const result = statusOrder.map((status) => ({
+      name: statusLabels[status],
+      total: (rows ?? []).filter((row: StatusRow) => row.status === status).length,
+    }))
+
+    setData(result)
+  }, [supabase, tenantId])
+
+  useEffect(() => {
+    void loadStatusBreakdown()
+  }, [loadStatusBreakdown])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`overview-chore-assignments-${tenantId ?? "all"}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chore_assignments",
+          ...(tenantId ? { filter: `tenant_id=eq.${tenantId}` } : {}),
+        },
+        () => {
+          void loadStatusBreakdown()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [loadStatusBreakdown, supabase, tenantId])
+
+  const chartData = useMemo(() => data, [data])
+
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data}>
+      <BarChart data={chartData}>
         <XAxis
           dataKey="name"
           stroke="#888888"
@@ -65,11 +89,12 @@ export function Overview() {
           axisLine={false}
         />
         <YAxis
+          allowDecimals={false}
+          domain={[0, "dataMax + 1"]}
           stroke="#888888"
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `$${value}`}
         />
         <Bar
           dataKey="total"
