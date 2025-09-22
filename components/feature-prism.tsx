@@ -61,53 +61,49 @@ class ErrorBoundary extends React.Component {
 // Define our features
 const features = [
   {
-    name: "Traceability",
+    name: "Pantry planning",
     icon: CuboidIcon,
-    description:
-      "End-to-end visibility of products throughout the supply chain, ensuring authenticity and origin verification.",
+    description: "Shared shopping lists keep staples in sync and prevent duplicate grocery runs.",
     color: "#3b82f6",
     icon3D: "Cube",
     pulseOffset: 0, // Offset for pulsing effect
   },
   {
-    name: "Security",
+    name: "Roommate transparency",
     icon: Shield,
-    description:
-      "Immutable and encrypted data storage protecting sensitive information across the entire logistics network.",
+    description: "See who restocked essentials last so chores and reimbursements stay fair for everyone.",
     color: "#10b981",
     icon3D: "Shield",
     pulseOffset: 1, // Offset for pulsing effect
   },
   {
-    name: "Efficiency",
+    name: "Smart reminders",
     icon: Zap,
-    description:
-      "Streamlined processes and reduced costs through optimized routing and real-time inventory management.",
+    description: "Automated nudges surface when household supplies are running low or overdue for replacement.",
     color: "#f59e0b",
     icon3D: "Lightning",
     pulseOffset: 2, // Offset for pulsing effect
   },
   {
-    name: "Integration",
+    name: "Connected receipts",
     icon: Link,
-    description:
-      "Seamless connection with existing systems including ERP, WMS, and other supply chain management tools.",
+    description: "Attach digital receipts and share payment links so reimbursements happen without group chat chaos.",
     color: "#8b5cf6",
     icon3D: "Chain",
     pulseOffset: 3, // Offset for pulsing effect
   },
   {
-    name: "Automation",
+    name: "Auto-split costs",
     icon: Cog,
-    description: "AI-driven decision making and operations that reduce human error and increase operational speed.",
+    description: "Suggested cost splits and ledger entries cut down on manual math after each supply run.",
     color: "#ec4899",
     icon3D: "Gear",
     pulseOffset: 5, // Offset for pulsing effect (Fibonacci)
   },
   {
-    name: "Data",
+    name: "Household insights",
     icon: Database,
-    description: "Comprehensive analytics and insights derived from blockchain-secured supply chain data.",
+    description: "Track monthly spend, identify trends, and forecast the next big restock before anyone runs out.",
     color: "#06b6d4",
     icon3D: "Database",
     pulseOffset: 8, // Offset for pulsing effect (Fibonacci)
