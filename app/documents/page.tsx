@@ -4,8 +4,8 @@ import { Separator } from "@/components/ui/separator";
 import { FileText, Users, Clock, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadDocumentDialog } from "./components/upload-document-dialog";
-import { DocumentsStats } from "./components/documents-stats";
-import { DocumentsList } from "./components/documents-list";
+import { DocumentsStats, DocumentsStatsSkeleton } from "./components/documents-stats";
+import { DocumentsList, DocumentsListSkeleton } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
 import { DocumentListFilters } from '@/types/documents';
 
@@ -26,18 +26,7 @@ export default function DocumentsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
+      <Suspense fallback={<DocumentsStatsSkeleton />}>
         <DocumentsStats />
       </Suspense>
 
@@ -136,35 +125,6 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
-
-function DocumentsListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[...Array(5)].map((_, i) => (
-        <Card key={i} className="animate-pulse">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="h-5 w-48 rounded bg-muted"></div>
-                <div className="h-4 w-32 rounded bg-muted"></div>
-              </div>
-              <div className="h-6 w-20 rounded bg-muted"></div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="h-4 w-24 rounded bg-muted"></div>
-              <div className="flex space-x-2">
-                <div className="h-8 w-16 rounded bg-muted"></div>
-                <div className="h-8 w-16 rounded bg-muted"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }

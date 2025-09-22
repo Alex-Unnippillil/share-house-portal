@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
-import { BookingStats } from "./components/booking-stats"
+import { BookingStats, BookingStatsSkeleton } from "./components/booking-stats"
 
 const amenities = [
   {
@@ -82,22 +82,7 @@ export default function BookingsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-4 w-3/4 rounded bg-muted"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-1/2 rounded bg-muted"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        }
-      >
+      <Suspense fallback={<BookingStatsSkeleton />}>
         <BookingStats />
       </Suspense>
 
