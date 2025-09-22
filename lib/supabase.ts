@@ -768,3 +768,4 @@ export type TablesInsert<TName extends keyof PublicSchema["Tables"]> =
 
 export type TablesUpdate<TName extends keyof PublicSchema["Tables"]> =
   PublicSchema["Tables"][TName]["Update"]
+
