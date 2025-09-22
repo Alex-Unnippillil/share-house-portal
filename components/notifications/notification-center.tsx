@@ -1,177 +1,200 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
-import { createClient } from "@/utils/supabase-browser";
-import { cn } from "@/lib/utils";
+import { useEffect, useMemo, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { Bell, X, Check, CheckCheck } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
+import useSupabaseBrowser from "@/utils/supabase-browser"
+import { useSupabaseQuery } from "@/hooks/use-supabase-query"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  action_url?: string;
-  read: boolean;
-  created_at: string;
+  id: string
+  title: string
+  message: string
+  type: "info" | "success" | "warning" | "error"
+  action_url?: string
+  read: boolean
+  created_at: string
 }
 
 export function NotificationCenter() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const supabase = useMemo(() => createClient(), []);
+  const [isOpen, setIsOpen] = useState(false)
+  const { toast } = useToast()
+  const supabase = useSupabaseBrowser()
+  const queryClient = useQueryClient()
+  const { data: user } = useCurrentUser()
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
+  const notificationsQueryKey = useMemo(
+    () => ["notifications", user?.id ?? null],
+    [user?.id]
+  )
+
+  const {
+    data: notifications = [],
+    isLoading,
+  } = useSupabaseQuery<Notification[]>({
+    queryKey: notificationsQueryKey,
+    enabled: Boolean(user?.id),
+    placeholderData: [],
+    queryFn: async () => {
+      if (!user?.id) return []
+
       const { data, error } = await (supabase as any)
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+      return (data as Notification[]) ?? []
+    },
+  })
+
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.read).length,
+    [notifications]
+  )
 
   useEffect(() => {
-    fetchNotifications();
+    if (!user?.id) return
 
-    // Subscribe to real-time notifications
-    const channel = supabase
-      .channel('notifications')
+    const channel = (supabase as any)
+      .channel(`notifications:user:${user.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
+        (payload: { new: Notification }) => {
+          const newNotification = payload.new
+          queryClient.setQueryData<Notification[]>(notificationsQueryKey, (prev) => {
+            const current = prev ?? []
 
-          // Show toast for new notification
+            if (current.some((notification) => notification.id === newNotification.id)) {
+              return current
+            }
+
+            return [newNotification, ...current].slice(0, 50)
+          })
+
           toast({
             title: newNotification.title,
             description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' :
-                    newNotification.type === 'warning' ? 'default' : 'default',
-          });
+            variant:
+              newNotification.type === "error"
+                ? "destructive"
+                : newNotification.type === "warning"
+                ? "default"
+                : "default",
+          })
         }
       )
-      .subscribe();
+      .subscribe()
 
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchNotifications, supabase, toast]);
+      supabase.removeChannel(channel)
+    }
+  }, [notificationsQueryKey, queryClient, supabase, toast, user?.id])
 
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await (supabase as any)
-        .from('notifications')
+        .from("notifications")
         .update({ read: true })
-        .eq('id', notificationId);
+        .eq("id", notificationId)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
+      queryClient.setQueryData<Notification[]>(notificationsQueryKey, (prev) =>
+        (prev ?? []).map((notification) =>
+          notification.id === notificationId
+            ? { ...notification, read: true }
+            : notification
         )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      )
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      console.error("Failed to mark notification as read:", error)
     }
-  };
+  }
 
   const markAllAsRead = async () => {
     try {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      const unreadIds = notifications.filter((notification) => !notification.read).map((n) => n.id)
 
-      if (unreadIds.length === 0) return;
+      if (unreadIds.length === 0) return
 
       const { error } = await (supabase as any)
-        .from('notifications')
+        .from("notifications")
         .update({ read: true })
-        .in('id', unreadIds);
+        .in("id", unreadIds)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
+      queryClient.setQueryData<Notification[]>(notificationsQueryKey, (prev) =>
+        (prev ?? []).map((notification) => ({ ...notification, read: true }))
+      )
 
       toast({
         title: "All notifications marked as read",
-      });
+      })
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+      console.error("Failed to mark all notifications as read:", error)
     }
-  };
+  }
 
   const deleteNotification = async (notificationId: string) => {
     try {
       const { error } = await (supabase as any)
-        .from('notifications')
+        .from("notifications")
         .delete()
-        .eq('id', notificationId);
+        .eq("id", notificationId)
 
-      if (error) throw error;
+      if (error) throw error
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
-      if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      queryClient.setQueryData<Notification[]>(notificationsQueryKey, (prev) =>
+        (prev ?? []).filter((notification) => notification.id !== notificationId)
+      )
     } catch (error) {
-      console.error('Failed to delete notification:', error);
+      console.error("Failed to delete notification:", error)
     }
-  };
+  }
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success':
-        return 'border-green-200 bg-green-100 text-green-800';
-      case 'warning':
-        return 'border-yellow-200 bg-yellow-100 text-yellow-800';
-      case 'error':
-        return 'border-red-200 bg-red-100 text-red-800';
+      case "success":
+        return "border-green-200 bg-green-100 text-green-800"
+      case "warning":
+        return "border-yellow-200 bg-yellow-100 text-yellow-800"
+      case "error":
+        return "border-red-200 bg-red-100 text-red-800"
       default:
-        return 'border-blue-200 bg-blue-100 text-blue-800';
+        return "border-blue-200 bg-blue-100 text-blue-800"
     }
-  };
+  }
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return date.toLocaleDateString();
-  };
+    if (diffInMinutes < 1) return "Just now"
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`
+    return date.toLocaleDateString()
+  }
 
   return (
     <div className="relative">
@@ -187,7 +210,7 @@ export function NotificationCenter() {
             variant="destructive"
             className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
           >
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         )}
       </Button>
@@ -220,7 +243,7 @@ export function NotificationCenter() {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-80">
-              {loading ? (
+              {isLoading ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   Loading notifications...
                 </div>
@@ -239,11 +262,11 @@ export function NotificationCenter() {
                         )}
                         onClick={() => {
                           if (!notification.read) {
-                            markAsRead(notification.id);
+                            markAsRead(notification.id)
                           }
                           if (notification.action_url) {
-                            window.location.href = notification.action_url;
-                            setIsOpen(false);
+                            window.location.href = notification.action_url
+                            setIsOpen(false)
                           }
                         }}
                       >
@@ -268,9 +291,9 @@ export function NotificationCenter() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markAsRead(notification.id);
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  markAsRead(notification.id)
                                 }}
                                 className="size-6"
                               >
@@ -280,9 +303,9 @@ export function NotificationCenter() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNotification(notification.id);
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                deleteNotification(notification.id)
                               }}
                               className="size-6 text-muted-foreground hover:text-destructive"
                             >
@@ -301,5 +324,5 @@ export function NotificationCenter() {
         </Card>
       )}
     </div>
-  );
+  )
 }

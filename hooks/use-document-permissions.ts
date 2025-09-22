@@ -1,115 +1,87 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase-browser';
-import { DocumentWithLease } from '@/types/documents';
+import { useMemo } from "react"
+
+import { useCurrentUser } from "@/hooks/use-current-user"
+import { useUserProfile } from "@/hooks/use-user-profile"
+import { DocumentWithLease } from "@/types/documents"
 
 export interface UserPermissions {
-  isTenant: boolean;
-  isRoommate: boolean;
-  isPropertyManager: boolean;
-  isAdmin: boolean;
-  canUploadDocuments: boolean;
-  canCreateSigningRequests: boolean;
-  canViewDocument: (document: DocumentWithLease) => boolean;
-  canSignDocument: (document: DocumentWithLease) => boolean;
-  canEditDocument: (document: DocumentWithLease) => boolean;
+  isTenant: boolean
+  isRoommate: boolean
+  isPropertyManager: boolean
+  isAdmin: boolean
+  canUploadDocuments: boolean
+  canCreateSigningRequests: boolean
+  canViewDocument: (document: DocumentWithLease) => boolean
+  canSignDocument: (document: DocumentWithLease) => boolean
+  canEditDocument: (document: DocumentWithLease) => boolean
+}
+
+const ANONYMOUS_PERMISSIONS: UserPermissions = {
+  isTenant: false,
+  isRoommate: false,
+  isPropertyManager: false,
+  isAdmin: false,
+  canUploadDocuments: false,
+  canCreateSigningRequests: false,
+  canViewDocument: () => false,
+  canSignDocument: () => false,
+  canEditDocument: () => false,
 }
 
 export function useDocumentPermissions(): UserPermissions {
-  const [permissions, setPermissions] = useState<UserPermissions>({
-    isTenant: false,
-    isRoommate: false,
-    isPropertyManager: false,
-    isAdmin: false,
-    canUploadDocuments: false,
-    canCreateSigningRequests: false,
-    canViewDocument: () => false,
-    canSignDocument: () => false,
-    canEditDocument: () => false,
-  });
-  const [loading, setLoading] = useState(true);
+  const { data: user } = useCurrentUser()
+  const { data: profile } = useUserProfile()
 
-  useEffect(() => {
-    const checkPermissions = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+  return useMemo<UserPermissions>(() => {
+    const userId = user?.id
+    const role = profile?.role
 
-        if (!user) {
-          setPermissions({
-            isTenant: false,
-            isRoommate: false,
-            isPropertyManager: false,
-            isAdmin: false,
-            canUploadDocuments: false,
-            canCreateSigningRequests: false,
-            canViewDocument: () => false,
-            canSignDocument: () => false,
-            canEditDocument: () => false,
-          });
-          return;
-        }
+    if (!userId || !role) {
+      return ANONYMOUS_PERMISSIONS
+    }
 
-        // Get user profile with role
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+    const isPropertyManager = role === "property_manager"
+    const isAdmin = role === "admin"
+    const isTenant = role === "tenant"
+    const isRoommate = role === "roommate"
 
-        const role = profile?.role || 'user';
-        const isPropertyManager = role === 'property_manager';
-        const isAdmin = role === 'admin';
-        const isTenant = role === 'tenant';
-        const isRoommate = role === 'roommate';
+    const canUploadDocuments = isPropertyManager || isAdmin
+    const canCreateSigningRequests = isPropertyManager || isAdmin
 
-        const userPermissions: UserPermissions = {
-          isTenant,
-          isRoommate,
-          isPropertyManager,
-          isAdmin,
-          canUploadDocuments: isPropertyManager || isAdmin,
-          canCreateSigningRequests: isPropertyManager || isAdmin,
+    const canViewDocument = (document: DocumentWithLease) => {
+      if (isPropertyManager || isAdmin) return true
+      if (document.tenant_id === userId) return true
+      if (document.lease?.tenant_ids?.includes(userId)) return true
+      return false
+    }
 
-          canViewDocument: (document: DocumentWithLease) => {
-            // Property managers and admins can view all documents
-            if (isPropertyManager || isAdmin) return true;
+    const canSignDocument = (document: DocumentWithLease) => {
+      if (!document.requires_signature) return false
 
-            // Users can view documents they're associated with
-            if (document.tenant_id === user.id) return true;
+      return (
+        document.signatures?.some(
+          (signature) => signature.signer_id === userId && signature.status === "pending"
+        ) ?? false
+      )
+    }
 
-            // For leases, check if user is a tenant on the lease
-            if (document.lease?.tenant_ids?.includes(user.id)) return true;
+    const canEditDocument = (document: DocumentWithLease) => {
+      void document
+      return isPropertyManager || isAdmin
+    }
 
-            return false;
-          },
-
-          canSignDocument: (document: DocumentWithLease) => {
-            // Check if document requires signature and has pending signatures for this user
-            if (!document.requires_signature) return false;
-
-            return document.signatures?.some(
-              sig => sig.signer_id === user.id && sig.status === 'pending'
-            ) || false;
-          },
-
-          canEditDocument: (document: DocumentWithLease) => {
-            // Only property managers and admins can edit documents
-            return isPropertyManager || isAdmin;
-          },
-        };
-
-        setPermissions(userPermissions);
-      } catch (error) {
-        console.error('Error checking document permissions:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkPermissions();
-  }, []);
-
-  return permissions;
+    return {
+      isTenant,
+      isRoommate,
+      isPropertyManager,
+      isAdmin,
+      canUploadDocuments,
+      canCreateSigningRequests,
+      canViewDocument,
+      canSignDocument,
+      canEditDocument,
+    }
+  }, [profile?.role, user?.id])
 }
