@@ -125,3 +125,9 @@ export interface DocumentStats {
   expired_documents: number;
   draft_documents: number;
 }
+
+export interface PaginatedDocumentsResult {
+  items: DocumentWithLease[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}

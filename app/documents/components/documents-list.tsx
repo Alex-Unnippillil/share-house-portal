@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
+import { getDocumentsAction, getLeasePageAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
@@ -14,31 +14,110 @@ interface DocumentsListProps {
   filter: DocumentListFilters;
 }
 
+const PAGE_SIZE = 25;
+
 export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const isLeaseOnlyFilter = useMemo(() => {
+    const typeFilters = filter.type || [];
+    if (typeFilters.length === 0) return false;
+    return typeFilters.every((type) => type === 'lease');
+  }, [filter.type]);
+
+  const fetchLeasePage = useCallback(
+    async (cursor?: string, append = false) => {
+      try {
+        if (append) {
+          setLoadingMore(true);
+        } else {
+          setLoading(true);
+          setDocuments([]);
+          setNextCursor(null);
+          setHasMore(false);
+        }
+        setError(null);
+
+        const result = await getLeasePageAction({
+          limit: PAGE_SIZE,
+          cursor,
+          filters: filter,
+        });
+
+        if (result.success && result.data) {
+          setDocuments((prev) =>
+            append ? [...prev, ...result.data.items] : result.data.items
+          );
+          setNextCursor(result.data.nextCursor);
+          setHasMore(result.data.hasMore);
+        } else {
+          setError(result.error || 'Failed to fetch leases');
+          if (!append) {
+            setDocuments([]);
+            setNextCursor(null);
+            setHasMore(false);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching leases:', err);
+        setError('An unexpected error occurred');
+        if (!append) {
+          setDocuments([]);
+          setNextCursor(null);
+          setHasMore(false);
+        }
+      } finally {
+        if (append) {
+          setLoadingMore(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    },
+    [filter]
+  );
 
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
         setLoading(true);
+        setError(null);
+
+        if (isLeaseOnlyFilter) {
+          await fetchLeasePage();
+          return;
+        }
+
         const result = await getDocumentsAction(filter);
         if (result.success && result.data) {
           setDocuments(result.data);
+          setNextCursor(null);
+          setHasMore(false);
         } else {
           setError(result.error || 'Failed to fetch documents');
+          setDocuments([]);
         }
       } catch (err) {
         console.error('Error fetching documents:', err);
         setError('An unexpected error occurred');
+        setDocuments([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDocuments();
-  }, [filter]);
+  }, [filter, fetchLeasePage, isLeaseOnlyFilter]);
+
+  const handleLoadMore = useCallback(() => {
+    if (!nextCursor) return;
+    fetchLeasePage(nextCursor, true);
+  }, [fetchLeasePage, nextCursor]);
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -115,7 +194,13 @@ export function DocumentsList({ filter }: DocumentsListProps) {
           <Button
             variant="outline"
             className="mt-4"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (isLeaseOnlyFilter) {
+                fetchLeasePage();
+              } else {
+                window.location.reload();
+              }
+            }}
           >
             Try Again
           </Button>
@@ -211,6 +296,23 @@ export function DocumentsList({ filter }: DocumentsListProps) {
           )}
         </Card>
       ))}
+
+      {isLeaseOnlyFilter && (
+        <div className="flex flex-col items-center space-y-2 pt-2">
+          <p className="text-sm text-muted-foreground">
+            Showing {documents.length} lease{documents.length === 1 ? '' : 's'}
+          </p>
+          {hasMore && (
+            <Button
+              variant="outline"
+              onClick={handleLoadMore}
+              disabled={!nextCursor || loadingMore}
+            >
+              {loadingMore ? 'Loading…' : 'Load more leases'}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

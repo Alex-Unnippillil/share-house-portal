@@ -5,13 +5,14 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
-import {
+import { 
   Document,
   DocumentWithLease,
   DocumentListFilters,
   DocumentUploadRequest,
   DocumentSigningRequest,
-  DocumentStats
+  DocumentStats,
+  PaginatedDocumentsResult,
 } from '@/types/documents';
 
 // Validation schemas
@@ -42,12 +43,34 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const leasePaginationSchema = z.object({
+  limit: z.number().int().positive().max(100).default(25),
+  cursor: z.string().datetime().optional(),
+  filters: documentListFiltersSchema.optional(),
+});
+
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
+}
+
+export function paginateLeaseRows(rows: DocumentWithLease[], limit: number) {
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const hasMore = rows.length > safeLimit;
+  const items = hasMore ? rows.slice(0, safeLimit) : rows;
+  const lastItem = items[items.length - 1];
+  const nextCursor = hasMore
+    ? lastItem?.created_at ?? (typeof lastItem?.id === 'string' ? lastItem.id : null)
+    : null;
+
+  return {
+    items,
+    hasMore,
+    nextCursor,
+  } satisfies PaginatedDocumentsResult;
 }
 
 // Get documents with optional filters
@@ -133,6 +156,109 @@ export async function getDocumentsAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function getLeasePageAction(
+  params?: z.input<typeof leasePaginationSchema>
+): Promise<ActionResult<PaginatedDocumentsResult>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to view leases.' };
+    }
+
+    const { limit, cursor, filters } = leasePaginationSchema.parse(params ?? {});
+    const normalizedFilters: DocumentListFilters = filters ? { ...filters } : {};
+
+    if (normalizedFilters.type && !normalizedFilters.type.includes('lease')) {
+      return { success: true, data: { items: [], hasMore: false, nextCursor: null } };
+    }
+
+    if (normalizedFilters.type) {
+      delete normalizedFilters.type;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    let query = (supabase as any)
+      .from('documents')
+      .select(`
+        *,
+        lease:leases(*),
+        signatures:document_signatures(*),
+        access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
+      `)
+      .eq('document_type', 'lease')
+      .order('created_at', { ascending: false });
+
+    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
+      query = query.or(
+        `tenant_id.eq.${user.id},signatures.signer_id.eq.${user.id}`
+      );
+    }
+
+    if (normalizedFilters.status?.length) {
+      query = query.in('status', normalizedFilters.status);
+    }
+    if (normalizedFilters.tenant_id) {
+      query = query.eq('tenant_id', normalizedFilters.tenant_id);
+    }
+    if (normalizedFilters.unit_id) {
+      query = query.eq('unit_id', normalizedFilters.unit_id);
+    }
+    if (normalizedFilters.date_from) {
+      query = query.gte('created_at', normalizedFilters.date_from);
+    }
+    if (normalizedFilters.date_to) {
+      query = query.lte('created_at', normalizedFilters.date_to);
+    }
+
+    if (cursor) {
+      query = query.lt('created_at', cursor);
+    }
+
+    const { data: documents, error } = await query.limit(limit + 1);
+
+    if (error) {
+      console.error('Error fetching paginated leases:', error);
+      return { success: false, error: 'Failed to fetch leases.' };
+    }
+
+    const pagination = paginateLeaseRows(documents || [], limit);
+
+    if (pagination.items.length > 0) {
+      await Promise.allSettled(
+        pagination.items.map((doc) =>
+          (supabase as any).rpc('log_document_access', {
+            p_document_id: doc.id,
+            p_action: 'view',
+            p_metadata: { source: 'documents_page_paginated' },
+          })
+        )
+      );
+    }
+
+    return { success: true, data: pagination };
+  } catch (error) {
+    console.error('Unexpected error in getLeasePageAction:', error);
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: error.issues.map((issue) => issue.message).join('\n') || 'Invalid pagination parameters.',
+      };
+    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
     };
   }
 }
