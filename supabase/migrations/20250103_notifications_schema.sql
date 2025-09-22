@@ -51,6 +51,15 @@ CREATE TABLE public.notifications (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create messages table for household realtime conversations
+CREATE TABLE public.messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  household_id UUID NOT NULL,
+  author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create email_notifications table for tracking sent emails
 CREATE TABLE public.email_notifications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -80,6 +89,7 @@ CREATE INDEX idx_visitor_logs_created_at ON public.visitor_logs(created_at DESC)
 CREATE INDEX idx_notifications_user_id ON public.notifications(user_id);
 CREATE INDEX idx_notifications_read ON public.notifications(read);
 CREATE INDEX idx_notifications_created_at ON public.notifications(created_at DESC);
+CREATE INDEX idx_messages_household_created_at ON public.messages(household_id, created_at DESC);
 CREATE INDEX idx_email_notifications_user_id ON public.email_notifications(user_id);
 CREATE INDEX idx_email_notifications_sent_at ON public.email_notifications(sent_at DESC);
 
@@ -87,6 +97,7 @@ CREATE INDEX idx_email_notifications_sent_at ON public.email_notifications(sent_
 ALTER TABLE public.maintenance_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.visitor_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.email_notifications ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for maintenance_requests
@@ -138,6 +149,53 @@ CREATE POLICY "Users can view their own notifications" ON public.notifications
 CREATE POLICY "Users can update their own notifications" ON public.notifications
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- RLS Policies for messages
+CREATE POLICY "Household members can view messages" ON public.messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+        AND profiles.unit_id = messages.household_id
+    )
+  );
+
+CREATE POLICY "Household members can post messages" ON public.messages
+  FOR INSERT WITH CHECK (
+    auth.uid() = author_id AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+        AND profiles.unit_id = messages.household_id
+    )
+  );
+
+CREATE POLICY "Authors can edit their messages" ON public.messages
+  FOR UPDATE USING (
+    auth.uid() = author_id AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+        AND profiles.unit_id = messages.household_id
+    )
+  ) WITH CHECK (
+    auth.uid() = author_id AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+        AND profiles.unit_id = messages.household_id
+    )
+  );
+
+CREATE POLICY "Authors can delete their messages" ON public.messages
+  FOR DELETE USING (
+    auth.uid() = author_id AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+        AND profiles.unit_id = messages.household_id
+    )
+  );
+
 -- RLS Policies for email notifications
 CREATE POLICY "Users can view their own email notifications" ON public.email_notifications
   FOR SELECT USING (auth.uid() = user_id);
@@ -185,3 +243,38 @@ CREATE TRIGGER update_visitor_logs_updated_at
 CREATE TRIGGER update_notifications_updated_at
   BEFORE UPDATE ON public.notifications
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Seed demo messages for realtime testing (idempotent on empty message table)
+WITH target_household AS (
+  SELECT unit_id AS household_id
+  FROM public.profiles
+  WHERE unit_id IS NOT NULL
+  GROUP BY unit_id
+  ORDER BY MIN(created_at)
+  LIMIT 1
+),
+household_members AS (
+  SELECT
+    p.id AS author_id,
+    p.unit_id AS household_id,
+    ROW_NUMBER() OVER (PARTITION BY p.unit_id ORDER BY p.id) AS rn
+  FROM public.profiles p
+  JOIN target_household th ON th.household_id = p.unit_id
+),
+demo_messages AS (
+  SELECT 1 AS rn, '👋 Welcome to your roommate channel! Use this space for reminders and updates.' AS body
+  UNION ALL
+  SELECT 2, '🧹 Don''t forget to check the cleaning roster before the weekend guests arrive.'
+  UNION ALL
+  SELECT 3, '📦 Package run tonight at 7 PM—reply if you have deliveries to grab.'
+)
+INSERT INTO public.messages (household_id, author_id, body, created_at)
+SELECT
+  hm.household_id,
+  hm.author_id,
+  dm.body,
+  NOW() - ((hm.rn - 1) || ' hours')::INTERVAL
+FROM household_members hm
+JOIN demo_messages dm ON dm.rn = hm.rn
+WHERE hm.rn <= 3
+  AND NOT EXISTS (SELECT 1 FROM public.messages);
