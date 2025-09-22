@@ -176,24 +176,33 @@ export function NotificationCenter() {
   return (
     <div className="relative">
       <Button
+        aria-label={isOpen ? "Close notifications" : "Open notifications"}
+        aria-expanded={isOpen}
+        aria-controls="notification-center-popover"
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
         className="relative"
       >
-        <Bell className="size-5" />
+        <Bell className="size-5" aria-hidden="true" />
         {unreadCount > 0 && (
           <Badge
             variant="destructive"
             className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
           >
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         )}
       </Button>
 
       {isOpen && (
-        <Card className="absolute right-0 top-12 z-50 max-h-96 w-96 shadow-lg">
+        <Card
+          id="notification-center-popover"
+          className="absolute right-0 top-12 z-50 max-h-96 w-96 shadow-lg"
+          role="dialog"
+          aria-modal="false"
+          aria-label="Notifications"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Notifications</CardTitle>
             <div className="flex gap-2">
@@ -213,8 +222,9 @@ export function NotificationCenter() {
                 size="icon"
                 onClick={() => setIsOpen(false)}
                 className="size-6"
+                aria-label="Close notifications"
               >
-                <X className="size-3" />
+                <X className="size-3" aria-hidden="true" />
               </Button>
             </div>
           </CardHeader>
@@ -234,9 +244,12 @@ export function NotificationCenter() {
                     <div key={notification.id}>
                       <div
                         className={cn(
-                          "cursor-pointer p-3 transition-colors hover:bg-muted/50",
+                          "cursor-pointer p-3 transition-colors hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                           !notification.read && "bg-muted/20"
                         )}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View notification: ${notification.title}`}
                         onClick={() => {
                           if (!notification.read) {
                             markAsRead(notification.id);
@@ -244,6 +257,18 @@ export function NotificationCenter() {
                           if (notification.action_url) {
                             window.location.href = notification.action_url;
                             setIsOpen(false);
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            if (!notification.read) {
+                              markAsRead(notification.id);
+                            }
+                            if (notification.action_url) {
+                              window.location.href = notification.action_url;
+                              setIsOpen(false);
+                            }
                           }
                         }}
                       >
@@ -273,8 +298,9 @@ export function NotificationCenter() {
                                   markAsRead(notification.id);
                                 }}
                                 className="size-6"
+                                aria-label={`Mark ${notification.title} as read`}
                               >
-                                <Check className="size-3" />
+                                <Check className="size-3" aria-hidden="true" />
                               </Button>
                             )}
                             <Button
@@ -285,8 +311,9 @@ export function NotificationCenter() {
                                 deleteNotification(notification.id);
                               }}
                               className="size-6 text-muted-foreground hover:text-destructive"
+                              aria-label={`Delete ${notification.title}`}
                             >
-                              <X className="size-3" />
+                              <X className="size-3" aria-hidden="true" />
                             </Button>
                           </div>
                         </div>
