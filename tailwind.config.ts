@@ -1,13 +1,23 @@
 import type { Config } from "tailwindcss"
+import { fontFamily } from "tailwindcss/defaultTheme"
 
 const config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-    "*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./components/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./hooks/**/*.{ts,tsx,js,jsx}",
+    "./lib/**/*.{ts,tsx,js,jsx}",
+    "./queries/**/*.{ts,tsx,js,jsx}",
+    "./utils/**/*.{ts,tsx,js,jsx}",
+    "./config/**/*.{ts,tsx,js,jsx}",
+    "./supabase/**/*.{ts,tsx,js,jsx}",
+    "./docs/**/*.{md,mdx}",
+    "./pages/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./src/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./types/**/*.{ts,tsx}",
+    "./mdx-components.{ts,tsx,js,jsx,mdx}",
+    "*.{js,ts,jsx,tsx,mdx,md}",
   ],
   prefix: "",
   theme: {
@@ -19,6 +29,10 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", ...fontFamily.sans],
+        mono: ["var(--font-mono)", ...fontFamily.mono],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

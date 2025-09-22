@@ -1,4 +1,4 @@
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 import { siteConfig } from "@/config/site"
 import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
@@ -8,13 +8,13 @@ export function SiteFooter() {
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-         <Link className="ml-0 flex items-center gap-2" href="/">
+         <SmartLink className="ml-0 flex items-center gap-2" href="/" intent="navigation">
           <Icons.logo className="size-6" />
           <div className="flex flex-col leading-tight">
             <span className="inline-block font-semibold">{siteConfig.name}</span>
             <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>
           </div>
-        </Link>
+        </SmartLink>
           <p className="text-sm text-muted-foreground">
             Manage rent, roommates, and shared amenities from a single, secure Roomsily HQ.
           </p>
@@ -24,19 +24,31 @@ export function SiteFooter() {
             <h3 className="text-sm font-medium">Solutions</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/payments" className="text-muted-foreground transition-colors hover:text-primary">
+                <SmartLink
+                  href="/payments"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
                   Rent payments
-                </Link>
+                </SmartLink>
               </li>
               <li>
-                <Link href="/documents" className="text-muted-foreground transition-colors hover:text-primary">
+                <SmartLink
+                  href="/documents"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
                   Document vault
-                </Link>
+                </SmartLink>
               </li>
               <li>
-                <Link href="/messaging" className="text-muted-foreground transition-colors hover:text-primary">
+                <SmartLink
+                  href="/messaging"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
                   Roommate messaging
-                </Link>
+                </SmartLink>
               </li>
             </ul>
           </div>
@@ -44,24 +56,40 @@ export function SiteFooter() {
             <h3 className="text-sm font-medium">Company</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground transition-colors hover:text-primary">
+                <SmartLink
+                  href="/about"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
                   About Us
-                </Link>
+                </SmartLink>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground transition-colors hover:text-primary">
+                <SmartLink
+                  href="/contact"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
                   Contact
-                </Link>
+                </SmartLink>
               </li>
               <li>
-                <Link href="/privacy" className="text-muted-foreground transition-colors hover:text-primary">
+                <SmartLink
+                  href="/privacy"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
                   Privacy Policy
-                </Link>
+                </SmartLink>
               </li>
               <li>
-                <Link href="/terms" className="text-muted-foreground transition-colors hover:text-primary">
+                <SmartLink
+                  href="/terms"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
                   Terms of Service
-                </Link>
+                </SmartLink>
               </li>
             </ul>
           </div>

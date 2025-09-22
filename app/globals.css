@@ -3,11 +3,25 @@
 @tailwind utilities;
 
 /* Minimal base colors */
-:root {}
+:root {
+  --font-sans: "InterVariable", "Inter", "Helvetica Neue", Helvetica, Arial, ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrainsMonoVariable", "JetBrains Mono", "Fira Code", "Fira Mono",
+    "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
 
 .dark {}
 
-body {}
+body {
+  font-family: var(--font-sans);
+}
+
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
 
 /* Shadcn UI Theme */
 @layer base {

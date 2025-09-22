@@ -1,4 +1,4 @@
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 import { redirect } from "next/navigation"
 import {
   CalendarRange,
@@ -145,24 +145,26 @@ export default async function IndexPage() {
               Roomsily centralizes rent, amenities, documents, and roommate communication into one elegant portal so shared homes stay calm, coordinated, and connected.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link
+              <SmartLink
                 href={siteConfig.links.login}
                 className={cn(
                   buttonVariants({ size: "lg" }),
                   "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                 )}
+                intent="critical"
               >
                 Sign in
-              </Link>
-              <Link
+              </SmartLink>
+              <SmartLink
                 href={siteConfig.links.signup}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "lg" }),
                   "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
                 )}
+                intent="critical"
               >
                 Create your household
-              </Link>
+              </SmartLink>
             </div>
             <div className="grid gap-4 pt-8 sm:grid-cols-3">
               {heroMetrics.map((metric) => (
@@ -199,9 +201,13 @@ export default async function IndexPage() {
                 <CardDescription>{feature.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Link href={feature.href} className="text-sm font-medium text-primary hover:underline">
+                <SmartLink
+                  href={feature.href}
+                  className="text-sm font-medium text-primary hover:underline"
+                  intent="passive"
+                >
                   Learn more
-                </Link>
+                </SmartLink>
               </CardContent>
             </Card>
           ))}
@@ -228,15 +234,16 @@ export default async function IndexPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link
+                  <SmartLink
                     href={highlight.cta.href}
                     className={cn(
                       buttonVariants({ variant: "ghost", size: "sm" }),
                       "justify-start px-0 text-primary hover:text-primary"
                     )}
+                    intent="passive"
                   >
                     {highlight.cta.label} →
-                  </Link>
+                  </SmartLink>
                 </CardContent>
               </Card>
             ))}
@@ -281,16 +288,17 @@ export default async function IndexPage() {
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <Link
+                <SmartLink
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "lg" }),
                     "bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                   )}
+                  intent="critical"
                 >
                   Get started
-                </Link>
-                <Link
+                </SmartLink>
+                <SmartLink
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
@@ -298,7 +306,7 @@ export default async function IndexPage() {
                   )}
                 >
                   Talk with us
-                </Link>
+                </SmartLink>
               </div>
             </CardContent>
           </Card>

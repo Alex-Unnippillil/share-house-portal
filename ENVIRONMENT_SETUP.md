@@ -43,6 +43,7 @@ SUPABASE_JWT_SECRET="your_jwt_secret"
 ```bash
 NEXT_PUBLIC_SITE_URL="http://localhost:3002"
 NEXT_PUBLIC_APP_URL="http://localhost:3002"
+NEXT_PUBLIC_FEATURE_STREAMING_DASHBOARDS="false"
 ```
 
 ### **STRIPE (FOR PAYMENTS)**

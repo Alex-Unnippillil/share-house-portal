@@ -37,3 +37,4 @@ Vitest unit tests (`tests/lib/data/*.test.ts`) mock the Supabase client chain to
 - Throws when Supabase returns an error.
 
 Run `pnpm test` after modifying these utilities to ensure behavior stays locked in.
+
