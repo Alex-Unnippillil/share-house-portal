@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
-import { fetchMemberRole } from '@/lib/data/members';
+import { fetchMemberProfile, fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
@@ -45,6 +45,17 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const bulkPermissionScopeSchema = z.enum(['property_staff', 'all_residents', 'custom_residents']);
+
+const bulkDocumentUploadSchema = z.object({
+  document_type: z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other']),
+  requires_signature: z.boolean().default(false),
+  description: z.string().optional(),
+  title_prefix: z.string().max(120).optional(),
+  permission_scope: bulkPermissionScopeSchema,
+  shared_member_ids: z.array(z.string().uuid()).optional(),
+});
+
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
@@ -52,6 +63,11 @@ interface ActionResult<T = any> {
   error?: string;
   message?: string;
 }
+
+type BulkUploadResult = {
+  created: Document[];
+  failed: { fileName: string; error: string }[];
+};
 
 // Get documents with optional filters
 export async function getDocumentsAction(
@@ -78,12 +94,23 @@ export async function getDocumentsAction(
       return { success: false, error: 'Failed to fetch documents.' };
     }
 
+    let profile: Awaited<ReturnType<typeof fetchMemberProfile>> | null = null;
+    try {
+      profile = await fetchMemberProfile(typedSupabase, user.id);
+    } catch (profileError) {
+      console.error('Error resolving member profile for documents:', profileError);
+    }
+
+    const effectiveRole = profile?.role ?? role;
+    const userUnitId = profile?.unit_id ?? null;
+
     let documents: DocumentWithLease[];
     try {
       documents = await fetchDocumentsList({
         client: typedSupabase,
         userId: user.id,
-        role,
+        role: effectiveRole,
+        userUnitId,
         filters: validatedFilters,
       });
     } catch (documentsError) {
@@ -206,6 +233,226 @@ export async function uploadDocumentAction(
     return { success: true, data: document, message: 'Document uploaded successfully.' };
   } catch (error) {
     console.error('Unexpected error in uploadDocumentAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function bulkUploadDocumentsAction(
+  formData: FormData
+): Promise<ActionResult<BulkUploadResult>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to upload documents.' };
+    }
+
+    const files = formData
+      .getAll('files')
+      .filter((entry): entry is File => entry instanceof File);
+
+    if (files.length === 0) {
+      return { success: false, error: 'Please select at least one file to upload.' };
+    }
+
+    const rawSharedMemberIds = formData.get('shared_member_ids');
+    let sharedMemberIds: string[] | undefined;
+    if (typeof rawSharedMemberIds === 'string' && rawSharedMemberIds.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(rawSharedMemberIds);
+        if (!Array.isArray(parsed)) {
+          throw new Error('Invalid shared member payload');
+        }
+        sharedMemberIds = parsed
+          .filter((value, index, self) => typeof value === 'string' && self.indexOf(value) === index);
+      } catch (parseError) {
+        console.error('Error parsing shared member ids for bulk upload:', parseError);
+        return { success: false, error: 'Invalid resident selection provided.' };
+      }
+    }
+
+    const rawDocumentType = formData.get('document_type');
+    const rawPermissionScope = formData.get('permission_scope');
+    const rawDescription = formData.get('description');
+    const rawTitlePrefix = formData.get('title_prefix');
+
+    const validationResult = bulkDocumentUploadSchema.safeParse({
+      document_type: typeof rawDocumentType === 'string' ? rawDocumentType : undefined,
+      requires_signature: formData.get('requires_signature') === 'true',
+      description: typeof rawDescription === 'string' ? rawDescription : undefined,
+      title_prefix: typeof rawTitlePrefix === 'string' ? rawTitlePrefix : undefined,
+      permission_scope: typeof rawPermissionScope === 'string' ? rawPermissionScope : undefined,
+      shared_member_ids: sharedMemberIds,
+    });
+
+    if (!validationResult.success) {
+      const errorMessages = Object.values(validationResult.error.flatten().fieldErrors)
+        .map(errors => errors?.join('. '))
+        .filter(Boolean)
+        .join(' ');
+      return { success: false, error: errorMessages || 'Invalid bulk upload data provided.' };
+    }
+
+    const {
+      document_type,
+      requires_signature,
+      description,
+      title_prefix,
+      permission_scope,
+      shared_member_ids: validatedMemberIds,
+    } = validationResult.data;
+
+    const memberIds = Array.isArray(validatedMemberIds) ? validatedMemberIds : [];
+
+    if (permission_scope === 'custom_residents' && memberIds.length === 0) {
+      return { success: false, error: 'Select at least one resident to share with.' };
+    }
+
+    const appliedAt = new Date().toISOString();
+    const baseSharedRoles =
+      permission_scope === 'all_residents'
+        ? ['tenant', 'roommate']
+        : permission_scope === 'property_staff'
+          ? ['property_manager', 'admin']
+          : undefined;
+    const baseSharedMemberIds = memberIds.length > 0 ? memberIds : undefined;
+
+    const buildMetadata = (fileName: string) => {
+      const metadata: Record<string, any> = {
+        permission_scope,
+        applied_by: user.id,
+        applied_at: appliedAt,
+        original_file_name: fileName,
+        bulk_upload: true,
+      };
+
+      if (baseSharedRoles) {
+        metadata.shared_roles = [...baseSharedRoles];
+      }
+
+      if (baseSharedMemberIds) {
+        metadata.shared_member_ids = [...baseSharedMemberIds];
+      }
+
+      return metadata;
+    };
+
+    const createdDocuments: Document[] = [];
+    const failedUploads: { fileName: string; error: string }[] = [];
+
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+    const buildDocumentTitle = (file: File) => {
+      const baseName = file.name
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[_-]+/g, ' ')
+        .trim() || 'Document';
+      const prefix = title_prefix?.trim();
+      return prefix ? `${prefix} ${baseName}`.trim() : baseName;
+    };
+
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        failedUploads.push({ fileName: file.name, error: 'Unsupported file type' });
+        continue;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        failedUploads.push({ fileName: file.name, error: 'File exceeds 10MB limit' });
+        continue;
+      }
+
+      const fileExt = file.name.split('.').pop() || 'pdf';
+      const storageFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const filePath = `documents/${storageFileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading file in bulk operation:', uploadError);
+        failedUploads.push({ fileName: file.name, error: 'Failed to upload file.' });
+        continue;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      const metadata = buildMetadata(file.name);
+
+      const { data: document, error: dbError } = await (supabase as any)
+        .from('documents')
+        .insert({
+          title: buildDocumentTitle(file),
+          description,
+          document_type,
+          file_url: publicUrl,
+          requires_signature,
+          metadata,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (dbError || !document) {
+        console.error('Error creating document record during bulk upload:', dbError);
+        await supabase.storage.from('documents').remove([filePath]);
+        failedUploads.push({ fileName: file.name, error: 'Failed to create document record.' });
+        continue;
+      }
+
+      try {
+        await (supabase as any).rpc('log_document_access', {
+          p_document_id: document.id,
+          p_action: 'bulk_upload',
+          p_metadata: { file_name: file.name, file_size: file.size, scope: permission_scope },
+        });
+      } catch (logError) {
+        console.error('Error logging document access for bulk upload:', logError);
+      }
+
+      createdDocuments.push(document as Document);
+    }
+
+    if (createdDocuments.length > 0) {
+      revalidatePath('/documents');
+    }
+
+    if (createdDocuments.length === 0) {
+      return {
+        success: false,
+        data: { created: [], failed: failedUploads },
+        error: failedUploads.length ? 'Failed to upload documents.' : 'No documents were uploaded.',
+      };
+    }
+
+    const message = failedUploads.length
+      ? `Uploaded ${createdDocuments.length} documents with ${failedUploads.length} failures.`
+      : `Uploaded ${createdDocuments.length} documents successfully.`;
+
+    return {
+      success: failedUploads.length === 0,
+      data: { created: createdDocuments, failed: failedUploads },
+      message,
+      error: failedUploads.length ? 'Some documents failed to upload.' : undefined,
+    };
+  } catch (error) {
+    console.error('Unexpected error in bulkUploadDocumentsAction:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
