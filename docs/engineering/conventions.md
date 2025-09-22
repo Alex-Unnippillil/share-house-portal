@@ -66,4 +66,12 @@ The repository is organized to keep infrastructure, services, clients, and share
 - Follow least-privilege principles when defining IAM roles or service accounts.
 - Ensure dependency scanning and container image scanning steps succeed before requesting review.
 
+### Household Event Stream
+
+- Persist high-signal roommate activity (payments, bookings, chores, etc.) in the `public.events` table. Columns capture multi-tenant context (`household_id`, `member_id`), a canonical action string, entity metadata, and an auditable JSON payload.
+- Action names follow a `domain.verb` convention (`payment.receipt_sent`, `booking.rescheduled`, `chore.completed`) so downstream consumers can filter and aggregate consistently.
+- `entity_type` stores the broad domain (`payment`, `booking`, `chore`) while `entity_id` links back to the originating record (Stripe payment ID, booking reference, chore slug). Leave `entity_id` `null` only when no durable record exists.
+- `payload` should remain compact—store immutable context like amounts, schedule windows, or participants; avoid duplicating large blobs when an identifier will do.
+- Application code should add events via the helpers in `queries/events.ts` to centralize Supabase wiring and ensure consistent error handling.
+
 These conventions will evolve with the platform. Propose updates via a new ADR or an update to this document and circulate it in the Platform Engineering Guild for approval.

@@ -1,4 +1,6 @@
 import { PaymentReceiptEmail } from '@/components/emails/payment-receipt';
+import type { Json } from '@/lib/supabase';
+import { getServiceRoleClient, insertEvent } from '@/queries/events';
 import { Resend } from 'resend';
 import { z } from 'zod';
 
@@ -25,6 +27,8 @@ const paymentReceiptSchema = z.object({
   taxAmount: z.number().nonnegative().optional(),
   discountAmount: z.number().nonnegative().optional(),
   sendCopyTo: z.array(z.string().email()).optional(),
+  householdId: z.string().uuid(),
+  memberId: z.string().uuid().optional(),
 });
 
 export async function POST(request: Request) {
@@ -74,6 +78,8 @@ export async function POST(request: Request) {
     taxAmount,
     discountAmount,
     sendCopyTo,
+    householdId,
+    memberId,
   } = parsed.data;
 
   const resend = new Resend(resendApiKey);
@@ -82,6 +88,7 @@ export async function POST(request: Request) {
   const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])];
 
   try {
+    const paymentDateToUse = paymentDate ?? new Date();
     const { data, error } = await resend.emails.send({
       from: fromAddress,
       to: emailRecipients,
@@ -91,7 +98,7 @@ export async function POST(request: Request) {
         paymentId,
         amountPaid,
         currency,
-        paymentDate: paymentDate ?? new Date(),
+        paymentDate: paymentDateToUse,
         items,
         businessName,
         supportEmail,
@@ -107,6 +114,31 @@ export async function POST(request: Request) {
       const message = error instanceof Error ? error.message : String(error);
       return Response.json({ error: message }, { status: 502 });
     }
+
+    const client = getServiceRoleClient();
+    const payload = {
+      amountPaid,
+      currency,
+      paymentDate: paymentDateToUse.toISOString(),
+      items: (items ?? []) as unknown as Json,
+      businessName,
+      supportEmail,
+      billingAddress,
+      notes,
+      subtotalAmount,
+      taxAmount,
+      discountAmount,
+      recipients: emailRecipients as unknown as Json,
+    } satisfies Json;
+
+    await insertEvent(client, {
+      household_id: householdId,
+      member_id: memberId ?? null,
+      action: 'payment.receipt_sent',
+      entity_type: 'payment',
+      entity_id: paymentId,
+      payload,
+    });
 
     return Response.json({ id: data?.id ?? null });
   } catch (error) {
