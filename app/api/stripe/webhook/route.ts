@@ -6,7 +6,11 @@ import {
   sendInAppNotification,
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
-import type { Database, TablesInsert } from "@/lib/supabase"
+import {
+  createSupabaseInstrumentationConfig,
+  type Database,
+  type TablesInsert,
+} from "@/lib/supabase"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -22,6 +26,11 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
       autoRefreshToken: false,
       persistSession: false,
     },
+    ...createSupabaseInstrumentationConfig({
+      helper: 'api/stripe/webhook',
+      environment: 'server',
+      context: { route: '/api/stripe/webhook' },
+    }),
   })
 }
 

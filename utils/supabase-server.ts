@@ -2,6 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/lib/supabase'
 
+import { createSupabaseInstrumentationConfig } from '@/lib/supabase'
+
 export default function createSupabaseServer(
   cookieStore: ReturnType<typeof cookies>
 ) {
@@ -14,6 +16,11 @@ export default function createSupabaseServer(
           return cookieStore.get(name)?.value
         },
       },
+      ...createSupabaseInstrumentationConfig({
+        helper: 'utils/supabase-server',
+        environment: 'server',
+        context: { helper: 'utils/supabase-server' },
+      }),
     }
   )
 }

@@ -1,6 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+import { createSupabaseInstrumentationConfig } from '@/lib/supabase'
+
 export function createClient() {
   const cookieStore = cookies()
 
@@ -31,6 +33,11 @@ export function createClient() {
           }
         },
       },
+      ...createSupabaseInstrumentationConfig({
+        helper: 'utils/supabase/server',
+        environment: 'server',
+        context: { helper: 'utils/supabase/server' },
+      }),
     }
   )
 }

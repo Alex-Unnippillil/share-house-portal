@@ -3,6 +3,7 @@
 import { createBrowserClient } from "@supabase/ssr"
 import { useMemo } from "react"
 
+import { createSupabaseInstrumentationConfig } from "@/lib/supabase"
 import type { Database } from "@/lib/supabase"
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
 
@@ -13,9 +14,14 @@ function getSupabaseBrowserClient() {
     return client
   }
 
-  client = createBrowserClient<any>(
+  client = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    createSupabaseInstrumentationConfig({
+      helper: 'utils/supabase-browser',
+      environment: 'browser',
+      context: { helper: 'utils/supabase-browser' },
+    })
   )
 
   return client

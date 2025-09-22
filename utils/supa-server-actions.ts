@@ -1,6 +1,8 @@
 import { type CookieOptions, createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+import { createSupabaseInstrumentationConfig } from '@/lib/supabase'
+
 export function createClient(cookieStore: ReturnType<typeof cookies>) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -17,6 +19,11 @@ export function createClient(cookieStore: ReturnType<typeof cookies>) {
           cookieStore.set({ name, value: '', ...options })
         },
       },
+      ...createSupabaseInstrumentationConfig({
+        helper: 'supa-server-actions',
+        environment: 'server',
+        context: { helper: 'utils/supa-server-actions' },
+      }),
     }
   )
 }
