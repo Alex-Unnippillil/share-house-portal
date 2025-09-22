@@ -183,6 +183,155 @@ export type Database = {
   }
   public: {
     Tables: {
+      chore_assignments: {
+        Row: {
+          assigned_to: string
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          scheduled_for: string
+          status: 'assigned' | 'completed' | 'skipped'
+          title: string
+          unit_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          scheduled_for: string
+          status?: 'assigned' | 'completed' | 'skipped'
+          title: string
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          scheduled_for?: string
+          status?: 'assigned' | 'completed' | 'skipped'
+          title?: string
+          unit_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'chore_assignments_assigned_to_fkey'
+            columns: ['assigned_to']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      chore_swaps: {
+        Row: {
+          assignment_id: string
+          id: string
+          metadata: Json | null
+          message: string | null
+          requested_at: string | null
+          requester_id: string
+          responder_id: string
+          responded_at: string | null
+          status: 'pending' | 'accepted' | 'declined' | 'cancelled'
+        }
+        Insert: {
+          assignment_id: string
+          id?: string
+          metadata?: Json | null
+          message?: string | null
+          requested_at?: string | null
+          requester_id: string
+          responder_id: string
+          responded_at?: string | null
+          status?: 'pending' | 'accepted' | 'declined' | 'cancelled'
+        }
+        Update: {
+          assignment_id?: string
+          id?: string
+          metadata?: Json | null
+          message?: string | null
+          requested_at?: string | null
+          requester_id?: string
+          responder_id?: string
+          responded_at?: string | null
+          status?: 'pending' | 'accepted' | 'declined' | 'cancelled'
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'chore_swaps_assignment_id_fkey'
+            columns: ['assignment_id']
+            isOneToOne: false
+            referencedRelation: 'chore_assignments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'chore_swaps_requester_id_fkey'
+            columns: ['requester_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'chore_swaps_responder_id_fkey'
+            columns: ['responder_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          author_id: string | null
+          body: string
+          channel: string
+          created_at: string | null
+          id: string
+          message_type: 'system' | 'user' | 'alert'
+          metadata: Json | null
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          channel?: string
+          created_at?: string | null
+          id?: string
+          message_type?: 'system' | 'user' | 'alert'
+          metadata?: Json | null
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          channel?: string
+          created_at?: string | null
+          id?: string
+          message_type?: 'system' | 'user' | 'alert'
+          metadata?: Json | null
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'messages_author_id_fkey'
+            columns: ['author_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       ai_agents: {
         Row: {
           created_at: string | null
