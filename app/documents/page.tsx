@@ -61,7 +61,7 @@ export default function DocumentsPage() {
 
         <TabsContent value="leases" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
+            <DocumentsList filter={{ type: ['lease'], lease_status: ['active'] }} />
           </Suspense>
         </TabsContent>
 

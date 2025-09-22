@@ -38,6 +38,7 @@ const documentListFiltersSchema = z.object({
   type: z.array(z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other'])).optional(),
   tenant_id: z.string().uuid().optional(),
   unit_id: z.string().optional(),
+  lease_status: z.array(z.enum(['active', 'expired', 'terminated'])).optional(),
   date_from: z.string().datetime().optional(),
   date_to: z.string().datetime().optional(),
 });
@@ -66,6 +67,10 @@ export async function getDocumentsAction(
 
     // Validate filters
     const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
+    const shouldTargetLeases = Boolean(
+      validatedFilters.lease_status?.length ||
+      validatedFilters.type?.includes('lease')
+    );
 
     // Determine role for scoping
     const { data: profile } = await supabase
@@ -103,6 +108,12 @@ export async function getDocumentsAction(
     }
     if (validatedFilters.unit_id) {
       query = query.eq('unit_id', validatedFilters.unit_id);
+      if (shouldTargetLeases) {
+        query = query.eq('lease.unit_id', validatedFilters.unit_id);
+      }
+    }
+    if (validatedFilters.lease_status?.length) {
+      query = query.in('lease.status', validatedFilters.lease_status);
     }
     if (validatedFilters.date_from) {
       query = query.gte('created_at', validatedFilters.date_from);
@@ -316,8 +327,9 @@ export async function createSigningRequestAction(
     if (document.document_type === 'lease') {
       const { data: lease } = await (supabase as any)
         .from('leases')
-        .select('tenant_ids')
+        .select('tenant_ids, unit_id, status')
         .eq('document_id', document.id)
+        .eq('status', 'active')
         .single();
 
       if (lease) {
