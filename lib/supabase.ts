@@ -33,6 +33,7 @@ export type Database = {
         stripe_customer_id: string | null
         rent_share: number | null
         metadata: Json | null
+        status: 'active' | 'inactive' | 'invited' | 'suspended'
       }>
       documents: SupabaseTable<{
         id: string
@@ -198,6 +199,22 @@ export type Database = {
         read: boolean | null
         created_at: string | null
         updated_at: string | null
+      }>
+      admin_jobs: SupabaseTable<{
+        id: string
+        type: 'status_update' | 'notification'
+        status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+        payload: Json
+        result: Json | null
+        total_tasks: number
+        processed_tasks: number
+        error: string | null
+        requested_by: string | null
+        created_at: string
+        updated_at: string
+        completed_at: string | null
+        cancelled_at: string | null
+        last_progress_at: string | null
       }>
       email_notifications: SupabaseTable<{
         id: string
