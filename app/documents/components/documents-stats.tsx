@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardSkeleton } from "@/components/ui/skeletons";
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { getDocumentStatsAction } from '../actions';
 import { DocumentStats } from '@/types/documents';
@@ -30,15 +31,8 @@ export function DocumentsStats() {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <CardSkeleton key={index} variant="metric" />
         ))}
       </div>
     );

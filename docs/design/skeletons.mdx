@@ -1,0 +1,53 @@
+# Skeleton primitives
+
+Consistent loading placeholders help residents understand when content is still being fetched. The shared skeleton primitives live in `components/ui/skeletons` and expose opinionated variants for the most common layouts in the portal.
+
+## CardSkeleton
+
+`CardSkeleton` mirrors our card spacing and typography rhythm. Use the `variant` prop to switch between presets:
+
+- `"metric"` — a compact stat card with a label line and a large value block. Perfect for dashboard counters.
+- `"list"` — matches the document row layout with primary/secondary text and trailing actions.
+- `"generic"` — renders `lines` full-width blocks for quick one-off placeholders.
+
+```tsx
+import { CardSkeleton } from "@/components/ui/skeletons"
+
+function StatsFallback() {
+  return (
+    <div className="grid gap-4 md:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <CardSkeleton key={index} variant="metric" />
+      ))}
+    </div>
+  )
+}
+```
+
+## ListSkeleton
+
+`ListSkeleton` handles vertical stacks of card rows and defaults to the `"list"` variant. Adjust `count` for the number of rows and pass `cardProps` to tweak spacing when necessary.
+
+```tsx
+import { ListSkeleton } from "@/components/ui/skeletons"
+
+function DocumentsFallback() {
+  return <ListSkeleton count={5} />
+}
+```
+
+## TableSkeleton
+
+`TableSkeleton` provides a responsive table wrapper with configurable headers and row counts. Use it whenever tabular data is loading so column widths remain stable.
+
+```tsx
+import { TableSkeleton } from "@/components/ui/skeletons"
+
+function PaymentsTableFallback() {
+  return <TableSkeleton columns={5} rows={6} />
+}
+```
+
+## Accessibility
+
+The skeleton primitives apply `role="status"` and `aria-busy="true"` so assistive technologies announce that content is in a loading state. Individual skeleton blocks are marked with `aria-hidden` to avoid noise. Always pair skeletons with an adjacent heading that describes the content being loaded (e.g. "Documents" or "Amenity Stats").
