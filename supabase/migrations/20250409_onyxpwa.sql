@@ -49,9 +49,41 @@ CREATE TABLE public.members_table (
   name text NULL DEFAULT ''::text,
   member_id uuid NOT NULL,
   email text NULL DEFAULT ''::text,
-  password text NOT NULL DEFAULT ''::text
+  password text NOT NULL DEFAULT ''::text,
+  credit_balance integer NOT NULL DEFAULT 0
 ) WITH (OIDS=FALSE);
 ALTER TABLE public.members_table ENABLE ROW LEVEL SECURITY;
+
+CREATE TYPE public.chore_status AS ENUM ('assigned', 'in_progress', 'completed');
+
+CREATE TABLE public.chore_assignments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  title text NOT NULL,
+  description text NULL,
+  status public.chore_status NOT NULL DEFAULT 'assigned',
+  assigned_to uuid NOT NULL,
+  credit_value integer NOT NULL DEFAULT 0,
+  due_date timestamp with time zone NULL,
+  proof_url text NULL,
+  completed_at timestamp with time zone NULL,
+  CONSTRAINT chore_assignments_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.members_table(member_id) ON DELETE CASCADE
+) WITH (OIDS=FALSE);
+ALTER TABLE public.chore_assignments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can view their chore assignments." ON public.chore_assignments
+  FOR SELECT TO authenticated
+  USING ((assigned_to = auth.uid()));
+
+CREATE POLICY "Members can update their own chore assignments." ON public.chore_assignments
+  FOR UPDATE TO authenticated
+  USING ((assigned_to = auth.uid()))
+  WITH CHECK ((assigned_to = auth.uid()));
+
+CREATE POLICY "Members can view their credit balance." ON public.members_table
+  FOR SELECT TO authenticated
+  USING ((member_id = auth.uid()));
 
 create table public.profiles (
   id uuid not null default auth.uid (),
