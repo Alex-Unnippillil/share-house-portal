@@ -2,7 +2,6 @@
 
 import { createClient } from '@/utils/supa-server-actions';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import {
@@ -54,8 +53,7 @@ interface ActionResult<T = any> {
 export async function getDocumentsAction(
   filters?: DocumentListFilters
 ): Promise<ActionResult<DocumentWithLease[]>> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createClient();
 
   try {
     // Check authentication
@@ -141,8 +139,7 @@ export async function getDocumentsAction(
 export async function uploadDocumentAction(
   formData: FormData
 ): Promise<ActionResult<Document>> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createClient();
 
   try {
     // Check authentication
@@ -244,8 +241,7 @@ export async function uploadDocumentAction(
 export async function createSigningRequestAction(
   formData: FormData
 ): Promise<ActionResult<{ signing_url?: string; envelope_id?: string }>> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createClient();
 
   try {
     // Check authentication
@@ -423,8 +419,7 @@ export async function signDocumentAction(
   documentId: string,
   signatureData?: Record<string, any>
 ): Promise<ActionResult> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createClient();
 
   try {
     // Check authentication
@@ -496,8 +491,7 @@ export async function signDocumentAction(
 export async function getSigningUrlAction(
   documentId: string
 ): Promise<ActionResult<{ signing_url: string }>> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createClient();
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -546,8 +540,7 @@ export async function getSigningUrlAction(
 
 // Get document statistics
 export async function getDocumentStatsAction(): Promise<ActionResult<DocumentStats>> {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createClient();
 
   try {
     // Check authentication

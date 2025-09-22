@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
+import { useSupabaseClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 
 const visitorBookingSchema = z.object({
@@ -40,7 +40,7 @@ export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),

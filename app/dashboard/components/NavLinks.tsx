@@ -4,17 +4,17 @@ import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-import { createClient } from "@/utils/supabase-browser";
+import { useSupabaseClient } from "@/utils/supabase-browser";
 
 export default function NavLinks() {
-	const pathname = usePathname();
-	const [role, setRole] = useState<string | null>(null);
+        const pathname = usePathname();
+        const [role, setRole] = useState<string | null>(null);
+        const supabase = useSupabaseClient();
 
-	useEffect(() => {
-		const load = async () => {
-			try {
-				const supabase = createClient();
-				const { data: { user } } = await supabase.auth.getUser();
+        useEffect(() => {
+                const load = async () => {
+                        try {
+                                const { data: { user } } = await supabase.auth.getUser();
 				if (!user) {
 					setRole(null);
 					return;
@@ -28,9 +28,9 @@ export default function NavLinks() {
 			} catch (e) {
 				setRole(null);
 			}
-		};
-		load();
-	}, []);
+                };
+                load();
+        }, [supabase]);
 
 	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
 

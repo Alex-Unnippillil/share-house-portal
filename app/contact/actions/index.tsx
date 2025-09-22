@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
 import { createClient } from "@/utils/supa-server-actions"
 
 type formData = {
@@ -11,8 +10,7 @@ type formData = {
 }
 
 export async function submitInquiry(data: formData) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createClient()
 
   try {
     const { error } = await supabase.from("inquiries").insert([

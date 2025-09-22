@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase-browser';
+import { useSupabaseClient } from '@/utils/supabase-browser';
 import { DocumentWithLease } from '@/types/documents';
 
 export interface UserPermissions {
@@ -29,11 +29,11 @@ export function useDocumentPermissions(): UserPermissions {
     canEditDocument: () => false,
   });
   const [loading, setLoading] = useState(true);
+  const supabase = useSupabaseClient();
 
   useEffect(() => {
     const checkPermissions = async () => {
       try {
-        const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -109,7 +109,7 @@ export function useDocumentPermissions(): UserPermissions {
     };
 
     checkPermissions();
-  }, []);
+  }, [supabase]);
 
   return permissions;
 }

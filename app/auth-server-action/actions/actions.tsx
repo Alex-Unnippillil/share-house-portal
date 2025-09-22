@@ -1,14 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supa-server-actions'
 
 export async function login(formData: FormData) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createClient()
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
@@ -28,8 +26,7 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createClient()
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
