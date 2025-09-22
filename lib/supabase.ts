@@ -187,6 +187,23 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      uptime_checks: SupabaseTable<{
+        id: string
+        checked_at: string
+        region: string
+        region_label: string
+        endpoint: string
+        http_method: string
+        full_url: string
+        status_code: number | null
+        success: boolean
+        latency_ms: number | null
+        error_message: string | null
+        response_excerpt: string | null
+        consecutive_failures: number
+        config_version: number
+        metadata: Json
+      }>
       notifications: SupabaseTable<{
         id: string
         user_id: string
