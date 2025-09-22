@@ -411,6 +411,39 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          household_id: string
+          id: number
+          member_id: string | null
+          payload: Json | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          household_id: string
+          id?: number
+          member_id?: string | null
+          payload?: Json | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          household_id?: string
+          id?: number
+          member_id?: string | null
+          payload?: Json | null
+        }
+        Relationships: []
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
