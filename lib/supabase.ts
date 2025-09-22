@@ -2120,12 +2120,9 @@ export type Database = {
           },
         ]
       }
-      document_signatures: {
-        Row: {
-          id: string
-          created_at: string
-          updated_at: string
-          document_id: string
+      // Removed duplicate document_signatures definition
+      // Removed duplicate document_access_logs definition
+      // Removed duplicate leases definition
           signer_id: string
           signer_email: string
           signer_name: string | null
@@ -2329,53 +2326,49 @@ export type Database = {
       }
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
       decrement_package_usage: {
         Args: { package_id: string }
         Returns: undefined
       }
       get_page_parents: {
         Args: { page_id: number }
-        Returns: {
+        Returns: Array<{
           id: number
           parent_page_id: number
           path: string
           meta: Json
-        }[]
+        }>
       }
       halfvec_avg: {
-        Args: { "": number[] }
+        Args: { values: number[] }
         Returns: unknown
       }
       halfvec_out: {
-        Args: { "": unknown }
+        Args: { vector: unknown }
         Returns: unknown
       }
       halfvec_send: {
-        Args: { "": unknown }
+        Args: { vector: unknown }
         Returns: string
       }
       halfvec_typmod_in: {
-        Args: { "": unknown[] }
+        Args: { typmod: unknown[] }
         Returns: number
       }
       hnsw_bit_support: {
-        Args: { "": unknown }
+        Args: { internal: unknown }
         Returns: unknown
       }
       hnsw_halfvec_support: {
-        Args: { "": unknown }
+        Args: { internal: unknown }
         Returns: unknown
       }
       hnsw_sparsevec_support: {
-        Args: { "": unknown }
+        Args: { internal: unknown }
         Returns: unknown
       }
       hnswhandler: {
-        Args: { "": unknown }
+        Args: { internal: unknown }
         Returns: unknown
       }
       increment_package_usage: {
@@ -2391,23 +2384,23 @@ export type Database = {
         Returns: boolean
       }
       ivfflat_bit_support: {
-        Args: { "": unknown }
+        Args: { internal: unknown }
         Returns: unknown
       }
       ivfflat_halfvec_support: {
-        Args: { "": unknown }
+        Args: { internal: unknown }
         Returns: unknown
       }
       ivfflathandler: {
-        Args: { "": unknown }
+        Args: { internal: unknown }
         Returns: unknown
       }
       l2_norm: {
-        Args: { "": unknown } | { "": unknown }
+        Args: { vector: unknown } | { vector: unknown }
         Returns: number
       }
       l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
+        Args: { vector: string } | { vector: unknown } | { vector: unknown }
         Returns: string
       }
       match_page_sections: {
@@ -2427,39 +2420,39 @@ export type Database = {
         }[]
       }
       sparsevec_out: {
-        Args: { "": unknown }
+        Args: { vector: unknown }
         Returns: unknown
       }
       sparsevec_send: {
-        Args: { "": unknown }
+        Args: { vector: unknown }
         Returns: string
       }
       sparsevec_typmod_in: {
-        Args: { "": unknown[] }
+        Args: { typmod: unknown[] }
         Returns: number
       }
       vector_avg: {
-        Args: { "": number[] }
+        Args: { values: number[] }
         Returns: string
       }
       vector_dims: {
-        Args: { "": string } | { "": unknown }
+        Args: { vector: string } | { vector: unknown }
         Returns: number
       }
       vector_norm: {
-        Args: { "": string }
+        Args: { vector: string }
         Returns: number
       }
       vector_out: {
-        Args: { "": string }
+        Args: { vector: string }
         Returns: unknown
       }
       vector_send: {
-        Args: { "": string }
+        Args: { vector: string }
         Returns: string
       }
       vector_typmod_in: {
-        Args: { "": unknown[] }
+        Args: { typmod: unknown[] }
         Returns: number
       }
     }
