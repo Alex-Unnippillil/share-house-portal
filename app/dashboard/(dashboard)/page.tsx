@@ -22,6 +22,7 @@ import { RecentSales } from "@/app/dashboard/components/recent-sales"
 import { Search } from "@/app/dashboard/components/search"
 import TeamSwitcher from "@/app/dashboard/components/team-switcher"
 import { UserNav } from "@/app/dashboard/components/user-nav"
+import FloorPlanOverlayMap from "@/components/floorplan-overlay-map"
 
 export const metadata: Metadata = {
   title: "Onyx Dashboard",
@@ -188,6 +189,17 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
               </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>House floorplan overlays</CardTitle>
+                  <CardDescription>
+                    Select a zone to jump directly into amenity bookings, roommate profiles, or parking reservations.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FloorPlanOverlayMap />
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
