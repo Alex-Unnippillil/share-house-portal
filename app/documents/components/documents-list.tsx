@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
@@ -20,10 +19,17 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchDocuments = async () => {
       try {
         setLoading(true);
+        setError(null);
         const result = await getDocumentsAction(filter);
+        if (!isMounted) {
+          return;
+        }
+
         if (result.success && result.data) {
           setDocuments(result.data);
         } else {
@@ -31,13 +37,21 @@ export function DocumentsList({ filter }: DocumentsListProps) {
         }
       } catch (err) {
         console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
+        if (isMounted) {
+          setError('An unexpected error occurred');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDocuments();
+
+    return () => {
+      isMounted = false;
+    };
   }, [filter]);
 
   const getStatusBadge = (status: string) => {
@@ -107,21 +121,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   }
 
   if (error) {
-    return (
-      <Card className="p-6">
-        <div className="text-center">
-          <p className="mb-2 text-destructive">Error loading documents</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
-        </div>
-      </Card>
-    );
+    throw new Error(error);
   }
 
   if (documents.length === 0) {

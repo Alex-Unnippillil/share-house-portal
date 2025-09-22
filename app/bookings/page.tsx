@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
@@ -82,24 +84,42 @@ export default function BookingsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-4 w-3/4 rounded bg-muted"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-1/2 rounded bg-muted"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        }
+      <ErrorBoundary
+        fallbackRender={({ error, reset }) => (
+          <Card className="p-6" role="alert">
+            <div className="space-y-3 text-center">
+              <p className="text-sm font-medium text-destructive">
+                Unable to load booking insights.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {error.message || "An unexpected error occurred while loading stats."}
+              </p>
+              <Button variant="outline" onClick={reset}>
+                Try again
+              </Button>
+            </div>
+          </Card>
+        )}
       >
-        <BookingStats />
-      </Suspense>
+        <Suspense
+          fallback={
+            <div className="grid gap-4 md:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader className="pb-2">
+                    <div className="h-4 w-3/4 rounded bg-muted"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-8 w-1/2 rounded bg-muted"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          }
+        >
+          <BookingStats />
+        </Suspense>
+      </ErrorBoundary>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="book" className="space-y-6">

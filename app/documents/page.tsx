@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { FileText, Users, Clock, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
 import { UploadDocumentDialog } from "./components/upload-document-dialog";
 import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
@@ -10,6 +12,31 @@ import { DocumentsFilters } from "./components/documents-filters";
 import { DocumentListFilters } from '@/types/documents';
 
 export default function DocumentsPage() {
+  const renderDocumentsSection = (filter: DocumentListFilters, contextLabel: string) => (
+    <ErrorBoundary
+      resetKeys={[JSON.stringify(filter)]}
+      fallbackRender={({ error, reset }) => (
+        <Card className="p-6" role="alert">
+          <div className="space-y-3 text-center">
+            <p className="text-sm font-medium text-destructive">
+              Unable to load {contextLabel}.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {error.message || 'Please try again in a few moments.'}
+            </p>
+            <Button variant="outline" onClick={reset}>
+              Try again
+            </Button>
+          </div>
+        </Card>
+      )}
+    >
+      <Suspense fallback={<DocumentsListSkeleton />}>
+        <DocumentsList filter={filter} />
+      </Suspense>
+    </ErrorBoundary>
+  );
+
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
@@ -54,27 +81,19 @@ export default function DocumentsPage() {
         </div>
 
         <TabsContent value="all" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
-          </Suspense>
+          {renderDocumentsSection({}, 'documents')}
         </TabsContent>
 
         <TabsContent value="leases" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
-          </Suspense>
+          {renderDocumentsSection({ type: ['lease'] }, 'lease documents')}
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['pending_signature'] }} />
-          </Suspense>
+          {renderDocumentsSection({ status: ['pending_signature'] }, 'documents awaiting signatures')}
         </TabsContent>
 
         <TabsContent value="signed" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['signed'] }} />
-          </Suspense>
+          {renderDocumentsSection({ status: ['signed'] }, 'signed documents')}
         </TabsContent>
       </Tabs>
 
