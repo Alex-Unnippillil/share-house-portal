@@ -1,51 +1,55 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { type ElementType } from "react"
+
+import { motion, type MotionProps } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { ChevronRight, Star, Zap, Shield } from "lucide-react"
-import { Contact } from '@/components/forms/contact'
+import { Star, Zap, Shield } from "lucide-react"
+import { Contact } from "@/components/forms/contact"
+import { useShouldReduceMotion } from "@/hooks/use-should-reduce-motion"
 
 export default function AboutPage() {
+  const shouldReduceMotion = useShouldReduceMotion()
+  const motionState = shouldReduceMotion ? "reduced" : "enabled"
+  const Section: ElementType = shouldReduceMotion ? "section" : motion.section
+  const Heading: ElementType = shouldReduceMotion ? "h1" : motion.h1
+  const AnimatedDiv: ElementType = shouldReduceMotion ? "div" : motion.div
+
+  const fadeUp = (delay = 0): MotionProps =>
+    shouldReduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 16 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.12, delay, ease: "easeOut" },
+        }
+
+  const scaleIn = (delay = 0): MotionProps =>
+    shouldReduceMotion
+      ? {}
+      : {
+          initial: { opacity: 0, scale: 0.97 },
+          animate: { opacity: 1, scale: 1 },
+          transition: { duration: 0.12, delay, ease: "easeOut" },
+        }
+
   return (
-    <div className="container mx-auto px-4 py-12">
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-16 text-center"
-      >
-        <motion.h1
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mb-4 text-4xl font-bold"
-        >
+    <div className="container mx-auto px-4 py-12" data-motion-reduced={shouldReduceMotion ? "true" : "false"}>
+      <Section {...(shouldReduceMotion ? {} : fadeUp())} data-motion={motionState} className="mb-16 text-center">
+        <Heading {...(shouldReduceMotion ? {} : scaleIn())} data-motion={motionState} className="mb-4 text-4xl font-bold">
           About Our Company
-        </motion.h1>
+        </Heading>
         <p className="text-xl text-muted-foreground">
           We&#39;re on a mission to revolutionize the industry with innovative solutions.
         </p>
-      </motion.section>
+      </Section>
 
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mb-16"
-      >
+      <Section {...(shouldReduceMotion ? {} : fadeUp(0.04))} data-motion={motionState} className="mb-16">
         <h2 className="mb-8 text-center text-2xl font-semibold">Our Team</h2>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {teamMembers.map((member, index) => (
-            <motion.div
-              key={member.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
+            <AnimatedDiv key={member.name} {...(shouldReduceMotion ? {} : fadeUp(index * 0.04))} data-motion={motionState}>
               <Card>
                 <CardHeader className="text-center">
                   <Avatar className="mx-auto mb-4 size-24">
@@ -64,51 +68,40 @@ export default function AboutPage() {
                   <p className="text-center">{member.bio}</p>
                 </CardContent>
               </Card>
-            </motion.div>
+            </AnimatedDiv>
           ))}
         </div>
-      </motion.section>
+      </Section>
 
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="mb-16"
-      >
+      <Section {...(shouldReduceMotion ? {} : fadeUp(0.08))} data-motion={motionState} className="mb-16">
         <h2 className="mb-8 text-center text-2xl font-semibold">Our Values</h2>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {values.map((value, index) => (
-            <motion.div
+            <AnimatedDiv
               key={value.title}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              {...(shouldReduceMotion ? {} : scaleIn(index * 0.04))}
+              data-motion={motionState}
               className="text-center"
             >
               <div className="mb-4">{value.icon}</div>
               <h3 className="mb-2 text-xl font-semibold">{value.title}</h3>
               <p className="text-muted-foreground">{value.description}</p>
-            </motion.div>
+            </AnimatedDiv>
           ))}
         </div>
-      </motion.section>
+      </Section>
 
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-        className="mb-16"
-      >
+      <Section {...(shouldReduceMotion ? {} : fadeUp(0.12))} data-motion={motionState} className="mb-16">
         <Card>
           <CardHeader>
             <CardTitle className="mb-4 text-2xl font-semibold">Contact Us</CardTitle>
             <CardDescription>Have questions? Get in touch with our team.</CardDescription>
           </CardHeader>
           <CardContent>
-          <Contact/>
+            <Contact />
           </CardContent>
         </Card>
-      </motion.section>
+      </Section>
     </div>
   )
 }
