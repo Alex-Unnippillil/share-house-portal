@@ -1,6 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
+import type { MotionProps } from "framer-motion"
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -10,19 +12,52 @@ import { ChevronRight, Star, Zap, Shield } from "lucide-react"
 import { Contact } from '@/components/forms/contact'
 
 export default function AboutPage() {
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const animationsEnabled = !prefersReducedMotion
+
+  const fadeUp = (delay = 0): MotionProps =>
+    animationsEnabled
+      ? {
+          initial: { opacity: 0, y: 20 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.45, delay, ease: "easeOut" },
+        }
+      : { initial: false }
+
+  const fadeIn = (delay = 0): MotionProps =>
+    animationsEnabled
+      ? {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { duration: 0.35, delay, ease: "easeOut" },
+        }
+      : { initial: false }
+
+  const scaleIn = (delay = 0): MotionProps =>
+    animationsEnabled
+      ? {
+          initial: { opacity: 0, scale: 0.95 },
+          animate: { opacity: 1, scale: 1 },
+          transition: { duration: 0.4, delay, ease: "easeOut" },
+        }
+      : { initial: false }
+
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div
+      className="container mx-auto px-4 py-12"
+      data-reduced-motion={prefersReducedMotion ? "true" : "false"}
+    >
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        {...fadeUp()}
         className="mb-16 text-center"
+        data-motion-enabled={animationsEnabled ? "true" : "false"}
+        style={animationsEnabled ? { willChange: "transform, opacity" } : undefined}
       >
         <motion.h1
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5 }}
+          {...scaleIn()}
           className="mb-4 text-4xl font-bold"
+          data-motion-enabled={animationsEnabled ? "true" : "false"}
+          style={animationsEnabled ? { willChange: "transform, opacity" } : undefined}
         >
           About Our Company
         </motion.h1>
@@ -32,19 +67,19 @@ export default function AboutPage() {
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        {...fadeIn(0.2)}
         className="mb-16"
+        data-motion-enabled={animationsEnabled ? "true" : "false"}
+        style={animationsEnabled ? { willChange: "opacity" } : undefined}
       >
         <h2 className="mb-8 text-center text-2xl font-semibold">Our Team</h2>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {teamMembers.map((member, index) => (
             <motion.div
               key={member.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              {...fadeUp(index * 0.08)}
+              data-motion-enabled={animationsEnabled ? "true" : "false"}
+              style={animationsEnabled ? { willChange: "transform, opacity" } : undefined}
             >
               <Card>
                 <CardHeader className="text-center">
@@ -70,19 +105,19 @@ export default function AboutPage() {
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
+        {...fadeIn(0.4)}
         className="mb-16"
+        data-motion-enabled={animationsEnabled ? "true" : "false"}
+        style={animationsEnabled ? { willChange: "opacity" } : undefined}
       >
         <h2 className="mb-8 text-center text-2xl font-semibold">Our Values</h2>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {values.map((value, index) => (
             <motion.div
               key={value.title}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              {...scaleIn(index * 0.08)}
+              data-motion-enabled={animationsEnabled ? "true" : "false"}
+              style={animationsEnabled ? { willChange: "transform, opacity" } : undefined}
               className="text-center"
             >
               <div className="mb-4">{value.icon}</div>
@@ -94,10 +129,10 @@ export default function AboutPage() {
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
+        {...fadeIn(0.6)}
         className="mb-16"
+        data-motion-enabled={animationsEnabled ? "true" : "false"}
+        style={animationsEnabled ? { willChange: "opacity" } : undefined}
       >
         <Card>
           <CardHeader>
