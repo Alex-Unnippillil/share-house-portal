@@ -17,6 +17,31 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
 export type Database = {
   public: {
     Tables: {
+      amenities: SupabaseTable<{
+        id: string
+        household_id: string | null
+        slug: string
+        name: string
+        description: string | null
+        slot_duration_minutes: number
+        buffer_minutes: number
+        open_hour: number
+        close_hour: number
+        max_advance_days: number
+        timezone: string
+        metadata: Json | null
+      }>
+      amenity_bookings: SupabaseTable<{
+        id: string
+        amenity_id: string
+        household_id: string | null
+        start_time: string
+        end_time: string
+        status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+        created_by: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
@@ -123,6 +148,33 @@ export type Database = {
         processed_at: string | null
         billing_period_start: string | null
         billing_period_end: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      roommate_balances: SupabaseTable<{
+        id: string
+        roommate_id: string
+        household_id: string | null
+        unit_label: string
+        currency: string
+        monthly_share: number
+        autopay_day: number
+        autopay_status: 'active' | 'paused' | 'disabled'
+        last_payment_date: string | null
+        last_payment_amount: number | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      roommate_charges: SupabaseTable<{
+        id: string
+        balance_id: string
+        description: string
+        category: string
+        due_date: string
+        original_amount: number
+        outstanding_amount: number
+        status: 'open' | 'partial' | 'paid' | 'waived'
         created_at: string | null
         updated_at: string | null
       }>
@@ -247,6 +299,41 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      get_available_amenity_slots: {
+        Args: {
+          p_amenity_slug: string
+          p_household_id?: string | null
+          p_range_start?: string | null
+          p_range_end?: string | null
+        }
+        Returns: {
+          slot_start: string
+          slot_end: string
+          is_peak: boolean
+        }[]
+      }
+      get_next_due_invoices: {
+        Args: {
+          p_household_id?: string | null
+          p_roommate_id?: string | null
+        }
+        Returns: {
+          balance_id: string
+          roommate_id: string
+          roommate_name: string
+          unit_label: string
+          currency: string
+          monthly_share: number
+          autopay_day: number
+          autopay_status: 'active' | 'paused' | 'disabled'
+          last_payment_date: string | null
+          last_payment_amount: number | null
+          metadata: Json | null
+          outstanding_total: number
+          next_charge: Json | null
+          charges: Json
+        }[]
+      }
       get_unread_notification_count: {
         Args: { user_uuid?: string | null }
         Returns: number
