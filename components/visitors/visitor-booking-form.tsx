@@ -9,15 +9,17 @@ import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { recordSupportFeedback } from "@/utils/support-feedback";
+
+const ESTIMATED_SUBMISSION_SECONDS = 8;
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -42,6 +44,21 @@ export function VisitorBookingForm() {
   const { toast } = useToast();
   const supabase = createClient();
 
+  const trackSupportFeedback = (
+    action: string,
+    status: "pending" | "resolved" | "escalated",
+    description?: string,
+    metadata?: Record<string, unknown>
+  ) => {
+    void recordSupportFeedback({
+      source: "visitor_booking",
+      action,
+      status,
+      description,
+      metadata,
+    });
+  };
+
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
     defaultValues: {
@@ -56,6 +73,19 @@ export function VisitorBookingForm() {
 
   const onSubmit = async (data: VisitorBookingFormData) => {
     setIsSubmitting(true);
+
+    toast({
+      title: "Submitting overnight visitor request",
+      description: `We’re saving your visitor details and queuing notifications now. This usually takes about ${ESTIMATED_SUBMISSION_SECONDS} seconds. Feel free to keep browsing while we finish.`,
+      duration: 6000,
+    });
+
+    trackSupportFeedback("submission_started", "pending", undefined, {
+      estimatedSeconds: ESTIMATED_SUBMISSION_SECONDS,
+      guestName: data.guestName,
+      checkInDate: data.checkInDate.toISOString(),
+      checkOutDate: data.checkOutDate.toISOString(),
+    });
 
     try {
       // Get current user info
@@ -83,7 +113,7 @@ export function VisitorBookingForm() {
       const propertyManager = unitData?.find(p => p.role === 'property_manager');
 
       if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
+        throw new Error("We couldn’t locate a property manager for your unit. Please contact support before logging overnight guests.");
       }
 
       // Create visitor booking record
@@ -126,17 +156,31 @@ export function VisitorBookingForm() {
       });
 
       toast({
-        title: "Visitor booking submitted",
-        description: "Your visitor booking has been submitted and notifications sent.",
+        title: "Visitor request submitted",
+        description: "We saved the visit details and pinged your roommates and property manager. They'll review it in the visitor log.",
+      });
+
+      trackSupportFeedback("submission_completed", "resolved", undefined, {
+        bookingId: booking?.id ?? null,
+        guestName: data.guestName,
+        roommateCount: roommates.length,
       });
 
       form.reset();
     } catch (error) {
       console.error('Error submitting visitor booking:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "We couldn’t submit your visitor request. Please try again or contact your property manager.";
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit visitor booking",
+        title: "Visitor request not sent",
+        description: `${errorMessage} If this keeps happening, let your property manager know so we can help.`,
         variant: "destructive",
+      });
+      trackSupportFeedback("submission_failed", "escalated", errorMessage, {
+        guestName: data.guestName,
+        error: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -152,10 +196,14 @@ export function VisitorBookingForm() {
             name="guestName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Guest Name *</FormLabel>
+                <FormLabel>Guest full name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter guest's full name" {...field} />
+                  <Input placeholder="As shown on their government ID" {...field} />
                 </FormControl>
+                <FormDescription>
+                  Use the exact name from your guest’s identification so building security can confirm their arrival without
+                  delays.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -166,10 +214,13 @@ export function VisitorBookingForm() {
             name="guestEmail"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Guest Email *</FormLabel>
+                <FormLabel>Guest email for updates *</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="guest@example.com" {...field} />
                 </FormControl>
+                <FormDescription>
+                  We’ll send arrival reminders and policy notes to this address so everyone knows what to expect.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -181,10 +232,13 @@ export function VisitorBookingForm() {
           name="guestPhone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Guest Phone (Optional)</FormLabel>
+              <FormLabel>Guest phone (optional)</FormLabel>
               <FormControl>
-                <Input placeholder="+1 (555) 123-4567" {...field} />
+                <Input placeholder="Include country code if outside the US" {...field} />
               </FormControl>
+              <FormDescription>
+                We’ll only call this number if there’s a check-in issue or an emergency during the stay.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -210,7 +264,7 @@ export function VisitorBookingForm() {
                         {field.value ? (
                           format(field.value, "PPP")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>Select arrival date</span>
                         )}
                         <CalendarIcon className="ml-auto size-4 opacity-50" />
                       </Button>
@@ -228,6 +282,9 @@ export function VisitorBookingForm() {
                     />
                   </PopoverContent>
                 </Popover>
+                <FormDescription>
+                  Choose the arrival day your guest will check in. Same-day visits are allowed until quiet hours begin.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -252,7 +309,7 @@ export function VisitorBookingForm() {
                         {field.value ? (
                           format(field.value, "PPP")
                         ) : (
-                          <span>Pick a date</span>
+                          <span>Select departure date</span>
                         )}
                         <CalendarIcon className="ml-auto size-4 opacity-50" />
                       </Button>
@@ -270,6 +327,9 @@ export function VisitorBookingForm() {
                     />
                   </PopoverContent>
                 </Popover>
+                <FormDescription>
+                  Set the day your guest will leave so we can keep overnight limits accurate.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -284,11 +344,14 @@ export function VisitorBookingForm() {
               <FormLabel>Purpose of Visit *</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Please describe the purpose of the visit and any special requirements..."
+                  placeholder="Explain why your guest is staying and any plans roommates should know about"
                   className="min-h-[80px]"
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                Share context—celebration, family visit, or support—so roommates understand the reason for the stay.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -299,10 +362,13 @@ export function VisitorBookingForm() {
           name="emergencyContact"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Emergency Contact (Optional)</FormLabel>
+              <FormLabel>Emergency contact (optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Name and phone number of emergency contact" {...field} />
+                <Input placeholder="Name and phone number to reach if we can’t contact the guest" {...field} />
               </FormControl>
+              <FormDescription>
+                Add a backup contact we can reach if there’s a safety concern while your guest is on-site.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -313,22 +379,42 @@ export function VisitorBookingForm() {
           name="specialNotes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Special Notes (Optional)</FormLabel>
+              <FormLabel>Special notes (optional)</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Any additional notes or requirements..."
+                  placeholder="Parking needs, accessibility notes, or quiet hours reminders"
                   className="min-h-[60px]"
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                Mention anything that helps your roommates prepare—vehicle details, sleeping arrangements, or building access.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Submitting..." : "Submit Visitor Booking"}
-        </Button>
+        <div className="space-y-2">
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting
+              ? `Submitting request (≈${ESTIMATED_SUBMISSION_SECONDS}s)`
+              : "Submit overnight visitor request"}
+          </Button>
+          {isSubmitting ? (
+            <p
+              className="text-center text-sm text-muted-foreground"
+              aria-live="polite"
+              role="status"
+            >
+              {`We’re saving your visitor booking and notifying everyone now. This usually wraps up in about ${ESTIMATED_SUBMISSION_SECONDS} seconds.`}
+            </p>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">
+              We’ll alert your roommates and property manager as soon as you send this request.
+            </p>
+          )}
+        </div>
       </form>
     </Form>
   );

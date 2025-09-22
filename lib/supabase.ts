@@ -210,6 +210,18 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      support_feedback_events: SupabaseTable<{
+        id: string
+        user_id: string | null
+        source: string
+        action: string
+        status: 'pending' | 'resolved' | 'escalated'
+        description: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+        resolved_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string
