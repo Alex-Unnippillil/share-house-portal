@@ -14,6 +14,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
+import { isManagementRole } from "@/lib/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
 const maintenanceRequestSchema = z.object({
@@ -80,12 +81,14 @@ export function MaintenanceRequestForm() {
         throw new Error("User is not assigned to a unit");
       }
 
-      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        roles: ['property_manager'],
+      const managementMembers = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
+        persona: 'management',
       });
 
+      const propertyManager = managementMembers.find(member => isManagementRole(member.role));
+
       if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
+        throw new Error("Property manager or landlord not found for this unit");
       }
 
       // Create maintenance request record

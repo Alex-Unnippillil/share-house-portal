@@ -2,9 +2,12 @@ import "server-only"
 
 import { cache } from "react"
 
+import type { MemberRole } from "@/lib/members"
+
 export type DashboardMember = {
         name: string
-        role: "admin" | "user"
+        role: MemberRole
+        persona: "resident" | "management"
         createdAt: string
         status: "active" | "resigned"
 }
@@ -17,26 +20,30 @@ export const getDashboardMembers = cache(async (): Promise<DashboardMember[]> =>
         await wait(260)
         return [
                 {
-                        name: "Admin Member",
-                        role: "admin",
+                        name: "Avery Chen",
+                        role: "tenant",
+                        persona: "resident",
                         createdAt: new Date().toDateString(),
                         status: "active",
                 },
                 {
-                        name: "Non Admin User",
-                        role: "user",
-                        createdAt: new Date().toDateString(),
-                        status: "active",
-                },
-                {
-                        name: "Administrator",
-                        role: "admin",
+                        name: "Jordan Blake",
+                        role: "roommate",
+                        persona: "resident",
                         createdAt: new Date().toDateString(),
                         status: "resigned",
                 },
                 {
-                        name: "Satoshi",
-                        role: "user",
+                        name: "Morgan Ellis",
+                        role: "property_manager",
+                        persona: "management",
+                        createdAt: new Date().toDateString(),
+                        status: "active",
+                },
+                {
+                        name: "Sonia Patel",
+                        role: "landlord",
+                        persona: "management",
                         createdAt: new Date().toDateString(),
                         status: "active",
                 },

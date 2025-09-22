@@ -19,6 +19,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
+import { isManagementRole, isResidentRole } from "@/lib/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
 const visitorBookingSchema = z.object({
@@ -78,13 +79,11 @@ export function VisitorBookingForm() {
         excludeUserId: user.id,
       });
 
-      const roommates = unitMembers.filter(
-        member => member.role === 'tenant' || member.role === 'roommate'
-      );
-      const propertyManager = unitMembers.find(member => member.role === 'property_manager');
+      const roommates = unitMembers.filter(member => isResidentRole(member.role));
+      const propertyManager = unitMembers.find(member => isManagementRole(member.role));
 
       if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
+        throw new Error("Property manager or landlord not found for this unit");
       }
 
       // Create visitor booking record

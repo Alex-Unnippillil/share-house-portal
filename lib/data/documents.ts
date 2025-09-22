@@ -1,10 +1,9 @@
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import type { DocumentListFilters, DocumentStats, DocumentWithLease } from '@/types/documents';
-import type { Database } from '@/lib/supabase';
+import type { MemberRole } from '@/lib/members';
+import { isManagementRole } from '@/lib/members';
 
 type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
-
-type MemberRole = Database['public']['Tables']['profiles']['Row']['role'];
 
 type FetchDocumentsParams = {
   client: SupabaseClientLike;
@@ -43,7 +42,7 @@ export async function fetchDocumentsList({
     .select(DOCUMENT_SELECT)
     .order('created_at', { ascending: false });
 
-  if (role !== 'property_manager' && role !== 'admin') {
+  if (!isManagementRole(role)) {
     query = query.or(`tenant_id.eq.${userId},signatures.signer_id.eq.${userId}`);
   }
 
@@ -84,7 +83,7 @@ export async function fetchDocumentStats({
 }: FetchDocumentStatsParams): Promise<DocumentStats> {
   let query = client.from('documents').select('status');
 
-  if (role !== 'property_manager' && role !== 'admin') {
+  if (!isManagementRole(role)) {
     query = query.eq('tenant_id', userId);
   }
 
