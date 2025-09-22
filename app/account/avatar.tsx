@@ -1,7 +1,7 @@
-'use client'
-import React, { useEffect, useState } from 'react'
-import useSupabaseBrowser from '@/utils/supabase-browser'
-import Image from 'next/image'
+"use client"
+import React, { useEffect, useState } from "react"
+import { ResponsiveImage } from "@/components/media/responsive-image"
+import useSupabaseBrowser from "@/utils/supabase-browser"
 
 export default function Avatar({
   uid,
@@ -65,13 +65,14 @@ export default function Avatar({
   return (
     <div>
       {avatarUrl ? (
-        <Image
+        <ResponsiveImage
           width={size}
           height={size}
           src={avatarUrl}
           alt="Avatar"
           className="relative flex size-10 shrink-0 overflow-hidden rounded-full"
           style={{ height: size, width: size }}
+          sizes={`${size}px`}
         />
       ) : (
         <div className="avatar no-image" style={{ height: size, width: size }} />

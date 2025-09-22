@@ -1,9 +1,23 @@
 // content security policy requirements vary from app to app head to https://nextjs.org/docs/pages/building-your-application/configuring/content-security-policy to learn how to configure nonces within middleware and or how to set policies within your next.config file
 
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient, type CookieOptions } from "@supabase/ssr"
+import { NextResponse, type NextRequest } from "next/server"
+
+const IMAGE_CACHE_CONTROL = "public, max-age=31536000, immutable"
 
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/_next/image")) {
+    const response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    })
+    response.headers.set("Cache-Control", IMAGE_CACHE_CONTROL)
+    response.headers.set("CDN-Cache-Control", IMAGE_CACHE_CONTROL)
+    response.headers.set("Vercel-CDN-Cache-Control", IMAGE_CACHE_CONTROL)
+    return response
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -11,8 +25,8 @@ export async function middleware(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
     {
       cookies: {
         get(name: string) {
@@ -38,7 +52,7 @@ export async function middleware(request: NextRequest) {
         remove(name: string, options: CookieOptions) {
           request.cookies.set({
             name,
-            value: '',
+            value: "",
             ...options,
           })
           response = NextResponse.next({
@@ -48,7 +62,7 @@ export async function middleware(request: NextRequest) {
           })
           response.cookies.set({
             name,
-            value: '',
+            value: "",
             ...options,
           })
         },
@@ -63,18 +77,12 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
+    "/_next/image(.*)",
     {
-      source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+      source: "/((?!api|_next/static|favicon.ico).*)",
       missing: [
-        { type: 'header', key: 'next-router-prefetch' },
-        { type: 'header', key: 'purpose', value: 'prefetch' },
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
       ],
     },
   ],
