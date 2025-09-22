@@ -1,7 +1,5 @@
  import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import './globals.css'
 import { ThemeProvider } from "@/components/theme-provider"
 import { CookieButton } from "@/components/cookie-button"
@@ -13,6 +11,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { cn } from "@/lib/utils"
+import { IdleTaskManager } from "@/components/idle-task-manager"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -124,22 +123,25 @@ export default function RootLayout({ children }: RootLayoutProps) {
             enableSystem
             disableTransitionOnChange
           >
-             <div className="relative flex min-h-screen flex-col">
+            <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
+              <div className="flex-1">
+                {children}
+                <Toaster />
+                <IdleTaskManager />
+              </div>
+            </div>
+            <SiteFooter />
 
-
-{/*
+            {/*
 enter your api info from termly.io or a provider of your choice
 <Script
   type="text/javascript"
   src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
 */}
-   <CookieButton />    
+            <CookieButton />
+            <TailwindIndicator />
           </ThemeProvider>
         
 
