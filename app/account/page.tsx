@@ -1,7 +1,10 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
+import Link from "next/link"
+
 import { Separator } from "@/components/ui/separator"
+import { tenantBillingSettings } from "@/config/tenant-settings"
 import { createClient } from "@/utils/supa-server-actions"
 
 import AccountForm from "./supa-account-form"
@@ -25,6 +28,16 @@ export default async function SettingsAccountPage() {
           <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Account Profile</h1>
           <p className="text-base text-muted-foreground">
             Keep your contact details current so rent reminders, booking updates, and document alerts reach you without delay.
+            For manual e-Transfer instructions share the
+            <Link
+              href={tenantBillingSettings.eTransfer.fallbackDocumentationUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="ml-1 font-medium text-primary underline-offset-4 hover:underline"
+            >
+              manual fallback guide
+            </Link>
+            with roommates who pay outside of Stripe.
           </p>
         </div>
         <Separator />
