@@ -8,6 +8,7 @@ import { CookieButton } from "@/components/cookie-button"
 import { fontSans } from "@/lib/font"
 import { siteConfig } from '@/config/site'
 import { ReactQueryClientProvider } from '@/components/react-query-client-provider'
+import { ServiceWorkerManager } from "@/components/service-worker-manager"
 import { Toaster } from "@/components/ui/toaster"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -126,7 +127,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
           >
              <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
+              <div className="flex-1">
+                {children}
+                <ServiceWorkerManager />
+                <Toaster/>
+                <Analytics/>
+                <SpeedInsights/>
+              </div>
               
    </div>           
 <SiteFooter/>
