@@ -239,6 +239,39 @@ export type Database = {
           },
         ]
       }
+      amenity_blackouts: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          reason: string
+          starts_at: string
+          timeslot: unknown
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          reason: string
+          starts_at: string
+          timeslot?: unknown
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          reason?: string
+          starts_at?: string
+          timeslot?: unknown
+        }
+        Relationships: []
+      }
       ai_analysis_results: {
         Row: {
           agent_id: string | null
