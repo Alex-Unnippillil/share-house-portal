@@ -1,6 +1,7 @@
 "use server"
 
 import { createSupbaseServerClient } from "@/utils/supaone"
+import { CACHE_TAGS, createCachedLoader, createSupabaseClientWithToken, invalidateCacheTag } from "@/lib/cache"
 import { Resend } from "resend"
 
 export interface NotificationData {
@@ -19,6 +20,51 @@ export interface InAppNotification {
   actionUrl?: string
   metadata?: Record<string, any>
 }
+
+type NotificationLoaderParams = {
+  accessToken: string
+  userId: string
+  limit?: number
+  unreadOnly?: boolean
+}
+
+const fetchNotificationsCached = createCachedLoader<
+  [NotificationLoaderParams],
+  any[]
+>(
+  async ({ accessToken, userId, limit, unreadOnly }) => {
+    const supabase = createSupabaseClientWithToken(accessToken)
+
+    let query = supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (typeof limit === 'number') {
+      query = query.limit(limit)
+    }
+
+    if (unreadOnly) {
+      query = query.eq('read', false)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return data || []
+  },
+  {
+    keyParts: ['notifications', 'list'],
+    tags: [CACHE_TAGS.notifications],
+    ttl: 60,
+    getCacheKey: ({ userId, limit, unreadOnly }) =>
+      JSON.stringify({ userId, limit: limit ?? null, unreadOnly: !!unreadOnly }),
+  }
+)
 
 class NotificationService {
   private resend: Resend | null = null
@@ -107,6 +153,8 @@ class NotificationService {
         console.error("Failed to create in-app notification:", error)
         return { success: false, error: error.message }
       }
+
+      await invalidateCacheTag(CACHE_TAGS.notifications, "notification-created")
 
       return { success: true, data }
     } catch (error) {
@@ -261,4 +309,13 @@ export async function sendBulkNotifications(
   notifications: (NotificationData | InAppNotification)[]
 ) {
   return notificationService.sendBulkNotification(notifications)
+}
+
+export async function getNotificationsForUser(params: NotificationLoaderParams) {
+  try {
+    return await fetchNotificationsCached(params)
+  } catch (error) {
+    console.error('Failed to load notifications:', error)
+    return []
+  }
 }
