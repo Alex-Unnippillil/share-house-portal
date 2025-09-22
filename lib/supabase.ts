@@ -1289,6 +1289,142 @@ export type Database = {
         }
         Relationships: []
       }
+      rent_invoice_supply_shares: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          invoice_id: string
+          supply_share_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          invoice_id: string
+          supply_share_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          invoice_id?: string
+          supply_share_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_invoice_supply_shares_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "rent_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_invoice_supply_shares_supply_share_id_fkey"
+            columns: ["supply_share_id"]
+            isOneToOne: false
+            referencedRelation: "supply_shares"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rent_invoices: {
+        Row: {
+          billing_month: string
+          created_at: string | null
+          due_date: string
+          id: string
+          member_id: string
+          memo: string | null
+          metadata: Json | null
+          rent_amount: number
+          status: string
+          supply_total: number
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          billing_month: string
+          created_at?: string | null
+          due_date: string
+          id?: string
+          member_id: string
+          memo?: string | null
+          metadata?: Json | null
+          rent_amount?: number
+          status?: string
+          supply_total?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          billing_month?: string
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          member_id?: string
+          memo?: string | null
+          metadata?: Json | null
+          rent_amount?: number
+          status?: string
+          supply_total?: number
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_invoices_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_shares: {
+        Row: {
+          billing_month: string | null
+          created_at: string | null
+          id: string
+          label: string
+          member_id: string
+          metadata: Json | null
+          share_amount: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          billing_month?: string | null
+          created_at?: string | null
+          id?: string
+          label: string
+          member_id: string
+          metadata?: Json | null
+          share_amount?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          billing_month?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string
+          member_id?: string
+          metadata?: Json | null
+          share_amount?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_shares_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reusable_packages: {
         Row: {
           created_at: string | null
