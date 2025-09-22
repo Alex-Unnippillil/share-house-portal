@@ -94,6 +94,7 @@ export type Database = {
         rent_frequency: string
         security_deposit: number | null
         tenant_ids: string[]
+        unit_id: string | null
         property_address: string | null
         unit_number: string | null
         landlord_name: string | null

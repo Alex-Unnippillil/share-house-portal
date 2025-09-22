@@ -74,6 +74,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
   const activeFilterCount =
     (filters.status?.length || 0) +
     (filters.type?.length || 0) +
+    (filters.lease_status?.length || 0) +
     (filters.tenant_id ? 1 : 0) +
     (filters.unit_id ? 1 : 0) +
     (filters.date_from ? 1 : 0) +

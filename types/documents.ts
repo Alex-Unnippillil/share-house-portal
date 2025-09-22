@@ -2,6 +2,8 @@ export type DocumentType = 'lease' | 'addendum' | 'insurance' | 'maintenance' | 
 
 export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled';
 
+export type LeaseStatus = 'active' | 'expired' | 'terminated';
+
 export type SignatureStatus = 'pending' | 'signed' | 'declined' | 'expired';
 
 export interface Document {
@@ -67,6 +69,7 @@ export interface Lease {
   rent_frequency: string;
   security_deposit?: number;
   tenant_ids: string[];
+  unit_id?: string;
   property_address?: string;
   unit_number?: string;
   landlord_name?: string;
@@ -74,7 +77,7 @@ export interface Lease {
   auto_renew: boolean;
   renewal_notice_days: number;
   special_terms?: string;
-  status: DocumentStatus;
+  status: LeaseStatus;
 }
 
 export interface DocumentWithLease extends Document {
@@ -114,6 +117,7 @@ export interface DocumentListFilters {
   type?: DocumentType[];
   tenant_id?: string;
   unit_id?: string;
+  lease_status?: LeaseStatus[];
   date_from?: string;
   date_to?: string;
 }
