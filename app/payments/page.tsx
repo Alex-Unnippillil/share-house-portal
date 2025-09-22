@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { StripeActions } from "./_components/stripe-actions"
+import { InvoicePayment } from "./_components/invoice-payment"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import {
   calculateOutstanding,
@@ -211,6 +212,17 @@ export default function PaymentsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <StripeActions />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Settle an invoice</CardTitle>
+              <CardDescription>
+                Generate a Payment Intent for an outstanding invoice and confirm it with Stripe Elements.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <InvoicePayment />
             </CardContent>
           </Card>
         </div>
