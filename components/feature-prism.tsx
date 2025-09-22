@@ -18,6 +18,7 @@ import * as THREE from "three"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CuboidIcon, Shield, Zap, Link, Cog, Database } from "lucide-react"
+import { useThrottledCallback } from "@/hooks/useThrottledCallback"
 
 // Add this after the imports
 class ErrorBoundary extends React.Component {
@@ -1206,17 +1207,17 @@ export default function FeaturePrism() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [cameraPosition, setCameraPosition] = useState([0, 0, 8])
 
+  const handleResize = useThrottledCallback(() => {
+    const isMobile = window.innerWidth < 768
+    setCameraPosition([0, 0, isMobile ? 10 : 8])
+  }, 150)
+
   // Responsive camera position
   useEffect(() => {
-    const handleResize = () => {
-      const isMobile = window.innerWidth < 768
-      setCameraPosition([0, 0, isMobile ? 10 : 8])
-    }
-
     handleResize()
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
-  }, [])
+  }, [handleResize])
 
   return (
     <ErrorBoundary>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -36,11 +37,22 @@ const visitorBookingSchema = z.object({
 
 type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
+type AvailabilityState = "idle" | "checking" | "conflict" | "available";
+
 export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availabilityState, setAvailabilityState] = useState<AvailabilityState>("idle");
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
@@ -54,7 +66,114 @@ export function VisitorBookingForm() {
     },
   });
 
+  const guestEmail = useWatch({ control: form.control, name: "guestEmail" });
+  const checkInDate = useWatch({ control: form.control, name: "checkInDate" });
+  const checkOutDate = useWatch({ control: form.control, name: "checkOutDate" });
+
+  const debouncedCheckAvailability = useDebouncedCallback(
+    async (email: string, start: Date, end: Date) => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('visitor_logs')
+          .select('id, check_in_date, check_out_date, status')
+          .ilike('guest_email', email)
+          .neq('status', 'cancelled')
+          .order('check_in_date', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          throw error;
+        }
+
+        if (!isMounted.current) {
+          return;
+        }
+
+        const normalizedStart = start.getTime();
+        const normalizedEnd = end.getTime();
+
+        const conflictingBooking = (data || []).find((booking: any) => {
+          if (!booking.check_in_date || !booking.check_out_date) {
+            return false;
+          }
+          const bookingStart = new Date(booking.check_in_date).getTime();
+          const bookingEnd = new Date(booking.check_out_date).getTime();
+          return normalizedStart <= bookingEnd && normalizedEnd >= bookingStart;
+        });
+
+        if (conflictingBooking) {
+          setAvailabilityState("conflict");
+          setAvailabilityMessage("This guest already has a booking that overlaps with the selected dates.");
+        } else {
+          setAvailabilityState("available");
+          setAvailabilityMessage("No conflicting visitor bookings detected for these dates.");
+        }
+      } catch (error) {
+        console.error('Failed to verify visitor availability:', error);
+        if (!isMounted.current) {
+          return;
+        }
+        setAvailabilityState("conflict");
+        setAvailabilityMessage("Unable to verify visitor availability. Please try again.");
+      }
+    },
+    200,
+  );
+
+  useEffect(() => {
+    const normalizedEmail = guestEmail?.trim() ?? "";
+
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setAvailabilityState("idle");
+      setAvailabilityMessage("");
+      debouncedCheckAvailability.cancel();
+      return;
+    }
+
+    if (!checkInDate || !checkOutDate) {
+      setAvailabilityState("idle");
+      setAvailabilityMessage("");
+      debouncedCheckAvailability.cancel();
+      return;
+    }
+
+    if (checkOutDate < checkInDate) {
+      debouncedCheckAvailability.cancel();
+      setAvailabilityState("conflict");
+      setAvailabilityMessage("Check-out date must be after the check-in date.");
+      form.setError("checkOutDate", {
+        type: "manual",
+        message: "Check-out date must be after the check-in date.",
+      });
+      return;
+    }
+
+    form.clearErrors("checkOutDate");
+    setAvailabilityState("checking");
+    setAvailabilityMessage("Checking for overlapping visitor bookings...");
+    debouncedCheckAvailability(normalizedEmail, checkInDate, checkOutDate);
+  }, [guestEmail, checkInDate, checkOutDate, debouncedCheckAvailability, form]);
+
   const onSubmit = async (data: VisitorBookingFormData) => {
+    if (availabilityState === "checking") {
+      toast({
+        title: "Checking availability",
+        description: "Please wait for the availability check to complete before submitting.",
+      });
+      return;
+    }
+
+    if (availabilityState === "conflict") {
+      toast({
+        title: "Resolve booking conflict",
+        description:
+          availabilityMessage ||
+          "Please adjust the visitor details before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -131,6 +250,9 @@ export function VisitorBookingForm() {
       });
 
       form.reset();
+      debouncedCheckAvailability.cancel();
+      setAvailabilityState("idle");
+      setAvailabilityMessage("");
     } catch (error) {
       console.error('Error submitting visitor booking:', error);
       toast({
@@ -276,6 +398,21 @@ export function VisitorBookingForm() {
           />
         </div>
 
+        {availabilityState !== "idle" && availabilityMessage && (
+          <div
+            className={cn(
+              "rounded-md border p-3 text-sm transition-colors",
+              availabilityState === "conflict"
+                ? "border-destructive/50 bg-destructive/10 text-destructive"
+                : availabilityState === "available"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                  : "border-border bg-muted/50 text-muted-foreground",
+            )}
+          >
+            {availabilityMessage}
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="purpose"
@@ -326,7 +463,15 @@ export function VisitorBookingForm() {
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button
+          type="submit"
+          disabled={
+            isSubmitting ||
+            availabilityState === "checking" ||
+            availabilityState === "conflict"
+          }
+          className="w-full"
+        >
           {isSubmitting ? "Submitting..." : "Submit Visitor Booking"}
         </Button>
       </form>
