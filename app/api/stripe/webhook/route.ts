@@ -7,6 +7,7 @@ import {
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { revalidateTables } from "@/lib/cache/tags"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -120,6 +121,7 @@ async function handleCheckoutSessionCompleted(
         }
 
         await supabase.from("rent_payments").insert(paymentData)
+        revalidateTables('rent_payments')
 
         // Send payment receipt notification if we have tenant info
         if (tenantId) {
@@ -227,6 +229,7 @@ async function handleInvoicePaymentSucceeded(
         },
       }
       await supabase.from("rent_payments").insert(subscriptionPayment)
+      revalidateTables('rent_payments')
 
       // Update subscription status if needed
       await supabase
@@ -241,6 +244,7 @@ async function handleInvoicePaymentSucceeded(
           ).toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id)
+      revalidateTables('subscriptions')
     }
   } catch (error) {
     console.error("Error handling invoice payment succeeded:", error)
@@ -256,27 +260,28 @@ async function handleSubscriptionCreated(
     // This handles when a subscription is first created
     const price = subscription.items.data[0]?.price
 
-    await supabase.from("subscriptions").insert({
-      user_id:
-        subscription.metadata?.tenant_id ||
-        "00000000-0000-0000-0000-000000000000",
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
-      status: subscription.status,
-      current_period_start: new Date(
-        subscription.current_period_start * 1000
-      ).toISOString(),
-      current_period_end: new Date(
-        subscription.current_period_end * 1000
-      ).toISOString(),
-      amount: price?.unit_amount || 0, // Convert from cents
-      currency: price?.currency?.toUpperCase() || "USD",
-      interval: "month", // Default, could be determined from price
-      metadata: {
-        ...subscription.metadata,
-        price_id: price?.id,
-      },
-    })
+  await supabase.from("subscriptions").insert({
+    user_id:
+      subscription.metadata?.tenant_id ||
+      "00000000-0000-0000-0000-000000000000",
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id: subscription.customer,
+    status: subscription.status,
+    current_period_start: new Date(
+      subscription.current_period_start * 1000
+    ).toISOString(),
+    current_period_end: new Date(
+      subscription.current_period_end * 1000
+    ).toISOString(),
+    amount: price?.unit_amount || 0, // Convert from cents
+    currency: price?.currency?.toUpperCase() || "USD",
+    interval: "month", // Default, could be determined from price
+    metadata: {
+      ...subscription.metadata,
+      price_id: price?.id,
+    },
+  })
+  revalidateTables('subscriptions')
   } catch (error) {
     console.error("Error handling subscription created:", error)
     throw error
@@ -288,19 +293,20 @@ async function handleSubscriptionUpdated(
   subscription: any
 ) {
   try {
-    await supabase
-      .from("subscriptions")
-      .update({
-        status: subscription.status,
-        current_period_start: new Date(
-          subscription.current_period_start * 1000
-        ).toISOString(),
-        current_period_end: new Date(
-          subscription.current_period_end * 1000
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("stripe_subscription_id", subscription.id)
+  await supabase
+    .from("subscriptions")
+    .update({
+      status: subscription.status,
+      current_period_start: new Date(
+        subscription.current_period_start * 1000
+      ).toISOString(),
+      current_period_end: new Date(
+        subscription.current_period_end * 1000
+      ).toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", subscription.id)
+  revalidateTables('subscriptions')
   } catch (error) {
     console.error("Error handling subscription updated:", error)
     throw error
@@ -312,15 +318,16 @@ async function handleSubscriptionDeleted(
   subscription: any
 ) {
   try {
-    await supabase
-      .from("subscriptions")
-      .update({
-        status: "canceled",
-        ended_at: new Date().toISOString(),
-        canceled_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("stripe_subscription_id", subscription.id)
+  await supabase
+    .from("subscriptions")
+    .update({
+      status: "canceled",
+      ended_at: new Date().toISOString(),
+      canceled_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", subscription.id)
+  revalidateTables('subscriptions')
   } catch (error) {
     console.error("Error handling subscription deleted:", error)
     throw error
