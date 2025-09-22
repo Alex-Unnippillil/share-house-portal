@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import {
@@ -20,27 +19,37 @@ import { formatCurrency } from "@/lib/payments/currency"
 import type { CatchUpBalance } from "@/types/payments"
 
 import { loadCatchUpBalances } from "./loaders"
+import type { LucideIcon } from "lucide-react"
+import { CalendarClock, PiggyBank, Receipt, ListChecks } from "lucide-react"
 
-const paymentHighlights = [
+const paymentHighlights: Array<{
+  title: string
+  description: string
+  icon: LucideIcon
+}> = [
   {
     title: "AutoPay scheduling",
     description:
       "Enable recurring rent collection with configurable due dates, grace periods, and automatic late fee handling.",
+    icon: CalendarClock,
   },
   {
     title: "One-time catch up",
     description:
       "Support partial or one-off payments so roommates can settle balances without waiting for the next billing cycle.",
+    icon: PiggyBank,
   },
   {
     title: "Receipt history",
     description:
       "Download itemized receipts and export payment history for reimbursement, tax, or dispute resolution needs.",
+    icon: Receipt,
   },
   {
     title: "Roomsily ledger",
     description:
       "Track individual roommate contributions alongside property manager adjustments to maintain full transparency.",
+    icon: ListChecks,
   },
 ]
 
@@ -109,14 +118,23 @@ export default async function PaymentsPage() {
         <Separator />
       </header>
       <div className="grid gap-6 md:grid-cols-2">
-        {paymentHighlights.map((item) => (
-          <Card key={item.title}>
-            <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
+        {paymentHighlights.map((item) => {
+          const Icon = item.icon
+
+          return (
+            <Card key={item.title}>
+              <CardHeader className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </div>
+                  <CardTitle className="text-lg font-semibold">{item.title}</CardTitle>
+                </div>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          )
+        })}
       </div>
       <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="space-y-6">
