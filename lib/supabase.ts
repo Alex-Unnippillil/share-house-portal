@@ -968,6 +968,59 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount_due: number
+          created_at: string
+          currency: string
+          description: string | null
+          due_date: string | null
+          id: string
+          metadata: Json | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_invoice_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_due: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_invoice_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_invoice_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           created_at: string | null
@@ -1201,6 +1254,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          client_secret: string | null
+          created_at: string
+          currency: string
+          id: string
+          invoice_id: string
+          payment_intent_id: string
+          payment_method_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_secret?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          invoice_id: string
+          payment_intent_id: string
+          payment_method_type: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_secret?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string
+          payment_intent_id?: string
+          payment_method_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permission_table: {
         Row: {
