@@ -78,32 +78,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="h-5 w-48 rounded bg-muted"></div>
-                  <div className="h-4 w-32 rounded bg-muted"></div>
-                </div>
-                <div className="h-6 w-20 rounded bg-muted"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="h-4 w-24 rounded bg-muted"></div>
-                <div className="flex space-x-2">
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <DocumentsListSkeleton items={4} />;
   }
 
   if (error) {
@@ -209,6 +184,49 @@ export function DocumentsList({ filter }: DocumentsListProps) {
               </div>
             </CardContent>
           )}
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+export function DocumentsListSkeleton({ items = 4 }: { items?: number }) {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: items }).map((_, index) => (
+        <Card key={index} className="animate-pulse">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-3">
+                <div className="mt-1 size-4 rounded-full bg-muted" />
+                <div className="space-y-2">
+                  <div className="h-5 w-48 rounded bg-muted" />
+                  <div className="h-4 w-64 rounded bg-muted" />
+                  <div className="flex flex-wrap items-center gap-3">
+                    {Array.from({ length: 3 }).map((_, metaIndex) => (
+                      <div key={metaIndex} className="flex items-center space-x-2">
+                        <div className="size-3 rounded-full bg-muted" />
+                        <div className="h-3 w-24 rounded bg-muted" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-6 w-24 rounded-full bg-muted" />
+                <div className="size-9 rounded bg-muted" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex items-center space-x-2">
+              <div className="h-4 w-20 rounded bg-muted" />
+              <div className="h-6 w-24 rounded-full bg-muted" />
+              <div className="h-6 w-20 rounded-full bg-muted" />
+              <div className="h-6 w-20 rounded-full bg-muted" />
+              <div className="h-6 w-16 rounded-full bg-muted" />
+            </div>
+          </CardContent>
         </Card>
       ))}
     </div>

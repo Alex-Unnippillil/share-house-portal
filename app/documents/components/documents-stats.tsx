@@ -28,20 +28,7 @@ export function DocumentsStats() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <DocumentsStatsSkeleton />;
   }
 
   if (!stats) {
@@ -93,6 +80,25 @@ export function DocumentsStats() {
               {item.title === "Signed Documents" && "Fully executed"}
               {item.title === "Expired Documents" && "Past expiry date"}
             </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+export function DocumentsStatsSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index} className="animate-pulse">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="h-4 w-28 rounded bg-muted" />
+            <div className="size-5 rounded-full bg-muted" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-8 w-24 rounded bg-muted" />
+            <div className="mt-2 h-4 w-32 rounded bg-muted" />
           </CardContent>
         </Card>
       ))}

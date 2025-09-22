@@ -25,5 +25,23 @@ export function BookingStats() {
   );
 }
 
+export function BookingStatsSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <Card key={index} className="animate-pulse">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="h-4 w-24 rounded bg-muted" />
+            <div className="size-5 rounded-full bg-muted" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-8 w-28 rounded bg-muted" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 
 
