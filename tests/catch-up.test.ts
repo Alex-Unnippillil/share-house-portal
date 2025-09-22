@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
 import {
   allocatePaymentToCharges,
@@ -9,7 +9,13 @@ import {
 } from "@/lib/payments/catch-up"
 import type { CatchUpCharge } from "@/types/payments"
 
+import { submitCatchUpPayment } from "@/app/payments/actions"
 import { loadCatchUpBalances } from "@/app/payments/loaders"
+import { resetCatchUpBalances } from "@/lib/payments/mock-data"
+
+beforeEach(() => {
+  resetCatchUpBalances()
+})
 
 const sampleCharges: CatchUpCharge[] = [
   {
@@ -97,5 +103,26 @@ describe("catch-up helpers", () => {
       expect(balance.roommateId).toMatch(/^rm_/)
       expect(balance.charges.length).toBeGreaterThan(0)
     }
+  })
+
+  it("persists partial catch-up payments for future loads", async () => {
+    const balancesBefore = await loadCatchUpBalances()
+    const target = balancesBefore[0]
+    const outstandingBefore = calculateOutstanding(target.charges)
+    const partialAmount = Math.min(200, outstandingBefore)
+
+    const result = await submitCatchUpPayment({
+      roommateId: target.roommateId,
+      amount: partialAmount,
+      includePropertyManager: false,
+    })
+
+    expect(result.projectedBalance).toBeCloseTo(outstandingBefore - partialAmount)
+
+    const balancesAfter = await loadCatchUpBalances()
+    const updated = balancesAfter.find((balance) => balance.roommateId === target.roommateId)
+
+    expect(updated).toBeDefined()
+    expect(calculateOutstanding(updated!.charges)).toBeCloseTo(result.projectedBalance)
   })
 })

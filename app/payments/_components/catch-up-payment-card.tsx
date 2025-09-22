@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format, parseISO } from "date-fns"
 import { useForm } from "react-hook-form"
@@ -70,13 +70,19 @@ type QuickAmount = {
 }
 
 export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
-  const schema = useMemo(() => createCatchUpFormSchema(balances), [balances])
+  const [balancesState, setBalancesState] = useState(balances)
+  const schema = useMemo(() => createCatchUpFormSchema(balancesState), [balancesState])
+
+  useEffect(() => {
+    setBalancesState(balances)
+  }, [balances])
+
   const form = useForm<CatchUpPaymentFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      roommateId: balances[0]?.roommateId ?? "",
-      amount: balances[0]
-        ? calculateOutstanding(balances[0].charges).toFixed(2)
+      roommateId: balancesState[0]?.roommateId ?? "",
+      amount: balancesState[0]
+        ? calculateOutstanding(balancesState[0].charges).toFixed(2)
         : "",
       includePropertyManager: false,
       note: "",
@@ -89,9 +95,45 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
   const amountInputValue = form.watch("amount")
 
   const selectedBalance = useMemo(
-    () => balances.find((balance) => balance.roommateId === selectedRoommateId),
-    [balances, selectedRoommateId],
+    () => balancesState.find((balance) => balance.roommateId === selectedRoommateId),
+    [balancesState, selectedRoommateId],
   )
+
+  const applyPaymentResultToBalances = (
+    result: CatchUpPaymentSubmissionResult,
+  ) => {
+    const allocationMap = new Map(
+      result.allocations.map((allocation) => [allocation.chargeId, allocation]),
+    )
+    const paymentDate = new Date().toISOString().slice(0, 10)
+
+    setBalancesState((previous) =>
+      previous.map((balance) => {
+        if (balance.roommateId !== result.roommateId) {
+          return balance
+        }
+
+        const updatedCharges = balance.charges.map((charge) => {
+          const allocation = allocationMap.get(charge.id)
+          if (!allocation) {
+            return charge
+          }
+
+          return {
+            ...charge,
+            outstandingAmount: allocation.remainingBalance,
+          }
+        })
+
+        return {
+          ...balance,
+          charges: updatedCharges,
+          lastPaymentAmount: result.amount,
+          lastPaymentDate: paymentDate,
+        }
+      }),
+    )
+  }
 
   const handleRoommateChange = (roommateId: string) => {
     form.setValue("roommateId", roommateId, {
@@ -100,7 +142,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
       shouldValidate: true,
     })
 
-    const balance = balances.find((item) => item.roommateId === roommateId)
+    const balance = balancesState.find((item) => item.roommateId === roommateId)
     if (!balance) {
       form.setValue("amount", "", {
         shouldDirty: false,
@@ -236,6 +278,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
           note: sanitizedNote,
         })
 
+        applyPaymentResultToBalances(result)
         setLastResult(result)
         toast({
           title: `Catch-up scheduled for ${result.roommateName}`,
@@ -300,7 +343,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {balances.map((balance) => (
+                        {balancesState.map((balance) => (
                           <SelectItem key={balance.roommateId} value={balance.roommateId}>
                             {balance.roommateName} · {balance.unitLabel}
                           </SelectItem>

@@ -10,6 +10,7 @@ import {
   generateMockPaymentIntentId,
 } from "@/lib/payments/catch-up"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
+import { recordCatchUpPayment } from "@/lib/payments/mock-data"
 import type { CatchUpPaymentSubmissionResult } from "@/types/payments"
 
 import { loadCatchUpBalances } from "./loaders"
@@ -59,6 +60,13 @@ export async function submitCatchUpPayment(
   const projectedBalance = roundToCurrency(
     calculateOutstanding(updatedCharges),
   )
+  const normalizedAmount = roundToCurrency(amount)
+
+  recordCatchUpPayment({
+    roommateId: balance.roommateId,
+    amount: normalizedAmount,
+    allocations,
+  })
 
   const allocationDetails = allocations.map((allocation) => {
     const originalCharge = balance.charges.find(
@@ -92,7 +100,7 @@ export async function submitCatchUpPayment(
     paymentIntentId: generateMockPaymentIntentId(),
     roommateId: balance.roommateId,
     roommateName: balance.roommateName,
-    amount: roundToCurrency(amount),
+    amount: normalizedAmount,
     currency: balance.currency,
     projectedBalance,
     allocations: allocationDetails,

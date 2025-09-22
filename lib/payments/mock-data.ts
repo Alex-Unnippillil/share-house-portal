@@ -1,6 +1,31 @@
-import type { CatchUpBalance } from "@/types/payments"
 
-export const catchUpBalances: CatchUpBalance[] = [
+import type {
+  CatchUpBalance,
+  CatchUpContact,
+  CatchUpPaymentAllocation,
+} from "@/types/payments"
+
+import { applyAllocationsToCharges } from "./catch-up"
+
+function cloneContact(contact: CatchUpContact): CatchUpContact {
+  return { ...contact }
+}
+
+function cloneBalance(balance: CatchUpBalance): CatchUpBalance {
+  return {
+    ...balance,
+    charges: balance.charges.map((charge) => ({ ...charge })),
+    contacts: {
+      primary: cloneContact(balance.contacts.primary),
+      roommates: balance.contacts.roommates?.map(cloneContact),
+      propertyManager: balance.contacts.propertyManager
+        ? cloneContact(balance.contacts.propertyManager)
+        : undefined,
+    },
+  }
+}
+
+const baseCatchUpBalances: CatchUpBalance[] = [
   {
     roommateId: "rm_avery",
     roommateName: "Avery Chen",
@@ -147,3 +172,38 @@ export const catchUpBalances: CatchUpBalance[] = [
     },
   },
 ]
+
+let catchUpBalancesState = baseCatchUpBalances.map(cloneBalance)
+
+export const catchUpBalances = baseCatchUpBalances
+
+export function getCatchUpBalances(): CatchUpBalance[] {
+  return catchUpBalancesState.map(cloneBalance)
+}
+
+export function recordCatchUpPayment({
+  roommateId,
+  amount,
+  allocations,
+}: {
+  roommateId: string
+  amount: number
+  allocations: CatchUpPaymentAllocation[]
+}): void {
+  const balance = catchUpBalancesState.find(
+    (item) => item.roommateId === roommateId,
+  )
+
+  if (!balance) {
+    return
+  }
+
+  const updatedCharges = applyAllocationsToCharges(balance.charges, allocations)
+  balance.charges = updatedCharges.map((charge) => ({ ...charge }))
+  balance.lastPaymentAmount = amount
+  balance.lastPaymentDate = new Date().toISOString().slice(0, 10)
+}
+
+export function resetCatchUpBalances(): void {
+  catchUpBalancesState = baseCatchUpBalances.map(cloneBalance)
+}
