@@ -76,7 +76,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'quantumone.b-cdn.net',
         port: '',
-        pathname: '/onyx/**',
+        pathname: '/roomsily/**',
       },
       {
         protocol: 'https',

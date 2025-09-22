@@ -9,8 +9,13 @@ import { siteConfig } from "@/config/site"
 import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { SiteHeader } from "@/components/site-header"
+
 import { SiteFooter } from "@/components/site-footer"
+import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
@@ -148,6 +153,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               <SiteHeader />
               <div className="flex-1">
                 {children}
+
                 <Toaster />
                 <Analytics />
                 <SpeedInsights />
@@ -167,6 +173,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </ThemeProvider>
         </body>
       </html>
+
     </ReactQueryClientProvider>
   )
 }

@@ -1,6 +1,9 @@
+import Link from "next/link"
+import { Suspense } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 
 export default function DashboardPage() {
   return (
@@ -8,9 +11,9 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
         <div className="flex gap-2">
-          <Link href="/payments">
+          <SmartLink href="/payments">
             <Button size="sm">Pay rent</Button>
-          </Link>
+          </SmartLink>
         </div>
       </div>
 
@@ -23,9 +26,9 @@ export default function DashboardPage() {
             <div className="text-sm text-muted-foreground">Amount</div>
             <div className="text-2xl font-semibold">$1,260.00</div>
             <div className="mt-1 text-sm text-muted-foreground">Due on the 1st</div>
-            <Link href="/payments" className="mt-4 inline-block">
+            <SmartLink href="/payments" className="mt-4 inline-block">
               <Button size="sm">View details</Button>
-            </Link>
+            </SmartLink>
           </CardContent>
         </Card>
 
@@ -38,9 +41,9 @@ export default function DashboardPage() {
               <li>Lease agreement v2.pdf</li>
               <li>House rules.pdf</li>
             </ul>
-            <Link href="/documents" className="mt-4 inline-block">
+            <SmartLink href="/documents" className="mt-4 inline-block">
               <Button variant="outline" size="sm">Open</Button>
-            </Link>
+            </SmartLink>
           </CardContent>
         </Card>
       </div>
@@ -54,9 +57,9 @@ export default function DashboardPage() {
             <li>Jordan: Wi-Fi is down, rebooted router.</li>
             <li>Avery: Parking spot swap this weekend?</li>
           </ul>
-          <Link href="/messaging" className="mt-4 inline-block">
+          <SmartLink href="/messaging" className="mt-4 inline-block">
             <Button variant="outline" size="sm">Go to messages</Button>
-          </Link>
+          </SmartLink>
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,5 @@
 import * as React from "react"
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 
 import { NavItem } from "@/types/nav"
 import { siteConfig } from "@/config/site"
@@ -13,28 +13,29 @@ interface MainNavProps {
 export function MainNav({ items }: MainNavProps) {
   return (
         <div className="mr-2 hidden gap-4 md:flex md:gap-8">
-      <Link href="/" className="flex items-center gap-2">
+      <SmartLink href="/" className="flex items-center gap-2" intent="navigation">
         <Icons.logo className="size-6 text-primary" />
         <div className="flex flex-col leading-tight">
           <span className="font-semibold">{siteConfig.name}</span>
           <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>
         </div>
-      </Link>
+      </SmartLink>
       {items?.length ? (
         <nav className="flex gap-6">
           {items?.map(
             (item, index) =>
               item.href && (
-                <Link
+                <SmartLink
                   key={index}
                   href={item.href}
                   className={cn(
                     "flex items-center text-sm font-medium text-muted-foreground",
                     item.disabled && "cursor-not-allowed opacity-80"
                   )}
+                  intent="navigation"
                 >
                   {item.title}
-                </Link>
+                </SmartLink>
               )
           )}
         </nav>
