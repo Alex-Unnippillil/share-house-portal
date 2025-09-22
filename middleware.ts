@@ -3,6 +3,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { createSupabaseInstrumentationConfig } from '@/lib/supabase'
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -53,6 +55,11 @@ export async function middleware(request: NextRequest) {
           })
         },
       },
+      ...createSupabaseInstrumentationConfig({
+        helper: 'middleware',
+        environment: 'edge',
+        context: { scope: 'middleware', matcher: 'app-wide' },
+      }),
     }
   )
 

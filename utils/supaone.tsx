@@ -3,40 +3,52 @@ import { cookies } from "next/headers";
 import type { Database } from '@/lib/supabase'
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client'
 
+import { createSupabaseInstrumentationConfig } from '@/lib/supabase'
+
 export async function createSupbaseServerClientReadOnly() {
 	const cookieStore = cookies();
 
-	return createServerClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-		{
-			cookies: {
-				get(name: string) {
-					return cookieStore.get(name)?.value;
-				},
-			},
-		}
-	);
+        return createServerClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                {
+                        cookies: {
+                                get(name: string) {
+                                        return cookieStore.get(name)?.value;
+                                },
+                        },
+                        ...createSupabaseInstrumentationConfig({
+                                helper: 'utils/supaone#read-only',
+                                environment: 'server',
+                                context: { helper: 'utils/supaone', mode: 'readonly' },
+                        }),
+                }
+        );
 }
 
 export async function createSupbaseServerClient() {
 	const cookieStore = cookies();
 
-	return createServerClient<Database>(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-		{
-			cookies: {
-				get(name: string) {
-					return cookieStore.get(name)?.value;
-				},
-				set(name: string, value: string, options: CookieOptions) {
-					cookieStore.set({ name, value, ...options });
-				},
-				remove(name: string, options: CookieOptions) {
-					cookieStore.set({ name, value: "", ...options });
-				},
-			},
-		}
-	);
+        return createServerClient<Database>(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                {
+                        cookies: {
+                                get(name: string) {
+                                        return cookieStore.get(name)?.value;
+                                },
+                                set(name: string, value: string, options: CookieOptions) {
+                                        cookieStore.set({ name, value, ...options });
+                                },
+                                remove(name: string, options: CookieOptions) {
+                                        cookieStore.set({ name, value: "", ...options });
+                                },
+                        },
+                        ...createSupabaseInstrumentationConfig({
+                                helper: 'utils/supaone',
+                                environment: 'server',
+                                context: { helper: 'utils/supaone', mode: 'mutating' },
+                        }),
+                }
+        );
 }

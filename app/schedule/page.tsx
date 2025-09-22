@@ -6,6 +6,8 @@ import { ScheduleForm } from '@/components/schedule-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster"
 
+import { createSupabaseInstrumentationConfig } from '@/lib/supabase';
+
 export default async function SchedulePage() {
     const cookieStore = cookies();
     const supabase = createServerClient(
@@ -17,6 +19,11 @@ export default async function SchedulePage() {
                     return cookieStore.get(name)?.value;
                 },
             },
+            ...createSupabaseInstrumentationConfig({
+                helper: 'app/schedule/page',
+                environment: 'server',
+                context: { route: '/schedule' },
+            }),
         }
     );
 

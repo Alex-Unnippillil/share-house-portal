@@ -4,6 +4,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/lib/supabase';
 
+import { createSupabaseInstrumentationConfig } from '@/lib/supabase';
+
 export async function createActionClient() {
   const cookieStore = cookies();
 
@@ -22,6 +24,11 @@ export async function createActionClient() {
           cookieStore.set({ name, value: '', ...options });
         },
       },
+      ...createSupabaseInstrumentationConfig({
+        helper: 'utils/supabase/actions',
+        environment: 'server',
+        context: { helper: 'utils/supabase/actions' },
+      }),
     }
   );
 }
