@@ -411,6 +411,513 @@ export type Database = {
         }
         Relationships: []
       }
+      announcements: {
+        Row: {
+          content: string | null
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          expires_at: string | null
+          id: string
+          publish_at: string | null
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["publish_status"]
+          summary: string | null
+          target_all: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          publish_at?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["publish_status"]
+          summary?: string | null
+          target_all?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          publish_at?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["publish_status"]
+          summary?: string | null
+          target_all?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "announcements_published_by_fkey",
+            columns: ["published_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      announcement_targets: {
+        Row: {
+          announcement_id: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          announcement_id: string
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          announcement_id?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_targets_announcement_id_fkey",
+            columns: ["announcement_id"],
+            isOneToOne: false,
+            referencedRelation: "announcements",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "announcement_targets_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "announcement_targets_profile_id_fkey",
+            columns: ["profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      bulletin_posts: {
+        Row: {
+          allow_comments: boolean
+          body: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          expires_at: string | null
+          id: string
+          publish_at: string | null
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["publish_status"]
+          target_all: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          allow_comments?: boolean
+          body: string
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          publish_at?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["publish_status"]
+          target_all?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          allow_comments?: boolean
+          body?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          expires_at?: string | null
+          id?: string
+          publish_at?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["publish_status"]
+          target_all?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulletin_posts_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "bulletin_posts_published_by_fkey",
+            columns: ["published_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      bulletin_post_targets: {
+        Row: {
+          bulletin_post_id: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          bulletin_post_id: string
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          bulletin_post_id?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulletin_post_targets_bulletin_post_id_fkey",
+            columns: ["bulletin_post_id"],
+            isOneToOne: false,
+            referencedRelation: "bulletin_posts",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "bulletin_post_targets_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "bulletin_post_targets_profile_id_fkey",
+            columns: ["profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          parent_id: string
+          parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          retention_expires_at: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          parent_id: string
+          parent_type: Database["public"]["Enums"]["comment_parent_type"]
+          retention_expires_at?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          parent_id?: string
+          parent_type?: Database["public"]["Enums"]["comment_parent_type"]
+          retention_expires_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_author_id_fkey",
+            columns: ["author_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      survey_questions: {
+        Row: {
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          is_required: boolean
+          options: Json | null
+          position: number
+          prompt: string
+          question_type: Database["public"]["Enums"]["survey_question_type"]
+          survey_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          position?: number
+          prompt: string
+          question_type: Database["public"]["Enums"]["survey_question_type"]
+          survey_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          position?: number
+          prompt?: string
+          question_type?: Database["public"]["Enums"]["survey_question_type"]
+          survey_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_questions_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "survey_questions_survey_id_fkey",
+            columns: ["survey_id"],
+            isOneToOne: false,
+            referencedRelation: "surveys",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      survey_responses: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          question_id: string
+          respondent_id: string
+          response: Json
+          retention_expires_at: string
+          survey_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          question_id: string
+          respondent_id: string
+          response: Json
+          retention_expires_at?: string
+          survey_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          question_id?: string
+          respondent_id?: string
+          response?: Json
+          retention_expires_at?: string
+          survey_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_question_id_fkey",
+            columns: ["question_id"],
+            isOneToOne: false,
+            referencedRelation: "survey_questions",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "survey_responses_respondent_id_fkey",
+            columns: ["respondent_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "survey_responses_survey_id_fkey",
+            columns: ["survey_id"],
+            isOneToOne: false,
+            referencedRelation: "surveys",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      survey_targets: {
+        Row: {
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          id: string
+          profile_id: string
+          survey_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          id?: string
+          profile_id: string
+          survey_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          id?: string
+          profile_id?: string
+          survey_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_targets_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "survey_targets_profile_id_fkey",
+            columns: ["profile_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "survey_targets_survey_id_fkey",
+            columns: ["survey_id"],
+            isOneToOne: false,
+            referencedRelation: "surveys",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      surveys: {
+        Row: {
+          allow_multiple_submissions: boolean
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          publish_at: string | null
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["publish_status"]
+          target_all: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          allow_multiple_submissions?: boolean
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          publish_at?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["publish_status"]
+          target_all?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          allow_multiple_submissions?: boolean
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          publish_at?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["publish_status"]
+          target_all?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surveys_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "surveys_published_by_fkey",
+            columns: ["published_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
@@ -1766,6 +2273,7 @@ export type Database = {
       }
     }
     Enums: {
+      comment_parent_type: "announcement" | "bulletin_post" | "survey"
       continents:
         | "Africa"
         | "Antarctica"
@@ -1774,6 +2282,14 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      publish_status: "draft" | "scheduled" | "published" | "archived"
+      survey_question_type:
+        | "short_text"
+        | "long_text"
+        | "single_choice"
+        | "multiple_choice"
+        | "rating"
+        | "boolean"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
