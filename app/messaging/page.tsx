@@ -1,6 +1,8 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
+import { MessageComposer } from "./_components/message-composer"
+
 const messagingHighlights = [
   {
     title: "Threaded conversations",
@@ -36,6 +38,7 @@ export default function MessagingPage() {
         </div>
         <Separator />
       </header>
+      <MessageComposer />
       <div className="grid gap-6 md:grid-cols-2">
         {messagingHighlights.map((item) => (
           <Card key={item.title}>
