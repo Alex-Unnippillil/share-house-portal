@@ -6,7 +6,7 @@ import {
   sendInAppNotification,
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
-import type { Database } from "@/lib/supabase"
+import type { Database, TablesInsert } from "@/lib/supabase"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -96,7 +96,7 @@ async function handleCheckoutSessionCompleted(
         const tenantId = fullSession.metadata?.tenant_id
         const unitId = fullSession.metadata?.unit_id
 
-        const paymentData = {
+        const paymentData: TablesInsert<'rent_payments'> = {
           user_id: tenantId || "00000000-0000-0000-0000-000000000000", // Use tenant_id as user_id, or a default UUID
           stripe_payment_intent_id: session.payment_intent as string,
           stripe_charge_id: session.payment_intent as string, // Will be updated when charge is available
@@ -140,7 +140,9 @@ async function handleCheckoutSessionCompleted(
                   tenantName: tenantProfile.full_name || tenantProfile.email,
                   amount: `$${paymentData.amount}`,
                   description: paymentData.description,
-                  date: new Date(paymentData.processed_at).toLocaleDateString(),
+                  date: new Date(
+                    paymentData.processed_at ?? new Date().toISOString()
+                  ).toLocaleDateString(),
                 },
                 userId: tenantId,
               })
@@ -191,13 +193,13 @@ async function handleInvoicePaymentSucceeded(
       // This is a subscription payment
       const amount = invoice.amount_paid / 100 // Convert from cents
 
-      await supabase.from("rent_payments").insert({
+      const subscriptionPayment: TablesInsert<'rent_payments'> = {
         user_id:
           subscription.metadata?.tenant_id ||
           "00000000-0000-0000-0000-000000000000", // Use tenant_id as user_id, or a default UUID
         stripe_customer_id: invoice.customer as string,
         stripe_subscription_id: subscription.id,
-        amount: amount,
+        amount,
         currency: invoice.currency.toUpperCase(),
         description: `Subscription payment - ${
           subscription.metadata?.unit_label || "Rent"
@@ -223,7 +225,8 @@ async function handleInvoicePaymentSucceeded(
           subscription_id: subscription.id,
           billing_reason: invoice.billing_reason,
         },
-      })
+      }
+      await supabase.from("rent_payments").insert(subscriptionPayment)
 
       // Update subscription status if needed
       await supabase
