@@ -36,7 +36,7 @@ export default function MessagingPage() {
         </div>
         <Separator />
       </header>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="content-visibility-auto contain-content grid gap-6 md:grid-cols-2">
         {messagingHighlights.map((item) => (
           <Card key={item.title}>
             <CardHeader>

@@ -8,7 +8,7 @@ export function BookingHistory() {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="content-visibility-auto contain-content grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {items.map((x) => (
         <Card key={x.id}>
           <CardHeader>
