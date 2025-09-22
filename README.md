@@ -78,6 +78,10 @@ DOCUMENSO_BASE_URL="your_documenso_instance_url"
 # Calendar (Optional)
 CALCOM_API_KEY="your_calcom_api_key"
 CALCOM_BASE_URL="your_calcom_instance_url"
+
+# Real User Monitoring
+NEXT_PUBLIC_RUM_ENDPOINT="/api/perf-metrics"
+NEXT_PUBLIC_RUM_WRITE_TOKEN="$SUPABASE_SERVICE_ROLE_KEY"
 ```
 
 ### Database Setup
@@ -114,6 +118,19 @@ Deploy to Vercel with the following environment variables configured in your Ver
 - All Supabase environment variables
 - Stripe keys (use live keys for production)
 - Document and calendar service URLs/keys
+- Real User Monitoring variables (`NEXT_PUBLIC_RUM_ENDPOINT`, `NEXT_PUBLIC_RUM_WRITE_TOKEN`)
+
+### Real User Monitoring
+
+The project ships with real user monitoring (RUM) for Web Vitals. When `NEXT_PUBLIC_RUM_WRITE_TOKEN` is defined the browser will
+send metrics to `/api/perf-metrics`, which persists them in Supabase using the service-role key. To enable it:
+
+- **Local**: add the variables from the `.env.local` template above and run `npm run dev`. Check Supabase Studio for rows in
+  `public.perf_metrics`.
+- **Vercel**: configure the same variables for each environment (Preview/Staging/Production) and redeploy so the bundle receives
+  the token.
+
+Dashboards, alerts, and additional context are documented in [`docs/perf/rum.md`](docs/perf/rum.md).
 
 ## Project Structure
 
