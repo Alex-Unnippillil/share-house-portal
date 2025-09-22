@@ -1,101 +1,56 @@
-'use client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertCircle, CheckCircle, Clock, FileText } from 'lucide-react'
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { getDocumentStatsAction } from '../actions';
-import { DocumentStats } from '@/types/documents';
+import { fetchDocumentStats } from '../data'
 
-export function DocumentsStats() {
-  const [stats, setStats] = useState<DocumentStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const result = await getDocumentStatsAction();
-        if (result.success && result.data) {
-          setStats(result.data);
-        }
-      } catch (error) {
-        console.error('Error fetching document stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (!stats) {
-    return null;
-  }
+export async function DocumentsStats() {
+  const stats = await fetchDocumentStats()
 
   const statItems = [
     {
-      title: "Total Documents",
+      title: 'Total Documents',
       value: stats.total_documents,
       icon: FileText,
-      color: "text-blue-600",
+      color: 'text-blue-600',
+      description: 'All document types',
     },
     {
-      title: "Pending Signatures",
+      title: 'Pending Signatures',
       value: stats.pending_signatures,
       icon: Clock,
-      color: "text-yellow-600",
+      color: 'text-yellow-600',
+      description: 'Awaiting signatures',
     },
     {
-      title: "Signed Documents",
+      title: 'Signed Documents',
       value: stats.signed_documents,
       icon: CheckCircle,
-      color: "text-green-600",
+      color: 'text-green-600',
+      description: 'Fully executed',
     },
     {
-      title: "Expired Documents",
+      title: 'Expired Documents',
       value: stats.expired_documents,
       icon: AlertCircle,
-      color: "text-red-600",
+      color: 'text-red-600',
+      description: 'Past expiry date',
     },
-  ];
+  ]
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
       {statItems.map((item) => (
         <Card key={item.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {item.title}
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
             <item.icon className={`size-4 ${item.color}`} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{item.value}</div>
-            <p className="text-xs text-muted-foreground">
-              {item.title === "Total Documents" && "All document types"}
-              {item.title === "Pending Signatures" && "Awaiting signatures"}
-              {item.title === "Signed Documents" && "Fully executed"}
-              {item.title === "Expired Documents" && "Past expiry date"}
-            </p>
+            <p className="text-xs text-muted-foreground">{item.description}</p>
           </CardContent>
         </Card>
       ))}
     </div>
-  );
+  )
 }
