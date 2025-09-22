@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.8",
@@ -41,6 +42,8 @@
     "@radix-ui/react-toast": "^1.1.5",
     "@react-three/drei": "9.92.7",
     "@react-three/fiber": "8.15.12",
+    "@stripe/react-stripe-js": "^2.7.1",
+    "@stripe/stripe-js": "^4.3.0",
     "@supabase-cache-helpers/postgrest-react-query": "^1.4.0",
     "@supabase/auth-helpers-nextjs": "^0.9.0",
     "@supabase/auth-helpers-react": "^0.4.2",
@@ -87,6 +90,7 @@
     "resend": "^4.1.2",
     "sharp": "^0.32.6",
     "sonner": "^1.5.0",
+    "stripe": "^16.5.0",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "0.160.0",
@@ -101,6 +105,7 @@
     "@types/node": "^20.14.15",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@playwright/test": "^1.46.0",
     "@typescript-eslint/parser": "^5.62.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
