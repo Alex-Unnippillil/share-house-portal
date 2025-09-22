@@ -2,9 +2,10 @@
 
 const withPlugins = require("next-compose-plugins")
 const withMDX = require('@next/mdx')()
-const withPWA = require("@ducanh2912/next-pwa").default({
-  dest: "public",
-});
+// Temporarily disable PWA to fix build issue
+// const withPWA = require("@ducanh2912/next-pwa").default({
+//   dest: "public",
+// });
 const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' *.supabase.co googleapis.com;
@@ -132,4 +133,5 @@ const nextConfig = {
 }
 
 module.exports = withMDX(nextConfig)
+// module.exports = withPlugins([withPWA, withMDX], nextConfig)
 

@@ -74,7 +74,7 @@ export async function getDocumentsAction(
       .eq('id', user.id)
       .single();
 
-    let query = supabase
+    let query = (supabase as any)
       .from('documents')
       .select(`
         *,
@@ -120,7 +120,7 @@ export async function getDocumentsAction(
 
     // Log access
     for (const doc of documents || []) {
-      await supabase.rpc('log_document_access', {
+      await (supabase as any).rpc('log_document_access', {
         p_document_id: doc.id,
         p_action: 'view',
         p_metadata: { source: 'documents_page' }
@@ -199,7 +199,7 @@ export async function uploadDocumentAction(
       .getPublicUrl(filePath);
 
     // Create document record
-    const { data: document, error: dbError } = await supabase
+    const { data: document, error: dbError } = await (supabase as any)
       .from('documents')
       .insert({
         title: validatedData.title,
@@ -223,7 +223,7 @@ export async function uploadDocumentAction(
     }
 
     // Log document creation
-    await supabase.rpc('log_document_access', {
+    await (supabase as any).rpc('log_document_access', {
       p_document_id: document.id,
       p_action: 'upload',
       p_metadata: { file_name: file.name, file_size: file.size }
@@ -275,7 +275,7 @@ export async function createSigningRequestAction(
     const validatedData = validationResult.data;
 
     // Get document details
-    const { data: document, error: docError } = await supabase
+    const { data: document, error: docError } = await (supabase as any)
       .from('documents')
       .select('*')
       .eq('id', validatedData.document_id)
@@ -314,7 +314,7 @@ export async function createSigningRequestAction(
     let tenantProfiles: { id: string; email: string | null; full_name: string | null }[] = [];
 
     if (document.document_type === 'lease') {
-      const { data: lease } = await supabase
+      const { data: lease } = await (supabase as any)
         .from('leases')
         .select('tenant_ids')
         .eq('document_id', document.id)
@@ -353,7 +353,7 @@ export async function createSigningRequestAction(
     }
 
     // Update document with Documenso envelope ID
-    await supabase
+    await (supabase as any)
       .from('documents')
       .update({
         documenso_envelope_id: signingResult.id,

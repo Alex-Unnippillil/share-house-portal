@@ -10,7 +10,7 @@ type formData = {
 }
 
 export async function submitInquiry(data: formData) {
-  const cookieStore = cookies();
+  const cookieStore = await import("next/headers").then((mod) => mod.cookies)();
   const supabase = createClient(cookieStore);
 
   try {
@@ -20,7 +20,7 @@ export async function submitInquiry(data: formData) {
         name: data.name,
         email: data.email,
         message: data.message
-      });
+      } as any);
 
     if (error) throw error;
 

@@ -196,9 +196,9 @@ export function NotificationCenter() {
                   variant="ghost"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="size-6 px-2 text-xs"
+                  className="px-2 size-6 text-xs"
                 >
-                  <CheckCheck className="size-3 mr-1" />
+                  <CheckCheck className="mr-1 size-3" />
                   Mark all read
                 </Button>
               )}
