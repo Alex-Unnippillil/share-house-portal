@@ -144,7 +144,15 @@ export type Database = {
           image?: string | null
           name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       verification_tokens: {
         Row: {
@@ -1226,6 +1234,193 @@ export type Database = {
         }
         Relationships: []
       }
+      households: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          name: string
+          slug: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          slug: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          slug?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      message_attachments: {
+        Row: {
+          bucket_id: string
+          content_type: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          message_id: string
+          storage_path: string
+        }
+        Insert: {
+          bucket_id?: string
+          content_type?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          message_id: string
+          storage_path: string
+        }
+        Update: {
+          bucket_id?: string
+          content_type?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          message_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_attachments_message_id_fkey",
+            columns: ["message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          parent_message_id: string | null
+          sender_id: string
+          thread_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          parent_message_id?: string | null
+          sender_id: string
+          thread_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          parent_message_id?: string | null
+          sender_id?: string
+          thread_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_parent_message_id_fkey",
+            columns: ["parent_message_id"],
+            isOneToOne: false,
+            referencedRelation: "messages",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey",
+            columns: ["sender_id"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "messages_thread_id_fkey",
+            columns: ["thread_id"],
+            isOneToOne: false,
+            referencedRelation: "threads",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
+      threads: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          is_pinned: boolean
+          metadata: Json | null
+          parent_thread_id: string | null
+          summary: string | null
+          title: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          household_id: string
+          id?: string
+          is_pinned?: boolean
+          metadata?: Json | null
+          parent_thread_id?: string | null
+          summary?: string | null
+          title: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          is_pinned?: boolean
+          metadata?: Json | null
+          parent_thread_id?: string | null
+          summary?: string | null
+          title?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threads_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+          {
+            foreignKeyName: "threads_parent_thread_id_fkey",
+            columns: ["parent_thread_id"],
+            isOneToOne: false,
+            referencedRelation: "threads",
+            referencedColumns: ["id"],
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1236,6 +1431,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           full_name: string | null
+          household_id: string | null
           id: string
           job_title: string | null
           linkedin_url: string | null
@@ -1256,6 +1452,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string | null
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
@@ -1276,6 +1473,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string | null
+          household_id?: string | null
           id?: string
           job_title?: string | null
           linkedin_url?: string | null
@@ -1287,7 +1485,15 @@ export type Database = {
           website?: string | null
           xhandle?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_household_id_fkey",
+            columns: ["household_id"],
+            isOneToOne: false,
+            referencedRelation: "households",
+            referencedColumns: ["id"],
+          },
+        ]
       }
       reusable_packages: {
         Row: {
