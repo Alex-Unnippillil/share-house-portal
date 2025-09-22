@@ -77,6 +77,23 @@ GOOGLE_OWNER_REFRESH_TOKEN="your_google_refresh_token"
 RESEND_API_KEY="re_your_resend_api_key"
 ```
 
+### **SMS (OPTIONAL)**
+```bash
+TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+TWILIO_AUTH_TOKEN="your_twilio_auth_token"
+# Provide either a messaging service SID or a from number
+TWILIO_MESSAGING_SERVICE_SID="MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+TWILIO_FROM_NUMBER="+15551234567"
+```
+
+### **WEB PUSH (OPTIONAL)**
+```bash
+WEB_PUSH_PUBLIC_KEY="your_vapid_public_key"
+WEB_PUSH_PRIVATE_KEY="your_vapid_private_key"
+WEB_PUSH_CONTACT_EMAIL="admin@roomsily.app"
+NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY="your_vapid_public_key"
+```
+
 ## 🛠️ **HOW TO GET THESE KEYS**
 
 ### **1. Supabase Setup**

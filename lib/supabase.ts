@@ -210,6 +210,40 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      notification_preferences: SupabaseTable<{
+        user_id: string
+        email_enabled: boolean
+        sms_enabled: boolean
+        push_enabled: boolean
+        sms_phone_number: string | null
+        push_subscription: Json | null
+        quiet_hours: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      sms_notifications: SupabaseTable<{
+        id: string
+        user_id: string | null
+        phone_number: string
+        message: string
+        status: 'sent' | 'failed' | 'skipped' | 'queued'
+        provider_message_id: string | null
+        error_message: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      push_notifications: SupabaseTable<{
+        id: string
+        user_id: string | null
+        endpoint: string
+        payload: Json
+        status: 'sent' | 'failed' | 'skipped'
+        error_message: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string

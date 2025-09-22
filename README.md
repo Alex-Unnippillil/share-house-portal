@@ -27,7 +27,7 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 
 ### 💬 **Communication**
 - **Realtime Messaging**: Roommate-to-roommate communication with threads
-- **Notifications**: In-app and email notifications for important events
+- **Notifications**: In-app, email, text message, and push notifications for important events
 - **Maintenance Requests**: Issue tracking and resolution workflow
 
 ### 🏢 **Admin Features**

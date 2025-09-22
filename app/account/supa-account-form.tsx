@@ -24,6 +24,7 @@ type ProfileState = {
   website: string
   avatarUrl: string
   email: string
+  phone: string
 }
 
 function createProfileState(user: User, profile: AccountProfile | null): ProfileState {
@@ -33,6 +34,7 @@ function createProfileState(user: User, profile: AccountProfile | null): Profile
     website: profile?.website ?? "",
     avatarUrl: profile?.avatarUrl ?? "",
     email: profile?.email ?? user.email ?? "",
+    phone: profile?.phone ?? "",
   }
 }
 
@@ -55,6 +57,7 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
           website: payload.website || null,
           avatar_url: payload.avatarUrl || null,
           email: payload.email || null,
+          phone: payload.phone || null,
           updated_at: new Date().toISOString(),
         })
 
@@ -156,6 +159,21 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
             value={profileState.website}
             onChange={handleChange("website")}
             placeholder="https://sharehouse.example"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            htmlFor="phone"
+          >
+            Mobile number
+          </label>
+          <Input
+            id="phone"
+            type="tel"
+            value={profileState.phone}
+            onChange={handleChange("phone")}
+            placeholder="+1 555-123-4567"
           />
         </div>
         <button
