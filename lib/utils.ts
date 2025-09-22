@@ -8,26 +8,89 @@ export function cn(...inputs: ClassValue[]) {
 
 
 
+type FetchCacheEntry = {
+  etag: string
+  payload: unknown
+}
+
+const etagCache = new Map<string, FetchCacheEntry>()
+
+const createCacheKey = (input: RequestInfo, init?: RequestInit) => {
+  const method =
+    (init?.method || (input instanceof Request ? input.method : "GET"))?.toUpperCase() ??
+    "GET"
+
+  const url =
+    typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url
+
+  return `${method}:${url}`
+}
+
+const ensureHeaders = (init?: RequestInit) => {
+  const headers = new Headers(init?.headers)
+  return { ...init, headers }
+}
+
 export async function fetcher<JSON = any>(
   input: RequestInfo,
   init?: RequestInit
 ): Promise<JSON> {
-  const res = await fetch(input, init)
+  const cacheKey = createCacheKey(input, init)
+  const cached = etagCache.get(cacheKey)
+
+  const requestInit = ensureHeaders(init)
+
+  if (cached) {
+    requestInit.headers.set("If-None-Match", cached.etag)
+  }
+
+  const res = await fetch(input, requestInit)
+
+  if (res.status === 304) {
+    if (cached) {
+      return cached.payload as JSON
+    }
+
+    throw new Error("Cached response unavailable for 304 Not Modified.")
+  }
 
   if (!res.ok) {
-    const json = await res.json()
-    if (json.error) {
+    let json: any = null
+    try {
+      json = await res.json()
+    } catch (error) {
+      // Ignore JSON parsing issues for error responses without bodies
+    }
+
+    if (json?.error) {
       const error = new Error(json.error) as Error & {
         status: number
       }
       error.status = res.status
       throw error
-    } else {
-      throw new Error('An unexpected error occurred')
     }
+
+    throw new Error("An unexpected error occurred")
   }
 
-  return res.json()
+  const data = (await res.json()) as JSON
+  const etag = res.headers.get("ETag")
+
+  if (etag) {
+    etagCache.set(cacheKey, { etag, payload: data })
+  } else if (etagCache.has(cacheKey)) {
+    etagCache.delete(cacheKey)
+  }
+
+  return data
+}
+
+export const clearFetcherCache = () => {
+  etagCache.clear()
 }
 
 export function formatDate(input: string | number | Date): string {
