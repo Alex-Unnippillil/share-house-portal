@@ -1,10 +1,12 @@
 import { headers } from "next/headers"
+import type Stripe from "stripe"
 import { getStripe } from "@/lib/stripe"
-import { createClient } from "@supabase/supabase-js"
-import type { Database } from "@/lib/supabase"
-import { notificationService } from "@/lib/notifications"
+import {
+  createClient,
+  type PostgrestError
+} from "@supabase/supabase-js"
 
-const supabase = createClient<Database>(
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   {
@@ -15,247 +17,557 @@ const supabase = createClient<Database>(
   }
 )
 
+type AuditEventStatus = "processed" | "skipped" | "failed"
+
+type SafeWriteResult = {
+  data: any[]
+  removedColumns: string[]
+  skipped: boolean
+}
+
+export const runtime = "nodejs"
+
 export async function POST(req: Request) {
-  const stripe = getStripe()
-  const signature = (await headers()).get("stripe-signature")
+  const stripeSignature = (await headers()).get("stripe-signature")
+
+  if (!stripeSignature) {
+    await recordAuditLog({
+      type: "stripe.webhook.missing_signature",
+      status: "failed",
+      message: "Missing stripe-signature header"
+    })
+    return new Response("Missing stripe-signature header", { status: 400 })
+  }
+
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
+    await recordAuditLog({
+      type: "stripe.webhook.misconfiguration",
+      status: "failed",
+      message: "STRIPE_WEBHOOK_SECRET is not configured"
+    })
     return new Response("Webhook not configured", { status: 500 })
   }
 
+  const stripe = getStripe()
   const rawBody = await req.text()
 
+  let event: Stripe.Event
+
   try {
-    const event = stripe.webhooks.constructEvent(rawBody, signature ?? "", webhookSecret)
-
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(event.data.object)
-        break
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(event.data.object)
-        break
-      case "customer.subscription.created":
-        await handleSubscriptionCreated(event.data.object)
-        break
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(event.data.object)
-        break
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object)
-        break
-      default:
-        console.log(`Unhandled event type: ${event.type}`)
-        break
-    }
-
-    return new Response("ok", { status: 200 })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid payload"
-    console.error("Webhook error:", message)
-    return new Response(`Webhook error: ${message}`, { status: 400 })
-  }
-}
-
-async function handleCheckoutSessionCompleted(session: any) {
-  try {
-    // Retrieve the full session with line items
-    const stripe = getStripe()
-    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ['line_items', 'customer']
-    })
-
-    // For one-time payments, create a rent payment record
-    if (fullSession.mode === 'payment') {
-      const lineItem = fullSession.line_items?.data[0]
-      if (lineItem) {
-        // Extract tenant and unit info from metadata if available
-        const tenantId = fullSession.metadata?.tenant_id
-        const unitId = fullSession.metadata?.unit_id
-
-        const paymentData = {
-          stripe_payment_intent_id: session.payment_intent as string,
-          stripe_charge_id: session.payment_intent as string, // Will be updated when charge is available
-          stripe_customer_id: session.customer as string,
-          amount: lineItem.amount_total / 100, // Convert from cents
-          currency: lineItem.currency.toUpperCase(),
-          description: lineItem.description || `Payment for ${lineItem.price?.nickname || 'rent'}`,
-          status: 'completed',
-          processed_at: new Date().toISOString(),
-          receipt_url: session.receipt_url,
-          tenant_id: tenantId,
-          unit_id: unitId,
-          payment_method_type: 'card', // Default assumption
-          metadata: {
-            session_id: session.id,
-            payment_status: session.payment_status,
-            ...fullSession.metadata
-          }
-        };
-
-        await supabase.from('rent_payments').insert(paymentData);
-
-        // Send payment receipt notification if we have tenant info
-        if (tenantId) {
-          try {
-            // Get tenant profile
-            const { data: tenantProfile } = await supabase
-              .from('profiles')
-              .select('full_name, email')
-              .eq('id', tenantId)
-              .single();
-
-            if (tenantProfile?.email) {
-              await notificationService.sendEmail({
-                to: tenantProfile.email,
-                subject: `Payment Receipt - $${paymentData.amount}`,
-                template: 'payment-receipt',
-                data: {
-                  tenantName: tenantProfile.full_name || tenantProfile.email,
-                  amount: `$${paymentData.amount}`,
-                  description: paymentData.description,
-                  date: new Date(paymentData.processed_at).toLocaleDateString(),
-                },
-                userId: tenantId,
-              });
-
-              // Also send in-app notification
-              await notificationService.sendInAppNotification({
-                userId: tenantId,
-                title: "Payment Successful",
-                message: `Your payment of $${paymentData.amount} has been processed successfully.`,
-                type: 'success',
-                actionUrl: '/payments',
-              });
-            }
-          } catch (notificationError) {
-            console.error('Failed to send payment notification:', notificationError);
-            // Don't fail the webhook for notification errors
-          }
-        }
-      }
-    }
-
-    // For subscriptions, the subscription will be created separately
-    // We might want to link the checkout session to the subscription here
-
+    event = stripe.webhooks.constructEvent(rawBody, stripeSignature, webhookSecret)
   } catch (error) {
-    console.error('Error handling checkout session completed:', error)
-    throw error
-  }
-}
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to verify Stripe webhook signature"
 
-async function handleInvoicePaymentSucceeded(invoice: any) {
-  try {
-    const stripe = getStripe()
-
-    // Get the full invoice with subscription details
-    const fullInvoice = await stripe.invoices.retrieve(invoice.id, {
-      expand: ['subscription', 'customer']
-    })
-
-    const subscription = fullInvoice.subscription as any
-
-    if (subscription) {
-      // This is a subscription payment
-      const amount = invoice.amount_paid / 100 // Convert from cents
-
-      await supabase.from('rent_payments').insert({
-        stripe_customer_id: invoice.customer as string,
-        stripe_subscription_id: subscription.id,
-        amount: amount,
-        currency: invoice.currency.toUpperCase(),
-        description: `Subscription payment - ${subscription.metadata?.unit_label || 'Rent'}`,
-        status: 'completed',
-        processed_at: new Date().toISOString(),
-        receipt_url: invoice.hosted_invoice_url,
-        tenant_id: subscription.metadata?.tenant_id,
-        unit_id: subscription.metadata?.unit_id,
-        payment_method_type: 'card', // Default assumption
-        billing_period_start: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString().split('T')[0] : undefined,
-        billing_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString().split('T')[0] : undefined,
-        metadata: {
-          invoice_id: invoice.id,
-          subscription_id: subscription.id,
-          billing_reason: invoice.billing_reason
-        }
-      })
-
-      // Update subscription status if needed
-      await supabase.from('subscriptions').update({
-        status: subscription.status,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      }).eq('stripe_subscription_id', subscription.id)
-    }
-
-  } catch (error) {
-    console.error('Error handling invoice payment succeeded:', error)
-    throw error
-  }
-}
-
-async function handleSubscriptionCreated(subscription: any) {
-  try {
-    // This handles when a subscription is first created
-    const price = subscription.items.data[0]?.price
-
-    await supabase.from('subscriptions').insert({
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
-      stripe_price_id: price?.id,
-      amount: price?.unit_amount / 100, // Convert from cents
-      currency: price?.currency.toUpperCase(),
-      billing_cycle: 'monthly', // Default, could be determined from price
-      status: subscription.status,
-      started_at: new Date(subscription.created * 1000).toISOString(),
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      tenant_id: subscription.metadata?.tenant_id,
-      unit_id: subscription.metadata?.unit_id,
+    await recordAuditLog({
+      type: "stripe.webhook.signature_verification_failed",
+      status: "failed",
+      message,
       metadata: {
-        ...subscription.metadata
-      }
+        signaturePresent: Boolean(stripeSignature)
+      },
+      payload: safeJsonParse(rawBody)
     })
 
-  } catch (error) {
-    console.error('Error handling subscription created:', error)
-    throw error
+    return new Response("Invalid webhook signature", { status: 400 })
   }
-}
 
-async function handleSubscriptionUpdated(subscription: any) {
+  if (event.type !== "payment_intent.succeeded") {
+    await recordAuditLog({
+      type: event.type,
+      status: "skipped",
+      referenceId: event.id,
+      message: "Event type not handled",
+      payload: sanitizeStripeEvent(event)
+    })
+
+    return new Response(null, { status: 200 })
+  }
+
   try {
-    await supabase.from('subscriptions').update({
-      status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      updated_at: new Date().toISOString()
-    }).eq('stripe_subscription_id', subscription.id)
+    const paymentIntent = event.data.object as Stripe.PaymentIntent
+    const result = await handlePaymentIntentSucceeded(paymentIntent)
 
+    await recordAuditLog({
+      type: event.type,
+      status: "processed",
+      referenceId: event.id,
+      payload: sanitizeStripeEvent(event),
+      metadata: result
+    })
+
+    return new Response(null, { status: 200 })
   } catch (error) {
-    console.error('Error handling subscription updated:', error)
+    const message = error instanceof Error ? error.message : "Unknown error"
+
+    console.error("Stripe webhook handler failed", error)
+
+    await recordAuditLog({
+      type: event.type,
+      status: "failed",
+      referenceId: event.id,
+      message,
+      payload: sanitizeStripeEvent(event)
+    })
+
+    return new Response("Webhook handler failed", { status: 500 })
+  }
+}
+
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  const sanitizedMetadata = sanitizeMetadata(paymentIntent.metadata)
+  const invoiceCandidates = collectInvoiceCandidates(paymentIntent, sanitizedMetadata)
+  const supplyShareIds = parseSupplyShareIds(paymentIntent, sanitizedMetadata)
+  const processedAt = toIsoTimestamp(paymentIntent.created)
+  const nowIso = new Date().toISOString()
+  const amountReceivedCents = paymentIntent.amount_received ?? paymentIntent.amount ?? 0
+  const amountReceived = amountReceivedCents / 100
+  const currency = paymentIntent.currency
+    ? paymentIntent.currency.toUpperCase()
+    : undefined
+
+  const invoiceUpdates: Array<{
+    column: string
+    value: string
+    updatedRowIds: string[]
+    removedColumns: string[]
+    skipped: boolean
+  }> = []
+
+  let matchedInvoiceId: string | null = null
+
+  for (const candidate of invoiceCandidates) {
+    const updateResult = await safeUpdateEq(
+      "invoices",
+      candidate.column,
+      candidate.value,
+      stripUndefined({
+        status: "paid",
+        paid_at: processedAt,
+        stripe_payment_intent_id: paymentIntent.id,
+        amount_paid: amountReceived,
+        currency,
+        updated_at: nowIso
+      })
+    )
+
+    invoiceUpdates.push({
+      column: candidate.column,
+      value: candidate.value,
+      updatedRowIds: (updateResult.data ?? [])
+        .map((row) => (row && typeof row === "object" ? (row as { id?: string }).id ?? null : null))
+        .filter((id): id is string => Boolean(id)),
+      removedColumns: updateResult.removedColumns,
+      skipped: updateResult.skipped
+    })
+
+    if (!matchedInvoiceId && updateResult.data.length > 0) {
+      const firstRow = updateResult.data[0]
+      if (firstRow && typeof firstRow === "object" && "id" in firstRow) {
+        matchedInvoiceId = String((firstRow as { id: unknown }).id)
+        break
+      }
+    }
+  }
+
+  const paymentRecord = await safeUpsert(
+    "payments",
+    stripUndefined({
+      invoice_id: matchedInvoiceId ?? invoiceCandidates.find((candidate) => candidate.column === "id")?.value,
+      stripe_payment_intent_id: paymentIntent.id,
+      amount: amountReceived,
+      currency,
+      status: paymentIntent.status ?? "succeeded",
+      processed_at: processedAt,
+      metadata: sanitizedMetadata ?? undefined
+    }),
+    "stripe_payment_intent_id"
+  )
+
+  let supplyShareUpdate: SafeWriteResult | undefined
+
+  if (supplyShareIds.length > 0) {
+    supplyShareUpdate = await safeUpdateIn(
+      "supply_shares",
+      "id",
+      supplyShareIds,
+      stripUndefined({
+        status: "settled",
+        settled_at: processedAt,
+        settled_payment_intent_id: paymentIntent.id,
+        updated_at: nowIso
+      })
+    )
+  }
+
+  return stripUndefined({
+    invoiceUpdates,
+    matchedInvoiceId,
+    invoiceCandidates,
+    paymentRecord: {
+      removedColumns: paymentRecord.removedColumns,
+      skipped: paymentRecord.skipped,
+      paymentRowIds: (paymentRecord.data ?? [])
+        .map((row) => (row && typeof row === "object" ? (row as { id?: string }).id ?? null : null))
+        .filter((id): id is string => Boolean(id))
+    },
+    supplyShareUpdate: supplyShareUpdate
+      ? {
+          requestedIds: supplyShareIds,
+          removedColumns: supplyShareUpdate.removedColumns,
+          skipped: supplyShareUpdate.skipped,
+          updatedRowIds: (supplyShareUpdate.data ?? [])
+            .map((row) => (row && typeof row === "object" ? (row as { id?: string }).id ?? null : null))
+            .filter((id): id is string => Boolean(id))
+        }
+      : undefined,
+    amountReceived,
+    currency,
+    metadata: sanitizedMetadata ?? undefined
+  })
+}
+
+async function safeUpdateEq(
+  table: string,
+  column: string,
+  value: string,
+  updates: Record<string, unknown>
+): Promise<SafeWriteResult> {
+  const cleanedUpdates = { ...updates }
+  const removedColumns: string[] = []
+
+  if (Object.keys(cleanedUpdates).length === 0) {
+    return { data: [], removedColumns, skipped: true }
+  }
+
+  let selectColumns: string | undefined = "id"
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let query = supabase.from(table).update(cleanedUpdates).eq(column, value)
+
+    if (selectColumns) {
+      query = query.select(selectColumns)
+    }
+
+    const { data, error } = await query
+
+    if (!error) {
+      return { data: data ?? [], removedColumns, skipped: false }
+    }
+
+    if (isUndefinedColumnError(error)) {
+      const missingColumn = extractMissingColumnName(error)
+
+      if (missingColumn && missingColumn === selectColumns) {
+        selectColumns = "*"
+        continue
+      }
+
+      if (missingColumn && missingColumn in cleanedUpdates) {
+        delete cleanedUpdates[missingColumn]
+        removedColumns.push(missingColumn)
+
+        if (Object.keys(cleanedUpdates).length === 0) {
+          return { data: [], removedColumns, skipped: true }
+        }
+
+        continue
+      }
+    }
+
     throw error
   }
 }
 
-async function handleSubscriptionDeleted(subscription: any) {
+async function safeUpdateIn(
+  table: string,
+  column: string,
+  values: string[],
+  updates: Record<string, unknown>
+): Promise<SafeWriteResult> {
+  const cleanedUpdates = { ...updates }
+  const removedColumns: string[] = []
+
+  if (values.length === 0 || Object.keys(cleanedUpdates).length === 0) {
+    return { data: [], removedColumns, skipped: true }
+  }
+
+  let selectColumns: string | undefined = "id"
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let query = supabase.from(table).update(cleanedUpdates).in(column, values)
+
+    if (selectColumns) {
+      query = query.select(selectColumns)
+    }
+
+    const { data, error } = await query
+
+    if (!error) {
+      return { data: data ?? [], removedColumns, skipped: false }
+    }
+
+    if (isUndefinedColumnError(error)) {
+      const missingColumn = extractMissingColumnName(error)
+
+      if (missingColumn && missingColumn === selectColumns) {
+        selectColumns = "*"
+        continue
+      }
+
+      if (missingColumn && missingColumn in cleanedUpdates) {
+        delete cleanedUpdates[missingColumn]
+        removedColumns.push(missingColumn)
+
+        if (Object.keys(cleanedUpdates).length === 0) {
+          return { data: [], removedColumns, skipped: true }
+        }
+
+        continue
+      }
+    }
+
+    throw error
+  }
+}
+
+async function safeUpsert(
+  table: string,
+  record: Record<string, unknown>,
+  conflictTarget?: string
+): Promise<SafeWriteResult> {
+  const payload = { ...record }
+  const removedColumns: string[] = []
+
+  if (Object.keys(payload).length === 0) {
+    return { data: [], removedColumns, skipped: true }
+  }
+
+  let selectColumns: string | undefined = "id"
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let query = supabase.from(table).upsert(payload, conflictTarget ? { onConflict: conflictTarget } : undefined)
+
+    if (selectColumns) {
+      query = query.select(selectColumns)
+    }
+
+    const { data, error } = await query
+
+    if (!error) {
+      return { data: data ?? [], removedColumns, skipped: false }
+    }
+
+    if (isUndefinedColumnError(error)) {
+      const missingColumn = extractMissingColumnName(error)
+
+      if (missingColumn && missingColumn === selectColumns) {
+        selectColumns = "*"
+        continue
+      }
+
+      if (missingColumn && missingColumn in payload) {
+        delete payload[missingColumn]
+        removedColumns.push(missingColumn)
+
+        if (Object.keys(payload).length === 0) {
+          return { data: [], removedColumns, skipped: true }
+        }
+
+        continue
+      }
+    }
+
+    throw error
+  }
+}
+
+function parseSupplyShareIds(
+  paymentIntent: Stripe.PaymentIntent,
+  metadata: Record<string, string> | null
+): string[] {
+  const keys = [
+    "rolled_supply_share_ids",
+    "supply_share_ids",
+    "supply_share_id",
+    "rolledSupplyShareIds",
+    "supplyShareIds"
+  ]
+
+  const identifiers = new Set<string>()
+
+  for (const key of keys) {
+    const rawValue = metadata?.[key]
+    for (const id of parseIdentifierList(rawValue)) {
+      identifiers.add(id)
+    }
+  }
+
+  if (typeof paymentIntent.metadata?.rolled_supply_share_ids === "string") {
+    for (const id of parseIdentifierList(paymentIntent.metadata.rolled_supply_share_ids)) {
+      identifiers.add(id)
+    }
+  }
+
+  return Array.from(identifiers)
+}
+
+function parseIdentifierList(value?: string | null): string[] {
+  if (!value) {
+    return []
+  }
+
+  const trimmed = value.trim()
+
+  if (!trimmed) {
+    return []
+  }
+
   try {
-    await supabase.from('subscriptions').update({
-      status: 'canceled',
-      ended_at: new Date().toISOString(),
-      canceled_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }).eq('stripe_subscription_id', subscription.id)
+    const parsed = JSON.parse(trimmed)
 
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((entry) => String(entry).trim())
+        .filter((entry) => entry.length > 0)
+    }
   } catch (error) {
-    console.error('Error handling subscription deleted:', error)
-    throw error
+    // The value was not JSON encoded. Fallback to comma-separated parsing.
+    if (error instanceof Error) {
+      // noop: handled by fallback below
+    }
+  }
+
+  return trimmed
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+}
+
+function collectInvoiceCandidates(
+  paymentIntent: Stripe.PaymentIntent,
+  metadata: Record<string, string> | null
+): Array<{ column: string; value: string }> {
+  const candidates: Array<{ column: string; value: string }> = []
+  const seen = new Set<string>()
+
+  const pushCandidate = (column: string, value?: string | null) => {
+    if (!value) {
+      return
+    }
+
+    const normalized = value.trim()
+
+    if (!normalized) {
+      return
+    }
+
+    const key = `${column}:${normalized}`
+
+    if (!seen.has(key)) {
+      seen.add(key)
+      candidates.push({ column, value: normalized })
+    }
+  }
+
+  pushCandidate("id", metadata?.invoice_id)
+  pushCandidate("id", metadata?.invoiceId)
+  pushCandidate("id", metadata?.invoice_uuid)
+  pushCandidate("id", metadata?.invoiceUuid)
+  pushCandidate("stripe_invoice_id", metadata?.stripe_invoice_id)
+
+  if (typeof paymentIntent.invoice === "string") {
+    pushCandidate("stripe_invoice_id", paymentIntent.invoice)
+  } else if (paymentIntent.invoice && typeof paymentIntent.invoice === "object") {
+    const invoiceObject = paymentIntent.invoice as { id?: string | null }
+    pushCandidate("stripe_invoice_id", invoiceObject.id ?? undefined)
+  }
+
+  return candidates
+}
+
+async function recordAuditLog(entry: {
+  type: string
+  status: AuditEventStatus
+  referenceId?: string | null
+  message?: string
+  metadata?: Record<string, unknown>
+  payload?: unknown
+}) {
+  const record = stripUndefined({
+    event_type: entry.type,
+    status: entry.status,
+    reference_id: entry.referenceId ?? undefined,
+    message: entry.message ?? undefined,
+    source: "stripe",
+    payload: entry.payload ?? undefined,
+    metadata: entry.metadata ?? undefined
+  })
+
+  const { error } = await supabase.from("events").insert(record)
+
+  if (error) {
+    console.error("Failed to record audit event", error)
   }
 }
 
-// Export runtime config for edge runtime
-export const runtime = 'edge';
+function sanitizeStripeEvent(event: Stripe.Event): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(event)) as Record<string, unknown>
+}
 
+function sanitizeMetadata(metadata: Stripe.Metadata | null | undefined):
+  | Record<string, string>
+  | null {
+  if (!metadata) {
+    return null
+  }
 
+  const entries = Object.entries(metadata).filter(([, value]) => typeof value === "string")
+
+  if (entries.length === 0) {
+    return null
+  }
+
+  return Object.fromEntries(entries.map(([key, value]) => [key, String(value)]))
+}
+
+function toIsoTimestamp(epochSeconds?: number | null): string {
+  const milliseconds = typeof epochSeconds === "number" ? epochSeconds * 1000 : Date.now()
+  return new Date(milliseconds).toISOString()
+}
+
+function safeJsonParse(value: string): unknown {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
+}
+
+function stripUndefined<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entryValue]) => entryValue !== undefined)
+  ) as T
+}
+
+function isUndefinedColumnError(error: unknown): error is PostgrestError {
+  return Boolean(
+    error && typeof error === "object" && "code" in error && (error as PostgrestError).code === "42703"
+  )
+}
+
+function extractMissingColumnName(error: PostgrestError): string | null {
+  if (!error.message) {
+    return null
+  }
+
+  const match = error.message.match(/column \"([^\"]+)\"/)
+  return match?.[1] ?? null
+}
