@@ -244,6 +244,22 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      web_vitals: SupabaseTable<{
+        id: string
+        created_at: string | null
+        metric_id: string
+        name: string
+        value: number
+        delta: number | null
+        rating: 'good' | 'needs-improvement' | 'poor'
+        label: string | null
+        event_name: string | null
+        route: string
+        url: string
+        navigation_type: string | null
+        metadata: Json | null
+        recorded_at: string | null
+      }>
     }
     Views: Record<string, never>
     Functions: {

@@ -1,0 +1,70 @@
+name: Lighthouse CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/lighthouse-ci.yml'
+      - 'app/**'
+      - 'components/**'
+      - 'public/**'
+      - 'lighthouserc.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  audit:
+    name: Run Lighthouse CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Pull Vercel environment information
+        run: pnpm dlx vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
+
+      - name: Create Vercel build
+        run: pnpm dlx vercel build --token "$VERCEL_TOKEN"
+
+      - name: Deploy preview build
+        id: vercel-deploy
+        run: |
+          preview_url=$(pnpm dlx vercel deploy --prebuilt --token "$VERCEL_TOKEN" --yes)
+          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
+
+      - name: Run Lighthouse CI
+        env:
+          LHCI_BUILD_CONTEXT__CURRENT_BRANCH: ${{ github.head_ref || github.ref_name }}
+          LHCI_BUILD_CONTEXT__COMMIT_TIME: ${{ github.event.head_commit.timestamp || github.event.pull_request.head.repo.pushed_at || '' }}
+          LHCI_BUILD_CONTEXT__EXTERNAL_BUILD_URL: ${{ steps.vercel-deploy.outputs.preview_url }}
+        run: pnpm dlx @lhci/cli autorun
+
+      - name: Upload Lighthouse HTML reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-html-reports
+          path: .lighthouseci/*.html
+          if-no-files-found: warn

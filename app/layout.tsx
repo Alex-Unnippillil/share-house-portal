@@ -1,4 +1,5 @@
- import type { Metadata, Viewport } from 'next'
+import type { Metadata, Viewport } from 'next'
+import type { NextWebVitalsMetric } from 'next/app'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -13,6 +14,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { cn } from "@/lib/utils"
+import { sendToAnalytics } from "@/utils/metrics/web-vitals"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -148,4 +150,8 @@ enter your api info from termly.io or a provider of your choice
     </html>
     </ReactQueryClientProvider>
   )
+}
+
+export function reportWebVitals(metric: NextWebVitalsMetric) {
+  sendToAnalytics(metric)
 }
