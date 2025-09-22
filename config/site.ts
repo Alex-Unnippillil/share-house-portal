@@ -26,6 +26,10 @@ export const siteConfig = {
       href: "/documents",
     },
     {
+      title: "House Rules",
+      href: "/house-rules",
+    },
+    {
       title: "Messaging",
       href: "/messaging",
     },
