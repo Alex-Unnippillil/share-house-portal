@@ -152,24 +152,54 @@ export function useNotifications() {
     roommates: Array<{ id: string; email: string; name: string }>
     propertyManager: { id: string; email: string; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
-      // Email to property manager
-      {
+    const notifications: (NotificationData | InAppNotification)[] = []
+    const templateData = {
+      guestName: data.guestName,
+      hostName: data.hostName,
+      checkInDate: data.checkInDate,
+      checkOutDate: data.checkOutDate,
+      purpose: data.purpose,
+    }
+
+    if (data.propertyManager.email) {
+      notifications.push({
         to: data.propertyManager.email,
         subject: `New Visitor Booking: ${data.guestName}`,
         template: "visitor-booking",
-        data,
+        data: templateData,
         userId: data.propertyManager.id,
-      },
-      // In-app notifications to all roommates
-      ...data.roommates.map((roommate) => ({
+      })
+    }
+
+    notifications.push({
+      userId: data.propertyManager.id,
+      title: "New Visitor Booking",
+      message: `${data.guestName} is visiting from ${data.checkInDate} to ${data.checkOutDate}`,
+      type: "info",
+      actionUrl: "/visitors",
+      metadata: templateData,
+    })
+
+    for (const roommate of data.roommates) {
+      if (roommate.email) {
+        notifications.push({
+          to: roommate.email,
+          subject: `New Visitor Booking: ${data.guestName}`,
+          template: "visitor-booking",
+          data: templateData,
+          userId: roommate.id,
+        })
+      }
+
+      notifications.push({
         userId: roommate.id,
         title: "New Visitor Booking",
         message: `${data.guestName} is visiting from ${data.checkInDate} to ${data.checkOutDate}`,
-        type: "info" as const,
-        actionUrl: "/dashboard",
-      })),
-    ]
+        type: "info",
+        actionUrl: "/visitors",
+        metadata: templateData,
+      })
+    }
 
     return sendBulkNotifications(notifications)
   }
