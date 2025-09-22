@@ -199,6 +199,16 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      kpi_cache: SupabaseTable<{
+        key: string
+        scope: string
+        payload: Json
+        computed_at: string
+        expires_at: string | null
+        compute_duration_ms: number | null
+        source: string
+        error: string | null
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null
@@ -258,6 +268,10 @@ export type Database = {
       update_updated_at_column: {
         Args: Record<string, never>
         Returns: unknown
+      }
+      calculate_dashboard_kpis: {
+        Args: Record<string, never>
+        Returns: Json
       }
     }
     Enums: Record<string, never>
