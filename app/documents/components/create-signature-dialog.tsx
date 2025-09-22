@@ -100,7 +100,7 @@ export function CreateSignatureDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <PenTool className="h-5 w-5" />
+            <PenTool className="size-5" />
             <span>Create Signing Request</span>
           </DialogTitle>
           <DialogDescription>
@@ -164,9 +164,9 @@ export function CreateSignatureDialog({
 
           {/* Lease-specific information */}
           {document.document_type === 'lease' && document.lease && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
               <div className="flex items-start space-x-2">
-                <Users className="h-4 w-4 text-blue-600 mt-0.5" />
+                <Users className="mt-0.5 size-4 text-blue-600" />
                 <div className="text-sm">
                   <p className="font-medium text-blue-900 dark:text-blue-100">
                     Lease Document
@@ -175,7 +175,7 @@ export function CreateSignatureDialog({
                     This is a lease agreement. For multi-tenant leases, consider creating separate signing requests for each tenant.
                   </p>
                   {document.lease.tenant_ids && document.lease.tenant_ids.length > 1 && (
-                    <p className="text-blue-600 dark:text-blue-400 mt-1">
+                    <p className="mt-1 text-blue-600 dark:text-blue-400">
                       This lease has {document.lease.tenant_ids.length} tenants. You may need to send individual requests.
                     </p>
                   )}

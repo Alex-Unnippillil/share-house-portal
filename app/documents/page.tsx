@@ -30,10 +30,10 @@ export default function DocumentsPage() {
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
-              <div className="h-4 bg-muted rounded w-3/4"></div>
+              <div className="h-4 w-3/4 rounded bg-muted"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-muted rounded w-1/2"></div>
+              <div className="h-8 w-1/2 rounded bg-muted"></div>
             </CardContent>
           </Card>
         ))}
@@ -83,7 +83,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <FileText className="h-5 w-5 text-primary" />
+              <FileText className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Secure Storage</CardTitle>
             </div>
           </CardHeader>
@@ -97,7 +97,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-primary" />
+              <Users className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Multi-Signature</CardTitle>
             </div>
           </CardHeader>
@@ -111,7 +111,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-primary" />
+              <Clock className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Version History</CardTitle>
             </div>
           </CardHeader>
@@ -125,7 +125,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Upload className="h-5 w-5 text-primary" />
+              <Upload className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Bulk Operations</CardTitle>
             </div>
           </CardHeader>
@@ -148,18 +148,18 @@ function DocumentsListSkeleton() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <div className="h-5 bg-muted rounded w-48"></div>
-                <div className="h-4 bg-muted rounded w-32"></div>
+                <div className="h-5 w-48 rounded bg-muted"></div>
+                <div className="h-4 w-32 rounded bg-muted"></div>
               </div>
-              <div className="h-6 bg-muted rounded w-20"></div>
+              <div className="h-6 w-20 rounded bg-muted"></div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="h-4 bg-muted rounded w-24"></div>
+              <div className="h-4 w-24 rounded bg-muted"></div>
               <div className="flex space-x-2">
-                <div className="h-8 bg-muted rounded w-16"></div>
-                <div className="h-8 bg-muted rounded w-16"></div>
+                <div className="h-8 w-16 rounded bg-muted"></div>
+                <div className="h-8 w-16 rounded bg-muted"></div>
               </div>
             </div>
           </CardContent>

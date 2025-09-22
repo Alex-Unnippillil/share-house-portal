@@ -1,4 +1,5 @@
-import { Suspense } from 'react';
+import { Suspense } from "react";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,10 +69,10 @@ export default function BookingsPage() {
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
-              <div className="h-4 bg-muted rounded w-3/4"></div>
+              <div className="h-4 w-3/4 rounded bg-muted"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-muted rounded w-1/2"></div>
+              <div className="h-8 w-1/2 rounded bg-muted"></div>
             </CardContent>
           </Card>
         ))}
@@ -89,7 +90,7 @@ export default function BookingsPage() {
         <TabsContent value="book" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {amenities.map((amenity) => (
-              <Card key={amenity.id} className="hover:shadow-md transition-shadow">
+              <Card key={amenity.id} className="transition-shadow hover:shadow-md">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
                     <amenity.icon className="size-6 text-primary" />
@@ -135,7 +136,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Tv className="h-5 w-5 text-primary" />
+              <Tv className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Real-time Availability</CardTitle>
             </div>
           </CardHeader>
@@ -149,7 +150,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Gamepad2 className="h-5 w-5 text-primary" />
+              <Gamepad2 className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Fair Usage</CardTitle>
             </div>
           </CardHeader>
@@ -163,7 +164,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Car className="h-5 w-5 text-primary" />
+              <Car className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Mobile Friendly</CardTitle>
             </div>
           </CardHeader>

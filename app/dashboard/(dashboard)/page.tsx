@@ -22,7 +22,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-sm text-muted-foreground">Amount</div>
             <div className="text-2xl font-semibold">$1,260.00</div>
-            <div className="text-sm text-muted-foreground mt-1">Due on the 1st</div>
+            <div className="mt-1 text-sm text-muted-foreground">Due on the 1st</div>
             <Link href="/payments" className="mt-4 inline-block">
               <Button size="sm">View details</Button>
             </Link>
@@ -34,7 +34,7 @@ export default function DashboardPage() {
             <CardTitle>Latest documents</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="text-sm space-y-2">
+            <ul className="space-y-2 text-sm">
               <li>Lease agreement v2.pdf</li>
               <li>House rules.pdf</li>
             </ul>
@@ -50,7 +50,7 @@ export default function DashboardPage() {
           <CardTitle>Roommate board</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="text-sm space-y-2">
+          <ul className="space-y-2 text-sm">
             <li>Jordan: Wi-Fi is down, rebooted router.</li>
             <li>Avery: Parking spot swap this weekend?</li>
           </ul>
