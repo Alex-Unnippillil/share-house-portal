@@ -167,7 +167,16 @@ class NotificationService {
       data?.checkOutDate || "Unknown"
     }</p>
         <p><strong>Purpose:</strong> ${data?.purpose || "Not specified"}</p>
-        <p>Please review this booking request in the dashboard.</p>
+        ${
+          Array.isArray(data?.roommates) && data?.roommates.length
+            ? `<p><strong>Awaiting approvals from:</strong> ${data.roommates
+                .map((roommate: { name?: string; email?: string }) =>
+                  roommate?.name || roommate?.email || "Unknown"
+                )
+                .join(", ")}</p>`
+            : ""
+        }
+        <p>Please review this booking request and track roommate approvals in the dashboard.</p>
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
         }/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View in Dashboard</a>

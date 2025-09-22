@@ -187,6 +187,16 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      visitor_approvals: SupabaseTable<{
+        id: string
+        visitor_log_id: string
+        roommate_id: string
+        status: 'pending' | 'approved' | 'rejected'
+        responded_at: string | null
+        response_notes: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       notifications: SupabaseTable<{
         id: string
         user_id: string
