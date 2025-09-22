@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
+import { getDocumentsListPayload } from '@/lib/data/documents';
 import {
   Document,
   DocumentWithLease,
@@ -33,15 +34,6 @@ const documentSigningSchema = z.object({
   expires_in_days: z.number().min(1).max(365).optional(),
 });
 
-const documentListFiltersSchema = z.object({
-  status: z.array(z.enum(['draft', 'pending_signature', 'signed', 'expired', 'cancelled'])).optional(),
-  type: z.array(z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other'])).optional(),
-  tenant_id: z.string().uuid().optional(),
-  unit_id: z.string().optional(),
-  date_from: z.string().datetime().optional(),
-  date_to: z.string().datetime().optional(),
-});
-
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
@@ -58,76 +50,8 @@ export async function getDocumentsAction(
   const supabase = createClient(cookieStore);
 
   try {
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return { success: false, error: 'You must be logged in to view documents.' };
-    }
-
-    // Validate filters
-    const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
-
-    // Determine role for scoping
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    let query = (supabase as any)
-      .from('documents')
-      .select(`
-        *,
-        lease:leases(*),
-        signatures:document_signatures(*),
-        access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
-      `)
-      .order('created_at', { ascending: false });
-
-    // Scope non-admin/property_manager users to their own documents or ones they need to sign
-    if (profile?.role !== 'property_manager' && profile?.role !== 'admin') {
-      query = query.or(
-        `tenant_id.eq.${user.id},signatures.signer_id.eq.${user.id}`
-      );
-    }
-
-    // Apply filters
-    if (validatedFilters.status?.length) {
-      query = query.in('status', validatedFilters.status);
-    }
-    if (validatedFilters.type?.length) {
-      query = query.in('document_type', validatedFilters.type);
-    }
-    if (validatedFilters.tenant_id) {
-      query = query.eq('tenant_id', validatedFilters.tenant_id);
-    }
-    if (validatedFilters.unit_id) {
-      query = query.eq('unit_id', validatedFilters.unit_id);
-    }
-    if (validatedFilters.date_from) {
-      query = query.gte('created_at', validatedFilters.date_from);
-    }
-    if (validatedFilters.date_to) {
-      query = query.lte('created_at', validatedFilters.date_to);
-    }
-
-    const { data: documents, error } = await query;
-
-    if (error) {
-      console.error('Error fetching documents:', error);
-      return { success: false, error: 'Failed to fetch documents.' };
-    }
-
-    // Log access
-    for (const doc of documents || []) {
-      await (supabase as any).rpc('log_document_access', {
-        p_document_id: doc.id,
-        p_action: 'view',
-        p_metadata: { source: 'documents_page' }
-      });
-    }
-
-    return { success: true, data: documents || [] };
+    const { documents } = await getDocumentsListPayload({ filters, client: supabase });
+    return { success: true, data: documents };
   } catch (error) {
     console.error('Unexpected error in getDocumentsAction:', error);
     return {

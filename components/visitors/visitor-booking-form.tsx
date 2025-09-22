@@ -12,12 +12,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { createClient } from "@/utils/supabase-browser";
+import type { VisitorBookingContext } from "@/lib/data/visitors";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -36,7 +36,11 @@ const visitorBookingSchema = z.object({
 
 type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
-export function VisitorBookingForm() {
+interface VisitorBookingFormProps {
+  context: VisitorBookingContext;
+}
+
+export function VisitorBookingForm({ context }: VisitorBookingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
@@ -58,34 +62,6 @@ export function VisitorBookingForm() {
     setIsSubmitting(true);
 
     try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, email, unit_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile) throw new Error("Profile not found");
-
-      // Get roommates and property manager
-      // This assumes there's a units table with tenant relationships
-      const { data: unitData } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role')
-        .eq('unit_id', profile.unit_id!)
-        .neq('id', user.id);
-
-      const roommates = unitData?.filter(p => p.role === 'tenant' || p.role === 'roommate') || [];
-      const propertyManager = unitData?.find(p => p.role === 'property_manager');
-
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
-      }
-
       // Create visitor booking record
       const { data: booking, error: bookingError } = await (supabase as any)
         .from('visitor_logs')
@@ -93,7 +69,7 @@ export function VisitorBookingForm() {
           guest_name: data.guestName,
           guest_email: data.guestEmail,
           guest_phone: data.guestPhone,
-          host_id: user.id,
+          host_id: context.userId,
           check_in_date: data.checkInDate.toISOString(),
           check_out_date: data.checkOutDate.toISOString(),
           purpose: data.purpose,
@@ -109,20 +85,20 @@ export function VisitorBookingForm() {
       // Send notifications
       await notifyVisitorBooking({
         guestName: data.guestName,
-        hostName: profile.full_name || user.email || 'Unknown',
+        hostName: context.hostProfile.full_name || context.hostProfile.email || 'Unknown',
         checkInDate: format(data.checkInDate, 'MMM dd, yyyy'),
         checkOutDate: format(data.checkOutDate, 'MMM dd, yyyy'),
         purpose: data.purpose,
-        roommates: roommates.map(r => ({
+        roommates: context.roommates.map(r => ({
           id: r.id,
           email: r.email || '',
           name: r.full_name || r.email || 'Unknown',
         })),
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
-        },
+        propertyManager: context.propertyManager ? {
+          id: context.propertyManager.id,
+          email: context.propertyManager.email || '',
+          name: context.propertyManager.full_name || context.propertyManager.email || 'Unknown',
+        } : undefined,
       });
 
       toast({
