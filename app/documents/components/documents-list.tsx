@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,36 +9,86 @@ import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import type { PaginationMetadata } from '@/types/pagination';
+import { PaginationControls } from '@/components/pagination-controls';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
 }
 
+const PAGE_SIZE = 10;
+
 export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationMetadata | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [cursorMap, setCursorMap] = useState<Record<number, string | null>>({ 1: null });
+
+  const filterKey = useMemo(() => JSON.stringify(filter ?? {}), [filter]);
+  const filtersForRequest = useMemo<DocumentListFilters>(() => {
+    return JSON.parse(filterKey) as DocumentListFilters;
+  }, [filterKey]);
+  const cursorForPage = cursorMap[currentPage] ?? null;
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setCursorMap({ 1: null });
+  }, [filterKey]);
 
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
         setLoading(true);
-        const result = await getDocumentsAction(filter);
+        setError(null);
+
+        const result = await getDocumentsAction({
+          filters: filtersForRequest,
+          pagination: {
+            limit: PAGE_SIZE,
+            page: currentPage,
+            cursor: cursorForPage ?? undefined,
+          },
+        });
+
         if (result.success && result.data) {
-          setDocuments(result.data);
+          setDocuments(result.data.items);
+          setPagination(result.data.pagination);
+          setCursorMap(prev => {
+            const next = { ...prev };
+
+            if (result.data.pagination.nextCursor) {
+              next[currentPage + 1] = result.data.pagination.nextCursor;
+            } else {
+              delete next[currentPage + 1];
+            }
+
+            if (currentPage > 1) {
+              next[currentPage - 1] = result.data.pagination.prevCursor ?? null;
+            }
+
+            next[currentPage] = cursorForPage ?? null;
+
+            return next;
+          });
         } else {
           setError(result.error || 'Failed to fetch documents');
+          setDocuments([]);
+          setPagination(null);
         }
       } catch (err) {
         console.error('Error fetching documents:', err);
         setError('An unexpected error occurred');
+        setDocuments([]);
+        setPagination(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDocuments();
-  }, [filter]);
+  }, [filterKey, currentPage, cursorForPage, filtersForRequest]);
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -77,7 +127,16 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     }
   };
 
-  if (loading) {
+  const handlePageChange = (page: number) => {
+    if (!pagination) return;
+    if (page < 1) return;
+    if (pagination.pageCount > 0 && page > pagination.pageCount) return;
+    if (page !== currentPage) {
+      setCurrentPage(page);
+    }
+  };
+
+  if (loading && documents.length === 0) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
@@ -211,6 +270,16 @@ export function DocumentsList({ filter }: DocumentsListProps) {
           )}
         </Card>
       ))}
+      {pagination && (
+        <PaginationControls
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          total={pagination.total}
+          limit={pagination.limit}
+          onPageChange={handlePageChange}
+          isLoading={loading}
+        />
+      )}
     </div>
   );
 }
