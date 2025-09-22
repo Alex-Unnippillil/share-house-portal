@@ -1414,9 +1414,48 @@ export type Database = {
             columns: ["package_id"]
             isOneToOne: false
             referencedRelation: "reusable_packages"
-            referencedColumns: ["id"]
-          },
-        ]
+          referencedColumns: ["id"]
+        },
+      ]
+      }
+      supply_items: {
+        Row: {
+          category: string
+          created_at: string
+          default_quantity: number
+          default_split: Database["public"]["Enums"]["supply_default_split"]
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          default_quantity?: number
+          default_split?: Database["public"]["Enums"]["supply_default_split"]
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_quantity?: number
+          default_split?: Database["public"]["Enums"]["supply_default_split"]
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       shipping: {
         Row: {
@@ -1774,6 +1813,7 @@ export type Database = {
         | "Oceania"
         | "North America"
         | "South America"
+      supply_default_split: "equal" | "weighted"
       user_role: "user" | "admin"
     }
     CompositeTypes: {
@@ -2233,6 +2273,7 @@ export const Constants = {
         "North America",
         "South America",
       ],
+      supply_default_split: ["equal", "weighted"],
       user_role: ["user", "admin"],
     },
   },
