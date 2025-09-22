@@ -1,6 +1,12 @@
+import React, { Suspense } from 'react'
+
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+
+import { LatestDocumentsSkeleton, RentSummarySkeleton, RoommateBoardSkeleton } from './components/dashboard-skeletons'
+import { LatestDocumentsCard } from './components/latest-documents-card'
+import { RentSummaryCard } from './components/rent-summary-card'
+import { RoommateBoardCard } from './components/roommate-board-card'
 
 export default function DashboardPage() {
   return (
@@ -15,50 +21,18 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Next rent due</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">Amount</div>
-            <div className="text-2xl font-semibold">$1,260.00</div>
-            <div className="mt-1 text-sm text-muted-foreground">Due on the 1st</div>
-            <Link href="/payments" className="mt-4 inline-block">
-              <Button size="sm">View details</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <Suspense fallback={<RentSummarySkeleton />}>
+          <RentSummaryCard />
+        </Suspense>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Latest documents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li>Lease agreement v2.pdf</li>
-              <li>House rules.pdf</li>
-            </ul>
-            <Link href="/documents" className="mt-4 inline-block">
-              <Button variant="outline" size="sm">Open</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <Suspense fallback={<LatestDocumentsSkeleton />}>
+          <LatestDocumentsCard />
+        </Suspense>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Roommate board</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm">
-            <li>Jordan: Wi-Fi is down, rebooted router.</li>
-            <li>Avery: Parking spot swap this weekend?</li>
-          </ul>
-          <Link href="/messaging" className="mt-4 inline-block">
-            <Button variant="outline" size="sm">Go to messages</Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<RoommateBoardSkeleton />}>
+        <RoommateBoardCard />
+      </Suspense>
     </div>
   )
 }

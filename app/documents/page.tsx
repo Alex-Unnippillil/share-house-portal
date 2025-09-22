@@ -1,13 +1,13 @@
-import { Suspense } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FileText, Users, Clock, Upload } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadDocumentDialog } from "./components/upload-document-dialog";
-import { DocumentsStats } from "./components/documents-stats";
-import { DocumentsList } from "./components/documents-list";
-import { DocumentsFilters } from "./components/documents-filters";
-import { DocumentListFilters } from '@/types/documents';
+import React, { Suspense } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { FileText, Users, Clock, Upload } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UploadDocumentDialog } from "./components/upload-document-dialog"
+import { DocumentsStats } from "./components/documents-stats"
+import { DocumentsList } from "./components/documents-list"
+import { DocumentsFilters } from "./components/documents-filters"
+import { DocumentsListSkeleton, DocumentsStatsSkeleton } from './components/skeletons'
 
 export default function DocumentsPage() {
   return (
@@ -26,18 +26,7 @@ export default function DocumentsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
+      <Suspense fallback={<DocumentsStatsSkeleton />}>
         <DocumentsStats />
       </Suspense>
 
@@ -54,26 +43,42 @@ export default function DocumentsPage() {
         </div>
 
         <TabsContent value="all" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
+          <Suspense fallback={<DocumentsListSkeleton variant="all" />}>
+            <DocumentsList
+              filter={{}}
+              emptyTitle="No documents yet"
+              emptyDescription="Upload your first lease, addendum, or policy to get started."
+            />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="leases" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
+          <Suspense fallback={<DocumentsListSkeleton variant="leases" />}>
+            <DocumentsList
+              filter={{ type: ['lease'] }}
+              emptyTitle="No lease documents"
+              emptyDescription="Upload a new lease or request one from your property manager."
+            />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['pending_signature'] }} />
+          <Suspense fallback={<DocumentsListSkeleton variant="pending" />}>
+            <DocumentsList
+              filter={{ status: ['pending_signature'] }}
+              emptyTitle="All caught up"
+              emptyDescription="No pending signatures right now. We'll notify you when something needs attention."
+            />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="signed" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['signed'] }} />
+          <Suspense fallback={<DocumentsListSkeleton variant="signed" />}>
+            <DocumentsList
+              filter={{ status: ['signed'] }}
+              emptyTitle="No signed documents"
+              emptyDescription="Once a document is completed it will show up here for quick reference."
+            />
           </Suspense>
         </TabsContent>
       </Tabs>
@@ -136,35 +141,6 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
-
-function DocumentsListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[...Array(5)].map((_, i) => (
-        <Card key={i} className="animate-pulse">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="h-5 w-48 rounded bg-muted"></div>
-                <div className="h-4 w-32 rounded bg-muted"></div>
-              </div>
-              <div className="h-6 w-20 rounded bg-muted"></div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="h-4 w-24 rounded bg-muted"></div>
-              <div className="flex space-x-2">
-                <div className="h-8 w-16 rounded bg-muted"></div>
-                <div className="h-8 w-16 rounded bg-muted"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }
