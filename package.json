@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:seed-demo": "pnpm exec tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.8",
@@ -111,6 +112,7 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.5.4",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "tsx": "^4.7.0"
   }
 }
