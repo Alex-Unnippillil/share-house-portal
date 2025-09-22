@@ -1,0 +1,199 @@
+name: Canary Release Promotion
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  CANARY_SLACK_WEBHOOK: ${{ secrets.CANARY_SLACK_WEBHOOK }}
+  CANARY_EMAIL_RECIPIENTS: ${{ secrets.CANARY_EMAIL_RECIPIENTS }}
+  CANARY_EMAIL_FROM: ${{ secrets.CANARY_EMAIL_FROM }}
+  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+jobs:
+  deploy_canary:
+    name: Deploy canary preview
+    runs-on: ubuntu-latest
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.preview-url }}
+      deployment-id: ${{ steps.deploy.outputs.deployment-id }}
+      previous-production-id: ${{ steps.previous.outputs.production-id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build application
+        run: pnpm build
+      - name: Capture current production deployment
+        id: previous
+        env:
+          PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$PROJECT_ID" ]; then
+            echo "Vercel credentials are missing" >&2
+            exit 1
+          fi
+          response=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v6/deployments?projectId=$PROJECT_ID&target=production&limit=1")
+          previous_id=$(echo "$response" | jq -r '.deployments[0].uid // ""')
+          echo "production-id=$previous_id" >> "$GITHUB_OUTPUT"
+      - name: Deploy canary to Vercel
+        id: deploy
+        run: |
+          set -euo pipefail
+          deployment=$(pnpm dlx vercel deploy --prebuilt --yes --target=preview --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --env CANARY=1 --json)
+          echo "$deployment"
+          preview_host=$(echo "$deployment" | jq -r '.url')
+          deployment_id=$(echo "$deployment" | jq -r '.deploymentId // .uid')
+          if [ -z "$preview_host" ] || [ -z "$deployment_id" ]; then
+            echo "Failed to determine deployment metadata" >&2
+            exit 1
+          fi
+          echo "preview-url=https://$preview_host" >> "$GITHUB_OUTPUT"
+          echo "deployment-id=$deployment_id" >> "$GITHUB_OUTPUT"
+
+  rum:
+    name: Real User Monitoring gate
+    runs-on: ubuntu-latest
+    needs: deploy_canary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Evaluate RUM metrics
+        env:
+          CANARY_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+          RUM_METRICS_ENDPOINT: ${{ secrets.RUM_METRICS_ENDPOINT }}
+          RUM_METRICS_API_KEY: ${{ secrets.RUM_METRICS_API_KEY }}
+        run: node ./scripts/canary/rum-check.mjs
+
+  uptime:
+    name: Canary uptime gate
+    runs-on: ubuntu-latest
+    needs: deploy_canary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify uptime
+        env:
+          CANARY_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+          UPTIME_CHECK_URL: ${{ secrets.UPTIME_CHECK_URL }}
+          UPTIME_CHECK_PATH: ${{ secrets.UPTIME_CHECK_PATH }}
+          UPTIME_CHECK_API_KEY: ${{ secrets.UPTIME_CHECK_API_KEY }}
+          UPTIME_EXPECTED_STATUS: ${{ secrets.UPTIME_EXPECTED_STATUS }}
+        run: node ./scripts/canary/uptime-check.mjs
+
+  lighthouse:
+    name: Lighthouse regression gate
+    runs-on: ubuntu-latest
+    needs: deploy_canary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run Lighthouse CI
+        env:
+          CANARY_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+          LIGHTHOUSE_RUNS: ${{ secrets.LIGHTHOUSE_RUNS }}
+        run: pnpm dlx @lhci/cli@0.14.0 autorun --config=./lighthouserc.cjs
+
+  smoke:
+    name: Smoke tests
+    runs-on: ubuntu-latest
+    needs: deploy_canary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Execute smoke suite
+        env:
+          CANARY_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+          NODE_ENV: test
+        run: pnpm canary:smoke
+
+  promote:
+    name: Promote canary to production
+    runs-on: ubuntu-latest
+    needs:
+      - deploy_canary
+      - rum
+      - uptime
+      - lighthouse
+      - smoke
+    if: |
+      ${{ needs.rum.result == 'success' && needs.uptime.result == 'success' && needs.lighthouse.result == 'success' && needs.smoke.result == 'success' }}
+    steps:
+      - name: Promote deployment
+        run: pnpm dlx vercel promote ${{ needs.deploy_canary.outputs.deployment-id }} --yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID"
+      - name: Notify Slack of promotion
+        if: env.CANARY_SLACK_WEBHOOK != ''
+        env:
+          PREVIEW_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+        run: |
+          payload=$(jq -n --arg text "Canary promotion succeeded for $PREVIEW_URL" '{text: $text}')
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$CANARY_SLACK_WEBHOOK"
+      - name: Notify stakeholders via email
+        if: env.RESEND_API_KEY != '' && env.CANARY_EMAIL_RECIPIENTS != '' && env.CANARY_EMAIL_FROM != ''
+        env:
+          PREVIEW_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+        run: |
+          curl -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg from "$CANARY_EMAIL_FROM" --arg to "$CANARY_EMAIL_RECIPIENTS" --arg subject 'Canary promoted to production' --arg html "<p>The canary deployment at <a href='$PREVIEW_URL'>$PREVIEW_URL</a> passed all checks and was promoted to production.</p>" '{from: $from, to: ($to | split(",")), subject: $subject, html: $html}')"
+
+  rollback:
+    name: Rollback on regression
+    runs-on: ubuntu-latest
+    needs:
+      - deploy_canary
+      - rum
+      - uptime
+      - lighthouse
+      - smoke
+    if: ${{ failure() }}
+    steps:
+      - name: Execute rollback
+        if: ${{ needs.deploy_canary.outputs.previous-production-id != '' }}
+        run: pnpm dlx vercel promote ${{ needs.deploy_canary.outputs.previous-production-id }} --yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID"
+      - name: Notify Slack of failure
+        if: env.CANARY_SLACK_WEBHOOK != ''
+        env:
+          PREVIEW_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+        run: |
+          payload=$(jq -n --arg text "Canary promotion failed for $PREVIEW_URL. Rollback executed." '{text: $text}')
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$CANARY_SLACK_WEBHOOK"
+      - name: Notify stakeholders via email
+        if: env.RESEND_API_KEY != '' && env.CANARY_EMAIL_RECIPIENTS != '' && env.CANARY_EMAIL_FROM != ''
+        env:
+          PREVIEW_URL: ${{ needs.deploy_canary.outputs.preview-url }}
+        run: |
+          curl -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg from "$CANARY_EMAIL_FROM" --arg to "$CANARY_EMAIL_RECIPIENTS" --arg subject 'Canary rollback executed' --arg html "<p>The canary deployment at <a href='$PREVIEW_URL'>$PREVIEW_URL</a> failed quality gates and has been rolled back to the last known good release.</p>" '{from: $from, to: ($to | split(",")), subject: $subject, html: $html}')"
