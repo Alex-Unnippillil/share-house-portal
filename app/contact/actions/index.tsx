@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supa-server-actions";
 import { revalidatePath } from "next/cache";
+import { cookies } from 'next/headers';
 
 type formData = {
     name: string;
@@ -10,7 +11,7 @@ type formData = {
 }
 
 export async function submitInquiry(data: formData) {
-  const cookieStore = await import("next/headers").then((mod) => mod.cookies)();
+  const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
   try {
