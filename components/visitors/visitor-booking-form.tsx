@@ -1,49 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { differenceInCalendarDays, format, isAfter, startOfToday } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
+import {
+  VISITOR_POLICY,
+  VisitorPolicyError,
+  ensureVisitorStayWithinPolicy,
+} from "@/lib/data/visitors";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import type { Database } from "@/lib/supabase";
 
-const visitorBookingSchema = z.object({
-  guestName: z.string().min(2, "Guest name must be at least 2 characters"),
-  guestEmail: z.string().email("Please enter a valid email address"),
-  guestPhone: z.string().optional(),
-  checkInDate: z.date({
-    required_error: "Check-in date is required",
-  }),
-  checkOutDate: z.date({
-    required_error: "Check-out date is required",
-  }),
-  purpose: z.string().min(10, "Please provide more details about the visit"),
-  emergencyContact: z.string().optional(),
-  specialNotes: z.string().optional(),
-});
+const visitorBookingSchema = z
+  .object({
+    guestName: z.string().min(2, "Guest name must be at least 2 characters"),
+    guestEmail: z.string().email("Please enter a valid email address"),
+    guestPhone: z.string().optional(),
+    checkInDate: z.date({
+      required_error: "Check-in date is required",
+    }),
+    checkOutDate: z.date({
+      required_error: "Check-out date is required",
+    }),
+    purpose: z.string().min(10, "Please provide more details about the visit"),
+    emergencyContact: z.string().optional(),
+    specialNotes: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const { checkInDate, checkOutDate } = data;
+
+    if (!isAfter(checkOutDate, checkInDate)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["checkOutDate"],
+        message: "Check-out date must be after the check-in date",
+      });
+      return;
+    }
+
+    const nights = differenceInCalendarDays(checkOutDate, checkInDate);
+
+    if (nights > VISITOR_POLICY.maxConsecutiveNights) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["checkOutDate"],
+        message: `Visitors may stay a maximum of ${VISITOR_POLICY.maxConsecutiveNights} consecutive nights`,
+      });
+    }
+  });
 
 type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
-export function VisitorBookingForm() {
+interface VisitorBookingFormProps {
+  onBookingCreated?: (booking: Database["public"]["Tables"]["visitor_logs"]["Row"]) => void;
+}
+
+export function VisitorBookingForm({ onBookingCreated }: VisitorBookingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
   const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const today = useMemo(() => startOfToday(), []);
+  const earliestAllowedDate = useMemo(() => new Date("1900-01-01"), []);
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
@@ -56,6 +89,15 @@ export function VisitorBookingForm() {
       specialNotes: "",
     },
   });
+
+  const checkInDateValue = form.watch("checkInDate");
+  const checkOutDateValue = form.watch("checkOutDate");
+  const selectedNights =
+    checkInDateValue &&
+    checkOutDateValue &&
+    isAfter(checkOutDateValue, checkInDateValue)
+      ? differenceInCalendarDays(checkOutDateValue, checkInDateValue)
+      : null;
 
   const onSubmit = async (data: VisitorBookingFormData) => {
     setIsSubmitting(true);
@@ -86,6 +128,13 @@ export function VisitorBookingForm() {
       if (!propertyManager) {
         throw new Error("Property manager not found for this unit");
       }
+
+      const policyResult = await ensureVisitorStayWithinPolicy(typedSupabase, {
+        hostId: user.id,
+        guestEmail: data.guestEmail,
+        checkInDate: data.checkInDate,
+        checkOutDate: data.checkOutDate,
+      });
 
       // Create visitor booking record
       const { data: booking, error: bookingError } = await (supabase as any)
@@ -128,17 +177,31 @@ export function VisitorBookingForm() {
 
       toast({
         title: "Visitor booking submitted",
-        description: "Your visitor booking has been submitted and notifications sent.",
+        description: `Your visitor booking has been submitted. This stay counts as ${policyResult.requestedNights} night${
+          policyResult.requestedNights === 1 ? "" : "s"
+        } (longest streak for this guest: ${policyResult.consecutiveNights}/${VISITOR_POLICY.maxConsecutiveNights} nights).`,
       });
+
+      if (booking) {
+        onBookingCreated?.(booking as Database["public"]["Tables"]["visitor_logs"]["Row"]);
+      }
 
       form.reset();
     } catch (error) {
       console.error('Error submitting visitor booking:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit visitor booking",
-        variant: "destructive",
-      });
+      if (error instanceof VisitorPolicyError) {
+        toast({
+          title: "Stay exceeds policy limits",
+          description: `This guest would accumulate ${error.consecutiveNights} consecutive nights which exceeds the ${error.limit}-night limit. Please shorten or shift the visit.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to submit visitor booking",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -223,7 +286,7 @@ export function VisitorBookingForm() {
                       selected={field.value}
                       onSelect={field.onChange}
                       disabled={(date) =>
-                        date < new Date() || date < new Date("1900-01-01")
+                        date < today || date < earliestAllowedDate
                       }
                       initialFocus
                     />
@@ -264,9 +327,24 @@ export function VisitorBookingForm() {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date() || date < new Date("1900-01-01")
-                      }
+                      disabled={(date) => {
+                        if (date < today || date < earliestAllowedDate) {
+                          return true;
+                        }
+
+                        if (!checkInDateValue) {
+                          return false;
+                        }
+
+                        if (date <= checkInDateValue) {
+                          return true;
+                        }
+
+                        return (
+                          differenceInCalendarDays(date, checkInDateValue) >
+                          VISITOR_POLICY.maxConsecutiveNights
+                        );
+                      }}
                       initialFocus
                     />
                   </PopoverContent>
@@ -276,6 +354,13 @@ export function VisitorBookingForm() {
             )}
           />
         </div>
+
+        {selectedNights !== null && (
+          <p className="text-sm text-muted-foreground">
+            This request covers {selectedNights} night{selectedNights === 1 ? "" : "s"}. Policy limit:{" "}
+            {VISITOR_POLICY.maxConsecutiveNights} consecutive nights.
+          </p>
+        )}
 
         <FormField
           control={form.control}

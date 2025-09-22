@@ -1,20 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { VisitorBookingForm } from "@/components/visitors/visitor-booking-form";
-
-const visitorHighlights = [
-  {
-    title: "Easy Guest Registration",
-    description: "Register overnight visitors with all necessary details and get approval from roommates.",
-  },
-  {
-    title: "Automatic Notifications",
-    description: "Roommates and property managers are automatically notified of new visitor requests.",
-  },
-  {
-    title: "Stay Limits",
-    description: "Enforce policy limits on consecutive nights and track visitor history.",
-  },
-];
+import { VisitorExperience } from "@/components/visitors/visitor-experience";
 
 export default function VisitorsPage() {
   return (
@@ -28,34 +12,7 @@ export default function VisitorsPage() {
         </div>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Register New Visitor</CardTitle>
-              <CardDescription>
-                Fill out the form to register an overnight guest. All roommates will be notified automatically.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <VisitorBookingForm />
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <div className="grid gap-6">
-            {visitorHighlights.map((item) => (
-              <Card key={item.title}>
-                <CardHeader>
-                  <CardTitle className="text-lg">{item.title}</CardTitle>
-                  <CardDescription>{item.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
+      <VisitorExperience />
     </div>
   );
 }
