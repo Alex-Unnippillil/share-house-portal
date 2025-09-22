@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import Image from "next/image"
+import { differenceInCalendarDays, parseISO } from "date-fns"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,19 +16,128 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { CalendarDateRangePicker } from "@/app/dashboard/components/date-range-picker"
+import { GarbageReminders, type GarbageReminderEvent } from "@/app/dashboard/components/garbage-reminders"
 import { MainNav } from "@/app/dashboard/components/main-nav"
 import { Overview } from "@/app/dashboard/components/overview"
 import { RecentSales } from "@/app/dashboard/components/recent-sales"
 import { Search } from "@/app/dashboard/components/search"
 import TeamSwitcher from "@/app/dashboard/components/team-switcher"
 import { UserNav } from "@/app/dashboard/components/user-nav"
+import { buildRotatingAssignments, makeWasteAssignmentKey, normalizeTorontoAddress } from "@/lib/integrations/toronto-waste"
+import type { Database } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/server"
+
+type GarbageEventRow = Database["public"]["Tables"]["garbage_events"]["Row"]
+
+const TORONTO_TIME_ZONE = "America/Toronto"
+
+function getTodayInToronto() {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TORONTO_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+  const iso = formatter.format(new Date())
+  return { iso, date: parseISO(iso) }
+}
 
 export const metadata: Metadata = {
   title: "Onyx Dashboard",
   description: "Manage your Onyx account and users.",
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { iso: torontoTodayIso, date: torontoTodayDate } = getTodayInToronto()
+
+  let address: string | null = null
+  let sourceUrl: string | null = null
+  const reminders: {
+    dayOf: GarbageReminderEvent[]
+    tomorrow: GarbageReminderEvent[]
+    upcoming: GarbageReminderEvent[]
+  } = {
+    dayOf: [],
+    tomorrow: [],
+    upcoming: [],
+  }
+
+  if (user) {
+    const { data: profileRows } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, waddress')
+      .eq('id', user.id)
+      .limit(1)
+    const profile = profileRows?.[0]
+
+    if (profile?.waddress) {
+      address = profile.waddress
+      const normalizedAddress = normalizeTorontoAddress(profile.waddress)
+
+      const { data: eventRows } = await supabase
+        .from('garbage_events')
+        .select('id, event_date, summary, materials, description, source_url, all_day')
+        .eq('address_normalized', normalizedAddress)
+        .gte('event_date', torontoTodayIso)
+        .order('event_date', { ascending: true })
+
+      const events = eventRows ?? []
+      sourceUrl = events[0]?.source_url ?? null
+
+      const { data: roommateRows } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, waddress')
+        .eq('waddress', profile.waddress)
+        .order('full_name', { ascending: true })
+
+      const roommates = (roommateRows ?? []).map(roommate => ({
+        id: roommate.id,
+        full_name: roommate.full_name,
+        email: roommate.email,
+      }))
+
+      const assignments = buildRotatingAssignments(
+        events.map(event => ({ date: event.event_date, summary: event.summary })),
+        roommates
+      )
+
+      const toReminderEvent = (event: GarbageEventRow): GarbageReminderEvent => {
+        const assignment = assignments.get(
+          makeWasteAssignmentKey({ date: event.event_date, summary: event.summary })
+        )
+        return {
+          id: event.id,
+          eventDate: event.event_date,
+          summary: event.summary,
+          materials: event.materials ?? [],
+          description: event.description,
+          allDay: event.all_day ?? true,
+          assignment: assignment
+            ? { full_name: assignment.full_name, email: assignment.email }
+            : null,
+        }
+      }
+
+      reminders.dayOf = events
+        .filter(event => differenceInCalendarDays(parseISO(event.event_date), torontoTodayDate) === 0)
+        .map(toReminderEvent)
+
+      reminders.tomorrow = events
+        .filter(event => differenceInCalendarDays(parseISO(event.event_date), torontoTodayDate) === 1)
+        .map(toReminderEvent)
+
+      reminders.upcoming = events
+        .filter(event => differenceInCalendarDays(parseISO(event.event_date), torontoTodayDate) > 1)
+        .slice(0, 4)
+        .map(toReminderEvent)
+    }
+  }
+
   return (
     <>
       <div className="xs:flex max-w-dvw w-full flex-col">
@@ -188,6 +297,13 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
               </div>
+              <GarbageReminders
+                address={address}
+                sourceUrl={sourceUrl}
+                dayOf={reminders.dayOf}
+                tomorrow={reminders.tomorrow}
+                upcoming={reminders.upcoming}
+              />
             </TabsContent>
           </Tabs>
         </div>

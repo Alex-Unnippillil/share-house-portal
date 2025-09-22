@@ -510,6 +510,54 @@ export type Database = {
         }
         Relationships: []
       }
+      garbage_events: {
+        Row: {
+          address: string
+          address_normalized: string
+          all_day: boolean
+          created_at: string
+          description: string | null
+          event_date: string
+          ics_dtstart_raw: string
+          ics_tzid: string | null
+          ics_uid: string | null
+          id: number
+          materials: string[]
+          source_url: string
+          summary: string
+        }
+        Insert: {
+          address: string
+          address_normalized: string
+          all_day?: boolean
+          created_at?: string
+          description?: string | null
+          event_date: string
+          ics_dtstart_raw: string
+          ics_tzid?: string | null
+          ics_uid?: string | null
+          id?: number
+          materials?: string[]
+          source_url: string
+          summary: string
+        }
+        Update: {
+          address?: string
+          address_normalized?: string
+          all_day?: boolean
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          ics_dtstart_raw?: string
+          ics_tzid?: string | null
+          ics_uid?: string | null
+          id?: number
+          materials?: string[]
+          source_url?: string
+          summary?: string
+        }
+        Relationships: []
+      }
       crm_activities: {
         Row: {
           completed_date: string | null
