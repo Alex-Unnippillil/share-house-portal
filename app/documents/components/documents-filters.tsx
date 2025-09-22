@@ -85,10 +85,10 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" />
+            <Filter className="mr-2 size-4" />
             Status
             {filters.status && filters.status.length > 0 && (
-              <Badge variant="secondary" className="ml-2 h-4 w-4 p-0 text-xs">
+              <Badge variant="secondary" className="ml-2 size-4 p-0 text-xs">
                 {filters.status.length}
               </Badge>
             )}
@@ -115,7 +115,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
           <Button variant="outline" size="sm">
             Type
             {filters.type && filters.type.length > 0 && (
-              <Badge variant="secondary" className="ml-2 h-4 w-4 p-0 text-xs">
+              <Badge variant="secondary" className="ml-2 size-4 p-0 text-xs">
                 {filters.type.length}
               </Badge>
             )}
@@ -144,7 +144,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
           onClick={clearFilters}
           className="text-muted-foreground hover:text-foreground"
         >
-          <X className="mr-2 h-4 w-4" />
+          <X className="mr-2 size-4" />
           Clear ({activeFilterCount})
         </Button>
       )}

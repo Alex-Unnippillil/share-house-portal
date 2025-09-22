@@ -33,10 +33,10 @@ export function DocumentsStats() {
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
-              <div className="h-4 bg-muted rounded w-3/4"></div>
+              <div className="h-4 w-3/4 rounded bg-muted"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-muted rounded w-1/2"></div>
+              <div className="h-8 w-1/2 rounded bg-muted"></div>
             </CardContent>
           </Card>
         ))}
@@ -83,7 +83,7 @@ export function DocumentsStats() {
             <CardTitle className="text-sm font-medium">
               {item.title}
             </CardTitle>
-            <item.icon className={`h-4 w-4 ${item.color}`} />
+            <item.icon className={`size-4 ${item.color}`} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{item.value}</div>

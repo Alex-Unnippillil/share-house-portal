@@ -67,13 +67,13 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'lease':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="size-4" />;
       case 'addendum':
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="size-4" />;
       case 'insurance':
-        return <Users className="h-4 w-4" />;
+        return <Users className="size-4" />;
       default:
-        return <FileText className="h-4 w-4" />;
+        return <FileText className="size-4" />;
     }
   };
 
@@ -85,18 +85,18 @@ export function DocumentsList({ filter }: DocumentsListProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <div className="h-5 bg-muted rounded w-48"></div>
-                  <div className="h-4 bg-muted rounded w-32"></div>
+                  <div className="h-5 w-48 rounded bg-muted"></div>
+                  <div className="h-4 w-32 rounded bg-muted"></div>
                 </div>
-                <div className="h-6 bg-muted rounded w-20"></div>
+                <div className="h-6 w-20 rounded bg-muted"></div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="h-4 bg-muted rounded w-24"></div>
+                <div className="h-4 w-24 rounded bg-muted"></div>
                 <div className="flex space-x-2">
-                  <div className="h-8 bg-muted rounded w-16"></div>
-                  <div className="h-8 bg-muted rounded w-16"></div>
+                  <div className="h-8 w-16 rounded bg-muted"></div>
+                  <div className="h-8 w-16 rounded bg-muted"></div>
                 </div>
               </div>
             </CardContent>
@@ -110,7 +110,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     return (
       <Card className="p-6">
         <div className="text-center">
-          <p className="text-destructive mb-2">Error loading documents</p>
+          <p className="mb-2 text-destructive">Error loading documents</p>
           <p className="text-sm text-muted-foreground">{error}</p>
           <Button
             variant="outline"
@@ -128,8 +128,8 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     return (
       <Card className="p-12">
         <div className="text-center">
-          <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No documents found</h3>
+          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
           <p className="text-sm text-muted-foreground">
             {Object.keys(filter).length > 0
               ? "No documents match your current filters."
@@ -143,7 +143,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   return (
     <div className="space-y-4">
       {documents.map((doc) => (
-        <Card key={doc.id} className="hover:shadow-md transition-shadow">
+        <Card key={doc.id} className="transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-3">
@@ -159,20 +159,20 @@ export function DocumentsList({ filter }: DocumentsListProps) {
                   )}
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                     <div className="flex items-center space-x-1">
-                      <Calendar className="h-3 w-3" />
+                      <Calendar className="size-3" />
                       <span>
                         {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
                       </span>
                     </div>
                     {doc.lease && (
                       <div className="flex items-center space-x-1">
-                        <Users className="h-3 w-3" />
+                        <Users className="size-3" />
                         <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
                       </div>
                     )}
                     {doc.signatures && doc.signatures.length > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Eye className="h-3 w-3" />
+                        <Eye className="size-3" />
                         <span>
                           {doc.signatures.filter(s => s.status === 'signed').length}/
                           {doc.signatures.length} signed

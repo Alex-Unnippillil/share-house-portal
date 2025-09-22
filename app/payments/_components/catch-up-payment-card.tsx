@@ -405,7 +405,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                           <tr key={charge.id} className="border-t">
                             <td className="py-2 pl-4 pr-2">
                               <div className="font-medium">{charge.description}</div>
-                              <div className="text-xs text-muted-foreground capitalize">
+                              <div className="text-xs capitalize text-muted-foreground">
                                 {charge.category}
                               </div>
                             </td>
