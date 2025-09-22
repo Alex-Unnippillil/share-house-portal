@@ -1031,6 +1031,39 @@ export type Database = {
         }
         Relationships: []
       }
+      member_roles: {
+        Row: {
+          created_at: string
+          member_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          member_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          member_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_roles_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_roles_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       moralis_users: {
         Row: {
           created_at: string
@@ -1223,6 +1256,27 @@ export type Database = {
           member_id?: string
           role?: string
           status?: string
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          key: string
+          label: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          key: string
+          label: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          key?: string
+          label?: string
         }
         Relationships: []
       }
