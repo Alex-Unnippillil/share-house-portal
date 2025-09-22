@@ -105,28 +105,28 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
             )}
           </div>
           <div className="flex flex-col space-y-2">
-            {docsConfig.sidebarNav.map((item, index) => (
-              <div key={index} className="flex flex-col space-y-3 pt-6">
-                <h4 className="font-medium">{item.title}</h4>
-                {item?.items?.length &&
-                  item.items.map((item) => (
-                    <React.Fragment key={item.href}>
-                      {!item.disabled &&
-                        (item.href ? (
+            {docsConfig.sidebarNav.map((section) => (
+              <div key={section.title} className="flex flex-col space-y-3 pt-6">
+                <h4 className="font-medium">{section.title}</h4>
+                {section?.items?.length &&
+                  section.items.map((navItem) => (
+                    <React.Fragment key={navItem.href ?? navItem.title}>
+                      {!navItem.disabled &&
+                        (navItem.href ? (
                           <MobileLink
-                            href={item.href}
+                            href={navItem.href}
                             onOpenChange={setOpen}
                             className="text-muted-foreground"
                           >
-                            {item.title}
-                            {item.label && (
+                            {navItem.title}
+                            {navItem.label && (
                               <span className="ml-2 rounded-md bg-[#adfa1d] px-1.5 py-0.5 text-xs leading-none text-[#000000] no-underline group-hover:no-underline">
-                                {item.label}
+                                {navItem.label}
                               </span>
                             )}
                           </MobileLink>
                         ) : (
-                          item.title
+                          navItem.title
                         ))}
                     </React.Fragment>
                   ))}
@@ -153,13 +153,14 @@ function MobileLink({
   ...props
 }: MobileLinkProps) {
   const router = useRouter()
+  const handleClick = React.useCallback(() => {
+    router.push(href.toString())
+    onOpenChange?.(false)
+  }, [href, onOpenChange, router])
   return (
     <Link
       href={href}
-      onClick={() => {
-        router.push(href.toString())
-        onOpenChange?.(false)
-      }}
+      onClick={handleClick}
       className={cn(className)}
       {...props}
     >

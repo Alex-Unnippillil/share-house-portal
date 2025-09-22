@@ -24,12 +24,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { createMember, updateMemberById } from "../../actions";
+import { createMember } from "../../actions";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z
-	.object({
+        .object({
 		name: z.string().min(2, {
 			message: "Username must be at least 2 characters.",
 		}),
@@ -43,20 +43,20 @@ const FormSchema = z
 			.string()
 			.min(6, { message: "Password should be 6 characters" }),
 	})
-	.refine((data) => data.confirm === data.password, {
-		message: "Passowrd doesn't match",
-		path: ["confirm"],
-	});
+        .refine((data) => data.confirm === data.password, {
+                message: "Passowrd doesn't match",
+                path: ["confirm"],
+        });
+
+const ROLE_OPTIONS = ["admin", "user"] as const;
+const STATUS_OPTIONS = ["active", "resigned"] as const;
 
 export default function MemberForm() {
-	const roles = ["admin", "user"];
-	const status = ["active", "resigned"];
-
-	const form = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			name: "",
-			role: "user",
+        const form = useForm<z.infer<typeof FormSchema>>({
+                resolver: zodResolver(FormSchema),
+                defaultValues: {
+                        name: "",
+                        role: "user",
 			status: "active",
 			email: "",
 		},
@@ -172,14 +172,14 @@ export default function MemberForm() {
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									{roles.map((role, index) => {
-										return (
-											<SelectItem
-												value={role}
-												key={index}
-											>
-												{role}
-											</SelectItem>
+                                                                        {ROLE_OPTIONS.map((role) => {
+                                                                                return (
+                                                                                        <SelectItem
+                                                                                                value={role}
+                                                                                                key={role}
+                                                                                        >
+                                                                                                {role}
+                                                                                        </SelectItem>
 										);
 									})}
 								</SelectContent>
@@ -205,14 +205,14 @@ export default function MemberForm() {
 									</SelectTrigger>
 								</FormControl>
 								<SelectContent>
-									{status.map((status, index) => {
-										return (
-											<SelectItem
-												value={status}
-												key={index}
-											>
-												{status}
-											</SelectItem>
+                                                                        {STATUS_OPTIONS.map((status) => {
+                                                                                return (
+                                                                                        <SelectItem
+                                                                                                value={status}
+                                                                                                key={status}
+                                                                                        >
+                                                                                                {status}
+                                                                                        </SelectItem>
 										);
 									})}
 								</SelectContent>

@@ -15,8 +15,8 @@ export function DocsSidebarNav({ items }: DocsSidebarNavProps) {
 
   return items.length ? (
     <div className="w-full">
-      {items.map((item, index) => (
-        <div key={index} className={cn("pb-4")}>
+      {items.map((item) => (
+        <div key={item.title} className={cn("pb-4")}>
           <h4 className="mb-1 rounded-md px-2 py-1 text-sm font-semibold">
             {item.title}
           </h4>
@@ -40,10 +40,10 @@ export function DocsSidebarNavItems({
 }: DocsSidebarNavItemsProps) {
   return items?.length ? (
     <div className="grid grid-flow-row auto-rows-max text-sm">
-      {items.map((item, index) =>
+      {items.map((item) =>
         item.href && !item.disabled ? (
           <Link
-            key={index}
+            key={item.href ?? item.title}
             href={item.href}
             className={cn(
               "group flex w-full items-center rounded-md border border-transparent px-2 py-1 hover:underline",
@@ -64,7 +64,7 @@ export function DocsSidebarNavItems({
           </Link>
         ) : (
           <span
-            key={index}
+            key={item.title}
             className={cn(
               "flex w-full cursor-not-allowed items-center rounded-md p-2 text-muted-foreground hover:underline",
               item.disabled && "cursor-not-allowed opacity-60"

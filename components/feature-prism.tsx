@@ -61,6 +61,7 @@ class ErrorBoundary extends React.Component {
 // Define our features
 const features = [
   {
+    id: "traceability",
     name: "Traceability",
     icon: CuboidIcon,
     description:
@@ -70,6 +71,7 @@ const features = [
     pulseOffset: 0, // Offset for pulsing effect
   },
   {
+    id: "security",
     name: "Security",
     icon: Shield,
     description:
@@ -79,6 +81,7 @@ const features = [
     pulseOffset: 1, // Offset for pulsing effect
   },
   {
+    id: "efficiency",
     name: "Efficiency",
     icon: Zap,
     description:
@@ -88,6 +91,7 @@ const features = [
     pulseOffset: 2, // Offset for pulsing effect
   },
   {
+    id: "integration",
     name: "Integration",
     icon: Link,
     description:
@@ -97,6 +101,7 @@ const features = [
     pulseOffset: 3, // Offset for pulsing effect
   },
   {
+    id: "automation",
     name: "Automation",
     icon: Cog,
     description: "AI-driven decision making and operations that reduce human error and increase operational speed.",
@@ -105,6 +110,7 @@ const features = [
     pulseOffset: 5, // Offset for pulsing effect (Fibonacci)
   },
   {
+    id: "data",
     name: "Data",
     icon: Database,
     description: "Comprehensive analytics and insights derived from blockchain-secured supply chain data.",
@@ -1111,6 +1117,7 @@ function HexagonalPrism({ setSelectedFeature }) {
       const z = Math.cos(angle) * radius
 
       positions.push({
+        id: `face-${i}`,
         position: [x, 0, z],
         rotation: [0, -angle + Math.PI, 0],
         connectionStart: [x * 0.2, 0, z * 0.2], // Start point near the face
@@ -1171,7 +1178,7 @@ function HexagonalPrism({ setSelectedFeature }) {
         {/* Connection lines with energy flow */}
         {facePositions.map((face, index) => (
           <EnhancedConnectionLine
-            key={`connection-${index}`}
+            key={face.id}
             start={face.connectionStart}
             end={face.connectionEnd}
             color={features[index].color}
@@ -1182,7 +1189,7 @@ function HexagonalPrism({ setSelectedFeature }) {
         {/* Feature faces with pulsating inner light */}
         {features.map((feature, index) => (
           <HexagonalFace
-            key={index}
+            key={feature.id}
             index={index}
             position={facePositions[index].position}
             rotation={facePositions[index].rotation}
