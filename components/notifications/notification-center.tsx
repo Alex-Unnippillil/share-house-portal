@@ -21,6 +21,16 @@ interface Notification {
   created_at: string;
 }
 
+const normalizeNotification = (notification: any): Notification => ({
+  id: notification.id,
+  title: notification.title,
+  message: notification.message,
+  type: notification.type,
+  action_url: notification.action_url ?? undefined,
+  read: Boolean(notification.read),
+  created_at: notification.created_at,
+});
+
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -40,8 +50,9 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
+      const normalized = (data || []).map(normalizeNotification);
+      setNotifications(normalized);
+      setUnreadCount(normalized.filter((n) => !n.read).length);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -63,9 +74,9 @@ export function NotificationCenter() {
           table: 'notifications',
         },
         (payload) => {
-          const newNotification = payload.new as Notification;
+          const newNotification = normalizeNotification(payload.new);
           setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
+          setUnreadCount(prev => prev + (newNotification.read ? 0 : 1));
 
           // Show toast for new notification
           toast({
@@ -84,31 +95,83 @@ export function NotificationCenter() {
   }, [fetchNotifications, supabase, toast]);
 
   const markAsRead = async (notificationId: string) => {
+    const targetNotification = notifications.find(
+      (notification) => notification.id === notificationId,
+    );
+
+    if (!targetNotification || targetNotification.read) {
+      return;
+    }
+
+    const previousNotifications = notifications.map((notification) => ({
+      ...notification,
+    }));
+    const previousUnreadCount = unreadCount;
+
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === notificationId
+          ? { ...notification, read: true }
+          : notification,
+      ),
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
     try {
-      const { error } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from('notifications')
         .update({ read: true })
-        .eq('id', notificationId);
+        .eq('id', notificationId)
+        .select('*')
+        .single();
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      if (data) {
+        const normalized = normalizeNotification(data);
+        setNotifications((prev) =>
+          prev.map((notification) =>
+            notification.id === notificationId ? normalized : notification,
+          ),
+        );
+      }
+
+      toast({
+        title: 'Notification read',
+        description: targetNotification.title
+          ? `Marked "${targetNotification.title}" as read.`
+          : 'Notification marked as read.',
+      });
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
+      setNotifications(previousNotifications);
+      setUnreadCount(previousUnreadCount);
+      toast({
+        title: 'Failed to mark notification as read',
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
   const markAllAsRead = async () => {
+    const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
+
+    if (unreadIds.length === 0) return;
+
+    const previousNotifications = notifications.map((notification) => ({
+      ...notification,
+    }));
+    const previousUnreadCount = unreadCount;
+
+    setNotifications((prev) => prev.map((notification) => ({
+      ...notification,
+      read: true,
+    })));
+    setUnreadCount(0);
+
     try {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-
-      if (unreadIds.length === 0) return;
-
       const { error } = await (supabase as any)
         .from('notifications')
         .update({ read: true })
@@ -116,20 +179,42 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
-
       toast({
-        title: "All notifications marked as read",
+        title: 'All notifications marked as read',
+        description: `Cleared ${unreadIds.length} notification${
+          unreadIds.length > 1 ? 's' : ''
+        }.`,
       });
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
+      setNotifications(previousNotifications);
+      setUnreadCount(previousUnreadCount);
+      toast({
+        title: 'Failed to mark all as read',
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
   const deleteNotification = async (notificationId: string) => {
+    const previousNotifications = notifications.map((notification) => ({
+      ...notification,
+    }));
+    const previousUnreadCount = unreadCount;
+    const deletedNotification = notifications.find(
+      (notification) => notification.id === notificationId,
+    );
+
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== notificationId),
+    );
+
+    if (deletedNotification && !deletedNotification.read) {
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+
     try {
       const { error } = await (supabase as any)
         .from('notifications')
@@ -138,14 +223,22 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
-      if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      toast({
+        title: 'Notification deleted',
+        description: deletedNotification?.title
+          ? `Removed "${deletedNotification.title}".`
+          : 'Notification removed.',
+      });
     } catch (error) {
       console.error('Failed to delete notification:', error);
+      setNotifications(previousNotifications);
+      setUnreadCount(previousUnreadCount);
+      toast({
+        title: 'Failed to delete notification',
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 

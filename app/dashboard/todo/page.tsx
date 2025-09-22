@@ -1,42 +1,16 @@
 
 import React from "react";
+
 import CreateForm from "./components/CreateForm";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import TodoTable from "./components/TodoTable";
 
 export default function Todo() {
-	const todos = [
-		{
-			title: "Subscribe",
-			created_by: "091832901830",
-			id: "101981908",
-			completed: false,
-		},
-	];
-
-	return (
-		<div className="flex h-screen items-center justify-center">
-			<div className="w-96 space-y-5">
-
-				<CreateForm />
-
-				{todos?.map((todo, index) => {
-					return (
-						<div key={index} className="flex items-center gap-6">
-							<h1
-								className={cn({
-									"line-through": todo.completed,
-								})}
-							>
-								{todo.title}
-							</h1>
-
-							<Button>delete</Button>
-							<Button>Update</Button>
-						</div>
-					);
-				})}
-			</div>
-		</div>
-	);
+  return (
+    <div className="flex h-full min-h-screen items-start justify-center py-10">
+      <div className="w-full max-w-4xl space-y-6 px-4">
+        <CreateForm />
+        <TodoTable />
+      </div>
+    </div>
+  );
 }

@@ -83,6 +83,14 @@ export type Database = {
         user_agent: string | null
         metadata: Json | null
       }>
+      todos: SupabaseTable<{
+        id: string
+        title: string
+        completed: boolean
+        created_at: string | null
+        updated_at: string | null
+        created_by: string | null
+      }>
       leases: SupabaseTable<{
         id: string
         document_id: string
