@@ -1,15 +1,18 @@
-import { Button } from "@/components/ui/button";
-import React from "react";
-import { TrashIcon, Pencil1Icon } from "@radix-ui/react-icons";
-import ListOfMembers from "./ListOfMembers";
-import Table from "@/components/ui/Table";
+import React from "react"
+import Table from "@/components/ui/Table"
+import ListOfMembers, { defaultMembers } from "./ListOfMembers"
+import type { DashboardMemberRecord } from "@/types/perf"
 
-export default function MemberTable() {
-	const tableHeader = ["Name", "Role", "Joined", "Status"];
+interface MemberTableProps {
+  members?: DashboardMemberRecord[]
+}
 
-	return (
-		<Table headers={tableHeader}>
-			<ListOfMembers />
-		</Table>
-	);
+export default function MemberTable({ members = defaultMembers }: MemberTableProps) {
+  const tableHeader = ["Name", "Role", "Joined", "Status"]
+
+  return (
+    <Table headers={tableHeader}>
+      <ListOfMembers members={members} />
+    </Table>
+  )
 }
