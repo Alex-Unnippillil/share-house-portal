@@ -1,57 +1,179 @@
-import Link from "next/link"
+import { Suspense } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AmenityBookingForm } from './components/amenity-booking-form';
+import { BookingHistory } from './components/booking-history';
+import { BookingStats } from './components/booking-stats';
+import { Kitchen, Tv, Gamepad2, Car, Monitor, Calendar } from 'lucide-react';
 
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-
-const bookingHighlights = [
+const amenities = [
   {
-    title: "Amenity scheduling",
-    description:
-      "Reserve the kitchen, TV lounge, parking spot, or gaming nook without double-booking roommates.",
+    id: 'kitchen',
+    name: 'Kitchen',
+    description: 'Book the kitchen for cooking or meal prep',
+    icon: Kitchen,
+    duration: '2 hours',
+    maxAdvance: '7 days',
   },
   {
-    title: "Recurring reservations",
-    description:
-      "Set weekly chore slots or study sessions with automatic conflict detection and notifications.",
+    id: 'tv-room',
+    name: 'TV Room',
+    description: 'Reserve the living room TV for movies or gaming',
+    icon: Tv,
+    duration: '3 hours',
+    maxAdvance: '7 days',
   },
   {
-    title: "Visitor management",
-    description:
-      "Log overnight guests and share itineraries with roommates and property managers instantly.",
+    id: 'playstation',
+    name: 'PlayStation Nook',
+    description: 'Book the gaming area for console gaming',
+    icon: Gamepad2,
+    duration: '2 hours',
+    maxAdvance: '7 days',
   },
   {
-    title: "Real-time updates",
-    description:
-      "Sync bookings from Cal.com directly into the portal so everyone sees the same availability grid.",
+    id: 'parking',
+    name: 'Parking Spot',
+    description: 'Reserve a visitor parking spot',
+    icon: Car,
+    duration: '24 hours',
+    maxAdvance: '14 days',
   },
-]
+  {
+    id: 'computer',
+    name: 'Shared Computer',
+    description: 'Use the shared computer workstation',
+    icon: Monitor,
+    duration: '1 hour',
+    maxAdvance: '3 days',
+  },
+];
 
 export default function BookingsPage() {
   return (
-    <div className="container max-w-5xl space-y-10 py-12">
+    <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Bookings</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Amenity Bookings</h1>
           <p className="text-base text-muted-foreground sm:text-lg">
-            Coordinate shared amenities and guest stays with collaborative schedules that respect each roommate plan.
+            Reserve shared amenities like the kitchen, TV room, parking, and more. Bookings are managed through our Cal.com integration.
           </p>
         </div>
         <Separator />
-        <Button asChild variant="secondary" className="w-fit">
-          <Link href="/schedule">Open amenity calendar</Link>
-        </Button>
       </header>
-      <div className="grid gap-6 md:grid-cols-2">
-        {bookingHighlights.map((item) => (
-          <Card key={item.title}>
-            <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
+
+      {/* Stats Overview */}
+      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="pb-2">
+              <div className="h-4 bg-muted rounded w-3/4"></div>
             </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-muted rounded w-1/2"></div>
+            </CardContent>
           </Card>
         ))}
+      </div>}>
+        <BookingStats />
+      </Suspense>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="book" className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="book">Book Amenity</TabsTrigger>
+          <TabsTrigger value="history">Booking History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="book" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {amenities.map((amenity) => (
+              <Card key={amenity.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <amenity.icon className="h-6 w-6 text-primary" />
+                    <div>
+                      <CardTitle className="text-lg">{amenity.name}</CardTitle>
+                      <CardDescription>{amenity.description}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Duration: {amenity.duration}</span>
+                    <span>Max advance: {amenity.maxAdvance}</span>
+                  </div>
+                  <AmenityBookingForm amenity={amenity} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-6">
+          <BookingHistory />
+        </TabsContent>
+      </Tabs>
+
+      {/* Feature Highlights */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Smart Scheduling</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              Automated conflict detection and recurring booking support.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Tv className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Real-time Availability</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              See live availability and get instant confirmation for bookings.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Gamepad2 className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Fair Usage</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              Booking limits prevent overuse while ensuring everyone gets access.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Car className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Mobile Friendly</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              Book amenities on-the-go with our responsive mobile interface.
+            </CardDescription>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  )
+  );
 }

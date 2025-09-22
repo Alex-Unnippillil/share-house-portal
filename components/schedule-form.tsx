@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { scheduleMeetingAction } from '@/app/schedule/actions';
 import { useFormState, useFormStatus } from 'react-dom';
 import { DayPicker } from 'react-day-picker';
-import { z } from 'zod'; // Import Zod
+import * as z from 'zod'; // Import Zod
 import {
     format,
     formatISO,

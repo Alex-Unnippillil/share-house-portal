@@ -6,7 +6,7 @@ import { useMemo } from "react"
 import type { Database } from "@/lib/supabase"
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
 
-let client: TypedSupabaseClient | undefined
+let client: TypedSupabaseClient
 
 function getSupabaseBrowserClient() {
   if (client) {
@@ -24,3 +24,6 @@ function getSupabaseBrowserClient() {
 export default function useSupabaseBrowser() {
   return useMemo(getSupabaseBrowserClient, [])
 }
+
+// Export the createClient function for compatibility
+export const createClient = getSupabaseBrowserClient

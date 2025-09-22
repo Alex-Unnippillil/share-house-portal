@@ -1,7 +1,7 @@
 {
-  "name": "Onyx",
-  "short_name": "Onyx",
-  "description": "A batteries included MVP Template.",
+  "name": "Shared House Portal",
+  "short_name": "House Portal",
+  "description": "Roommate portal for rent payments, shared documents, and realtime communication.",
   "start_url": "/", 
   "display": "standalone",
   "background_color": "#fff",

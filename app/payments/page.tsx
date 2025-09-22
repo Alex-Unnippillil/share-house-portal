@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import {
   calculateOutstanding,
@@ -200,6 +202,15 @@ export default function PaymentsPage() {
                   </div>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Pay with Stripe</CardTitle>
+              <CardDescription>Create a quick checkout or open Billing Portal</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <StripeActions />
             </CardContent>
           </Card>
         </div>

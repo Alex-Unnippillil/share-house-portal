@@ -1,94 +1,145 @@
-<a href="https://onyx-rho-pink.vercel.app/">
-  <img alt="Onyx open graph image." src="https://quantumone.b-cdn.net/onyx-git/og-image.jpg">
-  <h1 align="center">Onyx MVP Template</h1>
-</a>
+# Shared House Portal
 
-<a href="https://securityheaders.com/">
-  <img alt="Onyx security score image." src="https://quantumone.b-cdn.net/onyx-git/onyx-security-score-ls.jpg">
-  <h2 align="center">Onyx SecurityHeaders.com Score</h2>
-</a>
+A comprehensive web application designed for shared house roommates to manage rent payments, amenity bookings, document sharing, and communication in a seamless, frictionless experience.
 
+## Features
 
-### What is Onyx?
-- Onyx is a turnkey, full stack NextJS 14+ progressive web app written in Typescript that includes role based access control (RBAC),
-complete Supabase SSR Auth and DB integration, Zod validation, Tanstack React Query, Rust serverless function runtime and API, Markdown pages with ability to insert React components, React Hook form, and more. Fork, customize, and deploy on Vercel or elsewhere to have your MVP up and running in a few days or less. Stack details are below. 
+### 🏠 **Core Functionality**
+- **Multi-tenant Property Management**: Support for multiple roommates sharing rental properties
+- **Role-based Access Control**: Separate workflows for tenants, roommates, property managers, and admins
+- **Responsive Mobile-First Design**: Optimized for mobile usage with modern UI components
 
-### Stack and Features
-- NextJS 14 App Router in Typescript 
-- Supabase 
-  - SSR Auth with
-    - Fully configured email/password signup, login, oauth, PKCE and confirm routes 
-    - middleware 
-    - server actions
-    - typed Auth & DB clients
-    - readOnly userSession clients
-  - Postgres DB with CRUD functions configured
-    - User account and profile management configured 
-    - RBAC configured admin dashboard with data visualization, members administration and todo lists
-    - Contact form with toast, Zod validation, server side table insert  
-- TanStack React Query, Table, and Dev Tools
-  - Demo SSR with Supabase DB & cache helpers 
-- Zod data validation, schemas, event handling.
-- Shadcn-UI, Radix-UI primitives, Tailwind CSS
-- Markdown pages with Next/MDX - create page.mdx and layout.tsx for each markdown page
-- Next-PWA
-- Next Compose Plugins  
-- React Hook Form
-- Rent payments dashboard with Stripe-ready autopay flows
-- Amenity booking calendar for shared spaces and visitors
-- Document vault powered by Documenso templates and audit trails
-- Roommate messaging feed with realtime updates
-- Onboarding, signIn/signUp pages
-- CookieButton component configured to work with Consent Manager from Termly free plan. Just create a free Termly account, add your Script tag on the app/layout page using Next Script and then add your CookieButton to your app/layout just above the ThemeProvider and just below your termly Script tag.
-- Custom Formik Components with MUI are not used in app but code is solid for use in a "MUI Base X TailwindCSS config". Onyx is NOT currently configured for MUI nor MUI Base X TailwindCSS. 
-- Lucide React Icons with many brand SVGs ready for your props 
-- More..
+### 💳 **Payment Management**
+- **Stripe Integration**: Secure rent payments with autopay functionality
+- **Subscription Support**: Recurring rent payments with configurable billing cycles
+- **Payment Receipts**: Automatic receipt generation and email notifications
+- **Financial Tracking**: Complete payment history and reconciliation tools
 
-### API 
-- [Rust runtime for Vercel Serverless Functions](https://github.com/vercel-community/rust)
+### 📅 **Amenity Bookings**
+- **Shared Space Scheduling**: Book kitchen, TV room, PlayStation, parking spots, and shared computers
+- **Cal.com Integration**: Self-hosted calendar system with double-booking prevention
+- **Conflict Detection**: Smart scheduling to prevent overlapping reservations
 
-### Getting started with Onyx:
-- First, configure your environment
-  - Create a file named .env.local in project root
-  - Create a Supabase account and add the following to your env file
-    - NEXT_PUBLIC_SUPABASE_ANON_KEY="Your supabase anon key"
-    - SUPABASE_JWT_SECRET="Your supabase JWT secret"
-    - NEXT_PUBLIC_SUPABASE_URL="Your supabase project URL"
-    - SUPABASE_SERVIC_ROLE_KEY="Your supabase service role key"
-    - NEXT_PUBLIC_SITE_URL="http://localhost:3000" # Used for auth redirects in development
-    - SUPABASE_WORKOS_CONNECTION_ID="Your WorkOS connection ID" # Optional, required to enable SSO via WorkOS
+### 📄 **Document Management**
+- **Documenso Integration**: Secure document signing and storage
+- **Lease Agreements**: Digital lease management with version history
+- **Audit Trails**: Complete document access logging for compliance
 
-  - Enable WorkOS SSO (optional)
-    - Create a WorkOS connection in the Supabase dashboard and copy the connection ID from the Connections table
-    - Add the issuer URL from WorkOS when prompted in Supabase so that Supabase can validate the JWTs
-    - Configure the SUPABASE_WORKOS_CONNECTION_ID environment variable with the copied value
+### 💬 **Communication**
+- **Realtime Messaging**: Roommate-to-roommate communication with threads
+- **Notifications**: In-app and email notifications for important events
+- **Maintenance Requests**: Issue tracking and resolution workflow
 
-  - Ensure your Supabase tables match the tables and types found in '@/lib/supabase'.
-  - Add authorized development and production URL's to Supabase URL config. 
-### Run  
-- Development server:
+### 🏢 **Admin Features**
+- **Property Management**: Multi-unit property administration
+- **Visitor Logs**: Overnight guest tracking and approval workflows
+- **Analytics Dashboard**: Payment success rates, booking utilization, and financial reports
+
+## Tech Stack
+
+- **Framework**: Next.js 14 with App Router
+- **Authentication**: Supabase Auth with email magic links
+- **Database**: PostgreSQL with Supabase
+- **Payments**: Stripe Checkout + Billing Portal
+- **Calendar**: Self-hosted Cal.com instance
+- **Documents**: Documenso for digital signatures
+- **UI**: Tailwind CSS + shadcn/ui components
+- **Deployment**: Vercel
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm/yarn/pnpm
+- Supabase account
+- Stripe account
+- Vercel account (for deployment)
+
+### Environment Setup
+
+Create a `.env.local` file in the project root:
 
 ```bash
-npm i && npm run dev
-# or
-yarn i && yarn run dev
-# or
-pnpm i && pnpm dev
-# or
-bun i && bun dev
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL="your_supabase_project_url"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
+SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
+SUPABASE_JWT_SECRET="your_jwt_secret"
+
+# Stripe
+STRIPE_SECRET_KEY="your_stripe_secret_key"
+STRIPE_WEBHOOK_SECRET="your_webhook_secret"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Document Management (Optional)
+DOCUMENSO_API_KEY="your_documenso_api_key"
+DOCUMENSO_BASE_URL="your_documenso_instance_url"
+
+# Calendar (Optional)
+CALCOM_API_KEY="your_calcom_api_key"
+CALCOM_BASE_URL="your_calcom_instance_url"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Database Setup
 
+Run the Supabase migrations to set up the required database tables:
 
-### Deploy on Vercel
+```bash
+# Apply database migrations (requires Supabase CLI)
+supabase db push
+```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frmourey26%2Fonyx%2Ftree%2Fmain)
+### Development
 
+```bash
+# Install dependencies
+npm install
 
-### Reference/Credit
-- @chensokheng
+# Start development server
+npm run dev
+```
 
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### Tips/Support
-<a href="https://www.buymeacoffee.com/rmoureyjr" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="51" width="217"></a>
+### Stripe Configuration
+
+1. Create products and prices in your Stripe dashboard
+2. Set up webhooks for payment events
+3. Configure webhook endpoints to point to `/api/stripe/webhook`
+
+### Deployment
+
+Deploy to Vercel with the following environment variables configured in your Vercel dashboard:
+
+- All Supabase environment variables
+- Stripe keys (use live keys for production)
+- Document and calendar service URLs/keys
+
+## Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Main application pages
+│   ├── documents/         # Document management
+│   ├── payments/          # Payment functionality
+│   └── ...
+├── components/            # Reusable UI components
+├── lib/                   # Utility functions and configurations
+├── supabase/              # Database migrations and config
+├── types/                 # TypeScript type definitions
+└── utils/                 # Helper functions
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.

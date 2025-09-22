@@ -1,51 +1,170 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-
-const documentHighlights = [
-  {
-    title: "Lease lifecycle",
-    description:
-      "Distribute Documenso templates for new roommates, capture signatures, and archive executed agreements automatically.",
-  },
-  {
-    title: "Secure storage",
-    description:
-      "Store IDs, insurance policies, and move-in checklists with access logging for compliance peace of mind.",
-  },
-  {
-    title: "Version history",
-    description:
-      "Track revisions, amendments, and roommate acknowledgements in one place with timestamped audit trails.",
-  },
-  {
-    title: "Role-aware access",
-    description:
-      "Tenant, roommate, and property manager permissions ensure the right people can upload, review, or approve files.",
-  },
-]
+import { Suspense } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { FileText, Users, Clock, Upload } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UploadDocumentDialog } from "./components/upload-document-dialog";
+import { DocumentsStats } from "./components/documents-stats";
+import { DocumentsList } from "./components/documents-list";
+import { DocumentsFilters } from "./components/documents-filters";
+import { DocumentListFilters } from '@/types/documents';
 
 export default function DocumentsPage() {
   return (
-    <div className="container max-w-5xl space-y-10 py-12">
+    <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Keep leases, addendums, and household paperwork centralized with secure sharing and detailed audit logs.
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
+            <p className="text-base text-muted-foreground sm:text-lg">
+              Manage leases, agreements, and household documents with secure signing and version control.
+            </p>
+          </div>
+          <UploadDocumentDialog />
         </div>
         <Separator />
       </header>
-      <div className="grid gap-6 md:grid-cols-2">
-        {documentHighlights.map((item) => (
-          <Card key={item.title}>
-            <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
+
+      {/* Stats Overview */}
+      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="pb-2">
+              <div className="h-4 bg-muted rounded w-3/4"></div>
             </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-muted rounded w-1/2"></div>
+            </CardContent>
           </Card>
         ))}
+      </div>}>
+        <DocumentsStats />
+      </Suspense>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="all" className="space-y-6">
+        <div className="flex items-center justify-between">
+          <TabsList className="grid w-full max-w-md grid-cols-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="leases">Leases</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="signed">Signed</TabsTrigger>
+          </TabsList>
+          <DocumentsFilters />
+        </div>
+
+        <TabsContent value="all" className="space-y-6">
+          <Suspense fallback={<DocumentsListSkeleton />}>
+            <DocumentsList filter={{}} />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="leases" className="space-y-6">
+          <Suspense fallback={<DocumentsListSkeleton />}>
+            <DocumentsList filter={{ type: ['lease'] }} />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="pending" className="space-y-6">
+          <Suspense fallback={<DocumentsListSkeleton />}>
+            <DocumentsList filter={{ status: ['pending_signature'] }} />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="signed" className="space-y-6">
+          <Suspense fallback={<DocumentsListSkeleton />}>
+            <DocumentsList filter={{ status: ['signed'] }} />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
+
+      {/* Feature Highlights */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <FileText className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Secure Storage</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              Encrypted document storage with access logging for compliance.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Multi-Signature</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              Collect signatures from all tenants and property managers.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Version History</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              Track document changes with complete audit trails.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Upload className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-medium">Bulk Operations</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-xs">
+              Upload multiple documents and manage permissions at scale.
+            </CardDescription>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  )
+  );
+}
+
+function DocumentsListSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(5)].map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="h-5 bg-muted rounded w-48"></div>
+                <div className="h-4 bg-muted rounded w-32"></div>
+              </div>
+              <div className="h-6 bg-muted rounded w-20"></div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="h-4 bg-muted rounded w-24"></div>
+              <div className="flex space-x-2">
+                <div className="h-8 bg-muted rounded w-16"></div>
+                <div className="h-8 bg-muted rounded w-16"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 }

@@ -20,10 +20,6 @@ export const docsConfig: DocsConfig = {
       href: "/payments",
     },
     {
-      title: "Bookings",
-      href: "/bookings",
-    },
-    {
       title: "Documents",
       href: "/documents",
     },

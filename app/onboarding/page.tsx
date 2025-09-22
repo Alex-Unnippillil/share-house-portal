@@ -9,7 +9,7 @@ import { AuthFormLegacy } from '@/app/auth-server-action/components/AuthFormLega
 
 export const metadata: Metadata = {
   title: "Onboarding",
-  description: "Onyx new customer onboarding",
+  description: "Shared House Portal new user onboarding",
 }
 
 export default function OnboardingPage() {
@@ -17,17 +17,17 @@ export default function OnboardingPage() {
     <>
       <div className="hidden">
         <Image
-          src="https://quantumone.b-cdn.net/onyx/IMG_4777.jpeg"
+          src="/images/house-portal-1.jpg"
           width={1280}
           height={843}
-          alt="Onboarding"
+          alt="Shared House Portal"
           className="block dark:hidden"
         />
         <Image
-          src="https://quantumone.b-cdn.net/onyx/IMG_5036.jpeg"
+          src="/images/house-portal-2.jpg"
           width={1280}
           height={843}
-          alt="Onboarding-two"
+          alt="Roommate Collaboration"
           className="hidden"
         />
       </div>
@@ -44,10 +44,10 @@ export default function OnboardingPage() {
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
           <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
           <Image
-          src="https://quantumone.b-cdn.net/onyx/IMG_5036.jpeg"
+          src="/images/house-portal-2.jpg"
           width={2048}
           height={2048}
-          alt="Onboarding-two"
+          alt="Roommate Collaboration"
           style={{objectFit: "contain"}}
           
         />

@@ -26,11 +26,6 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/bookings" className="text-muted-foreground transition-colors hover:text-primary">
-                  Amenity bookings
-                </Link>
-              </li>
-              <li>
                 <Link href="/documents" className="text-muted-foreground transition-colors hover:text-primary">
                   Document vault
                 </Link>
@@ -67,61 +62,11 @@ export function SiteFooter() {
               </li>
             </ul>
           </div>
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium">Connect</h3>
-            <div className="flex space-x-4">
-              <Link
-                href={siteConfig.links.github}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <div
-                  className={buttonVariants({
-                    size: "icon",
-                    variant: "ghost",
-                  })}
-                >
-                  <Icons.gitHub className="size-5" />
-                  <span className="sr-only">GitHub</span>
-                </div>
-              </Link>
-              <Link
-              href={siteConfig.links.twitter}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <div
-                className={buttonVariants({
-                  size: "icon",
-                  variant: "ghost",
-                })}
-              >
-                <Icons.twitter className="size-4" />
-                <span className="sr-only">Twitter</span>
-              </div>
-            </Link>
-            <Link
-              href={siteConfig.links.linkedin}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <div
-                className={buttonVariants({
-                  size: "icon",
-                  variant: "ghost",
-                })}
-              >
-                <Icons.linkedin className="size-5" />
-                <span className="sr-only">LinkedIn</span>
-              </div>
-            </Link>
-            </div>
-          </div>
         </div>
       </div>
       <div className="container border-t py-6">
         <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Onyx. All Rights Reserved.
+          © {new Date().getFullYear()} Shared House Portal. All Rights Reserved.
         </p>
       </div>
     </footer>

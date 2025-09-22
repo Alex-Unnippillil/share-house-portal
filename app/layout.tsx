@@ -21,8 +21,8 @@ export const metadata: Metadata = {
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
-    manifest: 'https://onyx-rho-pink.vercel.app/manifest.json',
-  metadataBase: new URL('https://onyx-rho-pink.vercel.app'),
+    manifest: '/manifest.json',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   alternates: {
     canonical: '/',
     languages: {
@@ -50,9 +50,9 @@ export const metadata: Metadata = {
   },
   generator: 'NextJS',
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 
   robots: {
@@ -128,16 +128,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
-    <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-            // Prevent FOUC (Flash of Unstyled Content)
-            document.documentElement.classList.add('dark');
-          `,
-          }}
-        />
-      </head>
+    <head></head>
       <body className={cn(
             "min-h-screen bg-background font-sans antialiased",
             fontSans.variable
@@ -145,7 +136,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         >
 <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
+            defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
