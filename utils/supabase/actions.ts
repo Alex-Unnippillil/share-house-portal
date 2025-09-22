@@ -2,7 +2,7 @@
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { Database } from '@/lib/supabase';
+import type { Database } from '@/lib/supabase';
 
 export async function createActionClient() {
   const cookieStore = cookies();
