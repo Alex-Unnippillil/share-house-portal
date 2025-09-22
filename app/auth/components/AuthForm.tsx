@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { useTransition } from "react";
 import { loginWithEmailAndPassword, signInWithWorkOS } from "../actions";
@@ -136,8 +136,10 @@ export default function AuthForm() {
                                                 variant="outline"
                                         >
                                                 Log In{" "}
-                                                <AiOutlineLoading3Quarters
-                                                        className={cn(" animate-spin", { hidden: !isPending })}
+                                                <Icon
+                                                        name="spinner"
+                                                        className={cn("animate-spin", { hidden: !isPending })}
+                                                        aria-hidden
                                                 />
                                         </Button>
                                 </form>
@@ -152,8 +154,10 @@ export default function AuthForm() {
                                         variant="outline"
                                 >
                                         Continue with SSO
-                                        <AiOutlineLoading3Quarters
-                                                className={cn(" animate-spin", { hidden: !isWorkosPending })}
+                                        <Icon
+                                                name="spinner"
+                                                className={cn("animate-spin", { hidden: !isWorkosPending })}
+                                                aria-hidden
                                         />
                                 </Button>
                         </div>

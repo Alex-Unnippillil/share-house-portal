@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Icon } from "@/components/icons";
 import { signUpWithEmailAndPassword } from '@/app/auth-server-action/actions'
 
 import {
@@ -138,9 +138,11 @@ export default function RegisterForm() {
 				variant="outline"
 			>
 				Register{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
+                                <Icon
+                                        name="spinner"
+                                        className={cn("animate-spin", { hidden: !isPending })}
+                                        aria-hidden
+                                />
 			</Button>
 			</form>
 		</Form>

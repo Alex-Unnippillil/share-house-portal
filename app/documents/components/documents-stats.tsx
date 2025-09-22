@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Icon } from '@/components/icons';
 import { getDocumentStatsAction } from '../actions';
 import { DocumentStats } from '@/types/documents';
 
@@ -52,25 +52,25 @@ export function DocumentsStats() {
     {
       title: "Total Documents",
       value: stats.total_documents,
-      icon: FileText,
+      icon: 'file-text' as const,
       color: "text-blue-600",
     },
     {
       title: "Pending Signatures",
       value: stats.pending_signatures,
-      icon: Clock,
+      icon: 'clock' as const,
       color: "text-yellow-600",
     },
     {
       title: "Signed Documents",
       value: stats.signed_documents,
-      icon: CheckCircle,
+      icon: 'check-circle' as const,
       color: "text-green-600",
     },
     {
       title: "Expired Documents",
       value: stats.expired_documents,
-      icon: AlertCircle,
+      icon: 'alert-circle' as const,
       color: "text-red-600",
     },
   ];
@@ -83,7 +83,7 @@ export function DocumentsStats() {
             <CardTitle className="text-sm font-medium">
               {item.title}
             </CardTitle>
-            <item.icon className={`size-4 ${item.color}`} />
+            <Icon name={item.icon} className={`size-4 ${item.color}`} aria-hidden />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{item.value}</div>

@@ -1,9 +1,8 @@
 import React from "react";
-import { TrashIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import EditMember from "./edit/EditMember";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/icons";
 
 export default function ListOfMembers() {
 	const members = [
@@ -75,10 +74,10 @@ export default function ListOfMembers() {
 						</div>
 
 						<div className="flex items-center gap-2">
-							<Button variant="outline">
-								<TrashIcon />
-								Delete
-							</Button>
+                                                        <Button variant="outline">
+                                                                <Icon name="trash-2" className="mr-2 size-4" />
+                                                                Delete
+                                                        </Button>
 							<EditMember />
 						</div>
 					</div>

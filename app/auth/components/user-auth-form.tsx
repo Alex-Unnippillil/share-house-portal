@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
-import { Icons } from "@/components/icons"
+import { Icon } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +13,6 @@ import { AuthTokenResponse } from "@supabase/supabase-js"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { AiOutlineLoading3Quarters } from "react-icons/ai"
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -86,9 +85,11 @@ const [isLoading, setIsLoading] = React.useState<boolean>(false)
 				variant="outline"
 			>
 				Sign In{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
+                                <Icon
+                                        name="spinner"
+                                        className={cn("animate-spin", { hidden: !isPending })}
+                                        aria-hidden
+                                />
         </Button>
         </div>
       </form>
@@ -104,9 +105,9 @@ const [isLoading, setIsLoading] = React.useState<boolean>(false)
       </div>
       <Button variant="outline" type="button" disabled={isLoading}>
         {isLoading ? (
-          <Icons.spinner className="mr-2 size-4 animate-spin" />
+          <Icon name="spinner" className="mr-2 size-4 animate-spin" aria-hidden />
         ) : (
-          <Icons.gitHub className="mr-2 size-4" />
+          <Icon name="github" className="mr-2 size-4" aria-hidden />
         )}{" "}
         GitHub
       </Button>

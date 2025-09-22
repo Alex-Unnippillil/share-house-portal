@@ -25,7 +25,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { uploadDocumentAction } from '../actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import { Upload, FileText } from 'lucide-react';
+import { Icon } from '@/components/icons';
 import { toast } from 'sonner';
 
 export function UploadDocumentDialog() {
@@ -133,7 +133,7 @@ export function UploadDocumentDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Upload className="mr-2 size-4" />
+          <Icon name="upload" className="mr-2 size-4" aria-hidden />
           Upload Document
         </Button>
       </DialogTrigger>
@@ -158,7 +158,7 @@ export function UploadDocumentDialog() {
                 className="hidden"
               />
               <label htmlFor="file" className="cursor-pointer">
-                <FileText className="mx-auto mb-2 size-12 text-muted-foreground" />
+                <Icon name="file-text" className="mx-auto mb-2 size-12 text-muted-foreground" aria-hidden />
                 <div className="text-sm text-muted-foreground">
                   {file ? (
                     <span className="font-medium text-foreground">{file.name}</span>

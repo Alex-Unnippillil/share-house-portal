@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DocumentWithLease } from '@/types/documents';
 import { createSigningRequestAction } from '../actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import { PenTool, Users } from 'lucide-react';
+import { Icon } from '@/components/icons';
 import { toast } from 'sonner';
 
 interface CreateSignatureDialogProps {
@@ -100,7 +100,7 @@ export function CreateSignatureDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <PenTool className="size-5" />
+            <Icon name="pen-tool" className="size-5" aria-hidden />
             <span>Create Signing Request</span>
           </DialogTitle>
           <DialogDescription>
@@ -166,7 +166,7 @@ export function CreateSignatureDialog({
           {document.document_type === 'lease' && document.lease && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
               <div className="flex items-start space-x-2">
-                <Users className="mt-0.5 size-4 text-blue-600" />
+                <Icon name="users" className="mt-0.5 size-4 text-blue-600" aria-hidden />
                 <div className="text-sm">
                   <p className="font-medium text-blue-900 dark:text-blue-100">
                     Lease Document

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { NavItem } from "@/types/nav"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
-import { Icons } from "@/components/icons"
+import { Icon } from "@/components/icons"
 
 interface MainNavProps {
   items?: NavItem[]
@@ -14,7 +14,7 @@ export function MainNav({ items }: MainNavProps) {
   return (
         <div className="mr-2 hidden gap-4 md:flex md:gap-8">
       <Link href="/" className="flex items-center gap-2">
-        <Icons.logo className="size-6 text-primary" />
+        <Icon name="logo" className="size-6 text-primary" aria-hidden />
         <div className="flex flex-col leading-tight">
           <span className="font-semibold">{siteConfig.name}</span>
           <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>

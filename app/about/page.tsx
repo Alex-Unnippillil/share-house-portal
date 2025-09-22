@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronRight, Star, Zap, Shield } from "lucide-react"
+import { Icon } from "@/components/icons"
 import { Contact } from '@/components/forms/contact'
 
 export default function AboutPage() {
@@ -85,7 +85,9 @@ export default function AboutPage() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="text-center"
             >
-              <div className="mb-4">{value.icon}</div>
+              <div className="mb-4">
+                <Icon name={value.icon} className="mx-auto size-12 text-primary" aria-hidden />
+              </div>
               <h3 className="mb-2 text-xl font-semibold">{value.title}</h3>
               <p className="text-muted-foreground">{value.description}</p>
             </motion.div>
@@ -138,16 +140,16 @@ const values = [
   {
     title: "Innovation",
     description: "We constantly push boundaries to create groundbreaking solutions.",
-    icon: <Star className="mx-auto size-12 text-primary" />,
+    icon: "star" as const,
   },
   {
     title: "Efficiency",
     description: "We optimize our processes to deliver results quickly and effectively.",
-    icon: <Zap className="mx-auto size-12 text-primary" />,
+    icon: "zap" as const,
   },
   {
     title: "Integrity",
     description: "We uphold the highest standards of honesty and transparency in all we do.",
-    icon: <Shield className="mx-auto size-12 text-primary" />,
+    icon: "shield" as const,
   },
 ]

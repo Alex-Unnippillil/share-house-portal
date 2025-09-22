@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { siteConfig } from "@/config/site"
 import { buttonVariants } from "@/components/ui/button"
-import { Icons } from "@/components/icons"
+import { Icon } from "@/components/icons"
 
 export function SiteFooter() {
   return (
@@ -9,7 +9,7 @@ export function SiteFooter() {
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
          <Link className="ml-0 flex items-center gap-2" href="/">
-          <Icons.logo className="size-6" />
+          <Icon name="logo" className="size-6" aria-hidden />
           <div className="flex flex-col leading-tight">
             <span className="inline-block font-semibold">{siteConfig.name}</span>
             <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>

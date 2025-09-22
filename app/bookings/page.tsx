@@ -1,12 +1,5 @@
 import { Suspense } from "react"
-import {
-  Calendar,
-  Car,
-  Gamepad2,
-  Monitor,
-  Tv,
-  UtensilsCrossed,
-} from "lucide-react"
+import { Icon } from "@/components/icons"
 
 import {
   Card,
@@ -27,7 +20,7 @@ const amenities = [
     id: "kitchen",
     name: "Kitchen",
     description: "Book the kitchen for cooking or meal prep",
-    icon: UtensilsCrossed,
+    icon: "utensils-crossed" as const,
     duration: "2 hours",
     maxAdvance: "7 days",
   },
@@ -35,7 +28,7 @@ const amenities = [
     id: "tv-room",
     name: "TV Room",
     description: "Reserve the living room TV for movies or gaming",
-    icon: Tv,
+    icon: "tv" as const,
     duration: "3 hours",
     maxAdvance: "7 days",
   },
@@ -43,7 +36,7 @@ const amenities = [
     id: "playstation",
     name: "PlayStation Nook",
     description: "Book the gaming area for console gaming",
-    icon: Gamepad2,
+    icon: "gamepad2" as const,
     duration: "2 hours",
     maxAdvance: "7 days",
   },
@@ -51,7 +44,7 @@ const amenities = [
     id: "parking",
     name: "Parking Spot",
     description: "Reserve a visitor parking spot",
-    icon: Car,
+    icon: "car" as const,
     duration: "24 hours",
     maxAdvance: "14 days",
   },
@@ -59,7 +52,7 @@ const amenities = [
     id: "computer",
     name: "Shared Computer",
     description: "Use the shared computer workstation",
-    icon: Monitor,
+    icon: "monitor" as const,
     duration: "1 hour",
     maxAdvance: "3 days",
   },
@@ -110,14 +103,14 @@ export default function BookingsPage() {
 
         <TabsContent value="book" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {amenities.map(({ icon: Icon, ...amenity }) => (
+            {amenities.map(({ icon, ...amenity }) => (
               <Card
                 key={amenity.id}
                 className="transition-shadow hover:shadow-md"
               >
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <Icon className="size-6 text-primary" />
+                    <Icon name={icon} className="size-6 text-primary" aria-hidden />
                     <div>
                       <CardTitle className="text-lg">{amenity.name}</CardTitle>
                       <CardDescription>{amenity.description}</CardDescription>
@@ -146,7 +139,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Calendar className="size-5 text-primary" />
+              <Icon name="calendar" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">
                 Smart Scheduling
               </CardTitle>
@@ -162,7 +155,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Tv className="size-5 text-primary" />
+              <Icon name="tv" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">
                 Real-time Availability
               </CardTitle>
@@ -178,7 +171,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Gamepad2 className="size-5 text-primary" />
+              <Icon name="gamepad2" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">Fair Usage</CardTitle>
             </div>
           </CardHeader>
@@ -193,7 +186,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Car className="size-5 text-primary" />
+              <Icon name="car" className="size-5 text-primary" aria-hidden />
               <CardTitle className="text-sm font-medium">
                 Mobile Friendly
               </CardTitle>

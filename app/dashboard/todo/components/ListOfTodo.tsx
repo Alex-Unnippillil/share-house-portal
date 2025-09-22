@@ -1,9 +1,8 @@
 import React from "react";
-import { TrashIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import EditTodo from "./EditTodo";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/icons";
 
 export default function ListOfTodo() {
 	const todos = [
@@ -70,13 +69,13 @@ export default function ListOfTodo() {
 						})}
 
 						<div className="flex items-center gap-2">
-							<Button
-								variant="outline"
-								className="bg-dark dark:bg-inherit"
-							>
-								<TrashIcon />
-								delete
-							</Button>
+                                                        <Button
+                                                                variant="outline"
+                                                                className="bg-dark dark:bg-inherit"
+                                                        >
+                                                                <Icon name="trash-2" className="mr-2 size-4" />
+                                                                delete
+                                                        </Button>
 							<EditTodo />
 						</div>
 					</div>

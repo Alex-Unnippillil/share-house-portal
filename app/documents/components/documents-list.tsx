@@ -8,7 +8,7 @@ import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { Icon } from '@/components/icons';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -67,13 +67,12 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'lease':
-        return <FileText className="size-4" />;
       case 'addendum':
-        return <FileText className="size-4" />;
+        return <Icon name="file-text" className="size-4" aria-hidden />;
       case 'insurance':
-        return <Users className="size-4" />;
+        return <Icon name="users" className="size-4" aria-hidden />;
       default:
-        return <FileText className="size-4" />;
+        return <Icon name="file-text" className="size-4" aria-hidden />;
     }
   };
 
@@ -128,7 +127,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     return (
       <Card className="p-12">
         <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <Icon name="file-text" className="mx-auto mb-4 size-12 text-muted-foreground" aria-hidden />
           <h3 className="mb-2 text-lg font-medium">No documents found</h3>
           <p className="text-sm text-muted-foreground">
             {Object.keys(filter).length > 0
@@ -159,20 +158,20 @@ export function DocumentsList({ filter }: DocumentsListProps) {
                   )}
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                     <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
+                      <Icon name="calendar" className="size-3" aria-hidden />
                       <span>
                         {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
                       </span>
                     </div>
                     {doc.lease && (
                       <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
+                        <Icon name="users" className="size-3" aria-hidden />
                         <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
                       </div>
                     )}
                     {doc.signatures && doc.signatures.length > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
+                        <Icon name="eye" className="size-3" aria-hidden />
                         <span>
                           {doc.signatures.filter(s => s.status === 'signed').length}/
                           {doc.signatures.length} signed

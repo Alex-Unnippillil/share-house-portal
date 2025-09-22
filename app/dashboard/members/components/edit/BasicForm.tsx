@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z.object({
@@ -70,9 +70,11 @@ export default function BasicForm() {
 					variant="outline"
 				>
 					Update{" "}
-					<AiOutlineLoading3Quarters
-						className={cn(" animate-spin", "hidden")}
-					/>
+                                        <Icon
+                                                name="spinner"
+                                                className={cn("animate-spin", "hidden")}
+                                                aria-hidden
+                                        />
 				</Button>
 			</form>
 		</Form>

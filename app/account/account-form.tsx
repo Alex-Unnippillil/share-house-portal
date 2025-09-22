@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarIcon, CaretSortIcon, CheckIcon } from "@radix-ui/react-icons"
+import { Icon } from "@/components/icons"
 import { format } from "date-fns"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -128,7 +128,7 @@ export function AccountForm() {
                       ) : (
                         <span>Pick a date</span>
                       )}
-                      <CalendarIcon className="ml-auto size-4 opacity-50" />
+                      <Icon name="calendar" className="ml-auto size-4 opacity-50" aria-hidden />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
@@ -173,7 +173,7 @@ export function AccountForm() {
                             (language) => language.value === field.value
                           )?.label
                         : "Select language"}
-                      <CaretSortIcon className="ml-2 size-4 shrink-0 opacity-50" />
+                      <Icon name="chevrons-up-down" className="ml-2 size-4 shrink-0 opacity-50" aria-hidden />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
@@ -190,13 +190,15 @@ export function AccountForm() {
                             form.setValue("language", language.value)
                           }}
                         >
-                          <CheckIcon
+                          <Icon
+                            name="check"
                             className={cn(
                               "mr-2 size-4",
                               language.value === field.value
                                 ? "opacity-100"
                                 : "opacity-0"
                             )}
+                            aria-hidden
                           />
                           {language.label}
                         </CommandItem>

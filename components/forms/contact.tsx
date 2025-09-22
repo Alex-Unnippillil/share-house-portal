@@ -4,8 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from 'next/navigation';
-import { Icons } from "@/components/icons"
-import { ChevronRight } from 'lucide-react'
+import { Icon } from "@/components/icons"
 import { Button } from "@/components/ui/button";
 import {
         Form,
@@ -19,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 import { useTransition, useState } from "react";
 import { submitInquiry } from '@/app/contact/actions'
@@ -139,7 +137,7 @@ const router = useRouter();
                                 variant="outline"
                         >
                                 Send Message
-                                <ChevronRight className="ml-2 size-4"/>
+                                <Icon name="chevron-right" className="ml-2 size-4" aria-hidden />
    </Button>
                                 </form>
                         </Form>

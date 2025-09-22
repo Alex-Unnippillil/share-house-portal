@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
+import { Icon } from "@/components/icons";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -34,27 +34,26 @@ export default function NavLinks() {
 
 	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
 
-	const links = isLandlord
-		? [
-			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
-		: [
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-			{ href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
-			{ href: "/supplies", text: "Supplies", Icon: CrumpledPaperIcon },
-		];
+        const links = isLandlord
+                ? [
+                        { href: "/dashboard/members", text: "Members", icon: "user" as const },
+                        { href: "/payments", text: "Payments", icon: "file-text" as const },
+                        { href: "/documents", text: "Documents", icon: "file-text" as const },
+                        { href: "/messaging", text: "Message Board", icon: "message-square" as const },
+                ]
+                : [
+                        { href: "/payments", text: "Payments", icon: "file-text" as const },
+                        { href: "/documents", text: "My Lease", icon: "file-text" as const },
+                        { href: "/messaging", text: "Message Board", icon: "message-square" as const },
+                        { href: "/chores", text: "Chores", icon: "sparkles" as const },
+                        { href: "/supplies", text: "Supplies", icon: "wallet" as const },
+                ];
 
 	return (
 		<div className="space-y-5">
 			{links.map((link, index) => {
-				const Icon = link.Icon;
-				return (
-					<Link
+                                return (
+                                        <Link
 						onClick={() =>
 							document.getElementById("sidebar-close")?.click()
 						}
@@ -68,7 +67,7 @@ export default function NavLinks() {
 							}
 						)}
 					>
-						<Icon />
+                                                <Icon name={link.icon} aria-hidden />
 						{link.text}
 					</Link>
 				);
