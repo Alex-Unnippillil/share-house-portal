@@ -1,19 +1,23 @@
- import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/react';
+/* eslint-disable @next/next/no-css-tags */
+import type { Metadata, Viewport } from "next"
+import { Inter } from "next/font/google"
+import Script from "next/script"
+import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import './globals.css'
-import { ThemeProvider } from "@/components/theme-provider"
-import { CookieButton } from "@/components/cookie-button"
+
+import { siteConfig } from "@/config/site"
+import { criticalCss } from "@/lib/critical-css"
 import { fontSans } from "@/lib/font"
-import { siteConfig } from '@/config/site'
-import { ReactQueryClientProvider } from '@/components/react-query-client-provider'
-import { Toaster } from "@/components/ui/toaster"
-import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
-import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { cn } from "@/lib/utils"
-const inter = Inter({ subsets: ['latin'] })
+import { Toaster } from "@/components/ui/toaster"
+import { CookieButton } from "@/components/cookie-button"
+import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
+import { SiteFooter } from "@/components/site-footer"
+import { SiteHeader } from "@/components/site-header"
+import { TailwindIndicator } from "@/components/tailwind-indicator"
+import { ThemeProvider } from "@/components/theme-provider"
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: {
@@ -21,34 +25,55 @@ export const metadata: Metadata = {
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
-    manifest: '/manifest.json',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.roomsily'),
+  manifest: "/manifest.json",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://www.roomsily"
+  ),
   alternates: {
-    canonical: '/',
+    canonical: "/",
     languages: {
-      'en-US': '/en-US',
-      'de-DE': '/de-DE',
-      'es-ES': '/es-ES',
-      'fr-FR': '/fr-FR',
-      'jp-JP': '/jp-JP',
-      'ko-KO': '/ko-KP',
-      'zh-ZH': '/zh-ZH',
-      'pt-PT': '/pt-PT',
+      "en-US": "/en-US",
+      "de-DE": "/de-DE",
+      "es-ES": "/es-ES",
+      "fr-FR": "/fr-FR",
+      "jp-JP": "/jp-JP",
+      "ko-KO": "/ko-KP",
+      "zh-ZH": "/zh-ZH",
+      "pt-PT": "/pt-PT",
     },
   },
-  referrer: 'origin-when-cross-origin',
-  keywords: ['Roomsily', 'NextJS 14 TypeScript', 'Supabase SSR', 'TanStack React Query', 'co-living software', 'rent payment portal', 'shadcn/ui', 'Tailwind CSS', 'SaaS', 'NextJS Supabase Postgres Tailwind TanStack', 'NextJS CSP',
-             'PWA', 'NextJS SaaS PWA Template', 'CRUD ops', 'secure headers', 'NextJS templates with user authentication, RBAC, and CRUD ops', 'NextJS templates with data validation and database integration',
-            'Rust API runtime for vercel serverless functions', 'NextJS secure headers', 'NextJS NextMDX'],
-  authors: [{ name: 'Robert Mourey Jr' }],
-  creator: 'Robert Mourey Jr',
-  publisher: 'Robert Mourey Jr', 
+  referrer: "origin-when-cross-origin",
+  keywords: [
+    "Roomsily",
+    "NextJS 14 TypeScript",
+    "Supabase SSR",
+    "TanStack React Query",
+    "co-living software",
+    "rent payment portal",
+    "shadcn/ui",
+    "Tailwind CSS",
+    "SaaS",
+    "NextJS Supabase Postgres Tailwind TanStack",
+    "NextJS CSP",
+    "PWA",
+    "NextJS SaaS PWA Template",
+    "CRUD ops",
+    "secure headers",
+    "NextJS templates with user authentication, RBAC, and CRUD ops",
+    "NextJS templates with data validation and database integration",
+    "Rust API runtime for vercel serverless functions",
+    "NextJS secure headers",
+    "NextJS NextMDX",
+  ],
+  authors: [{ name: "Robert Mourey Jr" }],
+  creator: "Robert Mourey Jr",
+  publisher: "Robert Mourey Jr",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  generator: 'NextJS',
+  generator: "NextJS",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
@@ -63,9 +88,9 @@ export const metadata: Metadata = {
       index: true,
       follow: false,
       noimageindex: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   openGraph: {
@@ -75,29 +100,29 @@ export const metadata: Metadata = {
     url: "https://www.roomsily",
     images: [
       {
-        url: '/roomsily-og.svg',
+        url: "/roomsily-og.svg",
         width: 1200,
         height: 630,
-        alt: 'Roomsily — modern co-living hub',
+        alt: "Roomsily — modern co-living hub",
       },
     ],
-    locale: 'en_US',
-    type: 'website',
+    locale: "en_US",
+    type: "website",
   },
-    twitter: {
-         title: siteConfig.name,
-         description: siteConfig.description,
-         site: '@roomsily',
-         creator: '@roomsily',
-         images: ['/roomsily-og.svg'],
-   },
+  twitter: {
+    title: siteConfig.name,
+    description: siteConfig.description,
+    site: "@roomsily",
+    creator: "@roomsily",
+    images: ["/roomsily-og.svg"],
+  },
 }
-export const viewport: Viewport =  {
+export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
     { media: "(prefers-color-scheme: dark)", color: "black" },
   ],
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
@@ -107,45 +132,81 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
-
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <style
+            id="roomsily-critical-css"
+            dangerouslySetInnerHTML={{ __html: criticalCss }}
+          />
+          <link rel="preload" as="style" href="/styles/non-critical.css" />
+          <link
+            rel="stylesheet"
+            href="/styles/non-critical.css"
+            media="print"
+            data-critical-styles
+          />
+          <noscript>
+            <link rel="stylesheet" href="/styles/non-critical.css" />
+          </noscript>
+        </head>
+        <body
+          className={cn(
+            "critical-body min-h-screen bg-background font-sans antialiased",
             fontSans.variable
           )}
         >
-<ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-             <div className="relative flex min-h-screen flex-col">
+            <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
+              <div className="flex-1">
+                {children}
+                <Toaster />
+                <Analytics />
+                <SpeedInsights />
+              </div>
+            </div>
+            <SiteFooter />
 
-
-{/*
+            {/*
 enter your api info from termly.io or a provider of your choice
 <Script
   type="text/javascript"
   src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
 */}
-   <CookieButton />    
+            <CookieButton />
+            <TailwindIndicator />
           </ThemeProvider>
-        
-
-
-</body>
-    </html>
+        </body>
+        <Script id="roomsily-activate-css" strategy="afterInteractive">
+          {`
+        (function activateDeferredStyles() {
+          var link = document.querySelector('link[data-critical-styles]');
+          if (!link) return;
+          var activate = function () {
+            link.media = 'all';
+          };
+          if (link.media === 'all') return;
+          if (link.addEventListener) {
+            link.addEventListener('load', activate, { once: true });
+          }
+          if (link.sheet) {
+            activate();
+          } else {
+            setTimeout(activate, 250);
+          }
+        })();
+      `}
+        </Script>
+      </html>
     </ReactQueryClientProvider>
   )
 }

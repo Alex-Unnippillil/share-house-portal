@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { readUserSession } from "@/utils/actions"
 import {
   CalendarRange,
   FileText,
@@ -9,9 +10,10 @@ import {
   Wallet,
 } from "lucide-react"
 
-import { readUserSession } from "@/utils/actions"
 import { siteConfig } from "@/config/site"
+import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -19,8 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
 const heroMetrics = [
   { value: "98%", label: "On-time rent collection" },
@@ -128,29 +128,54 @@ export default async function IndexPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <section className="relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]" />
+      <section
+        data-critical="hero"
+        className="relative overflow-hidden border-b"
+      >
+        <div
+          data-critical="hero-background"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background dark:from-primary/15" />
-        <div className="container relative mx-auto px-4 py-24 sm:py-32">
+        <div
+          data-critical="hero-container"
+          className="container relative mx-auto px-4 py-24 sm:py-32"
+        >
           <div className="mx-auto max-w-3xl space-y-8 text-center">
             <div className="flex justify-center">
-              <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 text-primary">
+              <Badge
+                data-critical="hero-badge"
+                variant="outline"
+                className="rounded-full border-primary/30 bg-primary/10 text-primary"
+              >
                 www.roomsily
               </Badge>
             </div>
-            <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+            <h1
+              data-critical="hero-title"
+              className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl"
+            >
               Co-living operations, beautifully orchestrated
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              Roomsily centralizes rent, amenities, documents, and roommate communication into one elegant portal so shared homes stay calm, coordinated, and connected.
+            <p
+              data-critical="hero-description"
+              className="mx-auto max-w-2xl text-lg text-muted-foreground sm:text-xl"
+            >
+              Roomsily centralizes rent, amenities, documents, and roommate
+              communication into one elegant portal so shared homes stay calm,
+              coordinated, and connected.
             </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+            <div
+              data-critical="hero-cta"
+              className="flex flex-col justify-center gap-4 sm:flex-row"
+            >
               <Link
                 href={siteConfig.links.login}
                 className={cn(
                   buttonVariants({ size: "lg" }),
                   "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                 )}
+                data-critical="hero-primary"
               >
                 Sign in
               </Link>
@@ -160,18 +185,33 @@ export default async function IndexPage() {
                   buttonVariants({ variant: "outline", size: "lg" }),
                   "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
                 )}
+                data-critical="hero-secondary"
               >
                 Create your household
               </Link>
             </div>
-            <div className="grid gap-4 pt-8 sm:grid-cols-3">
+            <div
+              data-critical="hero-metrics"
+              className="grid gap-4 pt-8 sm:grid-cols-3"
+            >
               {heroMetrics.map((metric) => (
                 <div
                   key={metric.label}
+                  data-critical="hero-metric"
                   className="rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur"
                 >
-                  <p className="text-3xl font-semibold text-foreground">{metric.value}</p>
-                  <p className="text-sm text-muted-foreground">{metric.label}</p>
+                  <p
+                    data-critical="hero-metric-value"
+                    className="text-3xl font-semibold text-foreground"
+                  >
+                    {metric.value}
+                  </p>
+                  <p
+                    data-critical="hero-metric-label"
+                    className="text-sm text-muted-foreground"
+                  >
+                    {metric.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -185,21 +225,30 @@ export default async function IndexPage() {
             Everything your household needs in one portal
           </h2>
           <p className="mt-4 text-muted-foreground">
-            From rent to repairs, Roomsily keeps every roommate aligned with modern UI patterns and actionable insights.
+            From rent to repairs, Roomsily keeps every roommate aligned with
+            modern UI patterns and actionable insights.
           </p>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <Card key={feature.title} className="h-full border-border/70 bg-card/80 backdrop-blur">
+            <Card
+              key={feature.title}
+              className="h-full border-border/70 bg-card/80 backdrop-blur"
+            >
               <CardHeader className="space-y-4">
                 <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <feature.icon className="size-5" />
                 </div>
-                <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
+                <CardTitle className="text-xl font-semibold">
+                  {feature.title}
+                </CardTitle>
                 <CardDescription>{feature.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Link href={feature.href} className="text-sm font-medium text-primary hover:underline">
+                <Link
+                  href={feature.href}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
                   Learn more
                 </Link>
               </CardContent>
@@ -212,9 +261,14 @@ export default async function IndexPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             {highlights.map((highlight) => (
-              <Card key={highlight.title} className="h-full border-border/70 bg-background">
+              <Card
+                key={highlight.title}
+                className="h-full border-border/70 bg-background"
+              >
                 <CardHeader>
-                  <CardTitle className="text-2xl font-semibold">{highlight.title}</CardTitle>
+                  <CardTitle className="text-2xl font-semibold">
+                    {highlight.title}
+                  </CardTitle>
                   <CardDescription className="text-base">
                     {highlight.description}
                   </CardDescription>
@@ -250,17 +304,23 @@ export default async function IndexPage() {
             How households move into Roomsily
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Guided onboarding and contextual tips remove the friction from getting every roommate connected.
+            Guided onboarding and contextual tips remove the friction from
+            getting every roommate connected.
           </p>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           {workflow.map((item) => (
             <Card key={item.step} className="h-full border-border/70">
               <CardHeader>
-                <Badge variant="secondary" className="size-9 rounded-full text-base font-semibold">
+                <Badge
+                  variant="secondary"
+                  className="size-9 rounded-full text-base font-semibold"
+                >
                   {item.step}
                 </Badge>
-                <CardTitle className="mt-4 text-xl font-semibold">{item.title}</CardTitle>
+                <CardTitle className="mt-4 text-xl font-semibold">
+                  {item.title}
+                </CardTitle>
                 <CardDescription>{item.description}</CardDescription>
               </CardHeader>
             </Card>
@@ -277,7 +337,8 @@ export default async function IndexPage() {
                   Ready to bring calm to your shared home?
                 </h3>
                 <p className="text-base text-muted-foreground">
-                  Create a Roomsily household in minutes and invite roommates to experience modern, transparent co-living.
+                  Create a Roomsily household in minutes and invite roommates to
+                  experience modern, transparent co-living.
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
