@@ -411,6 +411,33 @@ export type Database = {
         }
         Relationships: []
       }
+      bookings: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          created_by: string
+          id: number
+          notes: string | null
+          timeslot: string
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string
+          created_by: string
+          id?: number
+          notes?: string | null
+          timeslot: string
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string
+          created_by?: string
+          id?: number
+          notes?: string | null
+          timeslot?: string
+        }
+        Relationships: []
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
