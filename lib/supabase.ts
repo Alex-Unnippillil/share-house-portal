@@ -483,6 +483,187 @@ export type Database = {
         }
         Relationships: []
       }
+      chore_assignments: {
+        Row: {
+          assignment_date: string
+          assignment_label: string
+          assigned_profile_id: string
+          created_at: string
+          created_by: string
+          credits: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          assignment_date: string
+          assignment_label: string
+          assigned_profile_id: string
+          created_at?: string
+          created_by: string
+          credits?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          assignment_date?: string
+          assignment_label?: string
+          assigned_profile_id?: string
+          created_at?: string
+          created_by?: string
+          credits?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_assignments_assigned_profile_id_fkey"
+            columns: ["assigned_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chore_credit_ledger: {
+        Row: {
+          amount: number
+          id: number
+          profile_id: string
+          reason: string
+          recorded_at: string
+          recorded_by: string
+          swap_id: number | null
+        }
+        Insert: {
+          amount: number
+          id?: number
+          profile_id: string
+          reason: string
+          recorded_at?: string
+          recorded_by: string
+          swap_id?: number | null
+        }
+        Update: {
+          amount?: number
+          id?: number
+          profile_id?: string
+          reason?: string
+          recorded_at?: string
+          recorded_by?: string
+          swap_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_credit_ledger_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_credit_ledger_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_credit_ledger_swap_id_fkey"
+            columns: ["swap_id"]
+            isOneToOne: false
+            referencedRelation: "chore_swaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chore_swaps: {
+        Row: {
+          counterparty_assignment_id: number
+          counterparty_id: string
+          created_at: string
+          decline_reason: string | null
+          id: number
+          message: string | null
+          proposed_credit_transfer: number
+          requester_assignment_id: number
+          requester_id: string
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+        }
+        Insert: {
+          counterparty_assignment_id: number
+          counterparty_id: string
+          created_at?: string
+          decline_reason?: string | null
+          id?: number
+          message?: string | null
+          proposed_credit_transfer?: number
+          requester_assignment_id: number
+          requester_id: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+        }
+        Update: {
+          counterparty_assignment_id?: number
+          counterparty_id?: string
+          created_at?: string
+          decline_reason?: string | null
+          id?: number
+          message?: string | null
+          proposed_credit_transfer?: number
+          requester_assignment_id?: number
+          requester_id?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_swaps_counterparty_assignment_id_fkey"
+            columns: ["counterparty_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "chore_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_swaps_counterparty_id_fkey"
+            columns: ["counterparty_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_swaps_requester_assignment_id_fkey"
+            columns: ["requester_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "chore_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_swaps_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chore_swaps_responded_by_fkey"
+            columns: ["responded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           continent: Database["public"]["Enums"]["continents"] | null
@@ -1631,9 +1812,17 @@ export type Database = {
       }
     }
     Functions: {
+      accept_chore_swap: {
+        Args: { p_swap_id: number }
+        Returns: Database["public"]["Tables"]["chore_swaps"]["Row"]
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      decline_chore_swap: {
+        Args: { p_reason?: string | null; p_swap_id: number }
+        Returns: Database["public"]["Tables"]["chore_swaps"]["Row"]
       }
       decrement_package_usage: {
         Args: { package_id: string }
