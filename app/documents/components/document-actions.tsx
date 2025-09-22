@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DocumentWithLease } from '@/types/documents';
-import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '../actions';
+import { signDocumentAction, getSigningUrlAction } from '../actions';
 import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
@@ -26,6 +27,69 @@ export function DocumentActions({ document }: DocumentActionsProps) {
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const permissions = useDocumentPermissions();
+  const queryClient = useQueryClient();
+
+  const signDocumentMutation = useMutation({
+    mutationFn: async ({ documentId }: { documentId: string }) => {
+      const result = await signDocumentAction(documentId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to sign document');
+      }
+      return { documentId };
+    },
+    onMutate: async ({ documentId }) => {
+      await queryClient.cancelQueries({ queryKey: ['documents'] });
+      const previousDocuments = queryClient.getQueriesData<DocumentWithLease[]>({ queryKey: ['documents'] });
+      const optimisticSignedAt = new Date().toISOString();
+
+      const snapshots = previousDocuments.map(([queryKey, data]) => {
+        const nextData = data?.map((doc) => {
+          if (doc.id !== documentId) {
+            return doc;
+          }
+
+          const updatedSignatures = doc.signatures?.map((signature) => {
+            if (permissions.userId && signature.signer_id === permissions.userId) {
+              return {
+                ...signature,
+                status: 'signed',
+                signed_at: optimisticSignedAt,
+              };
+            }
+            return signature;
+          });
+
+          const allSigned = updatedSignatures?.every((signature) => signature.status === 'signed') ?? false;
+
+          return {
+            ...doc,
+            signatures: updatedSignatures,
+            status: allSigned ? 'signed' : doc.status,
+            signed_at: allSigned ? optimisticSignedAt : doc.signed_at,
+          };
+        }) ?? data;
+
+        queryClient.setQueryData(queryKey, nextData);
+
+        return { queryKey, data };
+      });
+
+      return { snapshots };
+    },
+    onError: (error, _variables, context) => {
+      context?.snapshots?.forEach(({ queryKey, data }) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      toast.error(error instanceof Error ? error.message : 'Failed to sign document');
+    },
+    onSuccess: () => {
+      toast.success('Document signed successfully');
+    },
+    onSettled: () => {
+      setLoading(null);
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+  });
 
   const handleView = () => {
     setShowViewer(true);
@@ -43,19 +107,14 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       }
 
       // Fallback: mark as signed locally (only if URL not available)
-      const result = await signDocumentAction(document.id);
-      if (result.success) {
-        toast.success('Document signed successfully');
-        window.location.reload();
-      } else {
-        toast.error(result.error || 'Failed to sign document');
-      }
+      signDocumentMutation.mutate({ documentId: document.id });
     } catch (error) {
       console.error('Error initiating signing:', error);
       toast.error('An unexpected error occurred');
-    } finally {
       setLoading(null);
+      return;
     }
+
   };
 
   const handleCreateSigningRequest = () => {

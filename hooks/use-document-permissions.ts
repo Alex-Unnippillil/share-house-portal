@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase-browser';
 import { DocumentWithLease } from '@/types/documents';
 
 export interface UserPermissions {
+  userId: string | null;
   isTenant: boolean;
   isRoommate: boolean;
   isPropertyManager: boolean;
@@ -18,6 +19,7 @@ export interface UserPermissions {
 
 export function useDocumentPermissions(): UserPermissions {
   const [permissions, setPermissions] = useState<UserPermissions>({
+    userId: null,
     isTenant: false,
     isRoommate: false,
     isPropertyManager: false,
@@ -38,6 +40,7 @@ export function useDocumentPermissions(): UserPermissions {
 
         if (!user) {
           setPermissions({
+            userId: null,
             isTenant: false,
             isRoommate: false,
             isPropertyManager: false,
@@ -65,6 +68,7 @@ export function useDocumentPermissions(): UserPermissions {
         const isRoommate = role === 'roommate';
 
         const userPermissions: UserPermissions = {
+          userId: user.id,
           isTenant,
           isRoommate,
           isPropertyManager,

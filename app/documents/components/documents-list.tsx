@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,30 +16,28 @@ interface DocumentsListProps {
 }
 
 export function DocumentsList({ filter }: DocumentsListProps) {
-  const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const filtersKey = useMemo(() => JSON.stringify(filter || {}), [filter]);
+  const documentsQueryKey = useMemo(
+    () => ['documents', filtersKey] as const,
+    [filtersKey]
+  );
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        const result = await getDocumentsAction(filter);
-        if (result.success && result.data) {
-          setDocuments(result.data);
-        } else {
-          setError(result.error || 'Failed to fetch documents');
-        }
-      } catch (err) {
-        console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
-      } finally {
-        setLoading(false);
+  const {
+    data: documents = [],
+    isPending: loading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<DocumentWithLease[], Error>({
+    queryKey: documentsQueryKey,
+    queryFn: async () => {
+      const result = await getDocumentsAction(filter);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to fetch documents');
       }
-    };
-
-    fetchDocuments();
-  }, [filter]);
+      return result.data;
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -106,16 +105,17 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   }
 
-  if (error) {
+  if (isError) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
     return (
       <Card className="p-6">
         <div className="text-center">
           <p className="mb-2 text-destructive">Error loading documents</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-sm text-muted-foreground">{message}</p>
           <Button
             variant="outline"
             className="mt-4"
-            onClick={() => window.location.reload()}
+            onClick={() => refetch()}
           >
             Try Again
           </Button>
