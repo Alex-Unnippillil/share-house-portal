@@ -1,12 +1,12 @@
 import { Suspense } from "react"
 import {
-  Calendar,
-  Car,
-  Gamepad2,
-  Monitor,
-  Tv,
-  UtensilsCrossed,
-} from "lucide-react"
+  CalendarIcon,
+  CarIcon,
+  Gamepad2Icon,
+  MonitorIcon,
+  TvIcon,
+  UtensilsIcon,
+} from "@/components/icons"
 
 import {
   Card,
@@ -27,7 +27,7 @@ const amenities = [
     id: "kitchen",
     name: "Kitchen",
     description: "Book the kitchen for cooking or meal prep",
-    icon: UtensilsCrossed,
+    icon: UtensilsIcon,
     duration: "2 hours",
     maxAdvance: "7 days",
   },
@@ -35,7 +35,7 @@ const amenities = [
     id: "tv-room",
     name: "TV Room",
     description: "Reserve the living room TV for movies or gaming",
-    icon: Tv,
+    icon: TvIcon,
     duration: "3 hours",
     maxAdvance: "7 days",
   },
@@ -43,7 +43,7 @@ const amenities = [
     id: "playstation",
     name: "PlayStation Nook",
     description: "Book the gaming area for console gaming",
-    icon: Gamepad2,
+    icon: Gamepad2Icon,
     duration: "2 hours",
     maxAdvance: "7 days",
   },
@@ -51,7 +51,7 @@ const amenities = [
     id: "parking",
     name: "Parking Spot",
     description: "Reserve a visitor parking spot",
-    icon: Car,
+    icon: CarIcon,
     duration: "24 hours",
     maxAdvance: "14 days",
   },
@@ -59,7 +59,7 @@ const amenities = [
     id: "computer",
     name: "Shared Computer",
     description: "Use the shared computer workstation",
-    icon: Monitor,
+    icon: MonitorIcon,
     duration: "1 hour",
     maxAdvance: "3 days",
   },
@@ -146,7 +146,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Calendar className="size-5 text-primary" />
+              <CalendarIcon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">
                 Smart Scheduling
               </CardTitle>
@@ -162,7 +162,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Tv className="size-5 text-primary" />
+              <TvIcon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">
                 Real-time Availability
               </CardTitle>
@@ -178,7 +178,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Gamepad2 className="size-5 text-primary" />
+              <Gamepad2Icon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Fair Usage</CardTitle>
             </div>
           </CardHeader>
@@ -193,7 +193,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Car className="size-5 text-primary" />
+              <CarIcon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">
                 Mobile Friendly
               </CardTitle>

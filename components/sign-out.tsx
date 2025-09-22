@@ -1,9 +1,9 @@
 "use client";
 import { signOut } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import React, { useTransition } from "react";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 export function SignOut() {
         const [isPending, startTransition] = useTransition();
@@ -20,7 +20,7 @@ export function SignOut() {
                                 variant="outline"
                         >
                                 SignOut{" "}
-                                <AiOutlineLoading3Quarters
+                                <Icons.spinner
                                         className={cn(" animate-spin", { hidden: !isPending })}
                                 />
                         </Button>

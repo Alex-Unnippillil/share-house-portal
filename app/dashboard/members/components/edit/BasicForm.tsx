@@ -5,17 +5,17 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+        Form,
+        FormControl,
+        FormField,
+        FormItem,
+        FormLabel,
+        FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z.object({
@@ -69,10 +69,10 @@ export default function BasicForm() {
 					className="flex w-full items-center gap-2"
 					variant="outline"
 				>
-					Update{" "}
-					<AiOutlineLoading3Quarters
-						className={cn(" animate-spin", "hidden")}
-					/>
+                                        Update{" "}
+                                        <Icons.spinner
+                                                className={cn(" animate-spin", "hidden")}
+                                        />
 				</Button>
 			</form>
 		</Form>

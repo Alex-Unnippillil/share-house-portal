@@ -1,8 +1,9 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { PenToolIcon, UsersIcon } from "@/components/icons"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -10,15 +11,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { DocumentWithLease } from '@/types/documents';
-import { createSigningRequestAction } from '../actions';
-import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import { PenTool, Users } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useDocumentPermissions } from "@/hooks/use-document-permissions"
+import { DocumentWithLease } from "@/types/documents"
+import { toast } from "sonner"
+
+import { createSigningRequestAction } from "../actions"
 
 interface CreateSignatureDialogProps {
   open: boolean;
@@ -100,7 +101,7 @@ export function CreateSignatureDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <PenTool className="size-5" />
+            <PenToolIcon className="size-5" />
             <span>Create Signing Request</span>
           </DialogTitle>
           <DialogDescription>
@@ -166,7 +167,7 @@ export function CreateSignatureDialog({
           {document.document_type === 'lease' && document.lease && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
               <div className="flex items-start space-x-2">
-                <Users className="mt-0.5 size-4 text-blue-600" />
+                <UsersIcon className="mt-0.5 size-4 text-blue-600" />
                 <div className="text-sm">
                   <p className="font-medium text-blue-900 dark:text-blue-100">
                     Lease Document

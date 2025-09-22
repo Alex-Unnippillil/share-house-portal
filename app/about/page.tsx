@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ChevronRight, Star, Zap, Shield } from "lucide-react"
+import { ShieldIcon, StarIcon, ZapIcon } from "@/components/icons"
 import { Contact } from '@/components/forms/contact'
 
 export default function AboutPage() {
@@ -138,16 +138,16 @@ const values = [
   {
     title: "Innovation",
     description: "We constantly push boundaries to create groundbreaking solutions.",
-    icon: <Star className="mx-auto size-12 text-primary" />,
+    icon: <StarIcon className="mx-auto size-12 text-primary" />,
   },
   {
     title: "Efficiency",
     description: "We optimize our processes to deliver results quickly and effectively.",
-    icon: <Zap className="mx-auto size-12 text-primary" />,
+    icon: <ZapIcon className="mx-auto size-12 text-primary" />,
   },
   {
     title: "Integrity",
     description: "We uphold the highest standards of honesty and transparency in all we do.",
-    icon: <Shield className="mx-auto size-12 text-primary" />,
+    icon: <ShieldIcon className="mx-auto size-12 text-primary" />,
   },
 ]

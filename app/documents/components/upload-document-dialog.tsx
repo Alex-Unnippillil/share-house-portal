@@ -1,8 +1,10 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { FileTextIcon, UploadIcon } from "@/components/icons"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -11,22 +13,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { uploadDocumentAction } from '../actions';
-import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import { Upload, FileText } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/select"
+import { useDocumentPermissions } from "@/hooks/use-document-permissions"
+import { toast } from "sonner"
+
+import { uploadDocumentAction } from "../actions"
 
 export function UploadDocumentDialog() {
   const [open, setOpen] = useState(false);
@@ -133,7 +134,7 @@ export function UploadDocumentDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Upload className="mr-2 size-4" />
+          <UploadIcon className="mr-2 size-4" />
           Upload Document
         </Button>
       </DialogTrigger>
@@ -158,7 +159,7 @@ export function UploadDocumentDialog() {
                 className="hidden"
               />
               <label htmlFor="file" className="cursor-pointer">
-                <FileText className="mx-auto mb-2 size-12 text-muted-foreground" />
+                <FileTextIcon className="mx-auto mb-2 size-12 text-muted-foreground" />
                 <div className="text-sm text-muted-foreground">
                   {file ? (
                     <span className="font-medium text-foreground">{file.name}</span>

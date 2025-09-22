@@ -1,9 +1,9 @@
 "use client";
 import { signOut } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import React, { useTransition } from "react";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 export default function SignOut() {
 	const [isPending, startTransition] = useTransition();
@@ -19,10 +19,10 @@ export default function SignOut() {
 				className="flex w-full items-center gap-2"
 				variant="outline"
 			>
-				SignOut{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
+                                SignOut{" "}
+                                <Icons.spinner
+                                        className={cn(" animate-spin", { hidden: !isPending })}
+                                />
 			</Button>
 		</form>
 	);

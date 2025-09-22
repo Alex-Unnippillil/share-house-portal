@@ -17,7 +17,7 @@ import {
 import * as THREE from "three"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CuboidIcon, Shield, Zap, Link, Cog, Database } from "lucide-react"
+import { CogIcon, CuboidIcon, DatabaseIcon, LinkIcon, ShieldIcon, ZapIcon } from "@/components/icons"
 
 // Add this after the imports
 class ErrorBoundary extends React.Component {
@@ -71,7 +71,7 @@ const features = [
   },
   {
     name: "Security",
-    icon: Shield,
+    icon: ShieldIcon,
     description:
       "Immutable and encrypted data storage protecting sensitive information across the entire logistics network.",
     color: "#10b981",
@@ -80,7 +80,7 @@ const features = [
   },
   {
     name: "Efficiency",
-    icon: Zap,
+    icon: ZapIcon,
     description:
       "Streamlined processes and reduced costs through optimized routing and real-time inventory management.",
     color: "#f59e0b",
@@ -89,7 +89,7 @@ const features = [
   },
   {
     name: "Integration",
-    icon: Link,
+    icon: LinkIcon,
     description:
       "Seamless connection with existing systems including ERP, WMS, and other supply chain management tools.",
     color: "#8b5cf6",
@@ -98,7 +98,7 @@ const features = [
   },
   {
     name: "Automation",
-    icon: Cog,
+    icon: CogIcon,
     description: "AI-driven decision making and operations that reduce human error and increase operational speed.",
     color: "#ec4899",
     icon3D: "Gear",
@@ -106,7 +106,7 @@ const features = [
   },
   {
     name: "Data",
-    icon: Database,
+    icon: DatabaseIcon,
     description: "Comprehensive analytics and insights derived from blockchain-secured supply chain data.",
     color: "#06b6d4",
     icon3D: "Database",

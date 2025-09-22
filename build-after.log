@@ -1,0 +1,80 @@
+
+> roomsily@0.1.0 build /workspace/share-house-portal
+> next build
+
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+  ▲ Next.js 14.2.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/43) ...
+   Generating static pages (10/43) 
+   Generating static pages (21/43) 
+   Generating static pages (32/43) 
+ ✓ Generating static pages (43/43)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    184 B          94.3 kB
+├ ƒ /_not-found                          880 B          88.2 kB
+├ ƒ /about                               37.3 kB         164 kB
+├ ƒ /account                             3.32 kB         140 kB
+├ ƒ /api/auth/callback                   0 B                0 B
+├ ƒ /api/auth/google                     0 B                0 B
+├ ƒ /api/notifications                   0 B                0 B
+├ ƒ /api/payments/receipt                0 B                0 B
+├ ƒ /api/send                            0 B                0 B
+├ ƒ /api/sid/callback                    0 B                0 B
+├ ƒ /api/stripe/billing-portal           0 B                0 B
+├ ƒ /api/stripe/checkout                 0 B                0 B
+├ ƒ /api/stripe/webhook                  0 B                0 B
+├ ƒ /auth                                3.33 kB         137 kB
+├ ƒ /auth-server-action                  198 B           135 kB
+├ ƒ /auth/callback                       0 B                0 B
+├ ƒ /auth/confirm                        0 B                0 B
+├ ƒ /auth/signout                        0 B                0 B
+├ ƒ /bookings                            1.98 kB         115 kB
+├ ƒ /chores                              175 B          87.5 kB
+├ ƒ /confirmation                        1.85 kB         107 kB
+├ ƒ /contact                             2.75 kB         137 kB
+├ ƒ /countries/[id]                      749 B           179 kB
+├ ƒ /dashboard                           184 B          94.3 kB
+├ ƒ /dashboard/members                   4.67 kB         164 kB
+├ ƒ /dashboard/todo                      2.22 kB         129 kB
+├ ƒ /documents                           16.7 kB         191 kB
+├ ƒ /error                               175 B          87.5 kB
+├ ƒ /maintenance                         5.69 kB         186 kB
+├ ƒ /mdx                                 175 B          87.5 kB
+├ ƒ /messaging                           1.33 kB          96 kB
+├ ƒ /onboarding                          224 B           147 kB
+├ ○ /opengraph-image.jpg                 0 B                0 B
+├ ƒ /payments                            10.5 kB         171 kB
+├ ƒ /privacy                             175 B          87.5 kB
+├ ƒ /private                             175 B          87.5 kB
+├ ƒ /schedule                            4.82 kB         140 kB
+├ ƒ /signout                             808 B           106 kB
+├ ○ /sitemap.xml                         0 B                0 B
+├ ƒ /ssrcountries/[id]                   5.37 kB         184 kB
+├ ƒ /supplies                            175 B          87.5 kB
+├ ƒ /terms                               175 B          87.5 kB
+├ ○ /twitter-image.jpg                   0 B                0 B
+└ ƒ /visitors                            7.36 kB         199 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/8789-19b1879d393deffe.js      31.7 kB
+  ├ chunks/b572ea07-a26c96f8fe31822c.js  53.6 kB
+  └ other shared chunks (total)          2.01 kB
+
+
+ƒ Middleware                             52 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -1,13 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import {
-  CalendarRange,
-  FileText,
-  MessageSquare,
-  ShieldCheck,
-  Sparkles,
-  Wallet,
-} from "lucide-react"
+import { CalendarRangeIcon, FileTextIcon, MessageSquareIcon, ShieldCheckIcon, SparklesIcon, WalletIcon } from "@/components/icons"
 
 import { readUserSession } from "@/utils/actions"
 import { siteConfig } from "@/config/site"
@@ -33,42 +26,42 @@ const features = [
     title: "Clarity for every payment",
     description:
       "Split rent by roommate, automate autopay, and keep a clean ledger backed by Stripe and Supabase.",
-    icon: Wallet,
+    icon: WalletIcon,
     href: "/payments",
   },
   {
     title: "Effortless amenity booking",
     description:
       "Reserve kitchen time, game nights, or parking with conflict-aware scheduling powered by Cal.com.",
-    icon: CalendarRange,
+    icon: CalendarRangeIcon,
     href: "/bookings",
   },
   {
     title: "Organized document vault",
     description:
       "Store leases, addenda, and move-in checklists with Documenso signing flows and version history.",
-    icon: FileText,
+    icon: FileTextIcon,
     href: "/documents",
   },
   {
     title: "Roommate messaging feed",
     description:
       "Keep conversations on-topic with realtime threads, polls, and alerts that sync across every device.",
-    icon: MessageSquare,
+    icon: MessageSquareIcon,
     href: "/messaging",
   },
   {
     title: "Visitor & guest controls",
     description:
       "Approve overnight guests, capture details, and notify every roommate without leaving the dashboard.",
-    icon: ShieldCheck,
+    icon: ShieldCheckIcon,
     href: "/visitors",
   },
   {
     title: "Smart household insights",
     description:
       "See upcoming renewals, chores, and maintenance timelines at a glance with proactive reminders.",
-    icon: Sparkles,
+    icon: SparklesIcon,
     href: "/dashboard",
   },
 ]

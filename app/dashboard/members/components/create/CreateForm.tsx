@@ -6,14 +6,15 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+        Form,
+        FormControl,
+        FormDescription,
+        FormField,
+        FormItem,
+        FormLabel,
+        FormMessage,
 } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 
@@ -25,7 +26,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { createMember, updateMemberById } from "../../actions";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 
 const FormSchema = z
@@ -227,10 +227,10 @@ export default function MemberForm() {
 					className="flex w-full items-center gap-2"
 					variant="outline"
 				>
-					Submit{" "}
-					<AiOutlineLoading3Quarters
-						className={cn("animate-spin", { hidden: true })}
-					/>
+                                        Submit{" "}
+                                        <Icons.spinner
+                                                className={cn("animate-spin", { hidden: true })}
+                                        />
 				</Button>
 			</form>
 		</Form>

@@ -1,14 +1,20 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
-import { DocumentActions } from './document-actions';
-import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { useEffect, useState } from "react"
+import {
+  CalendarIcon,
+  EyeIcon,
+  FileTextIcon,
+  UsersIcon,
+} from "@/components/icons"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { DocumentListFilters, DocumentWithLease } from "@/types/documents"
+import { formatDistanceToNow } from "date-fns"
+
+import { getDocumentsAction } from "../actions"
+import { DocumentActions } from "./document-actions"
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -67,13 +73,13 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'lease':
-        return <FileText className="size-4" />;
+        return <FileTextIcon className="size-4" />
       case 'addendum':
-        return <FileText className="size-4" />;
+        return <FileTextIcon className="size-4" />
       case 'insurance':
-        return <Users className="size-4" />;
+        return <UsersIcon className="size-4" />
       default:
-        return <FileText className="size-4" />;
+        return <FileTextIcon className="size-4" />
     }
   };
 
@@ -128,7 +134,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     return (
       <Card className="p-12">
         <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <FileTextIcon className="mx-auto mb-4 size-12 text-muted-foreground" />
           <h3 className="mb-2 text-lg font-medium">No documents found</h3>
           <p className="text-sm text-muted-foreground">
             {Object.keys(filter).length > 0
@@ -159,20 +165,20 @@ export function DocumentsList({ filter }: DocumentsListProps) {
                   )}
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                     <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
+                      <CalendarIcon className="size-3" />
                       <span>
                         {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
                       </span>
                     </div>
                     {doc.lease && (
                       <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
+                        <UsersIcon className="size-3" />
                         <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
                       </div>
                     )}
                     {doc.signatures && doc.signatures.length > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
+                        <EyeIcon className="size-3" />
                         <span>
                           {doc.signatures.filter(s => s.status === 'signed').length}/
                           {doc.signatures.length} signed

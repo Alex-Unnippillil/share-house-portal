@@ -1,0 +1,74 @@
+
+> roomsily@0.1.0 build /workspace/share-house-portal
+> next build
+
+  ▲ Next.js 14.2.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/43) ...
+   Generating static pages (10/43) 
+   Generating static pages (21/43) 
+   Generating static pages (32/43) 
+ ✓ Generating static pages (43/43)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    184 B          94.3 kB
+├ ƒ /_not-found                          880 B          88.2 kB
+├ ƒ /about                               37.7 kB         163 kB
+├ ƒ /account                             4.6 kB          138 kB
+├ ƒ /api/auth/callback                   0 B                0 B
+├ ƒ /api/auth/google                     0 B                0 B
+├ ƒ /api/notifications                   0 B                0 B
+├ ƒ /api/payments/receipt                0 B                0 B
+├ ƒ /api/send                            0 B                0 B
+├ ƒ /api/sid/callback                    0 B                0 B
+├ ƒ /api/stripe/billing-portal           0 B                0 B
+├ ƒ /api/stripe/checkout                 0 B                0 B
+├ ƒ /api/stripe/webhook                  0 B                0 B
+├ ƒ /auth                                4.22 kB         137 kB
+├ ƒ /auth-server-action                  203 B           135 kB
+├ ƒ /auth/callback                       0 B                0 B
+├ ƒ /auth/confirm                        0 B                0 B
+├ ƒ /auth/signout                        0 B                0 B
+├ ƒ /bookings                            1.98 kB         113 kB
+├ ƒ /chores                              175 B          87.5 kB
+├ ƒ /confirmation                        3.44 kB         105 kB
+├ ƒ /contact                             2.9 kB          135 kB
+├ ƒ /countries/[id]                      749 B           179 kB
+├ ƒ /dashboard                           184 B          94.3 kB
+├ ƒ /dashboard/members                   5.59 kB         164 kB
+├ ƒ /dashboard/todo                      3.12 kB         129 kB
+├ ƒ /documents                           18 kB           191 kB
+├ ƒ /error                               175 B          87.5 kB
+├ ƒ /maintenance                         5.69 kB         185 kB
+├ ƒ /mdx                                 175 B          87.5 kB
+├ ƒ /messaging                           1.33 kB          96 kB
+├ ƒ /onboarding                          225 B           147 kB
+├ ○ /opengraph-image.jpg                 0 B                0 B
+├ ƒ /payments                            10.5 kB         169 kB
+├ ƒ /privacy                             175 B          87.5 kB
+├ ƒ /private                             175 B          87.5 kB
+├ ƒ /schedule                            4.38 kB         140 kB
+├ ƒ /signout                             3.16 kB         106 kB
+├ ○ /sitemap.xml                         0 B                0 B
+├ ƒ /ssrcountries/[id]                   5.37 kB         184 kB
+├ ƒ /supplies                            175 B          87.5 kB
+├ ƒ /terms                               175 B          87.5 kB
+├ ○ /twitter-image.jpg                   0 B                0 B
+└ ƒ /visitors                            7.62 kB         198 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/8789-19b1879d393deffe.js      31.7 kB
+  ├ chunks/b572ea07-a26c96f8fe31822c.js  53.6 kB
+  └ other shared chunks (total)          2.01 kB
+
+
+ƒ Middleware                             52 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

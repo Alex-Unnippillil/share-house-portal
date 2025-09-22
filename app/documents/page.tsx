@@ -1,13 +1,24 @@
-import { Suspense } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FileText, Users, Clock, Upload } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadDocumentDialog } from "./components/upload-document-dialog";
-import { DocumentsStats } from "./components/documents-stats";
-import { DocumentsList } from "./components/documents-list";
-import { DocumentsFilters } from "./components/documents-filters";
-import { DocumentListFilters } from '@/types/documents';
+import { Suspense } from "react"
+import {
+  ClockIcon,
+  FileTextIcon,
+  UploadIcon,
+  UsersIcon,
+} from "@/components/icons"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UploadDocumentDialog } from "./components/upload-document-dialog"
+import { DocumentsStats } from "./components/documents-stats"
+import { DocumentsList } from "./components/documents-list"
+import { DocumentsFilters } from "./components/documents-filters"
+import { DocumentListFilters } from "@/types/documents"
 
 export default function DocumentsPage() {
   return (
@@ -83,7 +94,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <FileText className="size-5 text-primary" />
+              <FileTextIcon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Secure Storage</CardTitle>
             </div>
           </CardHeader>
@@ -97,7 +108,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Users className="size-5 text-primary" />
+              <UsersIcon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Multi-Signature</CardTitle>
             </div>
           </CardHeader>
@@ -111,7 +122,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Clock className="size-5 text-primary" />
+              <ClockIcon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Version History</CardTitle>
             </div>
           </CardHeader>
@@ -125,7 +136,7 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Upload className="size-5 text-primary" />
+              <UploadIcon className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Bulk Operations</CardTitle>
             </div>
           </CardHeader>

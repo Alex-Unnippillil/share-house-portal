@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
+import { BellIcon, CheckCheckIcon, CheckIcon, Icons, XIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -181,7 +181,7 @@ export function NotificationCenter() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative"
       >
-        <Bell className="size-5" />
+        <BellIcon className="size-5" />
         {unreadCount > 0 && (
           <Badge
             variant="destructive"
@@ -204,7 +204,7 @@ export function NotificationCenter() {
                   onClick={markAllAsRead}
                   className="size-6 px-2 text-xs"
                 >
-                  <CheckCheck className="mr-1 size-3" />
+                  <CheckCheckIcon className="mr-1 size-3" />
                   Mark all read
                 </Button>
               )}
@@ -214,7 +214,7 @@ export function NotificationCenter() {
                 onClick={() => setIsOpen(false)}
                 className="size-6"
               >
-                <X className="size-3" />
+                <XIcon className="size-3" />
               </Button>
             </div>
           </CardHeader>
@@ -274,7 +274,7 @@ export function NotificationCenter() {
                                 }}
                                 className="size-6"
                               >
-                                <Check className="size-3" />
+                                <CheckIcon className="size-3" />
                               </Button>
                             )}
                             <Button
@@ -286,7 +286,7 @@ export function NotificationCenter() {
                               }}
                               className="size-6 text-muted-foreground hover:text-destructive"
                             >
-                              <X className="size-3" />
+                              <XIcon className="size-3" />
                             </Button>
                           </div>
                         </div>

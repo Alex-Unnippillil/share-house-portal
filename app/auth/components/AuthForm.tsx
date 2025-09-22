@@ -5,18 +5,18 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Icons } from "@/components/icons";
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+        Form,
+        FormControl,
+        FormDescription,
+        FormField,
+        FormItem,
+        FormLabel,
+        FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 import { useTransition } from "react";
 import { loginWithEmailAndPassword, signInWithWorkOS } from "../actions";
@@ -135,10 +135,10 @@ export default function AuthForm() {
                                                 type="submit"
                                                 variant="outline"
                                         >
-                                                Log In{" "}
-                                                <AiOutlineLoading3Quarters
-                                                        className={cn(" animate-spin", { hidden: !isPending })}
-                                                />
+                                        Log In{" "}
+                                        <Icons.spinner
+                                                className={cn(" animate-spin", { hidden: !isPending })}
+                                        />
                                         </Button>
                                 </form>
                         </Form>
@@ -152,7 +152,7 @@ export default function AuthForm() {
                                         variant="outline"
                                 >
                                         Continue with SSO
-                                        <AiOutlineLoading3Quarters
+                                        <Icons.spinner
                                                 className={cn(" animate-spin", { hidden: !isWorkosPending })}
                                         />
                                 </Button>
