@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.8",
@@ -96,6 +97,7 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^3.7.2",
+    "@playwright/test": "^1.55.0",
     "@types/eslint": "^8.56.2",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.14.15",
