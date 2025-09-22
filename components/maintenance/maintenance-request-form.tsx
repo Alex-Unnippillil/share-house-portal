@@ -77,11 +77,15 @@ export function MaintenanceRequestForm() {
 
       if (!profile) throw new Error("Profile not found");
 
+      if (!profile.unit_id) {
+        throw new Error("User is not assigned to a unit");
+      }
+
       // Get property manager for this unit
       const { data: propertyManager } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .eq('unit_id', profile.unit_id)
+        .eq('unit_id', profile.unit_id!)
         .eq('role', 'property_manager')
         .single();
 
@@ -90,7 +94,7 @@ export function MaintenanceRequestForm() {
       }
 
       // Create maintenance request record
-      const { data: request, error: requestError } = await supabase
+      const { data: request, error: requestError } = await (supabase as any)
         .from('maintenance_requests')
         .insert({
           title: data.title,
@@ -99,7 +103,7 @@ export function MaintenanceRequestForm() {
           category: data.category || null,
           location: data.location || null,
           requested_by: user.id,
-          unit_id: profile.unit_id,
+          unit_id: (profile as any).unit_id,
           status: 'pending',
         })
         .select()
@@ -109,7 +113,7 @@ export function MaintenanceRequestForm() {
 
       // Send notifications
       await notifyMaintenanceRequest({
-        requesterName: profile.full_name || user.email || 'Unknown',
+        requesterName: (profile as any).full_name || user.email || 'Unknown',
         title: data.title,
         description: data.description,
         priority: data.priority,

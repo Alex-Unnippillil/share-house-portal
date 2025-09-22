@@ -5,14 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AmenityBookingForm } from './components/amenity-booking-form';
 import { BookingHistory } from './components/booking-history';
 import { BookingStats } from './components/booking-stats';
-import { Kitchen, Tv, Gamepad2, Car, Monitor, Calendar } from 'lucide-react';
+import { UtensilsCrossed, Tv, Gamepad2, Car, Monitor, Calendar } from 'lucide-react';
 
 const amenities = [
   {
     id: 'kitchen',
     name: 'Kitchen',
     description: 'Book the kitchen for cooking or meal prep',
-    icon: Kitchen,
+    icon: UtensilsCrossed,
     duration: '2 hours',
     maxAdvance: '7 days',
   },
@@ -92,7 +92,7 @@ export default function BookingsPage() {
               <Card key={amenity.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <amenity.icon className="h-6 w-6 text-primary" />
+                    <amenity.icon className="size-6 text-primary" />
                     <div>
                       <CardTitle className="text-lg">{amenity.name}</CardTitle>
                       <CardDescription>{amenity.description}</CardDescription>
@@ -121,7 +121,7 @@ export default function BookingsPage() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
-              <Calendar className="h-5 w-5 text-primary" />
+              <Calendar className="size-5 text-primary" />
               <CardTitle className="text-sm font-medium">Smart Scheduling</CardTitle>
             </div>
           </CardHeader>

@@ -22,7 +22,7 @@ import { toast } from "@/components/ui/use-toast";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 import { useTransition, useState } from "react";
-import { updateInqueries } from '@/app/contact/actions'
+import { submitInquiry } from '@/app/contact/actions'
 
 const ContactSchema = z.object({
         name: z.string().min(1, { message: "Name can not be empty" }),
@@ -43,20 +43,34 @@ const router = useRouter();
                 },
         });
 
-        function onSubmit(data: ContactValues) {
-     setIsLoading(true)   
-     updateInqueries(data)
-    toast({
-      title: "Thank you for contacting Onyx. We received your inquiry and will respond within 24 hours.",
+        async function onSubmit(data: ContactValues) {
+    setIsLoading(true)
 
-    });
+    try {
+      const result = await submitInquiry(data);
 
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
-  
-  router.push('/')
-
+      if (result.success) {
+        toast({
+          title: "Message sent!",
+          description: "Thank you for contacting us. We will respond within 24 hours.",
+        });
+        form.reset();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
 

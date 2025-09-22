@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { DocumentListFilters } from '@/types/documents';
+import { DocumentListFilters, DocumentStatus, DocumentType } from '@/types/documents';
 import { Filter, X } from 'lucide-react';
 
 interface DocumentsFiltersProps {
@@ -21,7 +21,7 @@ interface DocumentsFiltersProps {
 export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
   const [filters, setFilters] = useState<DocumentListFilters>({});
 
-  const statusOptions = [
+  const statusOptions: { value: DocumentStatus; label: string }[] = [
     { value: 'draft', label: 'Draft' },
     { value: 'pending_signature', label: 'Pending Signature' },
     { value: 'signed', label: 'Signed' },
@@ -29,7 +29,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
     { value: 'cancelled', label: 'Cancelled' },
   ];
 
-  const typeOptions = [
+  const typeOptions: { value: DocumentType; label: string }[] = [
     { value: 'lease', label: 'Lease' },
     { value: 'addendum', label: 'Addendum' },
     { value: 'insurance', label: 'Insurance' },
@@ -42,7 +42,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
     onFiltersChange?.(newFilters);
   };
 
-  const toggleStatusFilter = (status: string, checked: boolean) => {
+  const toggleStatusFilter = (status: DocumentStatus, checked: boolean) => {
     const currentStatuses = filters.status || [];
     const newStatuses = checked
       ? [...currentStatuses, status]
@@ -54,7 +54,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
     });
   };
 
-  const toggleTypeFilter = (type: string, checked: boolean) => {
+  const toggleTypeFilter = (type: DocumentType, checked: boolean) => {
     const currentTypes = filters.type || [];
     const newTypes = checked
       ? [...currentTypes, type]
@@ -87,7 +87,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
           <Button variant="outline" size="sm">
             <Filter className="mr-2 h-4 w-4" />
             Status
-            {filters.status?.length > 0 && (
+            {filters.status && filters.status.length > 0 && (
               <Badge variant="secondary" className="ml-2 h-4 w-4 p-0 text-xs">
                 {filters.status.length}
               </Badge>
@@ -114,7 +114,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
             Type
-            {filters.type?.length > 0 && (
+            {filters.type && filters.type.length > 0 && (
               <Badge variant="secondary" className="ml-2 h-4 w-4 p-0 text-xs">
                 {filters.type.length}
               </Badge>

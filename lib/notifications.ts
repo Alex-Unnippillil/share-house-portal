@@ -80,7 +80,7 @@ class NotificationService {
     try {
       const supabase = await createSupbaseServerClient();
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('notifications')
         .insert({
           user_id: notification.userId,
@@ -127,7 +127,7 @@ class NotificationService {
     try {
       const supabase = await createSupbaseServerClient();
 
-      await supabase
+      await (supabase as any)
         .from('email_notifications')
         .insert({
           user_id: notification.userId,

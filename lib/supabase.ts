@@ -1241,6 +1241,7 @@ export type Database = {
           linkedin_url: string | null
           public_id: string | null
           role: string | null
+          unit_id: string | null
           updated_at: string | null
           username: string | null
           waddress: string | null
@@ -1261,6 +1262,7 @@ export type Database = {
           linkedin_url?: string | null
           public_id?: string | null
           role?: string | null
+          unit_id?: string | null
           updated_at?: string | null
           username?: string | null
           waddress?: string | null
@@ -1281,6 +1283,7 @@ export type Database = {
           linkedin_url?: string | null
           public_id?: string | null
           role?: string | null
+          unit_id?: string | null
           updated_at?: string | null
           username?: string | null
           waddress?: string | null
@@ -1596,74 +1599,526 @@ export type Database = {
           },
         ]
       }
-      documents: {
+      document_signatures: {
         Row: {
           id: string
           created_at: string
           updated_at: string
-          title: string
-          description: string | null
-          document_type: string
+          document_id: string
+          signer_id: string
+          signer_email: string
+          signer_name: string | null
           status: string
-          file_url: string | null
-          documenso_envelope_id: string | null
-          documenso_template_id: string | null
-          metadata: Json | null
-          created_by: string | null
-          property_id: string | null
-          tenant_id: string | null
-          unit_id: string | null
-          requires_signature: boolean
-          expires_at: string | null
           signed_at: string | null
-          version: number
-          parent_document_id: string | null
+          declined_at: string | null
+          decline_reason: string | null
+          documenso_signature_id: string | null
+          ip_address: string | null
+          user_agent: string | null
+          signature_data: Json | null
         }
         Insert: {
           id?: string
           created_at?: string
           updated_at?: string
-          title: string
-          description?: string | null
-          document_type?: string
+          document_id: string
+          signer_id: string
+          signer_email: string
+          signer_name?: string | null
           status?: string
-          file_url?: string | null
-          documenso_envelope_id?: string | null
-          documenso_template_id?: string | null
-          metadata?: Json | null
-          created_by?: string | null
-          property_id?: string | null
-          tenant_id?: string | null
-          unit_id?: string | null
-          requires_signature?: boolean
-          expires_at?: string | null
           signed_at?: string | null
-          version?: number
-          parent_document_id?: string | null
+          declined_at?: string | null
+          decline_reason?: string | null
+          documenso_signature_id?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          signature_data?: Json | null
         }
         Update: {
           id?: string
           created_at?: string
           updated_at?: string
-          title?: string
-          description?: string | null
-          document_type?: string
+          document_id?: string
+          signer_id?: string
+          signer_email?: string
+          signer_name?: string | null
           status?: string
-          file_url?: string | null
-          documenso_envelope_id?: string | null
-          documenso_template_id?: string | null
-          metadata?: Json | null
-          created_by?: string | null
-          property_id?: string | null
-          tenant_id?: string | null
-          unit_id?: string | null
-          requires_signature?: boolean
-          expires_at?: string | null
           signed_at?: string | null
-          version?: number
-          parent_document_id?: string | null
+          declined_at?: string | null
+          decline_reason?: string | null
+          documenso_signature_id?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          signature_data?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "document_signatures_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_access_logs: {
+        Row: {
+          id: string
+          created_at: string
+          document_id: string
+          user_id: string
+          action: string
+          ip_address: string | null
+          user_agent: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          document_id: string
+          user_id: string
+          action: string
+          ip_address?: string | null
+          user_agent?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          document_id?: string
+          user_id?: string
+          action?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_access_logs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leases: {
+        Row: {
+          id: string
+          document_id: string
+          created_at: string
+          updated_at: string
+          start_date: string
+          end_date: string | null
+          rent_amount: number | null
+          rent_frequency: string
+          security_deposit: number | null
+          tenant_ids: string[]
+          property_address: string | null
+          unit_number: string | null
+          landlord_name: string | null
+          landlord_email: string | null
+          auto_renew: boolean
+          renewal_notice_days: number
+          special_terms: string | null
+          status: string
+        }
+        Insert: {
+          id?: string
+          document_id: string
+          created_at?: string
+          updated_at?: string
+          start_date: string
+          end_date?: string | null
+          rent_amount?: number | null
+          rent_frequency?: string
+          security_deposit?: number | null
+          tenant_ids: string[]
+          property_address?: string | null
+          unit_number?: string | null
+          landlord_name?: string | null
+          landlord_email?: string | null
+          auto_renew?: boolean
+          renewal_notice_days?: number
+          special_terms?: string | null
+          status?: string
+        }
+        Update: {
+          id?: string
+          document_id?: string
+          created_at?: string
+          updated_at?: string
+          start_date?: string
+          end_date?: string | null
+          rent_amount?: number | null
+          rent_frequency?: string
+          security_deposit?: number | null
+          tenant_ids?: string[]
+          property_address?: string | null
+          unit_number?: string | null
+          landlord_name?: string | null
+          landlord_email?: string | null
+          auto_renew?: boolean
+          renewal_notice_days?: number
+          special_terms?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rent_payments: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_payment_intent_id: string | null
+          stripe_customer_id: string | null
+          amount: number
+          currency: string
+          status: string
+          payment_method: string | null
+          description: string | null
+          receipt_url: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_payment_intent_id?: string | null
+          stripe_customer_id?: string | null
+          amount: number
+          currency?: string
+          status?: string
+          payment_method?: string | null
+          description?: string | null
+          receipt_url?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_payment_intent_id?: string | null
+          stripe_customer_id?: string | null
+          amount?: number
+          currency?: string
+          status?: string
+          payment_method?: string | null
+          description?: string | null
+          receipt_url?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_subscription_id: string | null
+          stripe_customer_id: string | null
+          status: string
+          current_period_start: string | null
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          amount: number
+          currency: string
+          interval: string
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          status?: string
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          amount: number
+          currency?: string
+          interval?: string
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_subscription_id?: string | null
+          stripe_customer_id?: string | null
+          status?: string
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          amount?: number
+          currency?: string
+          interval?: string
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_requests: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          priority: string
+          status: string
+          category: string | null
+          location: string | null
+          requested_by: string
+          assigned_to: string | null
+          unit_id: string | null
+          created_at: string
+          updated_at: string
+          completed_at: string | null
+          notes: string | null
+          attachments: Json
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          priority?: string
+          status?: string
+          category?: string | null
+          location?: string | null
+          requested_by: string
+          assigned_to?: string | null
+          unit_id?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+          notes?: string | null
+          attachments?: Json
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          priority?: string
+          status?: string
+          category?: string | null
+          location?: string | null
+          requested_by?: string
+          assigned_to?: string | null
+          unit_id?: string | null
+          created_at?: string
+          updated_at?: string
+          completed_at?: string | null
+          notes?: string | null
+          attachments?: Json
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_logs: {
+        Row: {
+          id: string
+          guest_name: string
+          guest_email: string
+          guest_phone: string | null
+          host_id: string
+          check_in_date: string
+          check_out_date: string
+          purpose: string
+          emergency_contact: string | null
+          special_notes: string | null
+          status: string
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          guest_name: string
+          guest_email: string
+          guest_phone?: string | null
+          host_id: string
+          check_in_date: string
+          check_out_date: string
+          purpose: string
+          emergency_contact?: string | null
+          special_notes?: string | null
+          status?: string
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          guest_name?: string
+          guest_email?: string
+          guest_phone?: string | null
+          host_id?: string
+          check_in_date?: string
+          check_out_date?: string
+          purpose?: string
+          emergency_contact?: string | null
+          special_notes?: string | null
+          status?: string
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_logs_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_logs_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          message: string
+          type: string
+          action_url: string | null
+          metadata: Json | null
+          read: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          message: string
+          type: string
+          action_url?: string | null
+          metadata?: Json | null
+          read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          message?: string
+          type?: string
+          action_url?: string | null
+          metadata?: Json | null
+          read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_notifications: {
+        Row: {
+          id: string
+          user_id: string | null
+          recipient: string
+          subject: string
+          template: string
+          status: string
+          sent_at: string
+          error_message: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          recipient: string
+          subject: string
+          template: string
+          status?: string
+          sent_at?: string
+          error_message?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          recipient?: string
+          subject?: string
+          template?: string
+          status?: string
+          sent_at?: string
+          error_message?: string | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_signatures: {
         Row: {
@@ -2022,6 +2477,39 @@ export type Database = {
     CompositeTypes: {
       [_ in never]: never
     }
+  }
+  inquiries: {
+    Row: {
+      id: string
+      name: string
+      email: string
+      message: string
+      status: string
+      created_at: string
+      updated_at: string
+      metadata: Json | null
+    }
+    Insert: {
+      id?: string
+      name: string
+      email: string
+      message: string
+      status?: string
+      created_at?: string
+      updated_at?: string
+      metadata?: Json | null
+    }
+    Update: {
+      id?: string
+      name?: string
+      email?: string
+      message?: string
+      status?: string
+      created_at?: string
+      updated_at?: string
+      metadata?: Json | null
+    }
+    Relationships: []
   }
   storage: {
     Tables: {

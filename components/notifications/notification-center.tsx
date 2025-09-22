@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,25 @@ export function NotificationCenter() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const supabase = createClient();
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      setNotifications(data || []);
+      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
 
   useEffect(() => {
     fetchNotifications();
@@ -60,30 +79,11 @@ export function NotificationCenter() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
-
-  const fetchNotifications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [fetchNotifications, supabase, toast]);
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
@@ -107,7 +107,7 @@ export function NotificationCenter() {
 
       if (unreadIds.length === 0) return;
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('notifications')
         .update({ read: true })
         .in('id', unreadIds);
@@ -129,7 +129,7 @@ export function NotificationCenter() {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('notifications')
         .delete()
         .eq('id', notificationId);
@@ -175,11 +175,11 @@ export function NotificationCenter() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="size-5" />
         {unreadCount > 0 && (
           <Badge
             variant="destructive"
-            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            className="absolute -top-1 -right-1 size-5 flex items-center justify-center p-0 text-xs"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
@@ -196,9 +196,9 @@ export function NotificationCenter() {
                   variant="ghost"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="h-6 px-2 text-xs"
+                  className="size-6 px-2 text-xs"
                 >
-                  <CheckCheck className="h-3 w-3 mr-1" />
+                  <CheckCheck className="size-3 mr-1" />
                   Mark all read
                 </Button>
               )}
@@ -206,9 +206,9 @@ export function NotificationCenter() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsOpen(false)}
-                className="h-6 w-6"
+                className="size-6"
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Button>
             </div>
           </CardHeader>
@@ -265,9 +265,9 @@ export function NotificationCenter() {
                                   e.stopPropagation();
                                   markAsRead(notification.id);
                                 }}
-                                className="h-6 w-6"
+                                className="size-6"
                               >
-                                <Check className="h-3 w-3" />
+                                <Check className="size-3" />
                               </Button>
                             )}
                             <Button
@@ -279,7 +279,7 @@ export function NotificationCenter() {
                               }}
                               className="h-6 w-6 text-muted-foreground hover:text-destructive"
                             >
-                              <X className="h-3 w-3" />
+                              <X className="size-3" />
                             </Button>
                           </div>
                         </div>

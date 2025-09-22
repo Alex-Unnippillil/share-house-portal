@@ -65,7 +65,7 @@ export function VisitorBookingForm() {
       // Get user profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, email')
+        .select('full_name, email, unit_id')
         .eq('id', user.id)
         .single();
 
@@ -76,7 +76,7 @@ export function VisitorBookingForm() {
       const { data: unitData } = await supabase
         .from('profiles')
         .select('id, full_name, email, role')
-        .eq('unit_id', profile.unit_id) // Assuming profiles have unit_id
+        .eq('unit_id', profile.unit_id!)
         .neq('id', user.id);
 
       const roommates = unitData?.filter(p => p.role === 'tenant' || p.role === 'roommate') || [];
@@ -87,7 +87,7 @@ export function VisitorBookingForm() {
       }
 
       // Create visitor booking record
-      const { data: booking, error: bookingError } = await supabase
+      const { data: booking, error: bookingError } = await (supabase as any)
         .from('visitor_logs')
         .insert({
           guest_name: data.guestName,
@@ -212,7 +212,7 @@ export function VisitorBookingForm() {
                         ) : (
                           <span>Pick a date</span>
                         )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        <CalendarIcon className="ml-auto size-4 opacity-50" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
@@ -254,7 +254,7 @@ export function VisitorBookingForm() {
                         ) : (
                           <span>Pick a date</span>
                         )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        <CalendarIcon className="ml-auto size-4 opacity-50" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>

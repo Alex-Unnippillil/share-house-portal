@@ -7,12 +7,7 @@ if (!DOCUMENSO_API_KEY) {
   console.warn('DOCUMENSO_API_KEY is not configured');
 }
 
-interface DocumensoAuthHeaders {
-  Authorization: string;
-  'Content-Type': string;
-}
-
-const getAuthHeaders = (): DocumensoAuthHeaders => ({
+const getAuthHeaders = (): Record<string, string> => ({
   Authorization: `Bearer ${DOCUMENSO_API_KEY}`,
   'Content-Type': 'application/json',
 });

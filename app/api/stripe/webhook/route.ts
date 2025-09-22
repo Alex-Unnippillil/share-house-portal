@@ -75,6 +75,7 @@ async function handleCheckoutSessionCompleted(session: any) {
         const unitId = fullSession.metadata?.unit_id
 
         const paymentData = {
+          user_id: tenantId || '00000000-0000-0000-0000-000000000000', // Use tenant_id as user_id, or a default UUID
           stripe_payment_intent_id: session.payment_intent as string,
           stripe_charge_id: session.payment_intent as string, // Will be updated when charge is available
           stripe_customer_id: session.customer as string,
@@ -162,6 +163,7 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
       const amount = invoice.amount_paid / 100 // Convert from cents
 
       await supabase.from('rent_payments').insert({
+        user_id: subscription.metadata?.tenant_id || '00000000-0000-0000-0000-000000000000', // Use tenant_id as user_id, or a default UUID
         stripe_customer_id: invoice.customer as string,
         stripe_subscription_id: subscription.id,
         amount: amount,
@@ -202,20 +204,18 @@ async function handleSubscriptionCreated(subscription: any) {
     const price = subscription.items.data[0]?.price
 
     await supabase.from('subscriptions').insert({
+      user_id: subscription.metadata?.tenant_id || '00000000-0000-0000-0000-000000000000',
       stripe_subscription_id: subscription.id,
       stripe_customer_id: subscription.customer,
-      stripe_price_id: price?.id,
-      amount: price?.unit_amount / 100, // Convert from cents
-      currency: price?.currency.toUpperCase(),
-      billing_cycle: 'monthly', // Default, could be determined from price
       status: subscription.status,
-      started_at: new Date(subscription.created * 1000).toISOString(),
       current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      tenant_id: subscription.metadata?.tenant_id,
-      unit_id: subscription.metadata?.unit_id,
+      amount: price?.unit_amount || 0, // Convert from cents
+      currency: price?.currency?.toUpperCase() || 'USD',
+      interval: 'month', // Default, could be determined from price
       metadata: {
-        ...subscription.metadata
+        ...subscription.metadata,
+        price_id: price?.id
       }
     })
 

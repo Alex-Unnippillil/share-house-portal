@@ -1,8 +1,7 @@
 "use server";
 
-import { createSupbaseServerClient } from "@/utils/supaone";
-
-import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supa-server-actions";
+import { revalidatePath } from "next/cache";
 
 type formData = {
     name: string;
@@ -10,25 +9,25 @@ type formData = {
     message: string;
 }
 
+export async function submitInquiry(data: formData) {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
-export async function updateInqueries(data:formData) {
-      const supabase = await createSupbaseServerClient();
+  try {
+    const { error } = await supabase
+      .from('inquiries')
+      .insert({
+        name: data.name,
+        email: data.email,
+        message: data.message
+      });
 
-try {
+    if (error) throw error;
 
-const { data: inqueries, error } = await supabase
-  .from('inqueries')
-  .insert(
-    { name: data.name, email: data.email, message: data.message})
-  .select()
-
-const result = JSON.stringify(data)
-  return result;
-
-
-if (error) throw error
-      alert('Message sent!')
-    } catch (error) {
-      alert('Error updating the data!')
-    }
+    revalidatePath('/contact');
+    return { success: true, message: 'Message sent successfully!' };
+  } catch (error) {
+    console.error('Error submitting inquiry:', error);
+    return { success: false, message: 'Error sending message. Please try again.' };
+  }
 }
