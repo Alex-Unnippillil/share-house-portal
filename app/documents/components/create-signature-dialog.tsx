@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,25 +26,103 @@ interface CreateSignatureDialogProps {
   document: DocumentWithLease;
 }
 
+type CreateSigningRequestVariables = {
+  documentId: string;
+  formData: FormData;
+};
+
 export function CreateSignatureDialog({
   open,
   onOpenChange,
-  document
+  document,
 }: CreateSignatureDialogProps) {
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     signer_email: '',
     signer_name: '',
     message: '',
     expires_in_days: 30,
   });
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const permissions = useDocumentPermissions();
 
   // Check if user can create signing requests for this document
-  const canCreateSignature = permissions.canCreateSigningRequests &&
+  const canCreateSignature =
+    permissions.canCreateSigningRequests &&
     document.status === 'draft' &&
     document.requires_signature;
+
+  const createSigningRequestMutation = useMutation({
+    mutationFn: async ({ documentId, formData }: CreateSigningRequestVariables) => {
+      const result = await createSigningRequestAction(formData);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create signing request');
+      }
+      return {
+        documentId,
+        envelopeId: result.data?.envelope_id ?? null,
+      };
+    },
+    onMutate: async ({ documentId }) => {
+      await queryClient.cancelQueries({ queryKey: ['documents'] });
+      const previousDocuments = queryClient.getQueriesData<DocumentWithLease[]>({
+        queryKey: ['documents'],
+      });
+
+      const snapshots = previousDocuments.map(([queryKey, data]) => {
+        const nextData = data?.map((doc) =>
+          doc.id === documentId
+            ? {
+                ...doc,
+                status: 'pending_signature',
+              }
+            : doc
+        ) ?? data;
+
+        queryClient.setQueryData(queryKey, nextData);
+        return { queryKey, data };
+      });
+
+      return { snapshots };
+    },
+    onError: (error, _variables, context) => {
+      context?.snapshots?.forEach(({ queryKey, data }) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create signing request'
+      );
+    },
+    onSuccess: ({ documentId, envelopeId }) => {
+      toast.success('Signing request created successfully');
+      setFormData({
+        signer_email: '',
+        signer_name: '',
+        message: '',
+        expires_in_days: 30,
+      });
+      onOpenChange(false);
+
+      queryClient.setQueriesData<DocumentWithLease[]>({ queryKey: ['documents'] }, (current) => {
+        if (!current) return current;
+        return current.map((doc) =>
+          doc.id === documentId
+            ? {
+                ...doc,
+                status: 'pending_signature',
+                documenso_envelope_id: envelopeId ?? doc.documenso_envelope_id,
+              }
+            : doc
+        );
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+  });
+
+  const isSubmitting = createSigningRequestMutation.isPending;
 
   if (!canCreateSignature) {
     return null;
@@ -63,35 +141,21 @@ export function CreateSignatureDialog({
       return;
     }
 
-    setLoading(true);
+    const submitData = new FormData();
+    submitData.append('document_id', document.id);
+    submitData.append('signer_email', formData.signer_email);
+    submitData.append('signer_name', formData.signer_name);
+    submitData.append('message', formData.message);
+    submitData.append('expires_in_days', formData.expires_in_days.toString());
+
     try {
-      const submitData = new FormData();
-      submitData.append('document_id', document.id);
-      submitData.append('signer_email', formData.signer_email);
-      submitData.append('signer_name', formData.signer_name);
-      submitData.append('message', formData.message);
-      submitData.append('expires_in_days', formData.expires_in_days.toString());
-
-      const result = await createSigningRequestAction(submitData);
-
-      if (result.success) {
-        toast.success('Signing request created successfully');
-        onOpenChange(false);
-        setFormData({
-          signer_email: '',
-          signer_name: '',
-          message: '',
-          expires_in_days: 30,
-        });
-        router.refresh();
-      } else {
-        toast.error(result.error || 'Failed to create signing request');
-      }
+      await createSigningRequestMutation.mutateAsync({
+        documentId: document.id,
+        formData: submitData,
+      });
     } catch (error) {
       console.error('Error creating signing request:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setLoading(false);
+      // Error toast handled in mutation onError
     }
   };
 
@@ -104,7 +168,8 @@ export function CreateSignatureDialog({
             <span>Create Signing Request</span>
           </DialogTitle>
           <DialogDescription>
-            Send a signature request for &quot;{document.title}&quot; via Documenso. The signer will receive an email with a link to sign the document.
+            Send a signature request for &quot;{document.title}&quot; via Documenso. The signer will
+            receive an email with a link to sign the document.
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +181,9 @@ export function CreateSignatureDialog({
               id="signer_email"
               type="email"
               value={formData.signer_email}
-              onChange={(e) => setFormData(prev => ({ ...prev, signer_email: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, signer_email: e.target.value }))
+              }
               placeholder="signer@example.com"
               required
             />
@@ -128,7 +195,9 @@ export function CreateSignatureDialog({
             <Input
               id="signer_name"
               value={formData.signer_name}
-              onChange={(e) => setFormData(prev => ({ ...prev, signer_name: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, signer_name: e.target.value }))
+              }
               placeholder="John Doe"
               required
             />
@@ -140,7 +209,9 @@ export function CreateSignatureDialog({
             <Textarea
               id="message"
               value={formData.message}
-              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, message: e.target.value }))
+              }
               placeholder="Please review and sign this document at your earliest convenience."
               rows={3}
             />
@@ -155,10 +226,12 @@ export function CreateSignatureDialog({
               min="1"
               max="365"
               value={formData.expires_in_days}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                expires_in_days: parseInt(e.target.value) || 30
-              }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  expires_in_days: parseInt(e.target.value, 10) || 30,
+                }))
+              }
             />
           </div>
 
@@ -172,11 +245,13 @@ export function CreateSignatureDialog({
                     Lease Document
                   </p>
                   <p className="text-blue-700 dark:text-blue-300">
-                    This is a lease agreement. For multi-tenant leases, consider creating separate signing requests for each tenant.
+                    This is a lease agreement. For multi-tenant leases, consider creating separate
+                    signing requests for each tenant.
                   </p>
                   {document.lease.tenant_ids && document.lease.tenant_ids.length > 1 && (
                     <p className="mt-1 text-blue-600 dark:text-blue-400">
-                      This lease has {document.lease.tenant_ids.length} tenants. You may need to send individual requests.
+                      This lease has {document.lease.tenant_ids.length} tenants. You may need to send
+                      individual requests.
                     </p>
                   )}
                 </div>
@@ -189,12 +264,12 @@ export function CreateSignatureDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={loading}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Send Signing Request'}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Send Signing Request'}
             </Button>
           </DialogFooter>
         </form>

@@ -7,6 +7,7 @@ import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 
 export interface UserPermissions {
+  userId: string | null;
   isTenant: boolean;
   isRoommate: boolean;
   isPropertyManager: boolean;
@@ -20,6 +21,7 @@ export interface UserPermissions {
 
 export function useDocumentPermissions(): UserPermissions {
   const [permissions, setPermissions] = useState<UserPermissions>({
+    userId: null,
     isTenant: false,
     isRoommate: false,
     isPropertyManager: false,
@@ -41,6 +43,7 @@ export function useDocumentPermissions(): UserPermissions {
 
         if (!user) {
           setPermissions({
+            userId: null,
             isTenant: false,
             isRoommate: false,
             isPropertyManager: false,
@@ -68,6 +71,7 @@ export function useDocumentPermissions(): UserPermissions {
         const isRoommate = resolvedRole === 'roommate';
 
         const userPermissions: UserPermissions = {
+          userId: user.id,
           isTenant,
           isRoommate,
           isPropertyManager,
