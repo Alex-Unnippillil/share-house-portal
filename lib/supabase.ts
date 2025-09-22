@@ -1596,6 +1596,51 @@ export type Database = {
           },
         ]
       }
+      visitor_requests: {
+        Row: {
+          calcom_booking_id: string | null
+          calcom_event_type_id: number
+          created_at: string
+          ends_at: string
+          guest_email: string | null
+          guest_name: string
+          host_email: string
+          id: string
+          notes: string | null
+          starts_at: string
+          status: "pending" | "approved" | "revoked"
+          updated_at: string | null
+        }
+        Insert: {
+          calcom_booking_id?: string | null
+          calcom_event_type_id: number
+          created_at?: string
+          ends_at: string
+          guest_email?: string | null
+          guest_name: string
+          host_email: string
+          id?: string
+          notes?: string | null
+          starts_at: string
+          status?: "pending" | "approved" | "revoked"
+          updated_at?: string | null
+        }
+        Update: {
+          calcom_booking_id?: string | null
+          calcom_event_type_id?: number
+          created_at?: string
+          ends_at?: string
+          guest_email?: string | null
+          guest_name?: string
+          host_email?: string
+          id?: string
+          notes?: string | null
+          starts_at?: string
+          status?: "pending" | "approved" | "revoked"
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       package_utilization: {
