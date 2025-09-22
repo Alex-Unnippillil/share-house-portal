@@ -13,6 +13,8 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { cn } from "@/lib/utils"
+import { FeatureFlagProvider } from '@/components/feature-flag-provider'
+import { resolveFeatureFlags } from '@/lib/feature-flags'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -108,44 +110,51 @@ interface RootLayoutProps {
 }
 
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const featureFlags = await resolveFeatureFlags()
+
   return (
-    <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
-        >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-             <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <div className="flex-1">{children}<Toaster/><Analytics/><SpeedInsights/></div>
-              
-   </div>           
-<SiteFooter/>
+      <head></head>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+        )}
+      >
+        <ReactQueryClientProvider>
+          <FeatureFlagProvider initialFlags={featureFlags}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <div className="relative flex min-h-screen flex-col">
+                <SiteHeader />
+                <div className="flex-1">
+                  {children}
+                  <Toaster />
+                  <Analytics />
+                  <SpeedInsights />
+                </div>
+                <SiteFooter />
+              </div>
 
+              {/*
+              enter your api info from termly.io or a provider of your choice
+              <Script
+                type="text/javascript"
+                src="https://app.termly.io/resource-blocker/123456789abcdefg"
+              />
 
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
-*/}
-   <CookieButton />    
-          </ThemeProvider>
-        
-
-
-</body>
+              */}
+              <CookieButton />
+              <TailwindIndicator />
+            </ThemeProvider>
+          </FeatureFlagProvider>
+        </ReactQueryClientProvider>
+      </body>
     </html>
-    </ReactQueryClientProvider>
   )
 }

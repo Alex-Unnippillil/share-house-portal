@@ -1,23 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
-import { DocumentActions } from './document-actions';
-import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { DocumentWithLease, DocumentListFilters } from "@/types/documents";
+import { getDocumentsAction } from "../actions";
+import { DocumentActions } from "./document-actions";
+import { formatDistanceToNow } from "date-fns";
+import { FileText, Users, Calendar, Eye } from "lucide-react";
+import { useFeatureFlag } from "@/hooks/use-feature-flag";
+import { useVirtualizedList } from "@/hooks/use-virtualized-list";
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
 }
 
+const VIRTUALIZATION_THRESHOLD = 12;
+
 export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const virtualizationFlag = useFeatureFlag("virtualizedLists");
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -39,6 +44,14 @@ export function DocumentsList({ filter }: DocumentsListProps) {
 
     fetchDocuments();
   }, [filter]);
+
+  const virtualization = useVirtualizedList({
+    itemCount: documents.length,
+    estimateHeight: 192,
+    overscan: 6,
+    enabled:
+      virtualizationFlag && !loading && documents.length >= VIRTUALIZATION_THRESHOLD,
+  });
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -140,77 +153,98 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className="mt-1">
-                  {getTypeIcon(doc.document_type)}
+  const renderDocumentCard = (doc: DocumentWithLease) => (
+    <Card key={doc.id} className="transition-shadow hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
+            <div className="mt-1">{getTypeIcon(doc.document_type)}</div>
+            <div className="space-y-1">
+              <h3 className="font-medium leading-none">{doc.title}</h3>
+              {doc.description && (
+                <p className="text-sm text-muted-foreground">{doc.description}</p>
+              )}
+              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                <div className="flex items-center space-x-1">
+                  <Calendar className="size-3" />
+                  <span>
+                    {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
+                  </span>
                 </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium leading-none">{doc.title}</h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
-                  )}
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    {doc.lease && (
-                      <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
-                        <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
-                      </div>
-                    )}
-                    {doc.signatures && doc.signatures.length > 0 && (
-                      <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
-                        <span>
-                          {doc.signatures.filter(s => s.status === 'signed').length}/
-                          {doc.signatures.length} signed
-                        </span>
-                      </div>
-                    )}
+                {doc.lease && (
+                  <div className="flex items-center space-x-1">
+                    <Users className="size-3" />
+                    <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
                   </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {getStatusBadge(doc.status)}
-                <DocumentActions document={doc} />
-              </div>
-            </div>
-          </CardHeader>
-          {doc.signatures && doc.signatures.length > 0 && (
-            <CardContent className="pt-0">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground">Signers:</span>
-                {doc.signatures.slice(0, 3).map((signature) => (
-                  <Badge
-                    key={signature.id}
-                    variant={signature.status === 'signed' ? 'default' : 'outline'}
-                    className="text-xs"
-                  >
-                    {signature.signer_name || signature.signer_email.split('@')[0]}
-                  </Badge>
-                ))}
-                {doc.signatures.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{doc.signatures.length - 3} more
-                  </Badge>
+                )}
+                {doc.signatures && doc.signatures.length > 0 && (
+                  <div className="flex items-center space-x-1">
+                    <Eye className="size-3" />
+                    <span>
+                      {doc.signatures.filter((s) => s.status === 'signed').length}/
+                      {doc.signatures.length} signed
+                    </span>
+                  </div>
                 )}
               </div>
-            </CardContent>
-          )}
-        </Card>
-      ))}
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            {getStatusBadge(doc.status)}
+            <DocumentActions document={doc} />
+          </div>
+        </div>
+      </CardHeader>
+      {doc.signatures && doc.signatures.length > 0 && (
+        <CardContent className="pt-0">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-muted-foreground">Signers:</span>
+            {doc.signatures.slice(0, 3).map((signature) => (
+              <Badge
+                key={signature.id}
+                variant={signature.status === 'signed' ? 'default' : 'outline'}
+                className="text-xs"
+              >
+                {signature.signer_name || signature.signer_email.split('@')[0]}
+              </Badge>
+            ))}
+            {doc.signatures.length > 3 && (
+              <Badge variant="secondary" className="text-xs">
+                +{doc.signatures.length - 3} more
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+
+  if (virtualization.enabled) {
+    const visibleDocuments = documents.slice(
+      virtualization.startIndex,
+      virtualization.endIndex,
+    );
+
+    return (
+      <div
+        ref={virtualization.containerRef}
+        className="relative max-h-[32rem] overflow-auto"
+      >
+        <div style={{ height: virtualization.totalHeight }} className="relative">
+          <div
+            className="absolute inset-x-0 top-0 space-y-4"
+            style={{ transform: `translateY(${virtualization.offset}px)` }}
+          >
+            {visibleDocuments.map((doc) => renderDocumentCard(doc))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {documents.map((doc) => renderDocumentCard(doc))}
     </div>
   );
 }
