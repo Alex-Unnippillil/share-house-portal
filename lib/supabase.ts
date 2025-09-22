@@ -263,6 +263,30 @@ export type Database = {
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }
+  observability: {
+    Tables: {
+      query_costs: SupabaseTable<{
+        id: string
+        trace_id: string | null
+        route: string | null
+        actor: string | null
+        operation: string | null
+        entity: string | null
+        method: string
+        path: string
+        status_code: number | null
+        row_count: number | null
+        total_exec_time_ms: number
+        alert_level: string | null
+        metadata: Json | null
+        recorded_at: string
+      }>
+    }
+    Views: Record<string, never>
+    Functions: Record<string, unknown>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
+  }
   storage: {
     Tables: {
       buckets: SupabaseTable<{

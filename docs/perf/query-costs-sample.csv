@@ -1,0 +1,6 @@
+trace_id,route,entity,method,total_exec_time_ms,row_count,alert_level,recorded_at
+ac1f7c9f-1a8e-4c34-8a67-9f92f2c4c001,/app/api/stripe/webhook#POST,rent_payments,POST,1285,1,critical,2025-01-09T15:12:44.000Z
+b2c0a79d-b03d-43d3-9ba7-0f16c09f9d92,/app/api/notifications#POST,notifications,POST,740,1,warning,2025-01-09T09:47:13.000Z
+a5d590e4-2c07-4f33-8f04-3418ed5ce555,/app/documents/actions/download,documents,GET,512,1,warning,2025-01-09T04:05:02.000Z
+c6f996df-477e-4fd8-a7bb-9dcde1f7187f,/app/dashboard/members,profiles,GET,305,25,info,2025-01-09T12:31:22.000Z
+d7a46728-3452-4e25-804b-ccb3abf0f880,/app/auth/signout#POST,auth,POST,110,0,info,2025-01-09T07:19:54.000Z

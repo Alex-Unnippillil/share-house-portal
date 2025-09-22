@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto"
+
 import { headers } from "next/headers"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
@@ -7,6 +9,8 @@ import {
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { createInstrumentedFetch } from "@/utils/observability/query-logging"
+import { runWithQueryContext } from "@/utils/observability/query-context"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -22,59 +26,74 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
       autoRefreshToken: false,
       persistSession: false,
     },
+    global: {
+      fetch: createInstrumentedFetch({
+        operation: 'stripe-webhook-admin',
+        metadata: { client: 'stripe-webhook-admin' },
+      }),
+    },
   })
 }
 
 export async function POST(req: Request) {
-  const stripe = getStripe()
-  const signature = (await headers()).get("stripe-signature")
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  return runWithQueryContext(
+    {
+      traceId: randomUUID(),
+      route: 'app/api/stripe/webhook#POST',
+      actor: 'stripe-webhook-route',
+    },
+    async () => {
+      const stripe = getStripe()
+      const signature = (await headers()).get("stripe-signature")
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
-  if (!webhookSecret) {
-    return new Response("Webhook not configured", { status: 500 })
-  }
+      if (!webhookSecret) {
+        return new Response("Webhook not configured", { status: 500 })
+      }
 
-  const supabase = createSupabaseAdminClient()
-  if (!supabase) {
-    return new Response("Supabase client not configured", { status: 500 })
-  }
+      const supabase = createSupabaseAdminClient()
+      if (!supabase) {
+        return new Response("Supabase client not configured", { status: 500 })
+      }
 
-  const rawBody = await req.text()
+      const rawBody = await req.text()
 
-  try {
-    const event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature ?? "",
-      webhookSecret
-    )
+      try {
+        const event = stripe.webhooks.constructEvent(
+          rawBody,
+          signature ?? "",
+          webhookSecret
+        )
 
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(supabase, event.data.object)
-        break
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(supabase, event.data.object)
-        break
-      case "customer.subscription.created":
-        await handleSubscriptionCreated(supabase, event.data.object)
-        break
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(supabase, event.data.object)
-        break
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(supabase, event.data.object)
-        break
-      default:
-        console.log(`Unhandled event type: ${event.type}`)
-        break
+        switch (event.type) {
+          case "checkout.session.completed":
+            await handleCheckoutSessionCompleted(supabase, event.data.object)
+            break
+          case "invoice.payment_succeeded":
+            await handleInvoicePaymentSucceeded(supabase, event.data.object)
+            break
+          case "customer.subscription.created":
+            await handleSubscriptionCreated(supabase, event.data.object)
+            break
+          case "customer.subscription.updated":
+            await handleSubscriptionUpdated(supabase, event.data.object)
+            break
+          case "customer.subscription.deleted":
+            await handleSubscriptionDeleted(supabase, event.data.object)
+            break
+          default:
+            console.log(`Unhandled event type: ${event.type}`)
+            break
+        }
+
+        return new Response("ok", { status: 200 })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Invalid payload"
+        console.error("Webhook error:", message)
+        return new Response(`Webhook error: ${message}`, { status: 400 })
+      }
     }
-
-    return new Response("ok", { status: 200 })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid payload"
-    console.error("Webhook error:", message)
-    return new Response(`Webhook error: ${message}`, { status: 400 })
-  }
+  )
 }
 
 async function handleCheckoutSessionCompleted(

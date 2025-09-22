@@ -1,8 +1,21 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export function createClient() {
+import {
+  createInstrumentedFetch,
+  type QueryLoggingContext,
+} from '@/utils/observability/query-logging'
+
+export function createClient(context?: QueryLoggingContext) {
   const cookieStore = cookies()
+  const instrumentationContext: QueryLoggingContext = {
+    ...context,
+    operation: context?.operation ?? 'server-client',
+    metadata: {
+      client: 'supabase-server',
+      ...(context?.metadata ?? {}),
+    },
+  }
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +42,11 @@ export function createClient() {
             // This can be ignored if you have middleware refreshing
             // user sessions.
           }
+        },
+      },
+      options: {
+        global: {
+          fetch: createInstrumentedFetch(instrumentationContext),
         },
       },
     }
