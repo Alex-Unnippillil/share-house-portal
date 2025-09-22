@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VisitorBookingForm } from "@/components/visitors/visitor-booking-form";
+import { getVisitorBookingContext } from "@/lib/data/visitors";
 
 const visitorHighlights = [
   {
@@ -16,7 +17,9 @@ const visitorHighlights = [
   },
 ];
 
-export default function VisitorsPage() {
+export default async function VisitorsPage() {
+  const bookingContext = await getVisitorBookingContext();
+
   return (
     <div className="container max-w-6xl space-y-10 py-12">
       <header className="space-y-4">
@@ -38,7 +41,7 @@ export default function VisitorsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <VisitorBookingForm />
+              <VisitorBookingForm context={bookingContext} />
             </CardContent>
           </Card>
         </div>
