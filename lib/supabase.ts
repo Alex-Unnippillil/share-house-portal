@@ -411,6 +411,139 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_waitlist_entries: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          member_email: string
+          member_id: string
+          member_name: string | null
+          notified_at: string | null
+          position: number
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          member_email: string
+          member_id: string
+          member_name?: string | null
+          notified_at?: string | null
+          position: number
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          member_email?: string
+          member_id?: string
+          member_name?: string | null
+          notified_at?: string | null
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_waitlist_entries_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          amenity_id: string | null
+          amenity_name: string | null
+          cancelled_at: string | null
+          check_in_at: string | null
+          created_at: string
+          end_time: string
+          id: string
+          member_email: string
+          member_id: string
+          member_name: string | null
+          no_show_processed_at: string | null
+          reminder_sent_at: string | null
+          start_time: string
+          status: 'cancelled' | 'checked_in' | 'confirmed' | 'no_show_cancelled'
+          updated_at: string
+          waitlist_notified_at: string | null
+        }
+        Insert: {
+          amenity_id?: string | null
+          amenity_name?: string | null
+          cancelled_at?: string | null
+          check_in_at?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          member_email: string
+          member_id: string
+          member_name?: string | null
+          no_show_processed_at?: string | null
+          reminder_sent_at?: string | null
+          start_time: string
+          status?: 'cancelled' | 'checked_in' | 'confirmed' | 'no_show_cancelled'
+          updated_at?: string
+          waitlist_notified_at?: string | null
+        }
+        Update: {
+          amenity_id?: string | null
+          amenity_name?: string | null
+          cancelled_at?: string | null
+          check_in_at?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          member_email?: string
+          member_id?: string
+          member_name?: string | null
+          no_show_processed_at?: string | null
+          reminder_sent_at?: string | null
+          start_time?: string
+          status?: 'cancelled' | 'checked_in' | 'confirmed' | 'no_show_cancelled'
+          updated_at?: string
+          waitlist_notified_at?: string | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          member_id: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          member_id?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          member_id?: string | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_cards: {
         Row: {
           businesscard_name: string | null
