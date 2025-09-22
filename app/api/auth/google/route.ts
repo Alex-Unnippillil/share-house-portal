@@ -11,15 +11,11 @@ from
 '@/utils/supa-server-actions'
 ; 
 
-import { cookies } from 'next/headers'
-
-import { signInWithGoogle } from '@/app/auth/actions' 
+import { signInWithGoogle } from '@/app/auth/actions'
 
 export async function GET(request: Request) {
 
-const cookieStore = cookies();
-
-const supabase = createClient(cookieStore);
+const supabase = createClient();
 
 // Register this immediately after calling createClient!
 // Because signInWithOAuth causes a redirect, you need to fetch the

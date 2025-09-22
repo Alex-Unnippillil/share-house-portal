@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
+import { useSupabaseClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 
 const maintenanceRequestSchema = z.object({
@@ -47,7 +47,7 @@ export function MaintenanceRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = useSupabaseClient();
 
   const form = useForm<MaintenanceRequestFormData>({
     resolver: zodResolver(maintenanceRequestSchema),

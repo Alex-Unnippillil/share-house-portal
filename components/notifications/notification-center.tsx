@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { createClient } from "@/utils/supabase-browser";
+import { useSupabaseClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -27,7 +27,7 @@ export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useSupabaseClient();
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
