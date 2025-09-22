@@ -37,7 +37,16 @@ NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
 SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
 SUPABASE_JWT_SECRET="your_jwt_secret"
+SUPABASE_DB_URL="postgresql://postgres:postgres@localhost:54322/postgres"
+SUPABASE_DB_POOLER_URL="postgresql://db_user:db_password@project-ref.pooler.supabase.com:6543/postgres"
+SUPABASE_POOLER_WARNING_THRESHOLD="0.7"
+SUPABASE_POOLER_CRITICAL_THRESHOLD="0.9"
 ```
+
+- `SUPABASE_DB_URL` is used for local migrations and administrative scripts.
+- `SUPABASE_DB_POOLER_URL` should target the Supabase PgBouncer endpoint (port `6543`,
+  database `pgbouncer` or `postgres`) with `sslmode=require`.
+- Threshold variables control when connection saturation alerts fire (defaults are warning at 70% and critical at 90%).
 
 ### **APPLICATION**
 ```bash

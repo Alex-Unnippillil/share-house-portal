@@ -1,3 +1,6 @@
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { Agent, setGlobalDispatcher } from 'undici'
+
 export type Json =
   | string
   | number
@@ -310,3 +313,195 @@ export type TablesInsert<T extends keyof PublicSchema['Tables']> =
   PublicSchema['Tables'][T]['Insert']
 export type TablesUpdate<T extends keyof PublicSchema['Tables']> =
   PublicSchema['Tables'][T]['Update']
+
+type ServiceRoleClient = SupabaseClient<Database>
+
+type SupabaseGlobalState = {
+  __supabaseServiceRoleClient?: ServiceRoleClient
+  __supabaseAnonClient?: SupabaseClient<Database>
+  __supabaseFetchAgent?: Agent
+}
+
+const globalForSupabase = globalThis as typeof globalThis & SupabaseGlobalState
+
+const DEFAULT_KEEP_ALIVE_TIMEOUT = 30_000
+const DEFAULT_KEEP_ALIVE_MAX_TIMEOUT = 120_000
+
+const ensureSupabaseFetchAgent = () => {
+  if (!globalForSupabase.__supabaseFetchAgent) {
+    const agent = new Agent({
+      connect: {
+        keepAlive: true,
+      },
+      keepAliveTimeout: DEFAULT_KEEP_ALIVE_TIMEOUT,
+      keepAliveMaxTimeout: DEFAULT_KEEP_ALIVE_MAX_TIMEOUT,
+    })
+
+    setGlobalDispatcher(agent)
+    globalForSupabase.__supabaseFetchAgent = agent
+  }
+
+  return globalForSupabase.__supabaseFetchAgent
+}
+
+const keepAliveFetch: typeof fetch = (input, init = {}) => {
+  ensureSupabaseFetchAgent()
+
+  return fetch(input, {
+    ...init,
+    keepalive: true,
+  })
+}
+
+const getSupabaseUrl = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+
+  if (!supabaseUrl) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is not configured')
+  }
+
+  return supabaseUrl
+}
+
+const getSupabaseAnonKey = () => {
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!anonKey) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not configured')
+  }
+
+  return anonKey
+}
+
+const getSupabaseServiceRoleKey = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured')
+  }
+
+  return serviceRoleKey
+}
+
+const isLocalDatabase = (connectionString: string) =>
+  /localhost|127\.0\.0\.1/.test(connectionString)
+
+export const getSupabaseDatabaseUrl = () => {
+  const databaseUrl = process.env.SUPABASE_DB_URL
+
+  if (!databaseUrl) {
+    throw new Error('SUPABASE_DB_URL is not configured')
+  }
+
+  return databaseUrl
+}
+
+export const getSupabasePoolerUrl = () => {
+  const poolerUrl = process.env.SUPABASE_DB_POOLER_URL
+
+  if (poolerUrl) {
+    return poolerUrl
+  }
+
+  return getSupabaseDatabaseUrl()
+}
+
+export const getPoolerSslConfig = () => {
+  const poolerUrl = getSupabasePoolerUrl()
+
+  if (isLocalDatabase(poolerUrl)) {
+    return false
+  }
+
+  return {
+    rejectUnauthorized: false,
+  }
+}
+
+export const getSupabaseAnonClient = (): SupabaseClient<Database> => {
+  ensureSupabaseFetchAgent()
+
+  if (!globalForSupabase.__supabaseAnonClient) {
+    globalForSupabase.__supabaseAnonClient = createClient<Database>(
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
+      {
+        auth: {
+          persistSession: false,
+        },
+        global: {
+          fetch: keepAliveFetch,
+        },
+      }
+    )
+  }
+
+  return globalForSupabase.__supabaseAnonClient
+}
+
+export const getSupabaseServiceRoleClient = (): ServiceRoleClient => {
+  ensureSupabaseFetchAgent()
+
+  if (!globalForSupabase.__supabaseServiceRoleClient) {
+    globalForSupabase.__supabaseServiceRoleClient = createClient<Database>(
+      getSupabaseUrl(),
+      getSupabaseServiceRoleKey(),
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+        global: {
+          fetch: keepAliveFetch,
+        },
+      }
+    )
+  }
+
+  return globalForSupabase.__supabaseServiceRoleClient
+}
+
+export const resetSupabaseClients = () => {
+  if (globalForSupabase.__supabaseAnonClient) {
+    globalForSupabase.__supabaseAnonClient = undefined
+  }
+
+  if (globalForSupabase.__supabaseServiceRoleClient) {
+    globalForSupabase.__supabaseServiceRoleClient = undefined
+  }
+
+  if (globalForSupabase.__supabaseFetchAgent) {
+    void globalForSupabase.__supabaseFetchAgent.close()
+    globalForSupabase.__supabaseFetchAgent = undefined
+  }
+}
+
+export const getPoolerThresholdsFromEnv = () => {
+  const warning = Number(process.env.SUPABASE_POOLER_WARNING_THRESHOLD ?? '0.7')
+  const critical = Number(process.env.SUPABASE_POOLER_CRITICAL_THRESHOLD ?? '0.9')
+
+  const clamp = (value: number, fallback: number) => {
+    if (!Number.isFinite(value)) {
+      return fallback
+    }
+
+    return Math.min(Math.max(value, 0), 1)
+  }
+
+  const sanitizedWarning = clamp(warning, 0.7)
+  const sanitizedCritical = clamp(critical, 0.9)
+
+  return {
+    warning: sanitizedWarning,
+    critical: Math.max(sanitizedWarning, sanitizedCritical),
+  }
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __supabaseServiceRoleClient: ServiceRoleClient | undefined
+  // eslint-disable-next-line no-var
+  var __supabaseAnonClient: SupabaseClient<Database> | undefined
+  // eslint-disable-next-line no-var
+  var __supabaseFetchAgent: Agent | undefined
+}

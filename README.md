@@ -65,6 +65,10 @@ NEXT_PUBLIC_SUPABASE_URL="your_supabase_project_url"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
 SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
 SUPABASE_JWT_SECRET="your_jwt_secret"
+SUPABASE_DB_URL="postgresql://postgres:postgres@localhost:54322/postgres"
+SUPABASE_DB_POOLER_URL="postgresql://db_user:db_password@project-ref.pooler.supabase.com:6543/postgres"
+SUPABASE_POOLER_WARNING_THRESHOLD="0.7"
+SUPABASE_POOLER_CRITICAL_THRESHOLD="0.9"
 
 # Stripe
 STRIPE_SECRET_KEY="your_stripe_secret_key"
@@ -79,6 +83,10 @@ DOCUMENSO_BASE_URL="your_documenso_instance_url"
 CALCOM_API_KEY="your_calcom_api_key"
 CALCOM_BASE_URL="your_calcom_instance_url"
 ```
+
+- Configure `SUPABASE_DB_POOLER_URL` to use the PgBouncer connection string from the
+  Supabase dashboard (port `6543`, SSL required). Threshold variables control when
+  connection saturation alerts fire.
 
 ### Database Setup
 

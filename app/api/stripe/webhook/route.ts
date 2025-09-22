@@ -1,29 +1,16 @@
 import { headers } from "next/headers"
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 import {
   sendEmailNotification,
   sendInAppNotification,
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
-import type { Database, TablesInsert } from "@/lib/supabase"
-
-function createSupabaseAdminClient(): SupabaseClient<Database> | null {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Supabase admin credentials are not configured")
-    return null
-  }
-
-  return createClient<Database>(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-}
+import {
+  getSupabaseServiceRoleClient,
+  type Database,
+  type TablesInsert,
+} from "@/lib/supabase"
 
 export async function POST(req: Request) {
   const stripe = getStripe()
@@ -34,8 +21,11 @@ export async function POST(req: Request) {
     return new Response("Webhook not configured", { status: 500 })
   }
 
-  const supabase = createSupabaseAdminClient()
-  if (!supabase) {
+  let supabase: SupabaseClient<Database>
+  try {
+    supabase = getSupabaseServiceRoleClient()
+  } catch (error) {
+    console.error("Supabase client not configured", error)
     return new Response("Supabase client not configured", { status: 500 })
   }
 
