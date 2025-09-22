@@ -1,0 +1,17 @@
+{
+  "rum": {
+    "clsP75": 0.1,
+    "fidP75": 100,
+    "lcpP75": 2500
+  },
+  "uptime": {
+    "maxResponseTimeMs": 1500,
+    "expectedStatus": 200
+  },
+  "lighthouse": {
+    "performance": 0.9,
+    "accessibility": 0.9,
+    "bestPractices": 0.9,
+    "seo": 0.9
+  }
+}
