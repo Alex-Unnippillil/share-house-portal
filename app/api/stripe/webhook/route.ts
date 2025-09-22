@@ -65,7 +65,7 @@ export async function POST(req: Request) {
         await handleSubscriptionDeleted(supabase, event.data.object)
         break
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        console.warn(`Unhandled event type: ${event.type}`)
         break
     }
 

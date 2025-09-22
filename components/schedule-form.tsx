@@ -155,7 +155,7 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
     if (!validationResult.success) {
       // Validation failed: Update client error state and stop
       setClientErrors(validationResult.error.flatten().fieldErrors);
-      console.log("Client validation failed:", validationResult.error.flatten().fieldErrors);
+      console.warn("Client validation failed:", validationResult.error.flatten().fieldErrors);
       return;
     }
 
@@ -175,7 +175,6 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
     formData.append('description', `Scheduled via App by ${userEmail} for ${format(validationResult.data.startDateTime, 'PPP p')}`);
 
     // 5. Trigger Server Action
-    console.log("Client validation passed. Submitting to server action...");
     formAction(formData);
   };
 

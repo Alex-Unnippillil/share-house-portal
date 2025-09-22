@@ -12,6 +12,7 @@ module.exports = {
     ],
     plugins: ["tailwindcss"],
     rules: {
+      "no-console": ["error", { allow: ["warn", "error"] }],
       "@next/next/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
       "tailwindcss/no-custom-classname": "off",

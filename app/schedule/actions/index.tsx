@@ -111,8 +111,6 @@ export async function scheduleMeetingAction(
       return { success: false, message: null, error: errorMessage, googleEventLink: null };
     }
 
-    console.log(`Google Event created: ${calendarResult.eventId}, Link: ${calendarResult.link}`);
-
     // 5. Store meeting info in Supabase DB
     //    Pass the validated Date objects directly to the Supabase client.
     //    It typically handles conversion to 'timestamptz' correctly.
@@ -131,8 +129,6 @@ export async function scheduleMeetingAction(
       console.error('Error saving meeting to database:', dbError);
       // Optional: Return a partial success message or specific DB error
       // return { success: false, message: null, error: 'Meeting scheduled, but failed to save record.', googleEventLink: calendarResult.link };
-    } else {
-       console.log("Meeting details saved to database.");
     }
 
     // 6. Revalidate the path if needed
