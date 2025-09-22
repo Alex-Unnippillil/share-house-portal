@@ -1,3 +1,5 @@
+import type { PaginationMetadata, PaginationParams } from './pagination';
+
 export type DocumentType = 'lease' | 'addendum' | 'insurance' | 'maintenance' | 'other';
 
 export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled';
@@ -124,4 +126,15 @@ export interface DocumentStats {
   signed_documents: number;
   expired_documents: number;
   draft_documents: number;
+}
+
+export interface DocumentListParams {
+  filters?: DocumentListFilters;
+  pagination?: PaginationParams;
+}
+
+export interface PaginatedDocumentsResponse {
+  items: DocumentWithLease[];
+  pagination: PaginationMetadata;
+  filters?: DocumentListFilters;
 }

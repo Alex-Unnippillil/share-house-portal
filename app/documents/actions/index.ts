@@ -8,11 +8,17 @@ import { documensoService } from '@/lib/documenso';
 import {
   Document,
   DocumentWithLease,
-  DocumentListFilters,
+  DocumentListParams,
   DocumentUploadRequest,
   DocumentSigningRequest,
-  DocumentStats
+  DocumentStats,
+  PaginatedDocumentsResponse,
 } from '@/types/documents';
+import {
+  buildPaginationMetadata,
+  normalizePaginationParams,
+  paginationParamsSchema,
+} from '@/utils/pagination';
 
 // Validation schemas
 const documentUploadSchema = z.object({
@@ -42,6 +48,13 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const documentsQuerySchema = z.object({
+  filters: documentListFiltersSchema.optional(),
+  pagination: paginationParamsSchema.optional(),
+});
+
+const DEFAULT_DOCUMENT_PAGE_SIZE = 10;
+
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
@@ -52,8 +65,8 @@ interface ActionResult<T = any> {
 
 // Get documents with optional filters
 export async function getDocumentsAction(
-  filters?: DocumentListFilters
-): Promise<ActionResult<DocumentWithLease[]>> {
+  params?: DocumentListParams
+): Promise<ActionResult<PaginatedDocumentsResponse>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
 
@@ -64,8 +77,21 @@ export async function getDocumentsAction(
       return { success: false, error: 'You must be logged in to view documents.' };
     }
 
-    // Validate filters
-    const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
+    const parsedParams = documentsQuerySchema.parse(params ?? {});
+    const validatedFilters = parsedParams.filters ?? {};
+    const paginationInput = parsedParams.pagination;
+
+    let paginationConfig;
+    try {
+      const fallbackLimit = paginationInput?.limit ?? DEFAULT_DOCUMENT_PAGE_SIZE;
+      paginationConfig = normalizePaginationParams(paginationInput, fallbackLimit);
+    } catch (error) {
+      console.error('Invalid pagination cursor for documents:', error);
+      return { success: false, error: 'Invalid pagination cursor provided.' };
+    }
+
+    const { limit, offset, pageOverride } = paginationConfig;
+    const rangeEnd = Math.max(offset + limit - 1, offset);
 
     // Determine role for scoping
     const { data: profile } = await supabase
@@ -81,7 +107,7 @@ export async function getDocumentsAction(
         lease:leases(*),
         signatures:document_signatures(*),
         access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
-      `)
+      `, { count: 'exact' })
       .order('created_at', { ascending: false });
 
     // Scope non-admin/property_manager users to their own documents or ones they need to sign
@@ -111,7 +137,7 @@ export async function getDocumentsAction(
       query = query.lte('created_at', validatedFilters.date_to);
     }
 
-    const { data: documents, error } = await query;
+    const { data: documents, error, count } = await query.range(offset, rangeEnd);
 
     if (error) {
       console.error('Error fetching documents:', error);
@@ -127,7 +153,22 @@ export async function getDocumentsAction(
       });
     }
 
-    return { success: true, data: documents || [] };
+    const pagination = buildPaginationMetadata({
+      total: count ?? 0,
+      limit,
+      offset,
+      itemCount: documents?.length ?? 0,
+      pageOverride,
+    });
+
+    return {
+      success: true,
+      data: {
+        items: documents || [],
+        pagination,
+        filters: validatedFilters,
+      },
+    };
   } catch (error) {
     console.error('Unexpected error in getDocumentsAction:', error);
     return {
