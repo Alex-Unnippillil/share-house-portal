@@ -1,9 +1,9 @@
 import { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { ResponsiveImage } from "@/components/media/responsive-image"
 import AuthForm from "@/app/auth/components/AuthForm"
 import { AuthFormLegacy } from '@/app/auth-server-action/components/AuthFormLegacy'
 
@@ -16,19 +16,22 @@ export default function OnboardingPage() {
   return (
     <>
       <div className="hidden">
-        <Image
+        <ResponsiveImage
           src="/images/house-portal-1.jpg"
           width={1280}
           height={843}
           alt="Roomsily household workspace"
           className="block dark:hidden"
+          priority
+          sizes="100vw"
         />
-        <Image
+        <ResponsiveImage
           src="/images/house-portal-2.jpg"
           width={1280}
           height={843}
           alt="Roommate Collaboration"
           className="hidden"
+          sizes="100vw"
         />
       </div>
       <div className="container relative mx-auto grid h-[640px] grid-cols-1 flex-col items-center justify-center md:grid-cols-2 lg:max-w-none lg:px-0">
@@ -43,14 +46,14 @@ export default function OnboardingPage() {
         </Link>
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
           <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
-          <Image
-          src="/images/house-portal-2.jpg"
-          width={2048}
-          height={2048}
-          alt="Roommate Collaboration"
-          style={{objectFit: "contain"}}
-          
-        />
+            <ResponsiveImage
+              src="/images/house-portal-2.jpg"
+              width={2048}
+              height={2048}
+              alt="Roommate Collaboration"
+              style={{ objectFit: "contain" }}
+              priority
+            />
           </div>
           <div className="relative z-20 flex items-center text-lg font-medium">
             <svg
