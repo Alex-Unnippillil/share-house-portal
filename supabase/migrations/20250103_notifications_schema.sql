@@ -64,6 +64,32 @@ CREATE TABLE public.email_notifications (
   metadata JSONB
 );
 
+-- Invoice status enum ensures consistent lifecycle values
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_type
+    WHERE typname = 'invoice_status'
+      AND typnamespace = 'public'::regnamespace
+  ) THEN
+    CREATE TYPE public.invoice_status AS ENUM ('draft', 'sent', 'paid', 'overdue', 'void');
+  END IF;
+END;
+$$;
+
+-- Create invoices table for household billing
+CREATE TABLE public.invoices (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
+  member_id UUID NOT NULL REFERENCES public.members(id) ON DELETE CASCADE,
+  amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+  due_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  status public.invoice_status NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_maintenance_requests_requested_by ON public.maintenance_requests(requested_by);
 CREATE INDEX idx_maintenance_requests_assigned_to ON public.maintenance_requests(assigned_to);
@@ -82,6 +108,7 @@ CREATE INDEX idx_notifications_read ON public.notifications(read);
 CREATE INDEX idx_notifications_created_at ON public.notifications(created_at DESC);
 CREATE INDEX idx_email_notifications_user_id ON public.email_notifications(user_id);
 CREATE INDEX idx_email_notifications_sent_at ON public.email_notifications(sent_at DESC);
+CREATE INDEX idx_invoices_household_due_at ON public.invoices(household_id, due_at);
 
 -- Enable RLS
 ALTER TABLE public.maintenance_requests ENABLE ROW LEVEL SECURITY;
@@ -184,4 +211,8 @@ CREATE TRIGGER update_visitor_logs_updated_at
 
 CREATE TRIGGER update_notifications_updated_at
   BEFORE UPDATE ON public.notifications
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_invoices_updated_at
+  BEFORE UPDATE ON public.invoices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
