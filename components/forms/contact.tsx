@@ -4,8 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from 'next/navigation';
-import { Icons } from "@/components/icons"
-import { ChevronRight } from 'lucide-react'
+import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button";
 import {
         Form,
@@ -139,7 +138,7 @@ const router = useRouter();
                                 variant="outline"
                         >
                                 Send Message
-                                <ChevronRight className="ml-2 size-4"/>
+                                <Icon name="chevron-right" className="ml-2 size-4" />
    </Button>
                                 </form>
                         </Form>
