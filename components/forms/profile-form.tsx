@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
@@ -125,7 +125,10 @@ export function ProfileForm() {
               </Select>
               <FormDescription>
                 You can manage verified email addresses in your{" "}
-                <Link href="#">email settings</Link>.
+                <SmartLink href="#" intent="passive">
+                  email settings
+                </SmartLink>
+                .
               </FormDescription>
               <FormMessage />
             </FormItem>
