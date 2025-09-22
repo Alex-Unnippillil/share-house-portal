@@ -1,5 +1,12 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatDistanceToNow } from "date-fns"
+
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { createSupbaseServerClient } from "@/utils/supaone"
+import { cn } from "@/lib/utils"
+import type { IncidentSeverity, IncidentUpdate } from "@/lib/incidents/types"
+import { humanizeLabel, severityBadgeStyles } from "@/lib/incidents/presentation"
 
 const messagingHighlights = [
   {
@@ -24,7 +31,41 @@ const messagingHighlights = [
   },
 ]
 
-export default function MessagingPage() {
+type IncidentFeedEntry = IncidentUpdate & {
+  incidents: {
+    id: string
+    title: string | null
+    household_id: string | null
+  } | null
+  author: {
+    id: string
+    full_name: string | null
+  } | null
+}
+
+async function getIncidentFeed(): Promise<IncidentFeedEntry[]> {
+  const supabase = await createSupbaseServerClient()
+  const { data, error } = await supabase
+    .from("incident_updates")
+    .select(
+      `id, message, created_at, status, severity,
+       incidents:incident_id (id, title, household_id),
+       author:author_id (id, full_name)`,
+    )
+    .order("created_at", { ascending: false })
+    .limit(20)
+
+  if (error) {
+    console.error("Failed to load incident feed", error)
+    return []
+  }
+
+  return (data ?? []) as IncidentFeedEntry[]
+}
+
+export default async function MessagingPage() {
+  const incidentFeed = await getIncidentFeed()
+
   return (
     <div className="container max-w-5xl space-y-10 py-12">
       <header className="space-y-4">
@@ -46,6 +87,54 @@ export default function MessagingPage() {
           </Card>
         ))}
       </div>
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold">Incident updates</h2>
+          <p className="text-sm text-muted-foreground">
+            Every status change from the incidents dashboard is posted here so the household stays informed in real time.
+          </p>
+        </div>
+        <div className="grid gap-4">
+          {incidentFeed.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                Incident activity will appear here after the first report is triaged.
+              </CardContent>
+            </Card>
+          ) : (
+            incidentFeed.map((entry) => (
+              <Card key={entry.id}>
+                <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <CardTitle className="text-base">
+                      {entry.incidents?.title ?? "Incident update"}
+                    </CardTitle>
+                    <CardDescription>
+                      Household {entry.incidents?.household_id ?? "unknown"}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge className={cn("capitalize", severityBadgeStyles[entry.severity as IncidentSeverity])}>
+                      {humanizeLabel(entry.severity)}
+                    </Badge>
+                    <Badge variant="outline" className="capitalize">
+                      {humanizeLabel(entry.status)}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm leading-relaxed">{entry.message}</p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>{entry.author?.full_name ?? "System"}</span>
+                    <span aria-hidden>•</span>
+                    <span>{formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   )
 }
