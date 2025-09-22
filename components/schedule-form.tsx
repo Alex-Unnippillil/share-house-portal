@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button'
 import { scheduleMeetingAction } from '@/app/schedule/actions';
 import { useFormState, useFormStatus } from 'react-dom';
 import { DayPicker } from 'react-day-picker';
 import * as z from 'zod'; // Import Zod
+import { toast } from 'sonner';
 import {
     format,
     formatISO,
@@ -51,11 +52,18 @@ interface ScheduleFormProps {
   userName: string;
 }
 
-const initialState: { message: string | null; error: string | null; success: boolean; googleEventLink?: string | null } = {
+const initialState: {
+  message: string | null;
+  error: string | null;
+  success: boolean;
+  googleEventLink?: string | null;
+  fallbackNotice?: string | null;
+} = {
   message: null,
   error: null,
   success: false,
   googleEventLink: null,
+  fallbackNotice: null,
 };
 
 const MEETING_DURATION_MINUTES = 60;
@@ -90,6 +98,12 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined);
   // Client-side validation state
   const [clientErrors, setClientErrors] = useState<ClientValidationErrors | null>(null);
+
+  useEffect(() => {
+    if (serverState?.fallbackNotice) {
+      toast.warning(serverState.fallbackNotice);
+    }
+  }, [serverState?.fallbackNotice]);
 
 
   const availableTimeSlots = useMemo(() => {
@@ -203,9 +217,14 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
           )}
         </p>
       )}
-       {serverState?.error && (
+      {serverState?.error && (
         <p className="rounded bg-red-100 p-3 text-sm text-red-800">
           Server Error: {serverState.error}
+        </p>
+      )}
+      {serverState?.fallbackNotice && (
+        <p className="rounded bg-yellow-100 p-3 text-sm text-yellow-800">
+          {serverState.fallbackNotice}
         </p>
       )}
 
