@@ -165,9 +165,15 @@ export function useNotifications() {
       ...data.roommates.map((roommate) => ({
         userId: roommate.id,
         title: "New Visitor Booking",
-        message: `${data.guestName} is visiting from ${data.checkInDate} to ${data.checkOutDate}`,
+        message: `${data.guestName} is visiting from ${data.checkInDate} to ${data.checkOutDate}. Please review and record your approval in the visitor log.`,
         type: "info" as const,
-        actionUrl: "/dashboard",
+        actionUrl: "/visitors",
+        metadata: {
+          requiresApproval: true,
+          visitorName: data.guestName,
+          checkInDate: data.checkInDate,
+          checkOutDate: data.checkOutDate,
+        },
       })),
     ]
 
