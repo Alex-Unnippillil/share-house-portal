@@ -22,6 +22,10 @@ export const siteConfig = {
       href: "/bookings",
     },
     {
+      title: "Visitors",
+      href: "/visitors",
+    },
+    {
       title: "Documents",
       href: "/documents",
     },
