@@ -1596,6 +1596,135 @@ export type Database = {
           },
         ]
       }
+      visitor_access_audit: {
+        Row: {
+          actor_profile_id: string | null
+          building_id: string
+          created_at: string
+          event: Database["public"]["Enums"]["visitor_access_event"]
+          id: number
+          metadata: Json | null
+          status: string
+          visitor_request_id: string
+        }
+        Insert: {
+          actor_profile_id?: string | null
+          building_id: string
+          created_at?: string
+          event: Database["public"]["Enums"]["visitor_access_event"]
+          id?: number
+          metadata?: Json | null
+          status?: string
+          visitor_request_id: string
+        }
+        Update: {
+          actor_profile_id?: string | null
+          building_id?: string
+          created_at?: string
+          event?: Database["public"]["Enums"]["visitor_access_event"]
+          id?: number
+          metadata?: Json | null
+          status?: string
+          visitor_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_access_audit_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_access_audit_visitor_request_id_fkey"
+            columns: ["visitor_request_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_requests: {
+        Row: {
+          access_code: string | null
+          access_code_expires_at: string | null
+          access_code_issued_at: string | null
+          approval_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          building_id: string
+          created_at: string
+          guest_email: string | null
+          guest_name: string
+          host_profile_id: string
+          id: string
+          revoked_at: string | null
+          revocation_reason: string | null
+          status: Database["public"]["Enums"]["visitor_request_status"]
+          updated_at: string
+          visit_end: string
+          visit_reason: string | null
+          visit_start: string
+        }
+        Insert: {
+          access_code?: string | null
+          access_code_expires_at?: string | null
+          access_code_issued_at?: string | null
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          building_id: string
+          created_at?: string
+          guest_email?: string | null
+          guest_name: string
+          host_profile_id: string
+          id?: string
+          revoked_at?: string | null
+          revocation_reason?: string | null
+          status?: Database["public"]["Enums"]["visitor_request_status"]
+          updated_at?: string
+          visit_end: string
+          visit_reason?: string | null
+          visit_start: string
+        }
+        Update: {
+          access_code?: string | null
+          access_code_expires_at?: string | null
+          access_code_issued_at?: string | null
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          building_id?: string
+          created_at?: string
+          guest_email?: string | null
+          guest_name?: string
+          host_profile_id?: string
+          id?: string
+          revoked_at?: string | null
+          revocation_reason?: string | null
+          status?: Database["public"]["Enums"]["visitor_request_status"]
+          updated_at?: string
+          visit_end?: string
+          visit_reason?: string | null
+          visit_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_requests_host_profile_id_fkey"
+            columns: ["host_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       package_utilization: {
@@ -2234,6 +2363,12 @@ export const Constants = {
         "South America",
       ],
       user_role: ["user", "admin"],
+      visitor_access_event: [
+        "code_issued",
+        "revocation_scheduled",
+        "revoked",
+      ],
+      visitor_request_status: ["pending", "approved", "denied", "revoked"],
     },
   },
   storage: {
