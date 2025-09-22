@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "pnpm run guard:client-directives && next lint",
+    "guard:client-directives": "node ./scripts/check-client-directives.mjs",
     "test": "vitest run"
   },
   "dependencies": {

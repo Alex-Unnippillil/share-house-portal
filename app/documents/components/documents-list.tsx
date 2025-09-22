@@ -1,44 +1,36 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
+import { DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
 
 interface DocumentsListProps {
-  filter: DocumentListFilters;
+  filter?: DocumentListFilters;
 }
 
-export function DocumentsList({ filter }: DocumentsListProps) {
-  const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export async function DocumentsList({ filter = {} }: DocumentsListProps) {
+  const result = await getDocumentsAction(filter);
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        const result = await getDocumentsAction(filter);
-        if (result.success && result.data) {
-          setDocuments(result.data);
-        } else {
-          setError(result.error || 'Failed to fetch documents');
-        }
-      } catch (err) {
-        console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (!result.success) {
+    return (
+      <Card className="p-6">
+        <div className="text-center">
+          <p className="mb-2 text-destructive">Error loading documents</p>
+          <p className="text-sm text-muted-foreground">
+            {result.error || 'An unexpected error occurred.'}
+          </p>
+          <Button asChild variant="outline" className="mt-4">
+            <a href="/documents">Try again</a>
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
-    fetchDocuments();
-  }, [filter]);
+  const documents = result.data ?? [];
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -76,53 +68,6 @@ export function DocumentsList({ filter }: DocumentsListProps) {
         return <FileText className="size-4" />;
     }
   };
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="h-5 w-48 rounded bg-muted"></div>
-                  <div className="h-4 w-32 rounded bg-muted"></div>
-                </div>
-                <div className="h-6 w-20 rounded bg-muted"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="h-4 w-24 rounded bg-muted"></div>
-                <div className="flex space-x-2">
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-6">
-        <div className="text-center">
-          <p className="mb-2 text-destructive">Error loading documents</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
-        </div>
-      </Card>
-    );
-  }
 
   if (documents.length === 0) {
     return (

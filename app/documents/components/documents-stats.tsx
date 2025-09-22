@@ -1,42 +1,24 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { getDocumentStatsAction } from '../actions';
-import { DocumentStats } from '@/types/documents';
 
-export function DocumentsStats() {
-  const [stats, setStats] = useState<DocumentStats | null>(null);
-  const [loading, setLoading] = useState(true);
+export async function DocumentsStats() {
+  const result = await getDocumentStatsAction();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const result = await getDocumentStatsAction();
-        if (result.success && result.data) {
-          setStats(result.data);
-        }
-      } catch (error) {
-        console.error('Error fetching document stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  if (loading) {
+  if (!result.success || !result.data) {
     return (
       <div className="grid gap-4 md:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
+          <Card key={i} className="border-dashed">
             <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Documents unavailable
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
+              <p className="text-xs text-muted-foreground">
+                {result.error || 'Unable to load document statistics.'}
+              </p>
             </CardContent>
           </Card>
         ))}
@@ -44,9 +26,7 @@ export function DocumentsStats() {
     );
   }
 
-  if (!stats) {
-    return null;
-  }
+  const stats = result.data;
 
   const statItems = [
     {
@@ -54,26 +34,30 @@ export function DocumentsStats() {
       value: stats.total_documents,
       icon: FileText,
       color: "text-blue-600",
+      description: "All document types",
     },
     {
       title: "Pending Signatures",
       value: stats.pending_signatures,
       icon: Clock,
       color: "text-yellow-600",
+      description: "Awaiting signatures",
     },
     {
       title: "Signed Documents",
       value: stats.signed_documents,
       icon: CheckCircle,
       color: "text-green-600",
+      description: "Fully executed",
     },
     {
       title: "Expired Documents",
       value: stats.expired_documents,
       icon: AlertCircle,
       color: "text-red-600",
+      description: "Past expiry date",
     },
-  ];
+  ] as const;
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
@@ -87,12 +71,7 @@ export function DocumentsStats() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{item.value}</div>
-            <p className="text-xs text-muted-foreground">
-              {item.title === "Total Documents" && "All document types"}
-              {item.title === "Pending Signatures" && "Awaiting signatures"}
-              {item.title === "Signed Documents" && "Fully executed"}
-              {item.title === "Expired Documents" && "Past expiry date"}
-            </p>
+            <p className="text-xs text-muted-foreground">{item.description}</p>
           </CardContent>
         </Card>
       ))}
