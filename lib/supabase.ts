@@ -170,6 +170,17 @@ export type Database = {
         attachments: Json | null
         metadata: Json | null
       }>
+      bookings: SupabaseTable<{
+        id: string
+        amenity_id: string
+        tenant_id: string | null
+        start_time: string
+        end_time: string
+        status: string | null
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
       visitor_logs: SupabaseTable<{
         id: string
         guest_name: string
