@@ -54,14 +54,15 @@ export default function NavLinks() {
 			{links.map((link, index) => {
 				const Icon = link.Icon;
 				return (
-					<Link
-						onClick={() =>
-							document.getElementById("sidebar-close")?.click()
-						}
-						href={link.href}
-						key={index}
-						className={cn(
-							"flex items-center gap-2 rounded-sm p-2",
+                                        <Link
+                                                onClick={() =>
+                                                        document.getElementById("sidebar-close")?.click()
+                                                }
+                                                href={link.href}
+                                                prefetch={false}
+                                                key={index}
+                                                className={cn(
+                                                        "flex items-center gap-2 rounded-sm p-2",
 							{
 								" bg-gray-500 dark:bg-gray-700 text-white ":
 									pathname === link.href,
