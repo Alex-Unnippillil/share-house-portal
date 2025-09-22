@@ -84,7 +84,7 @@ export default function BookingsPage() {
       {/* Stats Overview */}
       <Suspense
         fallback={
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="content-visibility-auto contain-content grid gap-4 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader className="pb-2">
@@ -109,7 +109,7 @@ export default function BookingsPage() {
         </TabsList>
 
         <TabsContent value="book" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="content-visibility-auto contain-content grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {amenities.map(({ icon: Icon, ...amenity }) => (
               <Card
                 key={amenity.id}
