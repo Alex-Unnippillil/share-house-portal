@@ -4,11 +4,37 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  const requestHeaders = new Headers(request.headers)
+
+  if (!requestHeaders.has('accept-encoding')) {
+    requestHeaders.set('accept-encoding', 'br, gzip')
+  }
+
+  const applyResponseDefaults = (nextResponse: NextResponse) => {
+    const varyHeader = nextResponse.headers.get('Vary')
+
+    if (varyHeader) {
+      const varyValues = varyHeader
+        .split(',')
+        .map(value => value.trim().toLowerCase())
+
+      if (!varyValues.includes('accept-encoding')) {
+        nextResponse.headers.set('Vary', `${varyHeader}, Accept-Encoding`)
+      }
+    } else {
+      nextResponse.headers.set('Vary', 'Accept-Encoding')
+    }
+
+    return nextResponse
+  }
+
+  let response = applyResponseDefaults(
+    NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  )
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -24,11 +50,13 @@ export async function middleware(request: NextRequest) {
             value,
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          response = applyResponseDefaults(
+            NextResponse.next({
+              request: {
+                headers: requestHeaders,
+              },
+            })
+          )
           response.cookies.set({
             name,
             value,
@@ -41,11 +69,13 @@ export async function middleware(request: NextRequest) {
             value: '',
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          response = applyResponseDefaults(
+            NextResponse.next({
+              request: {
+                headers: requestHeaders,
+              },
+            })
+          )
           response.cookies.set({
             name,
             value: '',
@@ -58,7 +88,7 @@ export async function middleware(request: NextRequest) {
 
   await supabase.auth.getUser()
 
-  return response
+  return applyResponseDefaults(response)
 }
 
 export const config = {

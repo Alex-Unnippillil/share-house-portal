@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server"
-
 import {
   sendBulkNotifications,
   sendEmailNotification,
@@ -7,6 +5,7 @@ import {
   type InAppNotification,
   type NotificationData,
 } from "@/lib/notifications"
+import { createCompressedJsonResponse } from "@/lib/http/compression"
 
 type NotificationRequest =
   | { type: "email"; notification: NotificationData }
@@ -24,23 +23,25 @@ export async function POST(request: Request) {
       case "email": {
         const result = await sendEmailNotification(payload.notification)
         const status = result.success ? 200 : 400
-        return NextResponse.json(result, { status })
+        return createCompressedJsonResponse(request, result, { status })
       }
       case "in-app": {
         const result = await sendInAppNotification(payload.notification)
         const status = result.success ? 200 : 400
-        return NextResponse.json(result, { status })
+        return createCompressedJsonResponse(request, result, { status })
       }
       case "bulk": {
         const results = await sendBulkNotifications(payload.notifications)
         const success = results.every((entry) => entry.success)
-        return NextResponse.json(
+        return createCompressedJsonResponse(
+          request,
           { success, results },
           { status: success ? 200 : 400 }
         )
       }
       default: {
-        return NextResponse.json(
+        return createCompressedJsonResponse(
+          request,
           { success: false, error: "Invalid notification request" },
           { status: 400 }
         )
@@ -52,7 +53,8 @@ export async function POST(request: Request) {
       error instanceof Error
         ? error.message
         : "Unexpected error sending notification"
-    return NextResponse.json(
+    return createCompressedJsonResponse(
+      request,
       { success: false, error: message },
       { status: 500 }
     )
