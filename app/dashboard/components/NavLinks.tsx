@@ -5,6 +5,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase-browser";
+import { fetchMemberRole } from "@/lib/data/members";
+import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
 export default function NavLinks() {
 	const pathname = usePathname();
@@ -14,20 +16,22 @@ export default function NavLinks() {
 		const load = async () => {
 			try {
 				const supabase = createClient();
-				const { data: { user } } = await supabase.auth.getUser();
-				if (!user) {
-					setRole(null);
-					return;
-				}
-				const { data: profile } = await supabase
-					.from('profiles')
-					.select('role')
-					.eq('id', user.id)
-					.single();
-				setRole(profile?.role || null);
-			} catch (e) {
-				setRole(null);
-			}
+                                const { data: { user } } = await supabase.auth.getUser();
+                                if (!user) {
+                                        setRole(null);
+                                        return;
+                                }
+                                const typedSupabase = supabase as unknown as TypedSupabaseClient;
+                                try {
+                                        const resolvedRole = await fetchMemberRole(typedSupabase, user.id);
+                                        setRole(resolvedRole || null);
+                                } catch (memberError) {
+                                        console.error("Error loading member role", memberError);
+                                        setRole(null);
+                                }
+                        } catch (e) {
+                                setRole(null);
+                        }
 		};
 		load();
 	}, []);

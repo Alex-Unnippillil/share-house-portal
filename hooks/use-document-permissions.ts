@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase-browser';
 import { DocumentWithLease } from '@/types/documents';
+import { fetchMemberRole } from '@/lib/data/members';
+import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 
 export interface UserPermissions {
   isTenant: boolean;
@@ -34,6 +36,7 @@ export function useDocumentPermissions(): UserPermissions {
     const checkPermissions = async () => {
       try {
         const supabase = createClient();
+        const typedSupabase = supabase as unknown as TypedSupabaseClient;
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -51,18 +54,18 @@ export function useDocumentPermissions(): UserPermissions {
           return;
         }
 
-        // Get user profile with role
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+        let role: Awaited<ReturnType<typeof fetchMemberRole>> = null;
+        try {
+          role = await fetchMemberRole(typedSupabase, user.id);
+        } catch (roleError) {
+          console.error('Error loading member role:', roleError);
+        }
 
-        const role = profile?.role || 'user';
-        const isPropertyManager = role === 'property_manager';
-        const isAdmin = role === 'admin';
-        const isTenant = role === 'tenant';
-        const isRoommate = role === 'roommate';
+        const resolvedRole = role || 'user';
+        const isPropertyManager = resolvedRole === 'property_manager';
+        const isAdmin = resolvedRole === 'admin';
+        const isTenant = resolvedRole === 'tenant';
+        const isRoommate = resolvedRole === 'roommate';
 
         const userPermissions: UserPermissions = {
           isTenant,
