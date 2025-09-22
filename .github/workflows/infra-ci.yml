@@ -1,0 +1,102 @@
+name: Infrastructure CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra-ci.yml'
+  pull_request:
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra-ci.yml'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Apply Terraform changes after a successful plan'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  TERRAFORM_VERSION: ${{ vars.TERRAFORM_VERSION || '1.6.6' }}
+
+jobs:
+  terraform-plan:
+    name: Terraform plan
+    if: ${{ hashFiles('infra/**/*.tf') != '' }}
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_INFRA_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform format check
+        run: terraform -chdir=infra fmt -check
+
+      - name: Terraform init
+        run: terraform -chdir=infra init -input=false
+
+      - name: Terraform validate
+        run: terraform -chdir=infra validate
+
+      - name: Terraform plan
+        id: plan
+        run: terraform -chdir=infra plan -input=false -out=tfplan
+
+      - name: Show plan
+        run: terraform -chdir=infra show -no-color tfplan > terraform-plan.txt
+
+      - name: Upload plan output
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform-plan.txt
+
+  terraform-apply:
+    name: Terraform apply
+    needs: terraform-plan
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.apply }}
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_INFRA_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform init
+        run: terraform -chdir=infra init -input=false
+
+      - name: Terraform apply
+        run: terraform -chdir=infra apply -input=false -auto-approve

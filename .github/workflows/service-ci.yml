@@ -1,0 +1,216 @@
+name: Service Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/**'
+      - 'deploy/**'
+      - '.github/workflows/service-ci.yml'
+  pull_request:
+    paths:
+      - 'services/**'
+      - 'deploy/**'
+      - '.github/workflows/service-ci.yml'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Optional service name to build/deploy'
+        required: false
+        type: string
+      environment:
+        description: 'Deployment environment override'
+        required: false
+        default: dev
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY_PREFIX: ${{ vars.ECR_REPOSITORY_PREFIX || '' }}
+  HELM_REPOSITORY_PREFIX: ${{ vars.HELM_REPOSITORY_PREFIX || 'helm-' }}
+  HELM_VERSION: ${{ vars.HELM_VERSION || '3.13.3' }}
+  DEFAULT_ENVIRONMENT: ${{ vars.DEFAULT_DEPLOY_ENV || 'dev' }}
+
+jobs:
+  discover-services:
+    name: Discover services
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      environment: ${{ steps.detect.outputs.environment }}
+    env:
+      TARGET_SERVICE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.service) || '' }}
+      TARGET_ENVIRONMENT: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment) || env.DEFAULT_ENVIRONMENT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect services
+        id: detect
+        run: |
+          set -euo pipefail
+          services='[]'
+          shopt -s nullglob
+          for dockerfile in services/*/Dockerfile services/*/Dockerfile.*; do
+            [ -f "${dockerfile}" ] || continue
+            service_dir=$(dirname "$dockerfile")
+            service_name=$(basename "$service_dir")
+            chart_dir="deploy/charts/${service_name}"
+            if [ ! -f "${chart_dir}/Chart.yaml" ]; then
+              echo "::warning::Skipping ${service_name} because ${chart_dir}/Chart.yaml was not found"
+              continue
+            fi
+            if [ -n "${TARGET_SERVICE}" ] && [ "${TARGET_SERVICE}" != "${service_name}" ]; then
+              continue
+            fi
+            services=$(jq --arg name "$service_name" --arg context "$service_dir" --arg dockerfile "$dockerfile" --arg chartDir "$chart_dir" \
+              '. + [{name: $name, context: $context, dockerfile: $dockerfile, chartDir: $chartDir}]' <<<"${services}")
+          done
+          shopt -u nullglob
+          echo "Detected services: ${services}"
+          echo "matrix=${services}" >> "$GITHUB_OUTPUT"
+          echo "environment=${TARGET_ENVIRONMENT}" >> "$GITHUB_OUTPUT"
+
+  build-package-deploy:
+    name: Build, push, and deploy
+    needs: discover-services
+    if: ${{ needs.discover-services.outputs.matrix != '[]' }}
+    runs-on: ubuntu-latest
+    environment: ${{ needs.discover-services.outputs.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.discover-services.outputs.matrix) }}
+    env:
+      DEPLOY_ENVIRONMENT: ${{ needs.discover-services.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_SERVICE_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set image metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="${GITHUB_SHA}"
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            IMAGE_TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "image-tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "environment=${DEPLOY_ENVIRONMENT}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push container image
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs['image-tag'] }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+          SERVICE_NAME='${{ matrix.service.name }}'
+          REPO_NAME="${ECR_REPOSITORY_PREFIX}${SERVICE_NAME}"
+          IMAGE_URI="${ECR_REGISTRY}/${REPO_NAME}:${IMAGE_TAG}"
+          echo "Building ${IMAGE_URI} from ${{ matrix.service.context }}"
+          docker buildx build \
+            --platform linux/amd64 \
+            --file "${{ matrix.service.dockerfile }}" \
+            --tag "${IMAGE_URI}" \
+            --tag "${ECR_REGISTRY}/${REPO_NAME}:${DEPLOY_ENVIRONMENT}" \
+            --push \
+            "${{ matrix.service.context }}"
+          echo "image-uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Login Helm to Amazon ECR (OCI)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+          aws ecr get-login-password --region "${AWS_REGION}" | helm registry login "${ECR_REGISTRY}" --username AWS --password-stdin
+
+      - name: Package Helm chart
+        id: package
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs['image-tag'] }}
+        run: |
+          set -euo pipefail
+          export HELM_EXPERIMENTAL_OCI=1
+          CHART_DIR='${{ matrix.service.chartDir }}'
+          SERVICE_NAME='${{ matrix.service.name }}'
+          PACKAGE_DIR="packaged-charts/${SERVICE_NAME}"
+          mkdir -p "${PACKAGE_DIR}"
+          helm dependency update "${CHART_DIR}" || true
+          helm package "${CHART_DIR}" \
+            --destination "${PACKAGE_DIR}" \
+            --app-version "${IMAGE_TAG}"
+          chart_package=$(ls "${PACKAGE_DIR}"/*.tgz)
+          echo "chart-package=${chart_package}" >> "$GITHUB_OUTPUT"
+
+      - name: Push Helm chart to ECR OCI registry
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          CHART_PACKAGE: ${{ steps.package.outputs['chart-package'] }}
+        run: |
+          set -euo pipefail
+          export HELM_EXPERIMENTAL_OCI=1
+          SERVICE_NAME='${{ matrix.service.name }}'
+          CHART_REPOSITORY="${HELM_REPOSITORY_PREFIX}${SERVICE_NAME}"
+          helm push "${CHART_PACKAGE}" "oci://${ECR_REGISTRY}/${CHART_REPOSITORY}" --force
+
+      - name: Install Argo CD CLI
+        if: ${{ secrets.ARGOCD_SERVER != '' && secrets.ARGOCD_AUTH_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          ARGOCD_VERSION="${{ vars.ARGOCD_VERSION || 'v2.10.2' }}"
+          curl -sSL -o argocd "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-amd64"
+          sudo install -m 555 argocd /usr/local/bin/argocd
+
+      - name: Trigger Argo CD sync for dev
+        if: ${{ secrets.ARGOCD_SERVER != '' && secrets.ARGOCD_AUTH_TOKEN != '' }}
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+          ARGOCD_APP_NAME: ${{ vars.ARGOCD_APP_NAME || matrix.service.name }}
+          ARGOCD_PROJECT: ${{ vars.ARGOCD_PROJECT || 'default' }}
+          IMAGE_TAG: ${{ steps.meta.outputs['image-tag'] }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SERVICE_NAME: ${{ matrix.service.name }}
+        run: |
+          set -euo pipefail
+          export ARGOCD_OPTS="--server ${ARGOCD_SERVER} --grpc-web"
+          IMAGE_REPOSITORY="${ECR_REGISTRY}/${ECR_REPOSITORY_PREFIX}${SERVICE_NAME}"
+          argocd app set "${ARGOCD_APP_NAME}" ${ARGOCD_OPTS} --auth-token "${ARGOCD_AUTH_TOKEN}" \
+            --parameter image.tag="${IMAGE_TAG}" \
+            --parameter image.repository="${IMAGE_REPOSITORY}"
+          argocd app sync "${ARGOCD_APP_NAME}" ${ARGOCD_OPTS} --auth-token "${ARGOCD_AUTH_TOKEN}" --prune
+          argocd app wait "${ARGOCD_APP_NAME}" ${ARGOCD_OPTS} --auth-token "${ARGOCD_AUTH_TOKEN}" --timeout 300 --health
+
+      - name: Upload Helm package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ format('{0}-chart', matrix.service.name) }}
+          path: ${{ steps.package.outputs['chart-package'] }}
