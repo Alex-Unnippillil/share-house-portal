@@ -914,6 +914,30 @@ export type Database = {
         }
         Relationships: []
       }
+      floorplans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          name?: string
+        }
+        Relationships: []
+      }
       gpt_one: {
         Row: {
           created_at: string
@@ -940,6 +964,51 @@ export type Database = {
           vector_one?: string | null
         }
         Relationships: []
+      }
+      overlay_shapes: {
+        Row: {
+          created_at: string
+          floorplan_id: string
+          id: string
+          label: string
+          polygon: Json
+          tenant_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          floorplan_id: string
+          id?: string
+          label: string
+          polygon: Json
+          tenant_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          floorplan_id?: string
+          id?: string
+          label?: string
+          polygon?: Json
+          tenant_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overlay_shapes_floorplan_id_fkey"
+            columns: ["floorplan_id"]
+            isOneToOne: false
+            referencedRelation: "floorplans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "overlay_shapes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inqueries: {
         Row: {

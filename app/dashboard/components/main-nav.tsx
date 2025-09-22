@@ -24,10 +24,10 @@ export function MainNav({
         Customers
       </Link>
       <Link
-       href="#"
+        href="/dashboard/floorplans"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        Products
+        Floorplans
       </Link>
       <Link
         href="#"
