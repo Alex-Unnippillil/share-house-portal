@@ -510,6 +510,44 @@ export type Database = {
         }
         Relationships: []
       }
+      chore_participation_logs: {
+        Row: {
+          chore_name: string
+          id: string
+          member_id: string
+          metadata: Json | null
+          occurrence_date: string
+          recorded_at: string
+          status: string
+        }
+        Insert: {
+          chore_name: string
+          id?: string
+          member_id: string
+          metadata?: Json | null
+          occurrence_date: string
+          recorded_at?: string
+          status: string
+        }
+        Update: {
+          chore_name?: string
+          id?: string
+          member_id?: string
+          metadata?: Json | null
+          occurrence_date?: string
+          recorded_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chore_participation_logs_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_activities: {
         Row: {
           completed_date: string | null
@@ -2155,6 +2193,20 @@ export type Database = {
       }
     }
     Views: {
+      member_fairness_metrics: {
+        Row: {
+          avatar_url: string | null
+          completed_count: number
+          email: string | null
+          fairness_score: number
+          full_name: string | null
+          last_recorded_at: string | null
+          member_id: string
+          missed_count: number
+          role: string | null
+        }
+        Relationships: []
+      }
       package_utilization: {
         Row: {
           created_at: string | null
