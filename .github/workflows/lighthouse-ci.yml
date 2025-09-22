@@ -1,0 +1,92 @@
+name: Lighthouse CI
+
+on:
+  deployment_status:
+    types: [success]
+  workflow_dispatch:
+    inputs:
+      preview-url:
+        description: 'Fully-qualified preview base URL (for example, https://preview.vercel.app)'
+        required: true
+
+jobs:
+  audit:
+    name: Run Lighthouse checks
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'deployment_status' && !github.event.deployment.production_environment) }}
+    env:
+      PREVIEW_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.preview-url || github.event.deployment_status.target_url || '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+
+      - name: Validate preview URL
+        run: |
+          if [ -z "${PREVIEW_URL}" ]; then
+            echo "A preview URL is required to run Lighthouse CI." >&2
+            exit 1
+          fi
+        env:
+          PREVIEW_URL: ${{ env.PREVIEW_URL }}
+
+      - name: Run Lighthouse CI
+        env:
+          LHCI_PREVIEW_BASE_URL: ${{ env.PREVIEW_URL }}
+        run: pnpm dlx @lhci/cli@0.13.x autorun
+
+      - name: Summarize Lighthouse scores
+        if: always()
+        run: |
+          if [ -f artifacts/lighthouse/manifest.json ]; then
+            node <<'SUMMARY'
+const fs = require('fs');
+const path = require('path');
+
+const manifestPath = path.join(process.cwd(), 'artifacts', 'lighthouse', 'manifest.json');
+const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+
+if (!fs.existsSync(manifestPath) || !summaryPath) {
+  process.exit(0);
+}
+
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+const toPercent = (value) =>
+  typeof value === 'number' ? `${Math.round(value * 100)}%` : '—';
+
+const lines = [];
+lines.push('# Lighthouse results');
+lines.push('');
+lines.push('| URL | Performance | Accessibility | Best Practices | SEO |');
+lines.push('| --- | --- | --- | --- | --- |');
+
+for (const entry of manifest) {
+  const summary = entry.summary || {};
+  lines.push(
+    `| ${entry.url} | ${toPercent(summary.performance)} | ${toPercent(summary.accessibility)} | ${toPercent(summary['best-practices'])} | ${toPercent(summary.seo)} |`,
+  );
+}
+
+lines.push('');
+lines.push('Detailed HTML reports are uploaded to the `artifacts/lighthouse/` directory.');
+
+fs.appendFileSync(summaryPath, `${lines.join('\n')}\n`);
+SUMMARY
+          else
+            echo "Lighthouse reports were not generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload Lighthouse reports
+        if: always() && hashFiles('artifacts/lighthouse/*.html') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: artifacts/lighthouse
+          if-no-files-found: warn
