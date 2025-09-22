@@ -40,7 +40,6 @@ export async function createGoogleCalendarEvent({
   attendeeEmail,
   attendeeName,
 }: CreateEventOptions) {
-  console.log(`Attempting to create event for ${attendeeEmail} from ${startTime} to ${endTime}`);
 
   try {
     const event = {
@@ -78,7 +77,6 @@ export async function createGoogleCalendarEvent({
       // conferenceDataVersion: 1, // Required if adding conferenceData
     });
 
-    console.log('Google Calendar Event created: %s', response.data.htmlLink);
     return { success: true, eventId: response.data.id, link: response.data.htmlLink };
 
   } catch (error: unknown) {

@@ -70,6 +70,11 @@ const nextConfig = {
   experimental: {
     mdxRs: true,
   },
+  compiler: {
+    removeConsole: {
+      exclude: ['error', 'warn'],
+    },
+  },
     images : {
       remotePatterns: [
       {
