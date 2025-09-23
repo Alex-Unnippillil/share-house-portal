@@ -3,12 +3,26 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { CORRELATION_ID_HEADER } from '@/lib/constants/logging'
+
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  const requestHeaders = new Headers(request.headers)
+  const incomingCorrelationId =
+    requestHeaders.get(CORRELATION_ID_HEADER) ?? crypto.randomUUID()
+  requestHeaders.set(CORRELATION_ID_HEADER, incomingCorrelationId)
+
+  const applyCorrelationHeader = (res: NextResponse) => {
+    res.headers.set(CORRELATION_ID_HEADER, incomingCorrelationId)
+    return res
+  }
+
+  let response = applyCorrelationHeader(
+    NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  )
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -24,11 +38,13 @@ export async function middleware(request: NextRequest) {
             value,
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          response = applyCorrelationHeader(
+            NextResponse.next({
+              request: {
+                headers: requestHeaders,
+              },
+            })
+          )
           response.cookies.set({
             name,
             value,
@@ -41,11 +57,13 @@ export async function middleware(request: NextRequest) {
             value: '',
             ...options,
           })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+          response = applyCorrelationHeader(
+            NextResponse.next({
+              request: {
+                headers: requestHeaders,
+              },
+            })
+          )
           response.cookies.set({
             name,
             value: '',

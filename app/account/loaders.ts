@@ -2,13 +2,14 @@
 
 import "server-only"
 
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
 
 import type { User } from "@supabase/supabase-js"
 
 import type { Database } from "@/lib/supabase"
 
 import { createClient } from "@/utils/supa-server-actions"
+import { getLogger, withRequestContext } from "@/lib/logger"
 
 import type { AccountProfile } from "./types"
 
@@ -22,37 +23,46 @@ export interface AccountPageData {
   profile: AccountProfile | null
 }
 
+const log = getLogger({ module: "account.loaders" })
+
 export async function loadAccountPageData(): Promise<AccountPageData> {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const requestHeaders = headers()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  return withRequestContext(
+    async () => {
+      const cookieStore = cookies()
+      const supabase = createClient(cookieStore)
 
-  if (!user) {
-    return { user: null, profile: null }
-  }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("full_name, username, website, avatar_url, email")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>()
-
-  if (error) {
-    console.error("Failed to load account profile", error)
-  }
-
-  const profile: AccountProfile | null = data
-    ? {
-        fullName: data.full_name,
-        username: data.username,
-        website: data.website,
-        avatarUrl: data.avatar_url,
-        email: data.email,
+      if (!user) {
+        return { user: null, profile: null }
       }
-    : null
 
-  return { user, profile }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, username, website, avatar_url, email")
+        .eq("id", user.id)
+        .maybeSingle<ProfileRow>()
+
+      if (error) {
+        log.error({ error }, "Failed to load account profile")
+      }
+
+      const profile: AccountProfile | null = data
+        ? {
+            fullName: data.full_name,
+            username: data.username,
+            website: data.website,
+            avatarUrl: data.avatar_url,
+            email: data.email,
+          }
+        : null
+
+      return { user, profile }
+    },
+    { headers: requestHeaders }
+  )
 }

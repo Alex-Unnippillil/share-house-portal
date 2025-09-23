@@ -1,6 +1,8 @@
 import { google } from 'googleapis';
 import { GaxiosError } from 'gaxios'; // Part of googleapis
 
+import { getLogger } from '@/lib/logger';
+
 // Configure the Google OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -29,6 +31,8 @@ interface CreateEventOptions {
   attendeeName?: string; // Optional name of the user
 }
 
+const log = getLogger({ module: 'calendar-service' });
+
 /**
  * Creates an event on the app owner's Google Calendar.
  */
@@ -40,7 +44,10 @@ export async function createGoogleCalendarEvent({
   attendeeEmail,
   attendeeName,
 }: CreateEventOptions) {
-  console.log(`Attempting to create event for ${attendeeEmail} from ${startTime} to ${endTime}`);
+  log.info(
+    { attendeeEmail, startTime, endTime },
+    'Attempting to create Google Calendar event'
+  );
 
   try {
     const event = {
@@ -78,31 +85,48 @@ export async function createGoogleCalendarEvent({
       // conferenceDataVersion: 1, // Required if adding conferenceData
     });
 
-    console.log('Google Calendar Event created: %s', response.data.htmlLink);
+    log.info(
+      { eventId: response.data.id, htmlLink: response.data.htmlLink },
+      'Google Calendar event created'
+    );
     return { success: true, eventId: response.data.id, link: response.data.htmlLink };
 
   } catch (error: unknown) {
-    console.error('Error creating Google Calendar event:');
     if (error instanceof GaxiosError) {
-        console.error('Gaxios Error:', error.response?.status, error.response?.data);
-    } else if (error instanceof Error) {
-         console.error(error.message);
-    } else {
-        console.error('An unknown error occurred', error);
-    }
+      log.error(
+        {
+          status: error.response?.status,
+          data: error.response?.data,
+        },
+        'Error creating Google Calendar event via Google API'
+      );
 
-    // More specific error handling
-    if (error instanceof GaxiosError && error.response?.status === 401) {
-       console.error('Authentication error: Check Google credentials (Refresh Token might be expired or invalid).');
-       return { success: false, error: 'Authentication error with Google Calendar.' };
-    }
-     if (error instanceof GaxiosError && error.response?.status === 403) {
-        console.error('Permission error: Ensure the Calendar API is enabled and the refresh token has the correct scope (calendar.events).');
-       return { success: false, error: 'Permission error with Google Calendar.' };
-    }
-    if (error instanceof GaxiosError && error.response?.status === 400) {
-        console.error('Bad Request: Check event data format (dates, emails etc).', error.response?.data?.error?.errors);
-       return { success: false, error: `Invalid meeting data: ${error.response?.data?.error?.message || 'Check input format.'}` };
+      if (error.response?.status === 401) {
+        log.error('Authentication error with Google Calendar credentials');
+        return { success: false, error: 'Authentication error with Google Calendar.' };
+      }
+
+      if (error.response?.status === 403) {
+        log.error('Permission error accessing Google Calendar API');
+        return { success: false, error: 'Permission error with Google Calendar.' };
+      }
+
+      if (error.response?.status === 400) {
+        log.error(
+          { details: error.response?.data?.error?.errors },
+          'Bad request when creating Google Calendar event'
+        );
+        return {
+          success: false,
+          error: `Invalid meeting data: ${
+            error.response?.data?.error?.message || 'Check input format.'
+          }`,
+        };
+      }
+    } else if (error instanceof Error) {
+      log.error({ err: error }, 'Error creating Google Calendar event');
+    } else {
+      log.error({ error }, 'Unknown error creating Google Calendar event');
     }
 
     return { success: false, error: 'Failed to create Google Calendar event.' };

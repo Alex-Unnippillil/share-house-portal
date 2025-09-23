@@ -1,3 +1,5 @@
+import { getLogger } from '@/lib/logger';
+
 interface CalComCreateBookingRequest {
   start: string;
   end: string;
@@ -25,6 +27,8 @@ interface CalComEventType {
   slug: string;
   hidden: boolean;
 }
+
+const log = getLogger({ module: 'calcom-service' });
 
 class CalComService {
   private baseUrl: string;
@@ -58,7 +62,7 @@ class CalComService {
       const data = await response.json();
       return data.eventTypes || [];
     } catch (error) {
-      console.error('Error fetching Cal.com event types:', error);
+      log.error({ err: error }, 'Error fetching Cal.com event types');
       return [];
     }
   }
@@ -106,7 +110,7 @@ class CalComService {
         bookingUrl: data.booking?.url,
       };
     } catch (error) {
-      console.error('Error creating Cal.com booking:', error);
+      log.error({ err: error }, 'Error creating Cal.com booking');
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to create booking',
@@ -132,7 +136,7 @@ class CalComService {
 
       return response.ok;
     } catch (error) {
-      console.error('Error canceling Cal.com booking:', error);
+      log.error({ err: error, bookingId }, 'Error canceling Cal.com booking');
       return false;
     }
   }
@@ -158,7 +162,7 @@ class CalComService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching Cal.com booking:', error);
+      log.error({ err: error, bookingId }, 'Error fetching Cal.com booking');
       return null;
     }
   }
@@ -193,7 +197,7 @@ class CalComService {
       const data = await response.json();
       return data.bookings || [];
     } catch (error) {
-      console.error('Error fetching Cal.com user bookings:', error);
+      log.error({ err: error, userEmail }, 'Error fetching Cal.com user bookings');
       return [];
     }
   }
@@ -204,7 +208,7 @@ const CALCOM_BASE_URL = process.env.CALCOM_BASE_URL || 'https://api.cal.com';
 const CALCOM_API_KEY = process.env.CALCOM_API_KEY || '';
 
 if (!CALCOM_API_KEY) {
-  console.warn('CALCOM_API_KEY is not configured');
+  log.warn('CALCOM_API_KEY is not configured');
 }
 
 export const calComService = new CalComService(CALCOM_BASE_URL, CALCOM_API_KEY);

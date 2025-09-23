@@ -12,6 +12,9 @@ import {
 } from "@/lib/notifications"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
+import { getLogger, withRequestContext } from "@/lib/logger"
+
+const log = getLogger({ module: "api.notifications" })
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -65,17 +68,24 @@ function getClientIp(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  return withRequestContext(
+    () => handleGetNotifications(request),
+    { headers: request.headers }
+  )
+}
+
+async function handleGetNotifications(request: NextRequest) {
   const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries())
   const validation = notificationsQuerySchema.safeParse(rawParams)
   const ipAddress = getClientIp(request)
 
   if (!validation.success) {
-    console.warn("Notifications query validation failed", {
+    log.warn({
       ipAddress,
       userAgent: request.headers.get("user-agent") ?? "unknown",
       params: rawParams,
       issues: validation.error.issues,
-    })
+    }, "Notifications query validation failed")
 
     return NextResponse.json(
       {
@@ -100,11 +110,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (startDate && startDate > normalizedEndDate) {
-    console.warn("Notifications query startDate after endDate", {
+    log.warn({
       ipAddress,
       userAgent: request.headers.get("user-agent") ?? "unknown",
       params: rawParams,
-    })
+    }, "Notifications query startDate after endDate")
 
     return NextResponse.json(
       { error: "startDate must be before or equal to endDate" },
@@ -170,12 +180,12 @@ export async function GET(request: NextRequest) {
   }
 
   if (suspiciousSignals.length > 0) {
-    console.warn("Notifications query parameters adjusted", {
+    log.warn({
       userId: user.id,
       ipAddress,
       userAgent: request.headers.get("user-agent") ?? "unknown",
       adjustments: suspiciousSignals,
-    })
+    }, "Notifications query parameters adjusted")
   }
 
   const from = (page - 1) * limit
@@ -191,11 +201,11 @@ export async function GET(request: NextRequest) {
     .range(from, to)
 
   if (error) {
-    console.error("Failed to fetch notifications", {
+    log.error({
+      err: error,
       userId: user.id,
       ipAddress,
-      error: error.message,
-    })
+    }, "Failed to fetch notifications")
 
     return NextResponse.json(
       { error: "Failed to fetch notifications" },
@@ -228,6 +238,13 @@ type NotificationRequest =
     }
 
 export async function POST(request: Request) {
+  return withRequestContext(
+    () => handlePostNotifications(request),
+    { headers: request.headers }
+  )
+}
+
+async function handlePostNotifications(request: Request) {
   try {
     const payload = (await request.json()) as NotificationRequest
 
@@ -258,7 +275,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (error) {
-    console.error("Notification API error:", error)
+    log.error({ err: error }, "Notification API error")
     const message =
       error instanceof Error
         ? error.message

@@ -1,10 +1,14 @@
 import { DocumentSigningRequest, DocumentSigningResponse } from '@/types/documents';
 
+import { getLogger } from '@/lib/logger';
+
 const DOCUMENSO_BASE_URL = process.env.DOCUMENSO_BASE_URL || 'https://app.documenso.com';
 const DOCUMENSO_API_KEY = process.env.DOCUMENSO_API_KEY;
 
+const log = getLogger({ module: 'documenso-service' });
+
 if (!DOCUMENSO_API_KEY) {
-  console.warn('DOCUMENSO_API_KEY is not configured');
+  log.warn('DOCUMENSO_API_KEY is not configured');
 }
 
 const getAuthHeaders = (): Record<string, string> => ({
@@ -261,7 +265,7 @@ export async function createLeaseSigningRequest(
       signing_url: signingUrl,
     };
   } catch (error) {
-    console.error('Error creating lease signing request:', error);
+    log.error({ err: error }, 'Error creating lease signing request');
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

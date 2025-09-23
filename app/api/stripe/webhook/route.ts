@@ -1,4 +1,3 @@
-import { headers } from "next/headers"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
 import {
@@ -7,13 +6,16 @@ import {
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { getLogger, withRequestContext } from "@/lib/logger"
+
+const log = getLogger({ module: "api.stripe.webhook" })
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Supabase admin credentials are not configured")
+    log.error("Supabase admin credentials are not configured")
     return null
   }
 
@@ -26,55 +28,60 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
 }
 
 export async function POST(req: Request) {
-  const stripe = getStripe()
-  const signature = (await headers()).get("stripe-signature")
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  return withRequestContext(
+    async () => {
+      const stripe = getStripe()
+      const signature = req.headers.get("stripe-signature")
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
-  if (!webhookSecret) {
-    return new Response("Webhook not configured", { status: 500 })
-  }
+      if (!webhookSecret) {
+        return new Response("Webhook not configured", { status: 500 })
+      }
 
-  const supabase = createSupabaseAdminClient()
-  if (!supabase) {
-    return new Response("Supabase client not configured", { status: 500 })
-  }
+      const supabase = createSupabaseAdminClient()
+      if (!supabase) {
+        return new Response("Supabase client not configured", { status: 500 })
+      }
 
-  const rawBody = await req.text()
+      const rawBody = await req.text()
 
-  try {
-    const event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature ?? "",
-      webhookSecret
-    )
+      try {
+        const event = stripe.webhooks.constructEvent(
+          rawBody,
+          signature ?? "",
+          webhookSecret
+        )
 
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(supabase, event.data.object)
-        break
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(supabase, event.data.object)
-        break
-      case "customer.subscription.created":
-        await handleSubscriptionCreated(supabase, event.data.object)
-        break
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(supabase, event.data.object)
-        break
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(supabase, event.data.object)
-        break
-      default:
-        console.log(`Unhandled event type: ${event.type}`)
-        break
-    }
+        switch (event.type) {
+          case "checkout.session.completed":
+            await handleCheckoutSessionCompleted(supabase, event.data.object)
+            break
+          case "invoice.payment_succeeded":
+            await handleInvoicePaymentSucceeded(supabase, event.data.object)
+            break
+          case "customer.subscription.created":
+            await handleSubscriptionCreated(supabase, event.data.object)
+            break
+          case "customer.subscription.updated":
+            await handleSubscriptionUpdated(supabase, event.data.object)
+            break
+          case "customer.subscription.deleted":
+            await handleSubscriptionDeleted(supabase, event.data.object)
+            break
+          default:
+            log.info({ eventType: event.type }, "Unhandled Stripe event type")
+            break
+        }
 
-    return new Response("ok", { status: 200 })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid payload"
-    console.error("Webhook error:", message)
-    return new Response(`Webhook error: ${message}`, { status: 400 })
-  }
+        return new Response("ok", { status: 200 })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Invalid payload"
+        log.error({ err }, "Webhook error")
+        return new Response(`Webhook error: ${message}`, { status: 400 })
+      }
+    },
+    { headers: req.headers }
+  )
 }
 
 async function handleCheckoutSessionCompleted(
@@ -157,9 +164,9 @@ async function handleCheckoutSessionCompleted(
               })
             }
           } catch (notificationError) {
-            console.error(
-              "Failed to send payment notification:",
-              notificationError
+            log.error(
+              { err: notificationError, tenantId },
+              "Failed to send payment notification"
             )
             // Don't fail the webhook for notification errors
           }
@@ -170,7 +177,7 @@ async function handleCheckoutSessionCompleted(
     // For subscriptions, the subscription will be created separately
     // We might want to link the checkout session to the subscription here
   } catch (error) {
-    console.error("Error handling checkout session completed:", error)
+    log.error({ err: error }, "Error handling checkout session completed")
     throw error
   }
 }
@@ -243,7 +250,7 @@ async function handleInvoicePaymentSucceeded(
         .eq("stripe_subscription_id", subscription.id)
     }
   } catch (error) {
-    console.error("Error handling invoice payment succeeded:", error)
+    log.error({ err: error }, "Error handling invoice payment succeeded")
     throw error
   }
 }
@@ -278,7 +285,7 @@ async function handleSubscriptionCreated(
       },
     })
   } catch (error) {
-    console.error("Error handling subscription created:", error)
+    log.error({ err: error }, "Error handling subscription created")
     throw error
   }
 }
@@ -302,7 +309,7 @@ async function handleSubscriptionUpdated(
       })
       .eq("stripe_subscription_id", subscription.id)
   } catch (error) {
-    console.error("Error handling subscription updated:", error)
+    log.error({ err: error }, "Error handling subscription updated")
     throw error
   }
 }
@@ -322,7 +329,7 @@ async function handleSubscriptionDeleted(
       })
       .eq("stripe_subscription_id", subscription.id)
   } catch (error) {
-    console.error("Error handling subscription deleted:", error)
+    log.error({ err: error }, "Error handling subscription deleted")
     throw error
   }
 }
