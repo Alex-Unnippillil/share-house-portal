@@ -6,25 +6,61 @@ const withMDX = require('@next/mdx')()
 // const withPWA = require("@ducanh2912/next-pwa").default({
 //   dest: "public",
 // });
-const ContentSecurityPolicy = `
-  default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' *.supabase.co googleapis.com;
-  style-src 'self' 'unsafe-inline';
-  img-src * blob: data:;
-  media-src *.supabase.co quantumone.b-cdn.net *.unsplash.com youtube.com;
-  connect-src *;
-  font-src 'self' googleapis.com;
-  frame-src *.supabase.co youtube.com quantumone.b-cdn.net;
-  object-src 'none';
-  base-uri 'self';
-  form-action 'self';
-`
+const cspReportUri =
+  process.env.CSP_REPORT_URI ??
+  'https://report-uri.com/api/d/default/share-house-portal/csp'
+const reportToGroup = 'csp-endpoint'
+
+const cspBaseDirectives = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.supabase.co googleapis.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src * blob: data:",
+  "media-src *.supabase.co quantumone.b-cdn.net *.unsplash.com youtube.com",
+  "connect-src *",
+  "font-src 'self' googleapis.com",
+  "frame-src *.supabase.co youtube.com quantumone.b-cdn.net",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+]
+
+const buildContentSecurityPolicy = ({ reportOnly = false } = {}) => {
+  const directives = [...cspBaseDirectives]
+
+  if (reportOnly) {
+    directives.push("script-src-attr 'none'")
+    directives.push("style-src-attr 'none'")
+  }
+
+  directives.push(`report-to ${reportToGroup}`)
+  directives.push(`report-uri ${cspReportUri}`)
+
+  return directives.join('; ')
+}
+
+const ContentSecurityPolicy = buildContentSecurityPolicy()
+const ContentSecurityPolicyReportOnly = buildContentSecurityPolicy({ reportOnly: true })
+const reportToHeader = JSON.stringify({
+  group: reportToGroup,
+  max_age: 10886400,
+  endpoints: [{ url: cspReportUri }],
+  include_subdomains: true,
+})
 
 const securityHeaders = [
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
   {
     key: 'Content-Security-Policy',
-    value: ContentSecurityPolicy.replace(/\n/g, ''),
+    value: ContentSecurityPolicy,
+  },
+  {
+    key: 'Content-Security-Policy-Report-Only',
+    value: ContentSecurityPolicyReportOnly,
+  },
+  {
+    key: 'Report-To',
+    value: reportToHeader,
   },
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
   {
