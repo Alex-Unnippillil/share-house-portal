@@ -243,6 +243,17 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      user_favorites: SupabaseTable<{
+        id: string
+        user_id: string
+        entity_type: string
+        entity_id: string
+        metadata: Json | null
+        sort_order: number
+        pinned_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       chores: SupabaseTable<{
         id: string
         household_id: string

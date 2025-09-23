@@ -3,6 +3,11 @@
 import * as React from "react"
 import NextLink from "next/link"
 import { useRouter } from "next/navigation"
+import { Loader2, Pin, PinOff } from "lucide-react"
+
+import type { FavoriteMetadata } from "@/app/api/favorites/route"
+
+import { useFavorites } from "./FavoritesPanel"
 
 export type SmartLinkIntent = "standard" | "critical" | "passive" | "navigation"
 
@@ -20,6 +25,16 @@ export interface SmartLinkProps
    * Custom root margin applied to the IntersectionObserver used for viewport based prefetching.
    */
   viewportMargin?: string
+  /**
+   * Optional configuration to show a favorite pin toggle inline with the link.
+   */
+  favorite?: FavoriteToggleConfig
+}
+
+export interface FavoriteToggleConfig {
+  entityType: string
+  entityId: string
+  metadata?: FavoriteMetadata
 }
 
 type PrefetchHint = "never" | "hover" | "viewport" | "immediate"
@@ -35,6 +50,8 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       onPointerEnter,
       onFocus,
       href,
+      favorite,
+      children,
       ...rest
     } = props
 
@@ -203,6 +220,15 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       }
     }, [isInternalHref, isVisible, prefetchHint])
 
+    const content = favorite ? (
+      <span className="inline-flex w-full items-center gap-2">
+        <span className="min-w-0 flex-1 truncate">{children}</span>
+        <FavoriteToggleButton config={favorite} />
+      </span>
+    ) : (
+      children ?? null
+    )
+
     return (
       <NextLink
         ref={combinedRef}
@@ -211,7 +237,9 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
         onPointerEnter={handlePointerEnter}
         onFocus={handleFocus}
         {...rest}
-      />
+      >
+        {content}
+      </NextLink>
     )
   }
 )
@@ -219,3 +247,46 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
 SmartLink.displayName = "SmartLink"
 
 export default SmartLink
+
+const FavoriteToggleButton = ({
+  config,
+}: {
+  config: FavoriteToggleConfig
+}) => {
+  const { toggleFavorite, isFavorited, isProcessing, isReadOnly } = useFavorites()
+  const isPinned = isFavorited(config.entityType, config.entityId)
+  const pending = isProcessing(config.entityType, config.entityId)
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault()
+      event.stopPropagation()
+      if (pending || isReadOnly) {
+        return
+      }
+
+      void toggleFavorite(config)
+    },
+    [config, isReadOnly, pending, toggleFavorite],
+  )
+
+  const ariaLabel = isPinned ? "Unpin from favorites" : "Pin to favorites"
+
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+      onClick={handleClick}
+      disabled={pending || isReadOnly}
+    >
+      {pending ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : isPinned ? (
+        <PinOff className="size-4" />
+      ) : (
+        <Pin className="size-4" />
+      )}
+    </button>
+  )
+}

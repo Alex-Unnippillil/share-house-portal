@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { docsConfig } from "@/config/docs"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
+import { useFavorites } from "@/components/navigation/FavoritesPanel"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -19,6 +20,17 @@ interface MobileNavProps {
 
 export function MobileNav({ isAuthenticated }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
+  const { favorites } = useFavorites()
+
+  const navigationFavorites = React.useMemo(
+    () =>
+      favorites.filter(
+        (favorite) =>
+          favorite.entityType === "navigation" &&
+          Boolean(favorite.metadata?.href ?? favorite.entityId),
+      ),
+    [favorites],
+  )
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -90,6 +102,32 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           )}
         </div>
         <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+          {navigationFavorites.length > 0 && (
+            <div className="mb-6 flex flex-col space-y-2">
+              <h4 className="px-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Favorites
+              </h4>
+              <div className="flex flex-col space-y-2">
+                {navigationFavorites.map((favorite) => {
+                  const href = favorite.metadata?.href ?? favorite.entityId
+                  return (
+                    <MobileLink
+                      key={`favorite-${favorite.id}`}
+                      href={href}
+                      onOpenChange={setOpen}
+                      favorite={{
+                        entityType: favorite.entityType,
+                        entityId: favorite.entityId,
+                        metadata: favorite.metadata,
+                      }}
+                    >
+                      {favorite.metadata?.label ?? favorite.entityId}
+                    </MobileLink>
+                  )
+                })}
+              </div>
+            </div>
+          )}
           <div className="flex flex-col space-y-3">
             {docsConfig.mainNav?.map(
               (item) =>
