@@ -1,4 +1,4 @@
-import type { CatchUpBalance } from "@/types/payments"
+import type { CatchUpBalance, RoommateLedger } from "@/types/payments"
 
 export const catchUpBalances: CatchUpBalance[] = [
   {
@@ -145,5 +145,213 @@ export const catchUpBalances: CatchUpBalance[] = [
         email: "morgan.ellis@sharehouse.example",
       },
     },
+  },
+]
+
+export const roommateLedgers: RoommateLedger[] = [
+  {
+    roommateId: "rm_avery",
+    roommateName: "Avery Chen",
+    unitLabel: "Unit 3B",
+    currency: "USD",
+    startingBalance: 0,
+    entries: [
+      {
+        id: "rm_avery_rent_june_posted",
+        date: "2024-05-28",
+        description: "Posted June rent share",
+        amount: 1260,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Rent share added to the shared ledger ahead of autopay.",
+      },
+      {
+        id: "rm_avery_autopay_june",
+        date: "2024-06-01",
+        description: "Autopay - June rent share",
+        amount: -1000,
+        type: "contribution",
+        actor: {
+          name: "Avery Chen",
+          role: "roommate",
+        },
+        note: "Partial autopay captured from preferred payment method.",
+      },
+      {
+        id: "rm_avery_wifi_trueup",
+        date: "2024-06-05",
+        description: "Wi-Fi reimbursement",
+        amount: 45,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Fiber upgrade reimbursement split across the unit.",
+      },
+      {
+        id: "rm_avery_maintenance_fee",
+        date: "2024-06-10",
+        description: "Community maintenance fee",
+        amount: 30,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Shared amenity refresh charge from the property manager.",
+      },
+    ],
+  },
+  {
+    roommateId: "rm_jordan",
+    roommateName: "Jordan Blake",
+    unitLabel: "Unit 3B",
+    currency: "USD",
+    startingBalance: 0,
+    entries: [
+      {
+        id: "rm_jordan_rent_june_posted",
+        date: "2024-05-28",
+        description: "Posted June rent share",
+        amount: 1260,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+      },
+      {
+        id: "rm_jordan_parking_assignment",
+        date: "2024-05-29",
+        description: "Parking spot 17",
+        amount: 80,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Monthly reserved parking fee added to ledger.",
+      },
+      {
+        id: "rm_jordan_manual_payment",
+        date: "2024-05-30",
+        description: "Manual payment - rent catch up",
+        amount: -780,
+        type: "contribution",
+        actor: {
+          name: "Jordan Blake",
+          role: "roommate",
+        },
+        note: "Partial payment posted after autopay pause.",
+      },
+      {
+        id: "rm_jordan_utilities_trueup",
+        date: "2024-06-02",
+        description: "Shared utilities true-up",
+        amount: 62,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+      },
+      {
+        id: "rm_jordan_late_fee",
+        date: "2024-06-04",
+        description: "Late fee while autopay paused",
+        amount: 20,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Fee added per lease agreement after autopay pause.",
+      },
+      {
+        id: "rm_jordan_parking_payment",
+        date: "2024-06-06",
+        description: "Parking true-up payment",
+        amount: -40,
+        type: "contribution",
+        actor: {
+          name: "Jordan Blake",
+          role: "roommate",
+        },
+        note: "Paid half of the parking balance via one-time checkout.",
+      },
+      {
+        id: "rm_jordan_late_fee_waived",
+        date: "2024-06-07",
+        description: "Late fee waived",
+        amount: -20,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Waived after repayment plan confirmed with roommates.",
+      },
+    ],
+  },
+  {
+    roommateId: "rm_priya",
+    roommateName: "Priya Desai",
+    unitLabel: "Unit 3B",
+    currency: "USD",
+    startingBalance: 0,
+    entries: [
+      {
+        id: "rm_priya_rent_june_posted",
+        date: "2024-05-28",
+        description: "Posted June rent share",
+        amount: 1260,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Recurring rent share added while autopay is disabled.",
+      },
+      {
+        id: "rm_priya_supplies_reimbursement",
+        date: "2024-06-04",
+        description: "Household supplies reimbursement",
+        amount: 38,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Reimbursement for bulk cleaning supplies delivered in May.",
+      },
+      {
+        id: "rm_priya_courtesy_credit",
+        date: "2024-06-06",
+        description: "Courtesy credit - cleaning overlap",
+        amount: -25,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Temporary credit while reviewing contractor invoice.",
+      },
+      {
+        id: "rm_priya_credit_reversed",
+        date: "2024-06-08",
+        description: "Credit reversed after vendor invoice",
+        amount: 25,
+        type: "adjustment",
+        actor: {
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+        note: "Charge reinstated once the final cleaning invoice arrived.",
+      },
+    ],
   },
 ]

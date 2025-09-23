@@ -3,7 +3,7 @@
 import useAppFormContext from '@/lib/hooks/useAppFormContext';
 import clsx from 'clsx';
 // Components
-import Link from 'next/link';
+import SmartLink from "@/components/navigation/SmartLink";
 import { useRouter } from 'next/navigation';
 
 export default function Step({ step, segment }: StepProps) {
@@ -19,7 +19,7 @@ export default function Step({ step, segment }: StepProps) {
   // };
 
   return (
-    <Link href={`/${step.segment}`}>
+    <SmartLink href={`/${step.segment}`} intent="navigation">
       {/* <button type="button" onClick={() => validateStep(`/${step}`)}> */}
       <div className="flex items-center gap-4">
         <button
@@ -48,7 +48,7 @@ export default function Step({ step, segment }: StepProps) {
         </div>
       </div>
       {/* </button> */}
-    </Link>
+    </SmartLink>
   );
 }
 

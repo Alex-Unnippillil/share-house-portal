@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
+import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
+import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -41,6 +43,7 @@ export function VisitorBookingForm() {
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
@@ -63,24 +66,22 @@ export function VisitorBookingForm() {
       if (!user) throw new Error("Not authenticated");
 
       // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, email, unit_id')
-        .eq('id', user.id)
-        .single();
+      const profile = await fetchMemberProfile(typedSupabase, user.id);
 
       if (!profile) throw new Error("Profile not found");
 
-      // Get roommates and property manager
-      // This assumes there's a units table with tenant relationships
-      const { data: unitData } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role')
-        .eq('unit_id', profile.unit_id!)
-        .neq('id', user.id);
+      if (!profile.unit_id) {
+        throw new Error("User is not assigned to a unit");
+      }
 
-      const roommates = unitData?.filter(p => p.role === 'tenant' || p.role === 'roommate') || [];
-      const propertyManager = unitData?.find(p => p.role === 'property_manager');
+      const unitMembers = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
+        excludeUserId: user.id,
+      });
+
+      const roommates = unitMembers.filter(
+        member => member.role === 'tenant' || member.role === 'roommate'
+      );
+      const propertyManager = unitMembers.find(member => member.role === 'property_manager');
 
       if (!propertyManager) {
         throw new Error("Property manager not found for this unit");

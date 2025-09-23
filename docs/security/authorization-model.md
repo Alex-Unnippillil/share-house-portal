@@ -42,6 +42,7 @@ an internal `user_roles` table that records `(UserID, BuildingID, Role)` tuples.
 | `PATCH /api/buildings/{buildingId}/maintenance/{ticketId}` | Update maintenance ticket status or notes. | Building Staff, Property Manager | Enforcement by verifying `ticket.building_id` matches BuildingID and role has `WRITE` permission. | Audit log entry recorded for status changes. |
 | `GET /api/buildings/{buildingId}/reports/monthly` | Download operational reports. | Platform Admin, Property Manager | BuildingID validated; aggregated data pre-filtered per building. | Generates signed URL that expires in 15 minutes. |
 | `POST /api/send` | Trigger transactional email via Resend. | Platform Admin, Property Manager, Building Staff | BuildingID provided in payload and validated before templating. | Payload sanitized so email content excludes data outside scope. |
+| `GET /api/notifications` | Retrieve recent in-app notifications for the authenticated user. | Tenant, Roommate, Property Manager, Admin | Scoped by Supabase RLS on `user_id`; downstream joins enforce building membership. | Query params (`startDate`, `endDate`, `page`, `limit`) validated with Zod. Date ranges clamped to 90 days and page sizes capped at 100; oversized or malformed attempts are logged and rejected. |
 | `GET /api/auth/callback` | Complete OAuth login. | All authenticated roles | No BuildingID required; associates user with building memberships post login. | Redirect flow issues a JWT with role claims. |
 
 All new endpoints must declare required roles and tenancy scope annotations in

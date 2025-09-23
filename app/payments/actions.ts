@@ -10,8 +10,9 @@ import {
   generateMockPaymentIntentId,
 } from "@/lib/payments/catch-up"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
-import { catchUpBalances } from "@/lib/payments/mock-data"
 import type { CatchUpPaymentSubmissionResult } from "@/types/payments"
+
+import { loadCatchUpBalances } from "./loaders"
 
 const catchUpPaymentActionSchema = z.object({
   roommateId: z.string().min(1),
@@ -35,6 +36,8 @@ export async function submitCatchUpPayment(
     includePropertyManager = false,
     note,
   } = parsed.data
+
+  const catchUpBalances = await loadCatchUpBalances()
 
   const balance = findCatchUpBalance(catchUpBalances, roommateId)
   if (!balance) {
