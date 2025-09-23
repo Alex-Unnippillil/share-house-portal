@@ -29,6 +29,12 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      todos: SupabaseTable<{
+        id: string
+        title: string
+        completed: boolean
+        created_at: string | null
+      }>
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
