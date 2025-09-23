@@ -16,10 +16,14 @@ import {
 } from "./components/skeletons"
 
 import InsightsPanel from "./components/insights-panel"
+import NpsSurveyCard from "./components/nps-survey-card"
 
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
+      <Suspense fallback={null}>
+        <NpsSurveyCard />
+      </Suspense>
       <Suspense fallback={<DashboardHeaderSkeleton />}>
         <DashboardWelcome />
       </Suspense>
