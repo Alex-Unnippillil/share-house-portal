@@ -13,3 +13,14 @@ export function DashboardCardSkeleton() {
 export function DashboardBoardSkeleton() {
         return <Skeleton className="h-48 w-full" />
 }
+
+export function DashboardStatsSkeleton() {
+        return (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <Skeleton className="h-32 w-full" />
+                        <Skeleton className="h-32 w-full" />
+                        <Skeleton className="h-32 w-full" />
+                        <Skeleton className="h-32 w-full" />
+                </div>
+        )
+}

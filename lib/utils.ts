@@ -1,5 +1,125 @@
+import { createHash } from "crypto"
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+
+type TimestampInput = string | number | Date | null | undefined
+
+export interface CollectionCacheSignature {
+  count: number
+  latestUpdatedAtMs: number
+}
+
+const fetchResponseCache = new Map<string, { etag: string; data: unknown }>()
+
+const toTimestamp = (value: TimestampInput): number => {
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value.getTime() : 0
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = new Date(value)
+    const time = parsed.getTime()
+    return Number.isFinite(time) ? time : 0
+  }
+
+  return 0
+}
+
+export function getCollectionCacheSignature<
+  T extends { updated_at?: TimestampInput }
+>(
+  rows: T[] | null | undefined,
+  options?: { count?: number | null; fallbackUpdatedAt?: TimestampInput }
+): CollectionCacheSignature {
+  const count = options?.count ?? rows?.length ?? 0
+  let latestUpdatedAtMs = 0
+
+  for (const row of rows ?? []) {
+    const timestamp = toTimestamp(row.updated_at)
+    if (timestamp > latestUpdatedAtMs) {
+      latestUpdatedAtMs = timestamp
+    }
+  }
+
+  if (latestUpdatedAtMs === 0 && options?.fallbackUpdatedAt) {
+    latestUpdatedAtMs = toTimestamp(options.fallbackUpdatedAt)
+  }
+
+  return {
+    count,
+    latestUpdatedAtMs,
+  }
+}
+
+const createWeakEtag = (signature: CollectionCacheSignature): string => {
+  const base = `${signature.count}:${signature.latestUpdatedAtMs}`
+  const digest = createHash("sha1").update(base).digest("base64")
+  const urlSafeDigest = digest
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "")
+
+  return `W/"${urlSafeDigest}"`
+}
+
+export function buildCollectionCacheMetadata<
+  T extends { updated_at?: TimestampInput }
+>(
+  rows: T[] | null | undefined,
+  options?: { count?: number | null; fallbackUpdatedAt?: TimestampInput }
+): {
+  etag: string
+  count: number
+  latestUpdatedAt: string | null
+} {
+  const signature = getCollectionCacheSignature(rows, options)
+  const latestUpdatedAt =
+    signature.latestUpdatedAtMs > 0
+      ? new Date(signature.latestUpdatedAtMs).toISOString()
+      : null
+
+  return {
+    etag: createWeakEtag(signature),
+    count: signature.count,
+    latestUpdatedAt,
+  }
+}
+
+const resolveCacheKey = (
+  input: RequestInfo | URL,
+  init?: FetcherInit
+): string | undefined => {
+  if (init?.cacheKey) {
+    return init.cacheKey
+  }
+
+  if (typeof input === "string") {
+    return `${init?.method ?? "GET"}:${input}`
+  }
+
+  if (input instanceof URL) {
+    return `${init?.method ?? "GET"}:${input.toString()}`
+  }
+
+  if (typeof Request !== "undefined" && input instanceof Request) {
+    return `${input.method}:${input.url}`
+  }
+
+  return undefined
+}
+
+export interface FetcherInit extends RequestInit {
+  cacheKey?: string
+  skipCache?: boolean
+}
+
+export const clearFetcherCache = () => {
+  fetchResponseCache.clear()
+}
 
 
 export function cn(...inputs: ClassValue[]) {
@@ -9,25 +129,61 @@ export function cn(...inputs: ClassValue[]) {
 
 
 export async function fetcher<JSON = any>(
-  input: RequestInfo,
-  init?: RequestInit
+  input: RequestInfo | URL,
+  init?: FetcherInit
 ): Promise<JSON> {
-  const res = await fetch(input, init)
+  const cacheKey = init?.skipCache ? undefined : resolveCacheKey(input, init)
+  const cachedEntry = cacheKey ? fetchResponseCache.get(cacheKey) : undefined
 
-  if (!res.ok) {
-    const json = await res.json()
-    if (json.error) {
-      const error = new Error(json.error) as Error & {
-        status: number
-      }
-      error.status = res.status
-      throw error
-    } else {
-      throw new Error('An unexpected error occurred')
-    }
+  const headers = new Headers(init?.headers ?? {})
+  if (cachedEntry?.etag) {
+    headers.set("If-None-Match", cachedEntry.etag)
+  }
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json")
   }
 
-  return res.json()
+  const response = await fetch(input, { ...init, headers })
+
+  if (response.status === 304) {
+    if (cachedEntry) {
+      return cachedEntry.data as JSON
+    }
+
+    throw new Error("Received 304 response without cached data")
+  }
+
+  let payload: any = null
+  const contentType = response.headers.get("Content-Type") ?? ""
+  if (contentType.includes("application/json")) {
+    payload = await response.json().catch(() => null)
+  }
+
+  if (!response.ok) {
+    if (payload && typeof payload === "object" && "error" in payload) {
+      const error = new Error((payload as { error: string }).error) as Error & {
+        status: number
+      }
+      error.status = response.status
+      throw error
+    }
+
+    const error = new Error("An unexpected error occurred") as Error & {
+      status: number
+    }
+    error.status = response.status
+    throw error
+  }
+
+  const etag = response.headers.get("ETag")
+  if (cacheKey && etag) {
+    fetchResponseCache.set(cacheKey, {
+      etag,
+      data: payload as JSON,
+    })
+  }
+
+  return payload as JSON
 }
 
 export function formatDate(input: string | number | Date): string {
