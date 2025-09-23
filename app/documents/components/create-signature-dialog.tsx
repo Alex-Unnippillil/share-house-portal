@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentWithLease } from '@/types/documents';
-import { createSigningRequestAction } from '../actions';
+import { createSigningRequestAction } from '@/app/documents/actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { PenTool, Users } from 'lucide-react';
 import { toast } from 'sonner';

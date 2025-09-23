@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DocumentWithLease } from '@/types/documents';
-import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '../actions';
+import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '@/app/documents/actions';
 import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';

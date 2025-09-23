@@ -3,29 +3,66 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { getDocumentStatsAction } from '../actions';
+import { getDocumentStatsAction } from '@/app/documents/actions';
 import { DocumentStats } from '@/types/documents';
 
 export function DocumentsStats() {
   const [stats, setStats] = useState<DocumentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let isSubscribed = true;
+
     const fetchStats = async () => {
+      if (!isSubscribed) {
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setStats(null);
+
       try {
         const result = await getDocumentStatsAction();
+
+        if (!isSubscribed) {
+          return;
+        }
+
         if (result.success && result.data) {
           setStats(result.data);
+        } else {
+          throw new Error(result.error || 'Failed to fetch document statistics.');
         }
-      } catch (error) {
-        console.error('Error fetching document stats:', error);
+      } catch (err) {
+        if (!isSubscribed) {
+          return;
+        }
+
+        const errorInstance = err instanceof Error
+          ? err
+          : new Error('An unexpected error occurred while loading document statistics.');
+
+        console.error('Error fetching document stats:', errorInstance);
+        setError(errorInstance);
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
     };
 
     fetchStats();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, []);
+
+  if (error) {
+    throw error;
+  }
 
   if (loading) {
     return (
