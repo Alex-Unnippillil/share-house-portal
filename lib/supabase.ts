@@ -33,6 +33,7 @@ export type Database = {
         id: string
         created_at: string | null
         updated_at: string | null
+        row_version: number
         email: string | null
         full_name: string | null
         username: string | null

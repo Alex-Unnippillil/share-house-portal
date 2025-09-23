@@ -1,21 +1,38 @@
-import React from "react";
-import DailogForm from "../DialogForm";
-import { Button } from "@/components/ui/button";
-import { Pencil1Icon } from "@radix-ui/react-icons";
-import EditForm from "./EditForm";
+'use client'
 
-export default function EditMember() {
-	return (
-		<DailogForm
-			id="update-trigger"
-			title="Edit Member"
-			Trigger={
-				<Button variant="outline">
-					<Pencil1Icon />
-					Edit
-				</Button>
-			}
-			form={<EditForm />}
-		/>
-	);
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Pencil1Icon } from '@radix-ui/react-icons'
+
+import type { DashboardMember } from '../../data'
+
+import MemberUpdateForm from './MemberUpdateForm'
+
+interface EditMemberProps {
+  member: DashboardMember
+}
+
+export default function EditMember({ member }: EditMemberProps) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button className="flex items-center gap-2" variant="outline">
+          <Pencil1Icon />
+          Edit
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Edit member</DialogTitle>
+        </DialogHeader>
+        <MemberUpdateForm member={member} />
+      </DialogContent>
+    </Dialog>
+  )
 }
