@@ -1,3 +1,5 @@
+import * as React from "react"
+
 import SmartLink from "@/components/navigation/SmartLink"
 
 export default function OnboardingProgress({ step = 1 }: { step?: number }) {

@@ -46,6 +46,18 @@ export type Database = {
         rent_share: number | null
         metadata: Json | null
       }>
+      onboarding_progress: SupabaseTable<{
+        user_id: string
+        confirmed_unit: boolean
+        confirmed_unit_at: string | null
+        added_payment_method: boolean
+        added_payment_method_at: string | null
+        invited_roommate: boolean
+        invited_roommate_at: string | null
+        completed_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       documents: SupabaseTable<{
         id: string
         created_at: string | null
