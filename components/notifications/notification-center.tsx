@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
@@ -221,9 +222,7 @@ export function NotificationCenter() {
           <CardContent className="p-0">
             <ScrollArea className="h-80">
               {loading ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  Loading notifications...
-                </div>
+                <NotificationListSkeleton />
               ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   No notifications yet
@@ -302,4 +301,27 @@ export function NotificationCenter() {
       )}
     </div>
   );
+}
+
+export function NotificationListSkeleton() {
+  return (
+    <div className="space-y-3 p-4" role="status" aria-live="polite">
+      <Skeleton className="h-5 w-32 rounded" />
+      <div className="space-y-2">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Card key={index} className="border-border/40 bg-background/60">
+            <CardContent className="space-y-3 p-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-3 w-2/3" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <span className="sr-only">Loading notifications…</span>
+    </div>
+  )
 }

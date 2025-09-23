@@ -1,26 +1,23 @@
-function Skeleton({ className }: { className: string }) {
-        return <div className={`animate-pulse rounded-md bg-muted ${className}`} />
-}
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function DashboardHeaderSkeleton() {
-        return <Skeleton className="h-10 w-full" />
+  return <Skeleton className="h-10 w-full rounded-lg" />
 }
 
 export function DashboardCardSkeleton() {
-        return <Skeleton className="h-40 w-full" />
+  return <Skeleton className="h-40 w-full rounded-xl" />
 }
 
 export function DashboardBoardSkeleton() {
-        return <Skeleton className="h-48 w-full" />
+  return <Skeleton className="h-48 w-full rounded-xl" />
 }
 
 export function DashboardStatsSkeleton() {
-        return (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <Skeleton className="h-32 w-full" />
-                        <Skeleton className="h-32 w-full" />
-                        <Skeleton className="h-32 w-full" />
-                        <Skeleton className="h-32 w-full" />
-                </div>
-        )
+  return (
+    <div className="grid gap-4 md:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Skeleton key={index} className="h-32 w-full rounded-xl" />
+      ))}
+    </div>
+  )
 }

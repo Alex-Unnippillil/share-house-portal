@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
-import { DocumentActions } from './document-actions';
-import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { formatDistanceToNow } from "date-fns"
+import { FileText, Users, Calendar, Eye } from "lucide-react"
+
+import { DocumentWithLease, DocumentListFilters } from "@/types/documents"
+
+import { getDocumentsAction } from "../actions"
+import { DocumentsListSkeleton } from "./documents-skeletons"
+import { DocumentActions } from "./document-actions"
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -80,32 +83,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="h-5 w-48 rounded bg-muted"></div>
-                  <div className="h-4 w-32 rounded bg-muted"></div>
-                </div>
-                <div className="h-6 w-20 rounded bg-muted"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="h-4 w-24 rounded bg-muted"></div>
-                <div className="flex space-x-2">
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <DocumentsListSkeleton />
   }
 
   if (error) {
