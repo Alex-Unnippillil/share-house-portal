@@ -70,6 +70,9 @@
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "0.160.0",
+    "workbox-background-sync": "^7.3.0",
+    "workbox-core": "^7.3.0",
+    "workbox-routing": "^7.3.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -79,6 +82,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/parser": "^7.16.0",
+    "fake-indexeddb": "^6.2.2",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.2.4",

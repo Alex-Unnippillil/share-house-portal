@@ -3,18 +3,16 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { formatDistanceToNow } from "date-fns";
 import * as z from "zod";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -47,10 +45,14 @@ const priorities = [
 
 export function MaintenanceRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
-  const supabase = createClient();
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const {
+    submit,
+    isOnline,
+    queuedCount,
+    statusLabel,
+    lastSyncedAt,
+  } = useOfflineQueue("maintenance", "/api/maintenance");
 
   const form = useForm<MaintenanceRequestFormData>({
     resolver: zodResolver(maintenanceRequestSchema),
@@ -67,69 +69,50 @@ export function MaintenanceRequestForm() {
     setIsSubmitting(true);
 
     try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Get user profile
-      const profile = await fetchMemberProfile(typedSupabase, user.id);
-
-      if (!profile) throw new Error("Profile not found");
-
-      if (!profile.unit_id) {
-        throw new Error("User is not assigned to a unit");
-      }
-
-      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        roles: ['property_manager'],
-      });
-
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
-      }
-
-      // Create maintenance request record
-      const { data: request, error: requestError } = await (supabase as any)
-        .from('maintenance_requests')
-        .insert({
-          title: data.title,
-          description: data.description,
-          priority: data.priority,
-          category: data.category || null,
-          location: data.location || null,
-          requested_by: user.id,
-          unit_id: profile.unit_id,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (requestError) throw requestError;
-
-      // Send notifications
-      await notifyMaintenanceRequest({
-        requesterName: profile.full_name || user.email || 'Unknown',
+      const { response, queued } = await submit({
         title: data.title,
         description: data.description,
         priority: data.priority,
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
-        },
+        category: data.category || null,
+        location: data.location || null,
       });
+
+      if (queued) {
+        toast({
+          title: "Request queued offline",
+          description:
+            "You're offline. We'll sync this maintenance request once you're reconnected.",
+        });
+        form.reset();
+        return;
+      }
+
+      const result = (await response.json().catch(() => null)) as
+        | { success?: boolean; error?: unknown }
+        | null;
+
+      if (!response.ok || !result?.success) {
+        const errorMessage =
+          typeof result?.error === "string"
+            ? result.error
+            : "Failed to submit maintenance request";
+        throw new Error(errorMessage);
+      }
 
       toast({
         title: "Maintenance request submitted",
-        description: "Your maintenance request has been submitted and notifications sent.",
+        description: "We've notified your property manager about this issue.",
       });
 
       form.reset();
     } catch (error) {
-      console.error('Error submitting maintenance request:', error);
+      console.error("Error submitting maintenance request:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit maintenance request",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to submit maintenance request",
         variant: "destructive",
       });
     } finally {
@@ -140,6 +123,29 @@ export function MaintenanceRequestForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {!isOnline && (
+          <div className="rounded-md border border-dashed border-amber-500/60 bg-amber-50 p-3 text-sm text-amber-900">
+            You're currently offline. We'll queue this request and sync it automatically once
+            you're back online.
+          </div>
+        )}
+
+        <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-xs">
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">{statusLabel}</p>
+            <p className="text-muted-foreground">
+              {queuedCount > 0
+                ? `Queued submissions: ${queuedCount}`
+                : lastSyncedAt
+                ? `Last synced ${formatDistanceToNow(lastSyncedAt, { addSuffix: true })}`
+                : "Ready to submit"}
+            </p>
+          </div>
+          <Badge variant={queuedCount > 0 ? "secondary" : "outline"}>
+            {queuedCount > 0 ? `${queuedCount} queued` : "Up to date"}
+          </Badge>
+        </div>
+
         <FormField
           control={form.control}
           name="title"
