@@ -37,6 +37,13 @@ NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
 SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
 SUPABASE_JWT_SECRET="your_jwt_secret"
+# Optional pooling overrides
+SUPABASE_REST_MAX_CONNECTIONS="10"
+SUPABASE_REST_KEEP_ALIVE_MS="30000"
+SUPABASE_DB_POOL_URL="postgres://your-project.pooler.supabase.com/postgres"
+SUPABASE_DB_POOL_MAX="10"
+SUPABASE_DB_POOL_IDLE_TIMEOUT_MS="30000"
+SUPABASE_DB_POOL_CONNECTION_TIMEOUT_MS="2000"
 ```
 
 ### **APPLICATION**
