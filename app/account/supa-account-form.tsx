@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import useSupabaseBrowser from "@/utils/supabase-browser"
 
+import { AccessibilityPreferencesPanel } from "./accessibility-preferences"
+
 import Avatar from "./avatar"
 import type { AccountProfile } from "./types"
 
@@ -166,6 +168,7 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
           {isSaving ? "Saving..." : "Update account"}
         </button>
       </form>
+      <AccessibilityPreferencesPanel />
       <div className="mb-2 flex w-full flex-col">
         <form action="/auth/signout" className="items-center space-y-8" method="post">
           <button className={buttonVariants({ variant: "outline" })} type="submit">

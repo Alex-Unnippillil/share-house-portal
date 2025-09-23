@@ -32,6 +32,10 @@ body {}
     --input: 214 32% 91%;
     --ring: 222 47% 11%;
     --radius: 0.375rem;
+    --body-font-family: var(--font-sans);
+    --body-line-height: 1.6;
+    --body-letter-spacing: normal;
+    --reader-measure: 100%;
   }
 
   .dark {
@@ -63,6 +67,30 @@ body {}
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--body-font-family), var(--font-sans), system-ui, sans-serif;
+    line-height: var(--body-line-height);
+    letter-spacing: var(--body-letter-spacing);
+  }
+  body.dyslexia-font {
+    --body-font-family: var(--font-dyslexic), var(--font-sans);
+    --body-letter-spacing: 0.02em;
+  }
+  body.reader-mode {
+    --body-line-height: 1.75;
+    --reader-measure: 68ch;
+  }
+  body.reader-mode :where(p, li, blockquote) {
+    max-width: var(--reader-measure);
+    margin-inline: auto;
+    line-height: var(--body-line-height);
+  }
+  body.reader-mode :where(ul, ol) {
+    max-width: var(--reader-measure);
+    margin-inline: auto;
+  }
+  body.reader-mode .reader-max-width {
+    max-width: min(100%, var(--reader-measure));
+    margin-inline: auto;
   }
 }
 
