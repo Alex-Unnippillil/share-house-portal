@@ -101,6 +101,49 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
+## Docker Image
+
+Build the production container image with the provided multi-stage `Dockerfile` when you need a reproducible deployment artifact.
+
+### Required build arguments
+
+These build arguments prime the Next.js build with the Supabase and Stripe configuration that is read during compilation. Provide test values locally and production secrets in your CI/CD system.
+
+| Build arg | Description |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL exposed to the browser. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key used by the browser client. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key required for server actions. |
+| `STRIPE_SECRET_KEY` | Stripe secret key for server-side API calls. |
+| `STRIPE_WEBHOOK_SECRET` | Secret used to validate Stripe webhooks. |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key exposed to the browser. |
+
+The same values **must** be provided at runtime (for example with `docker run -e ...`) so the application can access them when serving requests.
+
+### Build and run locally
+
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co" \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key" \
+  --build-arg SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key" \
+  --build-arg STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key" \
+  --build-arg STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret" \
+  --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_your_publishable_key" \
+  -t roomsily:latest .
+
+docker run --rm -p 3000:3000 \
+  -e NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co" \
+  -e NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key" \
+  -e SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key" \
+  -e STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key" \
+  -e STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret" \
+  -e NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_your_publishable_key" \
+  roomsily:latest
+```
+
+Add the remaining environment variables from `.env.local` or `ENVIRONMENT_SETUP.md` as `-e` flags (or secrets in your orchestrator) to match your deployment target.
+
 ### Stripe Configuration
 
 1. Create products and prices in your Stripe dashboard
