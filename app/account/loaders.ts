@@ -14,7 +14,7 @@ import type { AccountProfile } from "./types"
 
 type ProfileRow = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
-  "full_name" | "username" | "website" | "avatar_url" | "email"
+  "full_name" | "username" | "website" | "avatar_url" | "email" | "timezone" | "locale"
 >
 
 export interface AccountPageData {
@@ -36,7 +36,7 @@ export async function loadAccountPageData(): Promise<AccountPageData> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("full_name, username, website, avatar_url, email")
+    .select("full_name, username, website, avatar_url, email, timezone, locale")
     .eq("id", user.id)
     .maybeSingle<ProfileRow>()
 
@@ -51,8 +51,42 @@ export async function loadAccountPageData(): Promise<AccountPageData> {
         website: data.website,
         avatarUrl: data.avatar_url,
         email: data.email,
+        timezone: data.timezone,
+        locale: data.locale,
       }
     : null
 
   return { user, profile }
+}
+
+export async function loadUserPreferences(): Promise<{
+  locale: string | null
+  timezone: string | null
+}> {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { locale: null, timezone: null }
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("locale, timezone")
+    .eq("id", user.id)
+    .maybeSingle<{ locale: string | null; timezone: string | null }>()
+
+  if (error) {
+    console.error("Failed to load user preferences", error)
+    return { locale: null, timezone: null }
+  }
+
+  return {
+    locale: data?.locale ?? null,
+    timezone: data?.timezone ?? null,
+  }
 }

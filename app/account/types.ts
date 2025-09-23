@@ -4,4 +4,6 @@ export interface AccountProfile {
   website: string | null
   avatarUrl: string | null
   email: string | null
+  timezone: string | null
+  locale: string | null
 }
