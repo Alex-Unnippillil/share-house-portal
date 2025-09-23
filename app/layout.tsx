@@ -9,6 +9,7 @@ import "./globals.css"
 
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
+import { PerformanceBudgetMonitor } from "@/components/performance-budget-monitor"
 import { CookieButton } from "@/components/cookie-button"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
@@ -141,6 +142,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <Toaster />
                 <Analytics />
                 <SpeedInsights />
+                <PerformanceBudgetMonitor />
               </div>
 
    </div>

@@ -4,6 +4,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  request.headers.set("x-performance-route", request.nextUrl.pathname)
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
