@@ -237,6 +237,38 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      referral_invitations: SupabaseTable<{
+        id: string
+        inviter_id: string
+        invitee_email: string
+        invitee_name: string | null
+        invite_token: string
+        status: 'pending' | 'accepted' | 'expired' | 'revoked'
+        sent_at: string | null
+        accepted_at: string | null
+        expires_at: string | null
+        accepted_by: string | null
+        household_id: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      referral_reward_ledger: SupabaseTable<{
+        id: string
+        invitation_id: string | null
+        inviter_id: string
+        invitee_id: string | null
+        household_id: string | null
+        reward_type: string
+        amount: number
+        currency: string
+        status: 'pending' | 'earned' | 'paid' | 'reversed'
+        description: string | null
+        posted_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string
