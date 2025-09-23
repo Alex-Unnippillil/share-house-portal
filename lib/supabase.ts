@@ -185,6 +185,7 @@ export type Database = {
         description: string
         priority: 'low' | 'normal' | 'high' | 'urgent'
         status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+        state: 'draft' | 'published'
         category: string | null
         location: string | null
         requested_by: string
@@ -196,6 +197,18 @@ export type Database = {
         notes: string | null
         attachments: Json | null
         metadata: Json | null
+        version: number
+      }>
+      maintenance_request_versions: SupabaseTable<{
+        id: string
+        request_id: string
+        version: number
+        state: 'draft' | 'published'
+        status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+        snapshot: Json
+        created_at: string | null
+        created_by: string | null
+        published_at: string | null
       }>
       visitor_logs: SupabaseTable<{
         id: string
