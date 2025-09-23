@@ -234,6 +234,12 @@ async function fetchQuickActions(): Promise<QuickAction[]> {
   await wait(140)
   return [
     {
+      id: "upgrade",
+      label: "Upgrade plan",
+      description: "Unlock automations, analytics, and concierge support",
+      href: "/pricing",
+    },
+    {
       id: "payments",
       label: "Record a payment",
       description: "Log an off-platform rent payment",

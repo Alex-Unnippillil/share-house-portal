@@ -5,6 +5,7 @@ import { siteConfig } from "@/config/site"
 
 const expectedEntries = [
   { title: "Payments", href: "/payments" },
+  { title: "Pricing", href: "/pricing" },
   { title: "Documents", href: "/documents" },
   { title: "Messaging", href: "/messaging" },
 ]
