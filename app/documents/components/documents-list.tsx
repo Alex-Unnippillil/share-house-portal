@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
+import { getDocumentsAction } from '@/app/documents/actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
@@ -17,28 +16,61 @@ interface DocumentsListProps {
 export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let isSubscribed = true;
+
     const fetchDocuments = async () => {
+      if (!isSubscribed) {
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setDocuments([]);
+
       try {
-        setLoading(true);
         const result = await getDocumentsAction(filter);
+
+        if (!isSubscribed) {
+          return;
+        }
+
         if (result.success && result.data) {
           setDocuments(result.data);
         } else {
-          setError(result.error || 'Failed to fetch documents');
+          throw new Error(result.error || 'Failed to fetch documents.');
         }
       } catch (err) {
-        console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
+        if (!isSubscribed) {
+          return;
+        }
+
+        const errorInstance = err instanceof Error
+          ? err
+          : new Error('An unexpected error occurred while loading documents.');
+
+        console.error('Error fetching documents:', errorInstance);
+
+        setError(errorInstance);
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDocuments();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [filter]);
+
+  if (error) {
+    throw error;
+  }
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -103,24 +135,6 @@ export function DocumentsList({ filter }: DocumentsListProps) {
           </Card>
         ))}
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-6">
-        <div className="text-center">
-          <p className="mb-2 text-destructive">Error loading documents</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
-        </div>
-      </Card>
     );
   }
 

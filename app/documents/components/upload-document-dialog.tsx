@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { uploadDocumentAction } from '../actions';
+import { uploadDocumentAction } from '@/app/documents/actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
