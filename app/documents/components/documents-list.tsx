@@ -66,6 +66,34 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   };
 
+  const getStateBadge = (state: string) => {
+    const labels = {
+      draft: 'Draft',
+      published: 'Published',
+    } as const;
+
+    return (
+      <Badge
+        variant={state === 'published' ? 'default' : 'secondary'}
+        className="uppercase"
+      >
+        {labels[state as keyof typeof labels] || state}
+      </Badge>
+    );
+  };
+
+  const versionStatusLabel = (status: string) => {
+    const labels = {
+      draft: 'Draft Saved',
+      pending_signature: 'Sent for Signature',
+      signed: 'Signed',
+      expired: 'Expired',
+      cancelled: 'Cancelled',
+    } as const;
+
+    return labels[status as keyof typeof labels] || status;
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'lease':
@@ -185,12 +213,13 @@ export function DocumentsList({ filter }: DocumentsListProps) {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                {getStateBadge(doc.state)}
                 {getStatusBadge(doc.status)}
                 <DocumentActions document={doc} />
               </div>
             </div>
           </CardHeader>
-          {doc.signatures && doc.signatures.length > 0 && (
+          {(doc.signatures && doc.signatures.length > 0) && (
             <CardContent className="pt-0">
               <div className="flex items-center space-x-2">
                 <span className="text-xs text-muted-foreground">Signers:</span>
@@ -208,6 +237,43 @@ export function DocumentsList({ filter }: DocumentsListProps) {
                     +{doc.signatures.length - 3} more
                   </Badge>
                 )}
+              </div>
+            </CardContent>
+          )}
+
+          {doc.versions && doc.versions.length > 0 && (
+            <CardContent className="pt-3">
+              <div className="border-t pt-3">
+                <div className="text-xs font-medium uppercase text-muted-foreground">
+                  Version history
+                </div>
+                <div className="mt-2 space-y-2">
+                  {doc.versions.slice(0, 5).map((version) => (
+                    <div
+                      key={version.id}
+                      className="flex items-center justify-between text-xs text-muted-foreground"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Badge
+                          variant={version.version === doc.version ? 'default' : 'outline'}
+                          className="text-[10px] uppercase"
+                        >
+                          v{version.version}
+                        </Badge>
+                        <Badge
+                          variant={version.state === 'published' ? 'default' : 'secondary'}
+                          className="text-[10px] uppercase"
+                        >
+                          {version.state}
+                        </Badge>
+                        <span>{versionStatusLabel(version.status)}</span>
+                      </div>
+                      <span>
+                        {formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           )}

@@ -2,6 +2,37 @@ export type DocumentType = 'lease' | 'addendum' | 'insurance' | 'maintenance' | 
 
 export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled';
 
+export type DocumentState = 'draft' | 'published';
+
+export interface DocumentVersionSnapshot {
+  title: string;
+  description?: string | null;
+  document_type: DocumentType;
+  status: DocumentStatus;
+  state: DocumentState;
+  file_url?: string | null;
+  metadata: Record<string, any>;
+  requires_signature: boolean;
+  expires_at?: string | null;
+  signed_at?: string | null;
+  tenant_id?: string | null;
+  unit_id?: string | null;
+  documenso_envelope_id?: string | null;
+  documenso_template_id?: string | null;
+}
+
+export interface DocumentVersion {
+  id: string;
+  document_id: string;
+  version: number;
+  state: DocumentState;
+  status: DocumentStatus;
+  snapshot: DocumentVersionSnapshot;
+  created_at: string;
+  created_by?: string | null;
+  published_at?: string | null;
+}
+
 export type SignatureStatus = 'pending' | 'signed' | 'declined' | 'expired';
 
 export interface Document {
@@ -12,6 +43,7 @@ export interface Document {
   description?: string;
   document_type: DocumentType;
   status: DocumentStatus;
+  state: DocumentState;
   file_url?: string;
   documenso_envelope_id?: string;
   documenso_template_id?: string;
@@ -25,6 +57,7 @@ export interface Document {
   signed_at?: string;
   version: number;
   parent_document_id?: string;
+  published_at?: string;
 }
 
 export interface DocumentSignature {
@@ -81,6 +114,7 @@ export interface DocumentWithLease extends Document {
   lease?: Lease;
   signatures?: DocumentSignature[];
   access_logs?: DocumentAccessLog[];
+  versions?: DocumentVersion[];
 }
 
 export interface DocumentSigningRequest {

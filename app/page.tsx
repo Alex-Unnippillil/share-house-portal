@@ -6,11 +6,15 @@ import SmartLink from "@/components/navigation/SmartLink"
 
 import { redirect } from "next/navigation"
 import {
+  BellRing,
   CalendarClock,
   FileText,
+  ListChecks,
   MessageSquare,
+  PiggyBank,
   ShieldCheck,
   Sparkles,
+  Users,
   Wallet,
 } from "lucide-react"
 
@@ -44,9 +48,30 @@ const integrationBadges = [
 ]
 
 const heroMetrics = [
-  { value: "99.2%", label: "Rent collected on schedule" },
-  { value: "8 min", label: "Average roommate onboarding" },
-  { value: "5x", label: "Fewer amenity conflicts" },
+  { value: "99.2%", label: "Rent collected on schedule", icon: PiggyBank },
+  { value: "8 min", label: "Average roommate onboarding", icon: Users },
+  { value: "5x", label: "Fewer amenity conflicts", icon: ListChecks },
+]
+
+const heroHighlights = [
+  {
+    title: "Autopay everyone trusts",
+    description:
+      "Stripe splits rent automatically, nudges late roommates, and stores a transparent receipt history.",
+    icon: Wallet,
+  },
+  {
+    title: "Bookings without friction",
+    description:
+      "Roommates tap a Cal.com link to hold the kitchen, parking, or gaming nook with real-time conflict checks.",
+    icon: CalendarClock,
+  },
+  {
+    title: "Signal over noise",
+    description:
+      "Threads, polls, and visitor approvals surface the updates that matter so every roommate stays in sync.",
+    icon: BellRing,
+  },
 ]
 
 const portalFeatures = [
@@ -97,6 +122,31 @@ const portalFeatures = [
     icon: Sparkles,
     href: "/dashboard",
     ctaLabel: "View dashboard",
+  },
+]
+
+const personaPlaybooks = [
+  {
+    badge: "Roommates",
+    title: "A calmer home hub",
+    description:
+      "Track rent, chores, and shared spaces from a mobile-first portal that respects everyone’s time.",
+    points: [
+      "Automatic rent splits with clear history and reminders for each roommate",
+      "A personalised daily agenda of bookings, chores, and open polls",
+      "Visitor check-ins and document vaults that remove guesswork",
+    ],
+  },
+  {
+    badge: "Property teams",
+    title: "Operations with context",
+    description:
+      "Connect leasing, finance, and community updates to lower churn and support happier households.",
+    points: [
+      "Stripe, Supabase, and Documenso data aligned in one control centre",
+      "Real-time alerts when payments slip or maintenance escalates",
+      "Exports, audit trails, and permissions tuned for compliance",
+    ],
   },
 ]
 
@@ -165,15 +215,18 @@ export default async function IndexPage() {
             <div className="space-y-10 text-center lg:text-left">
               <div className="flex justify-center lg:justify-start">
                 <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 text-primary">
-                  Tenant portal for shared homes
+                  Tenant portal crafted for shared homes
                 </Badge>
               </div>
               <div className="space-y-6">
                 <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-                  Run your shared home with one tenant portal
+                  Modern operations for every roommate and property manager
                 </h1>
                 <p className="mx-auto max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
-                  Roomsily weaves Stripe autopay, Cal.com bookings, Documenso eSignatures, and Supabase messaging into a calm, accountable workspace for every roommate.
+
+                  Roomsily brings autopay, bookings, documents, and updates into an intuitive workspace that keeps households
+                  aligned without the group-chat chaos.
+
                 </p>
               </div>
               <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
@@ -195,6 +248,22 @@ export default async function IndexPage() {
                 >
                   <span>Create your household</span>
                 </Link>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {heroHighlights.map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <item.icon className="size-5" aria-hidden="true" />
+                      </span>
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">{item.description}</p>
+                  </div>
+                ))}
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground lg:justify-start">
                 <span className="font-medium text-foreground">Works with</span>
@@ -241,10 +310,15 @@ export default async function IndexPage() {
             {heroMetrics.map((metric) => (
               <div
                 key={metric.label}
-                className="rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur"
+                className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur"
               >
-                <p className="text-3xl font-semibold text-foreground">{metric.value}</p>
-                <p className="text-sm text-muted-foreground">{metric.label}</p>
+                <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <metric.icon className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-3xl font-semibold text-foreground">{metric.value}</p>
+                  <p className="text-sm text-muted-foreground">{metric.label}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -262,10 +336,13 @@ export default async function IndexPage() {
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {portalFeatures.map((feature) => (
-            <Card key={feature.title} className="flex h-full flex-col border-border/70 bg-card/80 backdrop-blur">
-              <CardHeader className="space-y-4">
+            <Card
+              key={feature.title}
+              className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg"
+            >
+              <CardHeader className="space-y-5">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <feature.icon className="size-5" />
+                  <feature.icon className="size-5" aria-hidden="true" />
                 </div>
                 <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
                 <CardDescription>{feature.description}</CardDescription>
@@ -277,6 +354,44 @@ export default async function IndexPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Designed for the people using it</h2>
+            <p className="mt-4 text-muted-foreground">
+              Whether you’re paying rent or overseeing dozens of units, Roomsily gives every role the clarity they need.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-6 lg:grid-cols-2">
+            {personaPlaybooks.map((persona) => (
+              <Card
+                key={persona.badge}
+                className="relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur"
+              >
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
+                <CardHeader className="relative space-y-4">
+                  <Badge variant="secondary" className="w-fit rounded-full bg-primary/10 text-primary">
+                    {persona.badge}
+                  </Badge>
+                  <CardTitle className="text-2xl font-semibold">{persona.title}</CardTitle>
+                  <CardDescription className="text-base">{persona.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  <ul className="space-y-3 text-sm text-muted-foreground">
+                    {persona.points.map((point) => (
+                      <li key={point} className="flex items-start gap-3">
+                        <span className="mt-1 size-2 rounded-full bg-primary" aria-hidden="true" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -333,8 +448,8 @@ export default async function IndexPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             {integrationHighlights.map((highlight) => (
-              <Card key={highlight.title} className="h-full border-border/70 bg-background">
-                <CardHeader>
+              <Card key={highlight.title} className="h-full border-border/70 bg-background/95 shadow-sm">
+                <CardHeader className="space-y-4">
                   <CardTitle className="text-2xl font-semibold">{highlight.title}</CardTitle>
                   <CardDescription className="text-base">{highlight.description}</CardDescription>
                 </CardHeader>
@@ -373,19 +488,26 @@ export default async function IndexPage() {
             Guided onboarding and contextual tips remove the friction from getting every roommate connected.
           </p>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-4">
-          {workflowSteps.map((item) => (
-            <Card key={item.step} className="h-full border-border/70">
-              <CardHeader>
-                <Badge variant="secondary" className="size-9 rounded-full text-base font-semibold">
-                  {item.step}
-                </Badge>
-                <CardTitle className="mt-4 text-xl font-semibold">{item.title}</CardTitle>
-                <CardDescription>{item.description}</CardDescription>
-              </CardHeader>
-            </Card>
+        <ol className="relative mt-12 grid gap-6 md:grid-cols-4">
+          {workflowSteps.map((item, index) => (
+            <li
+              key={item.step}
+              className="relative flex h-full flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm"
+            >
+              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                {item.step}
+              </span>
+              <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
+              <p className="text-sm text-muted-foreground">{item.description}</p>
+              {index < workflowSteps.length - 1 && (
+                <span
+                  className="absolute right-[-18px] top-1/2 hidden h-px w-10 -translate-y-1/2 bg-border md:block"
+                  aria-hidden="true"
+                />
+              )}
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
       <section className="pb-24">
@@ -394,10 +516,13 @@ export default async function IndexPage() {
             <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
               <div className="max-w-xl space-y-4">
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Ready to align your shared household?
+                  Ready to centre your shared household around clarity?
                 </h3>
                 <p className="text-base text-muted-foreground">
-                  Spin up Roomsily with Stripe autopay, Cal.com bookings, Documenso agreements, and Supabase messaging in a few guided steps.
+
+                  Launch Roomsily with guided onboarding and give every roommate one place to handle payments, bookings, and
+                  documents.
+
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
