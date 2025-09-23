@@ -15,6 +15,8 @@ import {
   DashboardStatsSkeleton,
 } from "./components/skeletons"
 
+import InsightsPanel from "./components/insights-panel"
+
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
@@ -52,6 +54,7 @@ export default function DashboardPage() {
             <RoommateBoardCard />
           </Suspense>
         </div>
+
 
         <div className="space-y-4">
           <Suspense fallback={<DashboardCardSkeleton />}>
