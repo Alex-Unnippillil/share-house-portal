@@ -19,7 +19,7 @@ import {
   DocumentStats,
   DocumentVersionSnapshot,
 } from '@/types/documents';
-import type { Database } from '@/lib/supabase';
+import type { Database, Json } from '@/lib/supabase';
 
 // Validation schemas
 const documentUploadSchema = z.object({
@@ -59,6 +59,16 @@ interface ActionResult<T = any> {
 
 type DocumentRow = Database['public']['Tables']['documents']['Row'];
 
+function toMetadataRecord(
+  metadata: DocumentRow['metadata']
+): Record<string, Json> {
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    return metadata as Record<string, Json>;
+  }
+
+  return {};
+}
+
 function buildVersionSnapshot(document: DocumentRow): DocumentVersionSnapshot {
   return {
     title: document.title,
@@ -66,15 +76,15 @@ function buildVersionSnapshot(document: DocumentRow): DocumentVersionSnapshot {
     document_type: document.document_type,
     status: document.status,
     state: document.state,
-    file_url: document.file_url ?? undefined,
-    metadata: (document.metadata as Record<string, any> | null) ?? {},
+    file_url: document.file_url ?? null,
+    metadata: toMetadataRecord(document.metadata),
     requires_signature: document.requires_signature ?? false,
-    expires_at: document.expires_at ?? undefined,
-    signed_at: document.signed_at ?? undefined,
-    tenant_id: document.tenant_id ?? undefined,
-    unit_id: document.unit_id ?? undefined,
-    documenso_envelope_id: document.documenso_envelope_id ?? undefined,
-    documenso_template_id: document.documenso_template_id ?? undefined,
+    expires_at: document.expires_at ?? null,
+    signed_at: document.signed_at ?? null,
+    tenant_id: document.tenant_id ?? null,
+    unit_id: document.unit_id ?? null,
+    documenso_envelope_id: document.documenso_envelope_id ?? null,
+    documenso_template_id: document.documenso_template_id ?? null,
   };
 }
 
