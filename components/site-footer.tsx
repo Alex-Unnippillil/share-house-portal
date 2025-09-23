@@ -50,6 +50,15 @@ export function SiteFooter() {
                   Roommate messaging
                 </SmartLink>
               </li>
+              <li>
+                <SmartLink
+                  href="/messaging/live"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
+                  Live Messenger
+                </SmartLink>
+              </li>
             </ul>
           </div>
           <div className="space-y-4">
