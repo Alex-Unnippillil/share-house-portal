@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { FileText, Users, Clock, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadDocumentDialog } from "./components/upload-document-dialog";
+import { ImportDocumentsDialog } from "./components/import-documents-dialog";
 import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
@@ -20,7 +21,10 @@ export default function DocumentsPage() {
               Manage leases, agreements, and household documents with secure signing and version control.
             </p>
           </div>
-          <UploadDocumentDialog />
+          <div className="flex items-center gap-2">
+            <ImportDocumentsDialog />
+            <UploadDocumentDialog />
+          </div>
         </div>
         <Separator />
       </header>
