@@ -1,10 +1,24 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import type { KeyboardEvent } from "react";
+import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,10 +38,28 @@ interface Notification {
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [liveMessage, setLiveMessage] = useState<string>("");
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
+  const markAllButtonRef = useRef<HTMLButtonElement | null>(null);
+  const notificationRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const announce = useCallback((message: string) => {
+    setLiveMessage("");
+
+    const schedule =
+      typeof window !== 'undefined' &&
+      typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame
+        : (callback: () => void) => setTimeout(callback, 0);
+
+    schedule(() => {
+      setLiveMessage(message);
+    });
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -64,40 +96,84 @@ export function NotificationCenter() {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
+          setNotifications((prev) => [newNotification, ...prev]);
+          setUnreadCount((prev) => prev + 1);
+          announce(
+            `New ${newNotification.type} notification: ${newNotification.title}. ${newNotification.message}`,
+          );
 
           // Show toast for new notification
           toast({
             title: newNotification.title,
             description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' :
-                    newNotification.type === 'warning' ? 'default' : 'default',
+            variant:
+              newNotification.type === 'error'
+                ? 'destructive'
+                : 'default',
           });
-        }
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, supabase, toast]);
+  }, [announce, fetchNotifications, supabase, toast]);
 
-  const markAsRead = async (notificationId: string) => {
+  useEffect(() => {
+    notificationRefs.current = notificationRefs.current.slice(
+      0,
+      notifications.length,
+    );
+
+    if (notifications.length === 0) {
+      setActiveIndex(null);
+      return;
+    }
+
+    if (activeIndex !== null && activeIndex >= notifications.length) {
+      const newIndex = notifications.length - 1;
+      setActiveIndex(newIndex);
+      requestAnimationFrame(() => {
+        notificationRefs.current[newIndex]?.focus();
+      });
+    }
+  }, [notifications.length, activeIndex]);
+
+  useEffect(() => {
+    if (!open) {
+      setActiveIndex(null);
+      return;
+    }
+
+    const focusTarget = markAllButtonRef.current || notificationRefs.current[0];
+
+    if (focusTarget) {
+      requestAnimationFrame(() => {
+        focusTarget.focus();
+      });
+      if (!markAllButtonRef.current && notificationRefs.current[0]) {
+        setActiveIndex(0);
+      }
+    }
+  }, [open, notifications.length]);
+
+  const markAsRead = async (notification: Notification) => {
+    if (notification.read) return;
+
     try {
       const { error } = await (supabase as any)
         .from('notifications')
         .update({ read: true })
-        .eq('id', notificationId);
+        .eq('id', notification.id);
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)),
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+      announce(`Notification "${notification.title}" marked as read.`);
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
@@ -105,7 +181,8 @@ export function NotificationCenter() {
 
   const markAllAsRead = async () => {
     try {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      const unreadNotifications = notifications.filter((n) => !n.read);
+      const unreadIds = unreadNotifications.map((n) => n.id);
 
       if (unreadIds.length === 0) return;
 
@@ -116,34 +193,34 @@ export function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
 
       toast({
         title: "All notifications marked as read",
       });
+      announce("All notifications marked as read.");
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
     }
   };
 
-  const deleteNotification = async (notificationId: string) => {
+  const deleteNotification = async (notification: Notification) => {
     try {
       const { error } = await (supabase as any)
         .from('notifications')
         .delete()
-        .eq('id', notificationId);
+        .eq('id', notification.id);
 
       if (error) throw error;
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      const wasUnread = !notification.read;
+      setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
 
-      if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+      if (wasUnread) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
+      announce(`Notification "${notification.title}" dismissed.`);
     } catch (error) {
       console.error('Failed to delete notification:', error);
     }
@@ -173,133 +250,233 @@ export function NotificationCenter() {
     return date.toLocaleDateString();
   };
 
+  const focusNotification = (index: number) => {
+    if (index < 0 || index >= notifications.length) return;
+    setActiveIndex(index);
+    requestAnimationFrame(() => {
+      notificationRefs.current[index]?.focus();
+    });
+  };
+
+  const handleNotificationAction = (notification: Notification) => {
+    if (!notification.read) {
+      void markAsRead(notification);
+    }
+
+    if (notification.action_url && typeof window !== 'undefined') {
+      window.location.href = notification.action_url;
+      setOpen(false);
+    }
+  };
+
+  const handleNotificationKeyDown = (
+    event: KeyboardEvent<HTMLDivElement>,
+    index: number,
+    notification: Notification,
+  ) => {
+    if (notifications.length === 0) return;
+
+    switch (event.key) {
+      case 'ArrowDown': {
+        event.preventDefault();
+        focusNotification((index + 1) % notifications.length);
+        break;
+      }
+      case 'ArrowUp': {
+        event.preventDefault();
+        focusNotification(
+          (index - 1 + notifications.length) % notifications.length,
+        );
+        break;
+      }
+      case 'Home': {
+        event.preventDefault();
+        focusNotification(0);
+        break;
+      }
+      case 'End': {
+        event.preventDefault();
+        focusNotification(notifications.length - 1);
+        break;
+      }
+      case 'Enter':
+      case ' ': {
+        event.preventDefault();
+        handleNotificationAction(notification);
+        break;
+      }
+      case 'Delete':
+      case 'Backspace': {
+        event.preventDefault();
+        void deleteNotification(notification);
+        break;
+      }
+      case 'r':
+      case 'R': {
+        event.preventDefault();
+        void markAsRead(notification);
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
   return (
     <div className="relative">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative"
-      >
-        <Bell className="size-5" />
-        {unreadCount > 0 && (
-          <Badge
-            variant="destructive"
-            className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
+      <div role="status" aria-live="polite" className="sr-only">
+        {liveMessage}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-controls="notification-center"
+            aria-label={open ? 'Close notifications' : 'Open notifications'}
+            variant="ghost"
+            size="icon"
+            className="relative"
           >
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </Badge>
-        )}
-      </Button>
-
-      {isOpen && (
-        <Card className="absolute right-0 top-12 z-50 max-h-96 w-96 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notifications</CardTitle>
-            <div className="flex gap-2">
+            <Bell className="size-5" aria-hidden="true" />
+            {unreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent
+          id="notification-center"
+          className="flex w-full max-w-xl flex-col gap-4"
+        >
+          <DialogHeader className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle className="text-base font-semibold">
+                Notifications
+              </DialogTitle>
               {unreadCount > 0 && (
                 <Button
+                  ref={markAllButtonRef}
                   variant="ghost"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="size-6 px-2 text-xs"
+                  className="px-2 text-xs"
+                  aria-label="Mark all notifications as read"
                 >
-                  <CheckCheck className="mr-1 size-3" />
+                  <CheckCheck className="mr-1 size-3" aria-hidden="true" />
                   Mark all read
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="size-6"
-              >
-                <X className="size-3" />
-              </Button>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-80">
-              {loading ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  Loading notifications...
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No notifications yet
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {notifications.map((notification, index) => (
-                    <div key={notification.id}>
-                      <div
-                        className={cn(
-                          "cursor-pointer p-3 transition-colors hover:bg-muted/50",
-                          !notification.read && "bg-muted/20"
-                        )}
-                        onClick={() => {
-                          if (!notification.read) {
-                            markAsRead(notification.id);
-                          }
-                          if (notification.action_url) {
-                            window.location.href = notification.action_url;
-                            setIsOpen(false);
-                          }
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant="outline"
-                                className={cn("text-xs", getTypeColor(notification.type))}
-                              >
-                                {notification.type}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {formatTime(notification.created_at)}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.message}</p>
+            <DialogDescription>
+              Use the up and down arrow keys to move between notifications. Press
+              Enter to open a notification, R to mark it as read, or Delete to
+              dismiss it.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-80" role="presentation">
+            {loading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Loading notifications...
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No notifications yet
+              </div>
+            ) : (
+              <div className="space-y-1" role="list">
+                {notifications.map((notification, index) => (
+                  <div key={notification.id}>
+                    <div
+                      ref={(node) => {
+                        notificationRefs.current[index] = node;
+                      }}
+                      role="listitem"
+                      tabIndex={0}
+                      aria-label={`${notification.title}. ${notification.message}${
+                        notification.action_url
+                          ? ' Press Enter to open the related item.'
+                          : ''
+                      }${notification.read ? '' : ' Unread notification.'}`}
+                      className={cn(
+                        'group rounded-md p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                        'hover:bg-muted/50 focus:bg-muted/50',
+                        !notification.read && 'bg-muted/20',
+                      )}
+                      onClick={() => handleNotificationAction(notification)}
+                      onKeyDown={(event) =>
+                        handleNotificationKeyDown(event, index, notification)
+                      }
+                      onFocus={() => setActiveIndex(index)}
+                      data-unread={!notification.read}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-xs capitalize',
+                                getTypeColor(notification.type),
+                              )}
+                            >
+                              {notification.type}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {formatTime(notification.created_at)}
+                            </span>
                           </div>
-                          <div className="flex gap-1">
-                            {!notification.read && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markAsRead(notification.id);
-                                }}
-                                className="size-6"
-                              >
-                                <Check className="size-3" />
-                              </Button>
-                            )}
+                          <p className="text-sm font-medium">
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {notification.message}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          {!notification.read && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNotification(notification.id);
+                              tabIndex={-1}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void markAsRead(notification);
                               }}
-                              className="size-6 text-muted-foreground hover:text-destructive"
+                              aria-label={`Mark ${notification.title} as read`}
+                              className="size-7"
                             >
-                              <X className="size-3" />
+                              <Check className="size-3" aria-hidden="true" />
                             </Button>
-                          </div>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            tabIndex={-1}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void deleteNotification(notification);
+                            }}
+                            aria-label={`Dismiss ${notification.title}`}
+                            className="size-7 text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="size-3" aria-hidden="true" />
+                          </Button>
                         </div>
                       </div>
-                      {index < notifications.length - 1 && <Separator />}
                     </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
+                    {index < notifications.length - 1 && <Separator />}
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
