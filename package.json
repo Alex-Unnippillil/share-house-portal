@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "sbom:generate": "mkdir -p sbom && cyclonedx-npm --output-format json --output-file sbom/roomsily-sbom.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -73,6 +74,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "^4.0.3",
     "@ianvs/prettier-plugin-sort-imports": "^3.7.2",
     "@types/eslint": "^8.56.2",
     "@types/node": "^20.19.0",

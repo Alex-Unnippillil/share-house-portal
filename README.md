@@ -119,6 +119,12 @@ Deploy to Vercel with the following environment variables configured in your Ver
 
 Review the [Performance & Availability Playbook](docs/perf/playbook.md) for service level objectives, monitoring dashboards, alert channels, and rollback procedures across Next.js, Supabase, and Stripe integrations.
 
+## Software Bill of Materials (SBOM)
+
+- Generate a CycloneDX SBOM locally with `npm run sbom:generate`. The command writes `sbom/roomsily-sbom.json` and keeps the directory out of version control so that new reports can be regenerated on demand.
+- Continuous integration runs the same script in the `sbom` workflow and publishes the resulting `roomsily-sbom` artifact on every push and pull request. Download the artifact to review dependencies or to archive alongside compliance documentation.
+- When cutting a release, download the SBOM artifact produced for the release commit, store it with other release assets (e.g., in Vercel/Stripe change tickets), and provide it to security or operations stakeholders that require supply-chain attestations.
+
 ## Project Structure
 
 ```
