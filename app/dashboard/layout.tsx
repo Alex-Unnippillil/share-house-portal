@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
+import RecentActivityTracker from "@/components/navigation/RecentActivityTracker"
 import { readUserSession } from "@/utils/actions"
 import MobileSideNav from "./components/MobileSideNav"
 import SideNav from "./components/SideNav"
@@ -24,6 +25,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
 
                         <div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
                                 <ToggleSidebar />
+                                <RecentActivityTracker />
                                 <ErrorBoundary>
                                         <Suspense fallback={<RouteSkeleton />}>
                                                 {children}
