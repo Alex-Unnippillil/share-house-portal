@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
+import { readStreamedResponse } from "@/utils/streaming";
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
@@ -18,27 +18,107 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const filterKey = JSON.stringify(filter);
 
   useEffect(() => {
+    const activeFilter = JSON.parse(filterKey) as DocumentListFilters;
+    let cancelled = false;
+    let resolved = false;
+    const controller = new AbortController();
+
     const fetchDocuments = async () => {
+      setLoading(true);
+      setError(null);
+      setDocuments([]);
+
       try {
-        setLoading(true);
-        const result = await getDocumentsAction(filter);
-        if (result.success && result.data) {
-          setDocuments(result.data);
-        } else {
-          setError(result.error || 'Failed to fetch documents');
+        const params = new URLSearchParams();
+
+        activeFilter.status?.forEach((status) => params.append("status", status));
+        activeFilter.type?.forEach((type) => params.append("type", type));
+        if (activeFilter.tenant_id) params.append("tenant_id", activeFilter.tenant_id);
+        if (activeFilter.unit_id) params.append("unit_id", activeFilter.unit_id);
+        if (activeFilter.date_from) params.append("date_from", activeFilter.date_from);
+        if (activeFilter.date_to) params.append("date_to", activeFilter.date_to);
+
+        const query = params.toString();
+        const response = await fetch(`/api/documents${query ? `?${query}` : ""}`, {
+          headers: {
+            Accept: "application/x-ndjson",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        let firstChunkResolved = false;
+
+        const { items, metrics } = await readStreamedResponse<
+          { count: number; filters: DocumentListFilters },
+          DocumentWithLease
+        >({
+          response,
+          itemType: "document",
+          onMeta: () => {
+            if (!firstChunkResolved && !cancelled) {
+              firstChunkResolved = true;
+              resolved = true;
+              setLoading(false);
+            }
+          },
+          onItem: (item) => {
+            if (!firstChunkResolved && !cancelled) {
+              firstChunkResolved = true;
+              resolved = true;
+              setLoading(false);
+            }
+
+            if (!cancelled) {
+              setDocuments((prev) => [...prev, item]);
+            }
+          },
+        });
+
+        if (cancelled || controller.signal.aborted) {
+          return;
+        }
+
+        if (!firstChunkResolved) {
+          resolved = true;
+          setLoading(false);
+        }
+
+        setDocuments(items);
+        setError(null);
+
+        if (process.env.NODE_ENV !== "production") {
+          console.info("Documents stream metrics", metrics);
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+
         console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
+        if (!cancelled) {
+          setError('Failed to fetch documents');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled && !resolved) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDocuments();
-  }, [filter]);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [filterKey]);
 
   const getStatusBadge = (status: string) => {
     const variants = {

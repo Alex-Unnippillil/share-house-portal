@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
+import { readStreamedResponse } from "@/utils/streaming";
 
 interface Notification {
   id: string;
@@ -26,31 +27,93 @@ export function NotificationCenter() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await (supabase as any)
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+  const fetchNotifications = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      setLoadError(null);
+      setNotifications([]);
+      setUnreadCount(0);
 
-      if (error) throw error;
+      try {
+        const response = await fetch(`/api/notifications?limit=50`, {
+          headers: {
+            Accept: "application/x-ndjson",
+          },
+          signal,
+        });
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        let firstChunkResolved = false;
+        let unreadRunningCount = 0;
+
+        const { items, metrics } = await readStreamedResponse<
+          { pagination: unknown; filters: unknown },
+          Notification
+        >({
+          response,
+          itemType: "notification",
+          onMeta: () => {
+            if (!firstChunkResolved) {
+              firstChunkResolved = true;
+              setLoading(false);
+            }
+          },
+          onItem: (item) => {
+            if (!firstChunkResolved) {
+              firstChunkResolved = true;
+              setLoading(false);
+            }
+
+            setNotifications((prev) => [...prev, item]);
+            if (!item.read) {
+              unreadRunningCount += 1;
+              setUnreadCount(unreadRunningCount);
+            }
+          },
+        });
+
+        if (signal?.aborted) {
+          return;
+        }
+
+        if (!firstChunkResolved) {
+          setLoading(false);
+        }
+
+        setNotifications(items);
+        setUnreadCount(items.filter((item) => !item.read).length);
+
+        if (process.env.NODE_ENV !== "production") {
+          console.info("Notifications stream metrics", metrics);
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        console.error("Failed to fetch notifications:", error);
+        setLoadError("Unable to load notifications");
+        setLoading(false);
+        toast({
+          title: "Notifications unavailable",
+          description: "We couldn't refresh your notifications feed.",
+          variant: "destructive",
+        });
+      }
+    },
+    [toast]
+  );
 
   useEffect(() => {
-    fetchNotifications();
+    const controller = new AbortController();
+    fetchNotifications(controller.signal);
 
     // Subscribe to real-time notifications
     const channel = supabase
@@ -79,6 +142,7 @@ export function NotificationCenter() {
       .subscribe();
 
     return () => {
+      controller.abort();
       supabase.removeChannel(channel);
     };
   }, [fetchNotifications, supabase, toast]);
@@ -223,6 +287,10 @@ export function NotificationCenter() {
               {loading ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   Loading notifications...
+                </div>
+              ) : loadError ? (
+                <div className="p-4 text-center text-sm text-destructive">
+                  {loadError}
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
