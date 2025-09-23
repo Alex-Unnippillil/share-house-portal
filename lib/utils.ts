@@ -240,3 +240,60 @@ export const getMessageFromCode = (resultCode: string) => {
       return 'Logged in!'
   }
 }
+
+export interface EmptyStateConversionEvent {
+  surface: string
+  href: string
+  timestamp: number
+  metadata?: Record<string, unknown>
+}
+
+const emptyStateConversionBuffer: EmptyStateConversionEvent[] = []
+
+const dispatchEmptyStateEvent = (event: EmptyStateConversionEvent) => {
+  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function") {
+    return
+  }
+
+  const CustomEventCtor: typeof CustomEvent | undefined =
+    typeof window.CustomEvent === "function" ? window.CustomEvent : undefined
+
+  if (!CustomEventCtor) {
+    return
+  }
+
+  try {
+    window.dispatchEvent(new CustomEventCtor("roomsily:empty-state-conversion", { detail: event }))
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("empty-state conversion dispatch failed", error)
+    }
+  }
+}
+
+export const logEmptyStateConversion = (
+  surface: string,
+  href: string,
+  metadata?: Record<string, unknown>,
+): EmptyStateConversionEvent => {
+  const event: EmptyStateConversionEvent = {
+    surface,
+    href,
+    timestamp: Date.now(),
+    ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
+  }
+
+  emptyStateConversionBuffer.push(event)
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[analytics] empty-state conversion", event)
+  }
+
+  dispatchEmptyStateEvent(event)
+
+  return event
+}
+
+export const getEmptyStateConversions = (): EmptyStateConversionEvent[] => {
+  return [...emptyStateConversionBuffer]
+}

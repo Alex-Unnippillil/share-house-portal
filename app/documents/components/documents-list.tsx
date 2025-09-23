@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-states/EmptyState";
+import {
+  DOCUMENTS_EMPTY_STATE_ROUTE,
+  DOCUMENTS_EMPTY_STATE_SAMPLES,
+} from "@/components/empty-states/presets";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
@@ -79,6 +84,8 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     }
   };
 
+  const hasFilters = Object.keys(filter).length > 0;
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -128,17 +135,24 @@ export function DocumentsList({ filter }: DocumentsListProps) {
 
   if (documents.length === 0) {
     return (
-      <Card className="p-12">
-        <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(filter).length > 0
-              ? "No documents match your current filters."
-              : "Get started by uploading your first document."}
-          </p>
-        </div>
-      </Card>
+      <EmptyState
+        surface="documents:list"
+        title={hasFilters ? "No matching documents" : "Bring your first document online"}
+        description={
+          hasFilters
+            ? "Try adjusting your filters or create a new document packet for your roommates."
+            : "Import lease packets from Documenso or upload roommate paperwork to keep everyone aligned."
+        }
+        illustration={<FileText className="size-12 text-muted-foreground" />}
+        sampleItems={DOCUMENTS_EMPTY_STATE_SAMPLES}
+        primaryAction={{
+          href: DOCUMENTS_EMPTY_STATE_ROUTE,
+          label: "Create",
+          analyticsMetadata: {
+            filtersApplied: hasFilters,
+          },
+        }}
+      />
     );
   }
 
