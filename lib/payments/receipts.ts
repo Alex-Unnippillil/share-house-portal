@@ -1,4 +1,7 @@
-import { roundToCurrency } from "./currency"
+import { format, parseISO } from "date-fns"
+
+import { buildCsvString } from "@/lib/export/csv"
+import { formatCurrency, roundToCurrency } from "./currency"
 import type {
   PaymentReceiptHistoryEntry,
   PaymentReceiptLineItem,
@@ -50,57 +53,97 @@ export function summarizeReceiptHistory(
   }
 }
 
+export function formatReceiptPeriod(
+  periodStart: string | undefined,
+  periodEnd: string | undefined,
+): string {
+  if (!periodStart && !periodEnd) {
+    return "—"
+  }
+
+  if (periodStart && periodEnd) {
+    try {
+      const start = format(parseISO(periodStart), "MMM d")
+      const end = format(parseISO(periodEnd), "MMM d, yyyy")
+      return `${start} – ${end}`
+    } catch {
+      return `${periodStart} – ${periodEnd}`
+    }
+  }
+
+  const singleDate = periodStart ?? periodEnd
+  if (!singleDate) {
+    return "—"
+  }
+
+  try {
+    return format(parseISO(singleDate), "MMM d, yyyy")
+  } catch {
+    return singleDate
+  }
+}
+
+const statusLabels: Record<PaymentReceiptHistoryEntry["status"], string> = {
+  paid: "Paid",
+  processing: "Processing",
+  refunded: "Refunded",
+}
+
 export function createPaymentHistoryCsv(
   receipts: PaymentReceiptHistoryEntry[],
 ): string {
   const headers = [
-    "Receipt ID",
-    "Issued To",
-    "Payment Date",
-    "Period Start",
-    "Period End",
-    "Status",
+    "Payment",
+    "Period",
+    "Line items",
     "Amount",
-    "Currency",
-    "Payment Method",
-    "Line Items",
-    "Memo",
-    "Receipt URL",
-    "Invoice URL",
+    "Status",
+    "Actions",
   ]
 
   const rows = receipts.map((receipt) => {
-    const lineItems = receipt.lineItems
-      .map((item) => {
-        const formattedAmount = item.totalAmount.toFixed(2)
-        return `${item.description} [${item.category}] ${formattedAmount}`
-      })
-      .join(" | ")
+    const paymentDate = (() => {
+      try {
+        return format(parseISO(receipt.paymentDate), "MMM d, yyyy")
+      } catch {
+        return receipt.paymentDate
+      }
+    })()
+
+    const paymentDetails = [
+      receipt.issuedTo,
+      paymentDate
+        ? `${paymentDate}${receipt.paymentMethod ? ` · ${receipt.paymentMethod}` : ""}`
+        : receipt.paymentMethod,
+    ]
+
+    if (receipt.memo) {
+      paymentDetails.push(receipt.memo)
+    }
+
+    const lineItems = receipt.lineItems.map((item) => {
+      const amount = formatCurrency(item.totalAmount, receipt.currency)
+      return `${item.description} — ${amount}`
+    })
+
+    const amountCell = receipt.amount < 0
+      ? `${formatCurrency(receipt.amount, receipt.currency)}\nCredit issued`
+      : formatCurrency(receipt.amount, receipt.currency)
+
+    const actions = [
+      `Receipt: ${receipt.receiptUrl}`,
+      receipt.invoiceUrl ? `Invoice: ${receipt.invoiceUrl}` : null,
+    ].filter(Boolean) as string[]
 
     return [
-      receipt.id,
-      receipt.issuedTo,
-      receipt.paymentDate,
-      receipt.periodStart ?? "",
-      receipt.periodEnd ?? "",
-      receipt.status,
-      receipt.amount.toFixed(2),
-      receipt.currency,
-      receipt.paymentMethod,
-      lineItems,
-      receipt.memo ?? "",
-      receipt.receiptUrl,
-      receipt.invoiceUrl ?? "",
+      paymentDetails.filter(Boolean).join("\n"),
+      formatReceiptPeriod(receipt.periodStart, receipt.periodEnd),
+      lineItems.join("\n"),
+      amountCell,
+      statusLabels[receipt.status],
+      actions.join("\n"),
     ]
   })
 
-  const toCsvRow = (values: string[]) =>
-    values
-      .map((value) => {
-        const sanitized = value.replace(/"/g, '""')
-        return `"${sanitized}"`
-      })
-      .join(",")
-
-  return [headers, ...rows].map((row) => toCsvRow(row)).join("\n")
+  return buildCsvString(headers, rows)
 }
