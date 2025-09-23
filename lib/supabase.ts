@@ -34,6 +34,21 @@ export type Database = {
         rent_share: number | null
         metadata: Json | null
       }>
+      properties: SupabaseTable<{
+        id: string
+        name: string
+        slug: string | null
+        address_line1: string | null
+        address_line2: string | null
+        city: string | null
+        state: string | null
+        postal_code: string | null
+        country: string | null
+        property_manager_id: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       documents: SupabaseTable<{
         id: string
         created_at: string | null
@@ -139,6 +154,32 @@ export type Database = {
         currency: string
         interval: 'month' | 'year'
         metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      units: SupabaseTable<{
+        id: string
+        property_id: string
+        unit_number: string
+        floor: number | null
+        bedrooms: number | null
+        bathrooms: number | null
+        square_feet: number | null
+        rent_amount: number | null
+        rent_frequency: 'weekly' | 'monthly' | 'quarterly' | 'annually'
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      unit_members: SupabaseTable<{
+        id: string
+        unit_id: string
+        profile_id: string
+        role: 'tenant' | 'roommate' | 'property_manager' | 'admin'
+        invite_status: 'pending' | 'accepted' | 'declined' | 'revoked'
+        rent_share: number | null
+        move_in_date: string | null
+        move_out_date: string | null
         created_at: string | null
         updated_at: string | null
       }>

@@ -1,19 +1,27 @@
 import SmartLink from "@/components/navigation/SmartLink"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getQuickActions } from "../data"
+import { getDashboardAudience, getQuickActions } from "../data"
 import { ArrowUpRight } from "lucide-react"
 
 export async function DashboardQuickActions() {
-  const actions = await getQuickActions()
+  const [actions, audience] = await Promise.all([
+    getQuickActions(),
+    getDashboardAudience(),
+  ])
+
+  const title =
+    audience === "manager" ? "Portfolio quick actions" : "Quick actions"
+  const description =
+    audience === "manager"
+      ? "Stay ahead on turnovers, leasing, and maintenance follow-ups across your properties."
+      : "Jump straight into the tasks your household completes most."
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-4">
-        <CardTitle className="text-base font-semibold">Quick actions</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Jump straight into the tasks residents complete most.
-        </p>
+        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </CardHeader>
       <CardContent className="space-y-3">
         {actions.map((action) => (
