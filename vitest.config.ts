@@ -3,13 +3,16 @@ import path from "path"
 
 export default defineConfig({
   test: {
-    environment: "node",
-    include: ["tests/**/*.test.ts"],
+    environment: "jsdom",
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname),
       "server-only": path.resolve(__dirname, "tests/mocks/server-only.ts"),
     },
+  },
+  esbuild: {
+    jsx: "automatic",
   },
 })
