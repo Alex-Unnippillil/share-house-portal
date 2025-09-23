@@ -7,9 +7,10 @@ import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
+import { NotificationCenter } from "@/components/notifications/notification-center"
+import { AccessibilityMenu } from "@/components/accessibility/accessibility-menu"
 import { SignOutButton } from "@/components/sign-out-button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { NotificationCenter } from "@/components/notifications/notification-center"
 
 export async function SiteHeader() {
   const {
@@ -69,6 +70,7 @@ export async function SiteHeader() {
           </div>
           <nav className="flex items-center space-x-1">
             {isAuthenticated && <NotificationCenter />}
+            <AccessibilityMenu />
             <ThemeToggle />
           </nav>
         </div>
