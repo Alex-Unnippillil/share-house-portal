@@ -152,6 +152,17 @@ export interface DocumentListFilters {
   date_to?: string;
 }
 
+export type DocumentListSortColumn =
+  | 'created_at'
+  | 'title'
+  | 'status'
+  | 'document_type'
+
+export interface DocumentListSort {
+  column: DocumentListSortColumn;
+  direction: 'asc' | 'desc';
+}
+
 export interface DocumentStats {
   total_documents: number;
   pending_signatures: number;
