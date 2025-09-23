@@ -32,20 +32,24 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
         </Button>
       </SheetTrigger>
       <div className="xs:items-center ml-1 gap-4 md:hidden">
-        <SmartLink href="/" className="flex items-center space-x-2" intent="navigation">
-          <Icons.logo className="size-6" />
-          <span className="font-bold">{siteConfig.name}</span>
+        <SmartLink href="/" className="inline-flex" intent="navigation">
+          <span className="flex items-center space-x-2">
+            <Icons.logo className="size-6" />
+            <span className="font-bold">{siteConfig.name}</span>
+          </span>
         </SmartLink>
       </div>
 
       <SheetContent side="left" className="pr-0">
         <MobileLink
           href="/"
-          className="flex items-center"
+          className="inline-flex"
           onOpenChange={setOpen}
         >
-          <Icons.logo className="mr-1 size-6" />
-          <span className="font-bold">{siteConfig.name}</span>
+          <span className="flex items-center">
+            <Icons.logo className="mr-1 size-6" />
+            <span className="font-bold">{siteConfig.name}</span>
+          </span>
         </MobileLink>
         <div className="px-6 py-4">
           {isAuthenticated ? (
@@ -118,12 +122,14 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                             onOpenChange={setOpen}
                             className="text-muted-foreground"
                           >
-                            {item.title}
-                            {item.label && (
-                              <span className="ml-2 rounded-md bg-[#adfa1d] px-1.5 py-0.5 text-xs leading-none text-[#000000] no-underline group-hover:no-underline">
-                                {item.label}
-                              </span>
-                            )}
+                            <span className="flex items-center">
+                              <span>{item.title}</span>
+                              {item.label && (
+                                <span className="ml-2 rounded-md bg-[#adfa1d] px-1.5 py-0.5 text-xs leading-none text-[#000000] no-underline group-hover:no-underline">
+                                  {item.label}
+                                </span>
+                              )}
+                            </span>
                           </MobileLink>
                         ) : (
                           item.title

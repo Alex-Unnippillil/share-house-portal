@@ -73,11 +73,13 @@ export default function NavLinks() {
                                                 )}
                                                 intent="navigation"
                                         >
-                                                <Icon />
-                                                {link.text}
+                                                <span className="flex items-center gap-2">
+                                                        <Icon />
+                                                        <span>{link.text}</span>
+                                                </span>
                                         </SmartLink>
-				);
-			})}
-		</div>
-	);
+                                );
+                        })}
+                </div>
+        );
 }

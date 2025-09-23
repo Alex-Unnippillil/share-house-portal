@@ -20,7 +20,6 @@ export default function Step({ step, segment }: StepProps) {
 
   return (
     <SmartLink href={`/${step.segment}`} intent="navigation">
-      {/* <button type="button" onClick={() => validateStep(`/${step}`)}> */}
       <div className="flex items-center gap-4">
         <button
           className={clsx(
@@ -47,7 +46,6 @@ export default function Step({ step, segment }: StepProps) {
           </h2>
         </div>
       </div>
-      {/* </button> */}
     </SmartLink>
   );
 }
