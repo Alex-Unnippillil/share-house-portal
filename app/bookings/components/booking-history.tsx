@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function BookingHistory() {
@@ -10,14 +12,16 @@ export function BookingHistory() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {items.map((x) => (
-        <Card key={x.id}>
-          <CardHeader>
-            <CardTitle className="text-base">{x.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">{x.when}</div>
-          </CardContent>
-        </Card>
+        <Link key={x.id} href={`/bookings/${x.id}`} className="transition hover:no-underline">
+          <Card className="h-full transition hover:border-primary/50">
+            <CardHeader>
+              <CardTitle className="text-base">{x.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">{x.when}</div>
+            </CardContent>
+          </Card>
+        </Link>
       ))}
     </div>
   );
