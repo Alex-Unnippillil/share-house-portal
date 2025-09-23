@@ -140,8 +140,9 @@ CREATE TABLE public.documents (
 
 1. Copy this template to `.env.local`
 2. Fill in your actual API keys
-3. Run database migrations or create tables manually in Supabase
-4. Restart your development server: `npm run dev`
+3. Install dependencies with `pnpm install`
+4. Run the validation suite: `pnpm safe-build`
+5. Start or restart your development server: `pnpm dev`
 
 ## ⚠️ **SECURITY NOTES**
 

@@ -50,7 +50,8 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 
 ### Prerequisites
 - Node.js 18+
-- npm/yarn/pnpm
+- pnpm (preferred package manager)
+- npm or yarn (optional, if your workflow relies on them)
 - Supabase account
 - Stripe account
 - Vercel account (for deployment)
@@ -93,11 +94,21 @@ supabase db push
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 ```
+
+### Preflight checks
+
+Run the aggregated safe build workflow before pushing changes or triggering a deployment:
+
+```bash
+pnpm safe-build
+```
+
+This command sequentially runs linting, TypeScript checks, unit tests, and the production build so that CI and local workflows surface issues before any deployment artifacts are produced.
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 

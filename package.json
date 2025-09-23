@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "safe-build": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "css:purge": "node scripts/check-css-size.mjs"
   },
   "dependencies": {
