@@ -1,5 +1,6 @@
 'use server';
 
+import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supa-server-actions';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
@@ -8,14 +9,17 @@ import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
+import { getServiceRoleSupabaseClient } from '@/utils/supabase-service-role';
 import {
   Document,
   DocumentWithLease,
   DocumentListFilters,
   DocumentUploadRequest,
   DocumentSigningRequest,
-  DocumentStats
+  DocumentStats,
+  DocumentVersionSnapshot,
 } from '@/types/documents';
+import type { Database } from '@/lib/supabase';
 
 // Validation schemas
 const documentUploadSchema = z.object({
@@ -51,6 +55,85 @@ interface ActionResult<T = any> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+type DocumentRow = Database['public']['Tables']['documents']['Row'];
+
+function buildVersionSnapshot(document: DocumentRow): DocumentVersionSnapshot {
+  return {
+    title: document.title,
+    description: document.description,
+    document_type: document.document_type,
+    status: document.status,
+    state: document.state,
+    file_url: document.file_url ?? undefined,
+    metadata: (document.metadata as Record<string, any> | null) ?? {},
+    requires_signature: document.requires_signature ?? false,
+    expires_at: document.expires_at ?? undefined,
+    signed_at: document.signed_at ?? undefined,
+    tenant_id: document.tenant_id ?? undefined,
+    unit_id: document.unit_id ?? undefined,
+    documenso_envelope_id: document.documenso_envelope_id ?? undefined,
+    documenso_template_id: document.documenso_template_id ?? undefined,
+  };
+}
+
+async function insertDocumentVersion(
+  supabase: TypedSupabaseClient,
+  document: DocumentRow,
+  actorId: string,
+  versionOverride?: number,
+) {
+  const version = versionOverride ?? (document.version ?? 1);
+  const versionPayload = {
+    document_id: document.id,
+    version,
+    state: document.state,
+    status: document.status,
+    snapshot: buildVersionSnapshot(document),
+    created_by: actorId,
+    published_at: document.published_at,
+  };
+
+  const { error } = await (supabase as any)
+    .from('document_versions')
+    .insert(versionPayload);
+
+  if (!error) {
+    return;
+  }
+
+  if (!isRowLevelSecurityViolation(error)) {
+    throw new Error(`Failed to append document version: ${error.message}`);
+  }
+
+  const serviceRoleClient = getServiceRoleSupabaseClient();
+
+  if (!serviceRoleClient) {
+    throw new Error(
+      'Failed to append document version: service role client not configured.'
+    );
+  }
+
+  const { error: serviceError } = await serviceRoleClient
+    .from('document_versions')
+    .insert(versionPayload);
+
+  if (serviceError) {
+    throw new Error(
+      `Failed to append document version with service role: ${serviceError.message}`
+    );
+  }
+}
+
+function isRowLevelSecurityViolation(error: PostgrestError) {
+  const code = error.code?.toUpperCase();
+  if (code === '42501') {
+    return true;
+  }
+
+  const message = `${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return message.includes('row-level security');
 }
 
 // Get documents with optional filters
@@ -116,6 +199,7 @@ export async function uploadDocumentAction(
 ): Promise<ActionResult<Document>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -184,6 +268,8 @@ export async function uploadDocumentAction(
         requires_signature: validatedData.requires_signature,
         expires_at: validatedData.expires_at,
         created_by: user.id,
+        state: 'draft',
+        published_at: null,
       })
       .select()
       .single();
@@ -193,6 +279,15 @@ export async function uploadDocumentAction(
       // Clean up uploaded file if document creation fails
       await supabase.storage.from('documents').remove([filePath]);
       return { success: false, error: 'Failed to create document record.' };
+    }
+
+    try {
+      await insertDocumentVersion(typedSupabase, document as DocumentRow, user.id);
+    } catch (versionError) {
+      console.error('Error creating initial document version:', versionError);
+      await (supabase as any).from('documents').delete().eq('id', document.id);
+      await supabase.storage.from('documents').remove([filePath]);
+      return { success: false, error: 'Failed to create document version.' };
     }
 
     // Log document creation
@@ -206,6 +301,337 @@ export async function uploadDocumentAction(
     return { success: true, data: document, message: 'Document uploaded successfully.' };
   } catch (error) {
     console.error('Unexpected error in uploadDocumentAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+async function assertDocumentManager(
+  supabase: TypedSupabaseClient,
+  userId: string
+) {
+  const role = await fetchMemberRole(supabase, userId);
+
+  if (role !== 'property_manager' && role !== 'admin') {
+    throw new Error('You do not have permission to manage documents.');
+  }
+
+  return role;
+}
+
+function buildDocumentUpdateFromSnapshot(
+  snapshot: DocumentVersionSnapshot,
+  status: string,
+  state: string,
+  publishedAt: string | null,
+  version: number
+) {
+  return {
+    title: snapshot.title,
+    description: snapshot.description,
+    document_type: snapshot.document_type,
+    status,
+    state,
+    file_url: snapshot.file_url,
+    metadata: snapshot.metadata,
+    requires_signature: snapshot.requires_signature,
+    expires_at: snapshot.expires_at,
+    signed_at: snapshot.signed_at,
+    tenant_id: snapshot.tenant_id,
+    unit_id: snapshot.unit_id,
+    documenso_envelope_id: snapshot.documenso_envelope_id,
+    documenso_template_id: snapshot.documenso_template_id,
+    published_at: publishedAt,
+    version,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export async function publishDocumentAction(
+  documentId: string
+): Promise<ActionResult<Document>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to publish documents.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return { success: false, error: permissionError instanceof Error ? permissionError.message : 'Permission denied.' };
+    }
+
+    const { data: document, error: docError } = await (supabase as any)
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+
+    if (docError || !document) {
+      return { success: false, error: 'Document not found.' };
+    }
+
+    if (document.state === 'published') {
+      return { success: false, error: 'Document is already published.' };
+    }
+
+    const nextVersion = (document.version ?? 1) + 1;
+    const publishedAt = new Date().toISOString();
+    const nextStatus = document.status === 'draft' ? 'pending_signature' : document.status;
+
+    const { data: updatedDocument, error: updateError } = await (supabase as any)
+      .from('documents')
+      .update({
+        state: 'published',
+        published_at: publishedAt,
+        status: nextStatus,
+        version: nextVersion,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', documentId)
+      .select()
+      .single();
+
+    if (updateError || !updatedDocument) {
+      return { success: false, error: 'Failed to publish document.' };
+    }
+
+    try {
+      await insertDocumentVersion(
+        typedSupabase,
+        updatedDocument as DocumentRow,
+        user.id,
+        nextVersion,
+      );
+    } catch (versionError) {
+      console.error('Error appending version on publish:', versionError);
+      await (supabase as any)
+        .from('documents')
+        .update({
+          state: document.state,
+          published_at: document.published_at,
+          status: document.status,
+          version: document.version,
+          updated_at: document.updated_at,
+        })
+        .eq('id', documentId);
+      return { success: false, error: 'Failed to record publish version.' };
+    }
+
+    revalidatePath('/documents');
+    return { success: true, data: updatedDocument, message: 'Document published.' };
+  } catch (error) {
+    console.error('Unexpected error in publishDocumentAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function unpublishDocumentAction(
+  documentId: string
+): Promise<ActionResult<Document>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to unpublish documents.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return { success: false, error: permissionError instanceof Error ? permissionError.message : 'Permission denied.' };
+    }
+
+    const { data: document, error: docError } = await (supabase as any)
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+
+    if (docError || !document) {
+      return { success: false, error: 'Document not found.' };
+    }
+
+    if (document.state === 'draft') {
+      return { success: false, error: 'Document is already a draft.' };
+    }
+
+    const nextVersion = (document.version ?? 1) + 1;
+
+    const { data: updatedDocument, error: updateError } = await (supabase as any)
+      .from('documents')
+      .update({
+        state: 'draft',
+        published_at: null,
+        status: 'draft',
+        version: nextVersion,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', documentId)
+      .select()
+      .single();
+
+    if (updateError || !updatedDocument) {
+      return { success: false, error: 'Failed to unpublish document.' };
+    }
+
+    try {
+      await insertDocumentVersion(
+        typedSupabase,
+        updatedDocument as DocumentRow,
+        user.id,
+        nextVersion,
+      );
+    } catch (versionError) {
+      console.error('Error appending version on unpublish:', versionError);
+      await (supabase as any)
+        .from('documents')
+        .update({
+          state: document.state,
+          published_at: document.published_at,
+          status: document.status,
+          version: document.version,
+          updated_at: document.updated_at,
+        })
+        .eq('id', documentId);
+      return { success: false, error: 'Failed to record unpublish version.' };
+    }
+
+    revalidatePath('/documents');
+    return { success: true, data: updatedDocument, message: 'Document returned to draft.' };
+  } catch (error) {
+    console.error('Unexpected error in unpublishDocumentAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function rollbackDocumentAction({
+  documentId,
+  targetVersion,
+}: {
+  documentId: string;
+  targetVersion: number;
+}): Promise<ActionResult<Document>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to roll back documents.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return { success: false, error: permissionError instanceof Error ? permissionError.message : 'Permission denied.' };
+    }
+
+    const { data: document, error: docError } = await (supabase as any)
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+
+    if (docError || !document) {
+      return { success: false, error: 'Document not found.' };
+    }
+
+    if (targetVersion >= (document.version ?? 1)) {
+      return { success: false, error: 'Target version must be earlier than the current version.' };
+    }
+
+    const { data: versionRecord, error: versionError } = await (supabase as any)
+      .from('document_versions')
+      .select('*')
+      .eq('document_id', documentId)
+      .eq('version', targetVersion)
+      .single();
+
+    if (versionError || !versionRecord) {
+      return { success: false, error: 'Version not found.' };
+    }
+
+    const snapshot = versionRecord.snapshot as DocumentVersionSnapshot | null;
+    if (!snapshot) {
+      return { success: false, error: 'Version snapshot is invalid.' };
+    }
+
+    const nextVersion = (document.version ?? 1) + 1;
+    const updatePayload = buildDocumentUpdateFromSnapshot(
+      snapshot,
+      versionRecord.status,
+      versionRecord.state,
+      versionRecord.published_at,
+      nextVersion,
+    );
+
+    const { data: updatedDocument, error: updateError } = await (supabase as any)
+      .from('documents')
+      .update(updatePayload)
+      .eq('id', documentId)
+      .select()
+      .single();
+
+    if (updateError || !updatedDocument) {
+      return { success: false, error: 'Failed to roll back document.' };
+    }
+
+    try {
+      await insertDocumentVersion(
+        typedSupabase,
+        updatedDocument as DocumentRow,
+        user.id,
+        nextVersion,
+      );
+    } catch (error) {
+      console.error('Error appending version on rollback:', error);
+      await (supabase as any)
+        .from('documents')
+        .update({
+          title: document.title,
+          description: document.description,
+          document_type: document.document_type,
+          status: document.status,
+          state: document.state,
+          file_url: document.file_url,
+          metadata: document.metadata,
+          requires_signature: document.requires_signature,
+          expires_at: document.expires_at,
+          signed_at: document.signed_at,
+          tenant_id: document.tenant_id,
+          unit_id: document.unit_id,
+          documenso_envelope_id: document.documenso_envelope_id,
+          documenso_template_id: document.documenso_template_id,
+          published_at: document.published_at,
+          version: document.version,
+          updated_at: document.updated_at,
+        })
+        .eq('id', documentId);
+      return { success: false, error: 'Failed to record rollback version.' };
+    }
+
+    revalidatePath('/documents');
+    return { success: true, data: updatedDocument, message: 'Document restored to a previous version.' };
+  } catch (error) {
+    console.error('Unexpected error in rollbackDocumentAction:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
