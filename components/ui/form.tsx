@@ -26,15 +26,44 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 )
 
+type FormFieldComponentProps<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> =
+  | (ControllerProps<TFieldValues, TName> & { children?: never })
+  | {
+      name: TName
+      children: React.ReactNode
+    }
+
+const isControllerProps = <
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>
+>(
+  props: FormFieldComponentProps<TFieldValues, TName>
+): props is ControllerProps<TFieldValues, TName> => {
+  return typeof (props as ControllerProps<TFieldValues, TName>).render === "function"
+}
+
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
-  ...props
-}: ControllerProps<TFieldValues, TName>) => {
+>(
+  props: FormFieldComponentProps<TFieldValues, TName>,
+) => {
+  if (isControllerProps(props)) {
+    return (
+      <FormFieldContext.Provider value={{ name: props.name }}>
+        <Controller {...props} />
+      </FormFieldContext.Provider>
+    )
+  }
+
+  const { children } = props
+
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
-      <Controller {...props} />
+      {children}
     </FormFieldContext.Provider>
   )
 }
@@ -156,6 +185,8 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
+      role="alert"
+      aria-live="polite"
       className={cn("text-[0.8rem] font-medium text-destructive", className)}
       {...props}
     >
