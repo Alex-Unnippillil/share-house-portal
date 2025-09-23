@@ -45,6 +45,23 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const documentUpdateSchema = z.object({
+  documentId: z.string().uuid(),
+  title: z
+    .string()
+    .trim()
+    .min(1, 'Title is required')
+    .max(160, 'Title must be 160 characters or fewer')
+    .optional(),
+  description: z
+    .string()
+    .max(500, 'Description must be 500 characters or fewer')
+    .optional(),
+}).refine(
+  (value) => value.title !== undefined || value.description !== undefined,
+  { message: 'You must update at least one field.' },
+);
+
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
@@ -106,6 +123,98 @@ export async function getDocumentsAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+type DocumentMetadataUpdate = {
+  documentId: string;
+  title?: string;
+  description?: string;
+};
+
+export async function updateDocumentAttributesAction(
+  input: DocumentMetadataUpdate,
+): Promise<ActionResult<Pick<DocumentRow, 'id' | 'title' | 'description'>>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+
+  try {
+    const validation = documentUpdateSchema.safeParse(input);
+
+    if (!validation.success) {
+      const message = validation.error.errors
+        .map((error) => error.message)
+        .filter(Boolean)
+        .join(' ');
+
+      return {
+        success: false,
+        error: message || 'Invalid update payload.',
+      };
+    }
+
+    const { documentId, title, description } = validation.data;
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to update documents.' };
+    }
+
+    const updates: Partial<DocumentRow> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (title !== undefined) {
+      updates.title = title.trim();
+    }
+
+    if (description !== undefined) {
+      const normalizedDescription = description.trim();
+      updates.description = normalizedDescription.length > 0 ? normalizedDescription : null;
+    }
+
+    const { data: document, error: updateError } = await (supabase as any)
+      .from('documents')
+      .update(updates)
+      .eq('id', documentId)
+      .select('id, title, description')
+      .single();
+
+    if (updateError) {
+      console.error('Error updating document metadata:', updateError);
+      return { success: false, error: 'Failed to update document.' };
+    }
+
+    const { error: logError } = await (supabase as any).rpc('log_document_access', {
+      p_document_id: documentId,
+      p_action: 'update_metadata',
+      p_metadata: {
+        fields: Object.keys(updates).filter((key) => key !== 'updated_at'),
+      },
+    });
+
+    if (logError) {
+      console.error('Failed to record document update activity:', logError);
+    }
+
+    revalidatePath('/documents');
+
+    return {
+      success: true,
+      data: {
+        id: document.id,
+        title: document.title,
+        description: document.description,
+      },
+      message: 'Document updated successfully.',
+    };
+  } catch (error) {
+    console.error('Unexpected error in updateDocumentAttributesAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
     };
   }
 }

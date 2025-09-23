@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
+import { EditableTextCell } from '@/components/editable/editable-text-cell';
+import { getDocumentsAction, updateDocumentAttributesAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
@@ -41,6 +42,31 @@ export function DocumentsList({ filter }: DocumentsListProps) {
 
     fetchDocuments();
   }, [filter]);
+
+  const handleDocumentFieldSave = useCallback(
+    async (
+      documentId: string,
+      updates: Partial<Pick<DocumentWithLease, 'title' | 'description'>>,
+    ) => {
+      const result = await updateDocumentAttributesAction({
+        documentId,
+        ...updates,
+      });
+
+      if (result.success && result.data) {
+        setDocuments((prev) =>
+          prev.map((doc) =>
+            doc.id === documentId
+              ? { ...doc, ...result.data }
+              : doc,
+          ),
+        );
+      }
+
+      return result;
+    },
+    [],
+  );
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -153,12 +179,37 @@ export function DocumentsList({ filter }: DocumentsListProps) {
                   {getTypeIcon(doc.document_type)}
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-medium leading-none">{doc.title}</h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
-                  )}
+                  <EditableTextCell
+                    id={`${doc.id}-title`}
+                    label={`${doc.title} title`}
+                    value={doc.title}
+                    onSave={(nextTitle) =>
+                      handleDocumentFieldSave(doc.id, { title: nextTitle })
+                    }
+                    required
+                    maxLength={160}
+                    className="max-w-xl"
+                    displayClassName="font-medium leading-none"
+                    editButtonLabel="Edit"
+                  />
+                  <EditableTextCell
+                    id={`${doc.id}-description`}
+                    label={`${doc.title} description`}
+                    value={doc.description ?? ''}
+                    onSave={(nextDescription) =>
+                      handleDocumentFieldSave(doc.id, {
+                        description: nextDescription,
+                      })
+                    }
+                    multiline
+                    maxLength={500}
+                    placeholder="Add a short description"
+                    emptyPlaceholder="Add a description"
+                    className="max-w-2xl"
+                    displayClassName="text-sm text-muted-foreground"
+                    inputClassName="text-sm"
+                    editButtonLabel="Edit"
+                  />
                   <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Calendar className="size-3" />

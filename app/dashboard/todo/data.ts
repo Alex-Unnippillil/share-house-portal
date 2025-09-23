@@ -6,6 +6,7 @@ export type DashboardTodo = {
         id: string
         title: string
         createdBy: string
+        createdAt: string
         completed: boolean
 }
 
@@ -19,6 +20,7 @@ export const getDashboardTodos = cache(async (): Promise<DashboardTodo[]> => {
                 {
                         title: "Subscribe",
                         createdBy: "091832901830",
+                        createdAt: new Date().toDateString(),
                         id: "101981908",
                         completed: false,
                 },
