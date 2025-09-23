@@ -16,6 +16,7 @@ import {
 } from "./components/skeletons"
 
 import InsightsPanel from "./components/insights-panel"
+import DashboardRecentActivityPanel from "./components/recent-activity-panel"
 
 export default function DashboardPage() {
   return (
@@ -57,6 +58,9 @@ export default function DashboardPage() {
 
 
         <div className="space-y-4">
+          <Suspense fallback={<DashboardCardSkeleton />}>
+            <DashboardRecentActivityPanel />
+          </Suspense>
           <Suspense fallback={<DashboardCardSkeleton />}>
             <UpcomingBookingsCard />
           </Suspense>

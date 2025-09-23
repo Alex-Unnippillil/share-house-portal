@@ -213,6 +213,17 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      user_recent_items: SupabaseTable<{
+        id: string
+        user_id: string
+        entity_type: string
+        entity_id: string
+        label: string
+        last_visited_route: string
+        visited_at: string
+        created_at: string | null
+        updated_at: string | null
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null

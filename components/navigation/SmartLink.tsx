@@ -4,6 +4,9 @@ import * as React from "react"
 import NextLink from "next/link"
 import { useRouter } from "next/navigation"
 
+import { recordRecentItemVisit } from "@/lib/data/recent-activity"
+import useSupabaseBrowser from "@/utils/supabase-browser"
+
 export type SmartLinkIntent = "standard" | "critical" | "passive" | "navigation"
 
 export interface SmartLinkProps
@@ -20,6 +23,15 @@ export interface SmartLinkProps
    * Custom root margin applied to the IntersectionObserver used for viewport based prefetching.
    */
   viewportMargin?: string
+  /**
+   * Optional metadata for persisting navigation history.
+   */
+  recentActivity?: {
+    entityType: string
+    entityId: string
+    label: string
+    route?: string
+  }
 }
 
 type PrefetchHint = "never" | "hover" | "viewport" | "immediate"
@@ -34,11 +46,33 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       prefetch: prefetchProp,
       onPointerEnter,
       onFocus,
+      onClick,
       href,
+      recentActivity,
       ...rest
     } = props
 
     const router = useRouter()
+    const supabase = useSupabaseBrowser()
+    const resolvedUserIdRef = React.useRef<string | null | undefined>(undefined)
+
+    const resolveUserId = React.useCallback(async () => {
+      if (resolvedUserIdRef.current !== undefined) {
+        return resolvedUserIdRef.current
+      }
+
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        resolvedUserIdRef.current = user?.id ?? null
+        return resolvedUserIdRef.current
+      } catch (error) {
+        resolvedUserIdRef.current = null
+        throw error
+      }
+    }, [supabase])
+
     const innerRef = React.useRef<HTMLAnchorElement | null>(null)
     const combinedRef = React.useCallback(
       (node: AnchorRef) => {
@@ -186,6 +220,49 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       [onFocus, prefetchHint, triggerPrefetch]
     )
 
+    const handleClick = React.useCallback(
+      (event: React.MouseEvent<HTMLAnchorElement>) => {
+        onClick?.(event)
+        if (event.defaultPrevented) {
+          return
+        }
+
+        if (!recentActivity) {
+          return
+        }
+
+        const candidateRoute =
+          recentActivity.route ?? (typeof href === "string" ? href : undefined)
+        const shouldRecord =
+          !!candidateRoute && typeof candidateRoute === "string" && candidateRoute.startsWith("/")
+
+        if (!isInternalHref || !shouldRecord) {
+          return
+        }
+
+        void (async () => {
+          try {
+            const userId = await resolveUserId()
+            if (!userId) {
+              return
+            }
+
+            await recordRecentItemVisit({
+              client: supabase,
+              userId,
+              entityType: recentActivity.entityType,
+              entityId: recentActivity.entityId,
+              label: recentActivity.label,
+              lastVisitedRoute: candidateRoute,
+            })
+          } catch (error) {
+            console.error("Failed to record recent navigation", error)
+          }
+        })()
+      },
+      [href, isInternalHref, onClick, recentActivity, resolveUserId, supabase]
+    )
+
     const shouldPrefetch = React.useMemo(() => {
       if (!isInternalHref) {
         return false
@@ -210,6 +287,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
         prefetch={shouldPrefetch}
         onPointerEnter={handlePointerEnter}
         onFocus={handleFocus}
+        onClick={handleClick}
         {...rest}
       />
     )
