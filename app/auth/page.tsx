@@ -4,7 +4,7 @@ import { readUserSession } from "@/utils/actions";
 import { redirect } from "next/navigation";
 import { Icons } from '@/components/icons'
 import { cn } from "@/lib/utils"
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 import { siteConfig } from "@/config/site"
 import { buttonVariants } from "@/components/ui/button"
 
@@ -18,10 +18,10 @@ export default async function page() {
         <div className="mt-10 px-2 lg:p-8">
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <div className="flex flex-col items-center space-y-2 text-center">
-      <Link href="/" className="mb-8 flex items-center space-x-2">
+      <SmartLink href="/" className="mb-8 flex items-center space-x-2">
         <Icons.logo className="size-8" />
         <span className="inline-block font-bold">{siteConfig.name}</span>
-      </Link>
+      </SmartLink>
               <h1 className="text-2xl font-semibold tracking-tight">
                 Welcome back!
               </h1>
@@ -32,19 +32,19 @@ export default async function page() {
             <AuthForm />
             <p className="px-8 text-center text-sm text-muted-foreground">
               By clicking continue, you agree to our{" "}
-              <Link
+              <SmartLink
                 href="/terms"
                 className="underline underline-offset-4 hover:text-primary"
               >
                 Terms of Service
-              </Link>{" "}
+              </SmartLink>{" "}
               and{" "}
-              <Link
+              <SmartLink
                 href="/privacy"
                 className="underline underline-offset-4 hover:text-primary"
               >
                 Privacy Policy
-              </Link>
+              </SmartLink>
               .
             </p>
           </div>

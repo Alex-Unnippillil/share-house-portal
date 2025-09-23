@@ -9,6 +9,8 @@ import {
 } from "@/lib/payments/catch-up"
 import type { CatchUpCharge } from "@/types/payments"
 
+import { loadCatchUpBalances } from "@/app/payments/loaders"
+
 const sampleCharges: CatchUpCharge[] = [
   {
     id: "charge_rent",
@@ -86,5 +88,14 @@ describe("catch-up helpers", () => {
     const id = generateMockPaymentIntentId()
     expect(id.startsWith("pi_")).toBe(true)
     expect(id.length).toBeGreaterThan(5)
+  })
+
+  it("exposes catch-up balances from the server loader", async () => {
+    const balances = await loadCatchUpBalances()
+    expect(balances.length).toBeGreaterThan(0)
+    for (const balance of balances) {
+      expect(balance.roommateId).toMatch(/^rm_/)
+      expect(balance.charges.length).toBeGreaterThan(0)
+    }
   })
 })

@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 import { usePathname } from "next/navigation"
 import { SidebarNavItem } from "types/nav"
 
@@ -42,7 +42,7 @@ export function DocsSidebarNavItems({
     <div className="grid grid-flow-row auto-rows-max text-sm">
       {items.map((item, index) =>
         item.href && !item.disabled ? (
-          <Link
+          <SmartLink
             key={index}
             href={item.href}
             className={cn(
@@ -54,6 +54,7 @@ export function DocsSidebarNavItems({
             )}
             target={item.external ? "_blank" : ""}
             rel={item.external ? "noreferrer" : ""}
+            intent="navigation"
           >
             {item.title}
             {item.label && (
@@ -61,7 +62,7 @@ export function DocsSidebarNavItems({
                 {item.label}
               </span>
             )}
-          </Link>
+          </SmartLink>
         ) : (
           <span
             key={index}

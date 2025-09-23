@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
+
 import { redirect } from "next/navigation"
 import {
   CalendarClock,
@@ -190,6 +191,7 @@ export default async function IndexPage() {
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
                   )}
+
                 >
                   Create your household
                 </Link>
@@ -272,6 +274,7 @@ export default async function IndexPage() {
                 <Link href={feature.href} className="text-sm font-medium text-primary hover:underline">
                   {feature.ctaLabel}
                 </Link>
+
               </CardContent>
             </Card>
           ))}
@@ -346,15 +349,16 @@ export default async function IndexPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link
+                  <SmartLink
                     href={highlight.cta.href}
                     className={cn(
                       buttonVariants({ variant: "ghost", size: "sm" }),
                       "justify-start px-0 text-primary hover:text-primary"
                     )}
+                    intent="passive"
                   >
                     {highlight.cta.label} →
-                  </Link>
+                  </SmartLink>
                 </CardContent>
               </Card>
             ))}
@@ -400,16 +404,18 @@ export default async function IndexPage() {
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <Link
+                <SmartLink
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "lg" }),
                     "bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                   )}
+                  intent="critical"
                 >
                   Start onboarding
                 </Link>
                 <Link
+
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
@@ -417,7 +423,7 @@ export default async function IndexPage() {
                   )}
                 >
                   Talk with us
-                </Link>
+                </SmartLink>
               </div>
             </CardContent>
           </Card>

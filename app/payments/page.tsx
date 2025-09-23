@@ -1,4 +1,5 @@
 import { format, parseISO } from "date-fns"
+import { CheckCircle2 } from "lucide-react"
 
 import {
   Card,
@@ -8,72 +9,61 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
+import { RoommateLedger } from "./_components/roommate-ledger"
 import {
   calculateOutstanding,
   formatAutopayDay,
   getNextOutstandingCharge,
 } from "@/lib/payments/catch-up"
 import { formatCurrency } from "@/lib/payments/currency"
-import { catchUpBalances } from "@/lib/payments/mock-data"
 import type { CatchUpBalance } from "@/types/payments"
+
+import { loadCatchUpBalances, loadRoommateLedgers } from "./loaders"
 
 const paymentHighlights = [
   {
     title: "AutoPay scheduling",
     description:
       "Enable recurring rent collection with configurable due dates, grace periods, and automatic late fee handling.",
+    points: [
+      "Assign custom due dates per lease or roommate share.",
+      "Set grace windows before late fees automatically post.",
+      "Keep everyone informed with proactive autopay reminders.",
+    ],
   },
   {
     title: "One-time catch up",
     description:
       "Support partial or one-off payments so roommates can settle balances without waiting for the next billing cycle.",
+    points: [
+      "Accept partial payments against outstanding charges instantly.",
+      "Apply settlements across multiple invoices in a single flow.",
+      "Log property manager adjustments so every credit is traceable.",
+    ],
   },
   {
     title: "Receipt history",
     description:
       "Download itemized receipts and export payment history for reimbursement, tax, or dispute resolution needs.",
+    points: [
+      "Generate PDF or CSV exports on demand for bookkeeping.",
+      "Surface line items for rent, deposits, and utilities in one view.",
+      "Attach notes and documentation to streamline disputes.",
+    ],
   },
   {
     title: "Roomsily ledger",
     description:
       "Track individual roommate contributions alongside property manager adjustments to maintain full transparency.",
+    points: [
+      "Monitor running balances per roommate with live updates.",
+      "Contrast autopay coverage with manual payments at a glance.",
+      "Share the same ledger with roommates, managers, and admins.",
+    ],
   },
 ]
-
-const outstandingSummaries = catchUpBalances.map((balance) => {
-  const outstanding = calculateOutstanding(balance.charges)
-  const nextCharge = getNextOutstandingCharge(balance.charges)
-  return { balance, outstanding, nextCharge }
-})
-
-const totalOutstanding = outstandingSummaries.reduce(
-  (sum, item) => sum + item.outstanding,
-  0,
-)
-
-const activeAutopays = catchUpBalances.filter(
-  (balance) => balance.autopayStatus === "active",
-).length
-const pausedAutopays = catchUpBalances.filter(
-  (balance) => balance.autopayStatus === "paused",
-).length
-const disabledAutopays = catchUpBalances.filter(
-  (balance) => balance.autopayStatus === "disabled",
-).length
-
-const autopCoveragePercentage =
-  catchUpBalances.length > 0
-    ? Math.round((activeAutopays / catchUpBalances.length) * 100)
-    : 0
-
-const defaultCurrency = catchUpBalances[0]?.currency ?? "USD"
-
-const roommateSummaries = [...outstandingSummaries].sort(
-  (a, b) => b.outstanding - a.outstanding,
-)
 
 function describeAutopayStatus(balance: CatchUpBalance) {
   const autopayDay = formatAutopayDay(balance.autopayDay)
@@ -94,7 +84,43 @@ function formatFullDate(date: string) {
   return format(parseISO(date), "MMM d, yyyy")
 }
 
-export default function PaymentsPage() {
+export default async function PaymentsPage() {
+  const [catchUpBalances, roommateLedgers] = await Promise.all([
+    loadCatchUpBalances(),
+    loadRoommateLedgers(),
+  ])
+  const outstandingSummaries = catchUpBalances.map((balance) => {
+    const outstanding = calculateOutstanding(balance.charges)
+    const nextCharge = getNextOutstandingCharge(balance.charges)
+    return { balance, outstanding, nextCharge }
+  })
+
+  const totalOutstanding = outstandingSummaries.reduce(
+    (sum, item) => sum + item.outstanding,
+    0,
+  )
+
+  const activeAutopays = catchUpBalances.filter(
+    (balance) => balance.autopayStatus === "active",
+  ).length
+  const pausedAutopays = catchUpBalances.filter(
+    (balance) => balance.autopayStatus === "paused",
+  ).length
+  const disabledAutopays = catchUpBalances.filter(
+    (balance) => balance.autopayStatus === "disabled",
+  ).length
+
+  const autopCoveragePercentage =
+    catchUpBalances.length > 0
+      ? Math.round((activeAutopays / catchUpBalances.length) * 100)
+      : 0
+
+  const defaultCurrency = catchUpBalances[0]?.currency ?? "USD"
+
+  const roommateSummaries = [...outstandingSummaries].sort(
+    (a, b) => b.outstanding - a.outstanding,
+  )
+
   return (
     <div className="container max-w-5xl space-y-10 py-12">
       <header className="space-y-4">
@@ -108,11 +134,21 @@ export default function PaymentsPage() {
       </header>
       <div className="grid gap-6 md:grid-cols-2">
         {paymentHighlights.map((item) => (
-          <Card key={item.title}>
+          <Card key={item.title} className="h-full">
             <CardHeader>
               <CardTitle>{item.title}</CardTitle>
               <CardDescription>{item.description}</CardDescription>
             </CardHeader>
+            <CardContent>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {item.points.map((point) => (
+                  <li key={point} className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 size-4 text-primary" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -216,6 +252,7 @@ export default function PaymentsPage() {
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
       </section>
+      <RoommateLedger ledgers={roommateLedgers} />
     </div>
   )
 }

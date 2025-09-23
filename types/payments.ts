@@ -75,3 +75,31 @@ export interface CatchUpPaymentFormValues {
   includePropertyManager: boolean
   note?: string
 }
+
+export type LedgerEntryType = "contribution" | "adjustment"
+
+export type LedgerActorRole = "roommate" | "property_manager"
+
+export interface LedgerEntryActor {
+  name: string
+  role: LedgerActorRole
+}
+
+export interface LedgerEntry {
+  id: string
+  date: string
+  description: string
+  amount: number
+  type: LedgerEntryType
+  actor: LedgerEntryActor
+  note?: string
+}
+
+export interface RoommateLedger {
+  roommateId: string
+  roommateName: string
+  unitLabel: string
+  currency: string
+  startingBalance: number
+  entries: LedgerEntry[]
+}
