@@ -1,4 +1,6 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { MessageComposer } from "@/components/messaging/message-composer"
+import { MessageContent } from "@/components/messaging/message-content"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,8 +14,11 @@ import {
 import { Progress } from "@/components/ui/progress"
 
 import { Separator } from "@/components/ui/separator"
+import type { StoredMention } from "@/lib/messaging/types"
 import { cn } from "@/lib/utils"
 import { Paperclip } from "lucide-react"
+
+import { createThreadMessage } from "./actions"
 
 type ThreadListItem = {
   id: string
@@ -63,7 +68,8 @@ type ThreadPost = {
     accent: string
   }
   timestamp: string
-  content: string[]
+  content: string
+  mentions?: StoredMention[]
   attachments?: Attachment[]
   poll?: ThreadPoll
   reactions?: PostReaction[]
@@ -95,9 +101,17 @@ const threadFilters = [
   { label: "Social", active: false },
 ]
 
+const activeThreadId = "thread-chore-rotation"
+
+const currentUser = {
+  id: "profile-jordan-lee",
+  name: "Jordan Lee",
+  unitId: "unit-3b",
+}
+
 const threadList: ThreadListItem[] = [
   {
-    id: "chore-rotation",
+    id: activeThreadId,
     title: "Q2 chore rotation plan",
     category: "Chores",
     summary:
@@ -149,6 +163,7 @@ const threadList: ThreadListItem[] = [
 ]
 
 const activeThread = {
+  id: activeThreadId,
   title: "Q2 chore rotation plan",
   summary:
     "Keep the shared areas sparkling with a rotation everyone can reference — vote on the deep clean weekend and review updated checklists in one place.",
@@ -168,9 +183,24 @@ const threadPosts: ThreadPost[] = [
       accent: "bg-sky-500/20 text-sky-700",
     },
     timestamp: "Today • 8:45 AM",
-    content: [
-      "Kicking off the Q2 chore rotation thread so we can stay ahead of the spring deep clean.",
-      "Please vote in the poll for when we should tackle the deep clean together. I added the updated checklist and rotation calendar so everyone can review before voting.",
+    content:
+      "Kicking off the Q2 chore rotation thread so we can stay ahead of the spring deep clean. Please vote in the poll for when we should tackle the deep clean weekend together. I added #Deep clean checklist and #Q2 rotation calendar so everyone can review before voting.",
+    mentions: [
+      {
+        entityId: "document-deep-clean-checklist",
+        entityType: "document",
+        trigger: "#",
+        label: "Deep clean checklist",
+        order: 0,
+        metadata: { document_type: "checklist" },
+      },
+      {
+        entityId: "document-q2-rotation-calendar",
+        entityType: "document",
+        trigger: "#",
+        label: "Q2 rotation calendar",
+        order: 1,
+      },
     ],
     attachments: [
       {
@@ -211,9 +241,16 @@ const threadPosts: ThreadPost[] = [
       accent: "bg-amber-500/20 text-amber-700",
     },
     timestamp: "Today • 9:05 AM",
-    content: [
-      "Looks good to me. I left a couple of notes in the sheet about trading weekends because of my travel schedule.",
-      "If we go with the Saturday 10 AM block, I can take recycling duty during the week so Sunday stays open.",
+    content:
+      "Looks good to me. I left a couple of notes in the sheet about trading weekends because of my travel schedule. @Avery Chen I can take recycling duty during the week so Sunday stays open if we land on Saturday morning.",
+    mentions: [
+      {
+        entityId: "profile-avery-chen",
+        entityType: "profile",
+        trigger: "@",
+        label: "Avery Chen",
+        order: 0,
+      },
     ],
     attachments: [
       {
@@ -237,9 +274,17 @@ const threadPosts: ThreadPost[] = [
       accent: "bg-purple-500/20 text-purple-700",
     },
     timestamp: "Today • 9:42 AM",
-    content: [
-      "Thanks everyone! Once the poll closes I'll lock the rotation and post a PDF to the documents hub.",
-      "Reminder that the spring inspection is on April 18 — make sure kitchen counters and the entryway are cleared the night before.",
+    content:
+      "Thanks everyone! Once the poll closes I'll lock the rotation and post a PDF to the documents hub. Reminder that the spring inspection is on April 18 — I reserved #Shared storage closet so supplies are easy to grab next weekend.",
+    mentions: [
+      {
+        entityId: "amenity-shared-storage",
+        entityType: "amenity",
+        trigger: "#",
+        label: "Shared storage closet",
+        order: 0,
+        metadata: { slug: "shared-storage" },
+      },
     ],
     reactions: [
       { emoji: "📌", count: 2 },
@@ -303,6 +348,21 @@ const pollSnapshots: PollSnapshot[] = [
 ]
 
 export default function MessagingPage() {
+  async function submitMessage(payload: {
+    content: string
+    mentions: StoredMention[]
+  }) {
+    "use server"
+
+    await createThreadMessage({
+      threadId: activeThread.id,
+      senderId: currentUser.id,
+      senderDisplayName: currentUser.name,
+      content: payload.content,
+      mentions: payload.mentions,
+    })
+  }
+
   return (
     <div className="container max-w-6xl space-y-10 py-12">
       <header className="space-y-4">
@@ -463,12 +523,12 @@ export default function MessagingPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-3 text-sm leading-6 text-foreground">
-                      {post.content.map((paragraph, idx) => (
-                        <p key={`${post.id}-content-${idx}`} className="text-muted-foreground">
-                          {paragraph}
-                        </p>
-                      ))}
+                    <div className="text-sm leading-6 text-foreground">
+                      <MessageContent
+                        content={post.content}
+                        mentions={post.mentions ?? []}
+                        className="text-muted-foreground"
+                      />
                     </div>
 
                     {post.attachments?.length ? (
@@ -562,6 +622,15 @@ export default function MessagingPage() {
                   {index < threadPosts.length - 1 ? <Separator /> : null}
                 </div>
               ))}
+              <div className="pt-2">
+                <MessageComposer
+                  threadId={activeThread.id}
+                  currentUserId={currentUser.id}
+                  currentUserName={currentUser.name}
+                  unitId={currentUser.unitId}
+                  onSubmit={submitMessage}
+                />
+              </div>
             </CardContent>
           </Card>
 
