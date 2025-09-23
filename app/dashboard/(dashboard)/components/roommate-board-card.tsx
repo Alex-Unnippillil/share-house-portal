@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getRoommateUpdates } from "../data"
+import { getDashboardAudience, getRoommateUpdates } from "../data"
 import { Badge } from "@/components/ui/badge"
 import SmartLink from "@/components/navigation/SmartLink"
 import { MessageSquare } from "lucide-react"
@@ -42,7 +42,21 @@ function formatRelativeTime(timestamp: string) {
 }
 
 export async function RoommateBoardCard() {
-  const updates = await getRoommateUpdates()
+  const [updates, audience] = await Promise.all([
+    getRoommateUpdates(),
+    getDashboardAudience(),
+  ])
+
+  const title = audience === "manager" ? "Resident activity" : "Roommate board"
+  const description =
+    audience === "manager"
+      ? "Check in on resident updates and announcements across your portfolio."
+      : "Keep the household in sync with quick updates and replies."
+  const emptyCopy =
+    audience === "manager"
+      ? "No updates yet. Encourage residents to post announcements or maintenance notes."
+      : "No updates yet. Share a note to keep your household and property team on the same page."
+  const ctaLabel = audience === "manager" ? "Open portfolio feed" : "Open message board"
 
   return (
     <Card>
@@ -50,38 +64,40 @@ export async function RoommateBoardCard() {
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
             <MessageSquare className="size-5 text-primary" />
-            Roommate board
+            {title}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Keep the household in sync with quick updates and replies.
-          </p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ul className="space-y-3">
-          {updates.map((update) => {
-            const { label, variant } = topicCopy[update.topic]
-            return (
-              <li
-                key={update.id}
-                className="rounded-lg border border-transparent bg-muted/40 p-3 transition-colors hover:border-border/70 hover:bg-muted/60"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <span>{update.author}</span>
-                    <Badge variant={variant}>{label}</Badge>
+        {updates.length ? (
+          <ul className="space-y-3">
+            {updates.map((update) => {
+              const { label, variant } = topicCopy[update.topic]
+              return (
+                <li
+                  key={update.id}
+                  className="rounded-lg border border-transparent bg-muted/40 p-3 transition-colors hover:border-border/70 hover:bg-muted/60"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <span>{update.author}</span>
+                      <Badge variant={variant}>{label}</Badge>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatRelativeTime(update.timestamp)}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{formatRelativeTime(update.timestamp)}</span>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{update.message}</p>
-              </li>
-            )
-          })}
-        </ul>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{update.message}</p>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">{emptyCopy}</p>
+        )}
 
         <SmartLink href="/messaging" className="inline-flex" intent="navigation">
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
-            Open message board
+            {ctaLabel}
           </Button>
         </SmartLink>
       </CardContent>

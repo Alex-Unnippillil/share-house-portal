@@ -7,7 +7,7 @@ export type MemberRole = Database['public']['Tables']['profiles']['Row']['role']
 
 export type MemberProfile = Pick<
   Database['public']['Tables']['profiles']['Row'],
-  'id' | 'email' | 'full_name' | 'role' | 'unit_id'
+  'id' | 'email' | 'full_name' | 'role' | 'unit_id' | 'rent_share'
 >;
 
 function handlePostgrestError(error: { message: string } | null, context: string) {
@@ -37,7 +37,7 @@ export async function fetchMemberProfile(
 ): Promise<MemberProfile | null> {
   const { data, error } = await client
     .from('profiles')
-    .select('id, email, full_name, role, unit_id')
+    .select('id, email, full_name, role, unit_id, rent_share')
     .eq('id', memberId)
     .maybeSingle();
 
@@ -62,7 +62,7 @@ export async function fetchMembersByUnit(
 ): Promise<MemberProfile[]> {
   let query = client
     .from('profiles')
-    .select('id, email, full_name, role, unit_id')
+    .select('id, email, full_name, role, unit_id, rent_share')
     .eq('unit_id', unitId);
 
   if (options.excludeUserId) {
