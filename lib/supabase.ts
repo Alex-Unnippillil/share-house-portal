@@ -17,6 +17,20 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
 export type Database = {
   public: {
     Tables: {
+      units: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        building_id: string | null
+        unit_number: string
+        name: string | null
+        description: string | null
+        bedrooms: number | null
+        bathrooms: number | null
+        square_feet: number | null
+        rent_cents: number | null
+        metadata: Json | null
+      }>,
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
@@ -33,7 +47,36 @@ export type Database = {
         stripe_customer_id: string | null
         rent_share: number | null
         metadata: Json | null
-      }>
+      }>,
+      amenities: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        unit_id: string | null
+        building_id: string | null
+        name: string
+        description: string | null
+        location: string | null
+        capacity: number | null
+        requires_approval: boolean
+        metadata: Json | null
+      }>,
+      bookings: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        amenity_id: string
+        unit_id: string | null
+        building_id: string | null
+        start_time: string
+        end_time: string
+        status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed'
+        created_by: string
+        approved_by: string | null
+        notes: string | null
+        recurrence_rule: string | null
+        metadata: Json | null
+      }>,
       documents: SupabaseTable<{
         id: string
         created_at: string | null
@@ -198,7 +241,29 @@ export type Database = {
         read: boolean | null
         created_at: string | null
         updated_at: string | null
-      }>
+      }>,
+      threads: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        unit_id: string | null
+        title: string
+        created_by: string
+        status: 'open' | 'locked' | 'archived'
+        pinned: boolean
+        metadata: Json | null
+      }>,
+      messages: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        thread_id: string
+        sender_id: string
+        content: string
+        message_type: 'message' | 'announcement' | 'system'
+        attachments: Json | null
+        metadata: Json | null
+      }>,
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null
@@ -209,7 +274,30 @@ export type Database = {
         sent_at: string | null
         error_message: string | null
         metadata: Json | null
-      }>
+      }>,
+      floorplans: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        unit_id: string | null
+        name: string
+        description: string | null
+        svg_url: string
+        created_by: string | null
+        metadata: Json | null
+      }>,
+      floorplan_annotations: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        floorplan_id: string
+        created_by: string
+        label: string
+        description: string | null
+        coordinates: Json
+        color: string | null
+        metadata: Json | null
+      }>,
       meetings: SupabaseTable<{
         id: string
         user_id: string

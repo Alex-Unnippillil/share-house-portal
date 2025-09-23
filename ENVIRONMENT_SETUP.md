@@ -11,7 +11,7 @@ Error: Could not find the table 'public.documents' in the schema cache
 
 **Issue**: Your Supabase database is missing the required tables.
 
-**Solution**: You need to run the database migrations or create the tables manually.
+**Solution**: Apply the Supabase migrations via the CLI (`pnpm db:bootstrap`) so the schema defined in `supabase/migrations/` is created for you.
 
 ### 2. **DOCUMENSO API KEY**
 ```
@@ -117,30 +117,19 @@ RESEND_API_KEY="re_your_resend_api_key"
 
 ## 🗄️ **DATABASE SETUP**
 
-You also need to create the missing database tables in Supabase:
+All tables live in versioned SQL files under `supabase/migrations/`. After installing the [Supabase CLI](https://supabase.com/docs/guides/cli), run the project bootstrap script to apply every migration and load the demo seed data:
 
-```sql
--- Documents table
-CREATE TABLE public.documents (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  file_url TEXT,
-  file_type TEXT,
-  file_size INTEGER,
-  uploaded_by UUID REFERENCES auth.users(id),
-  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Add more tables as needed for your application
+```bash
+pnpm db:bootstrap
 ```
+
+This command executes `supabase db push` (optionally using `SUPABASE_DB_URL` if you need to target a remote instance) and then seeds from `supabase/demo/seed.sql`. Use `pnpm db:push` any time you want to re-run just the migrations without seeding.
 
 ## 🚀 **QUICK START**
 
 1. Copy this template to `.env.local`
 2. Fill in your actual API keys
-3. Run database migrations or create tables manually in Supabase
+3. Run `pnpm db:bootstrap` to apply the Supabase migrations
 4. Restart your development server: `npm run dev`
 
 ## ⚠️ **SECURITY NOTES**
