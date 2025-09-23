@@ -4,9 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
 import {
-  sendBulkNotifications,
-  sendEmailNotification,
-  sendInAppNotification,
+  enqueueBulkNotifications,
+  enqueueEmailNotification,
+  enqueueInAppNotification,
+} from "@/lib/notification-queue"
+import {
   type InAppNotification,
   type NotificationData,
 } from "@/lib/notifications"
@@ -230,24 +232,59 @@ type NotificationRequest =
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as NotificationRequest
+    const requestId =
+      request.headers.get("x-request-id") ?? crypto.randomUUID()
 
     switch (payload.type) {
       case "email": {
-        const result = await sendEmailNotification(payload.notification)
-        const status = result.success ? 200 : 400
-        return NextResponse.json(result, { status })
+        const { jobId } = await enqueueEmailNotification(payload.notification, {
+          correlationId: requestId,
+        })
+        console.info("Enqueued email notification", {
+          jobId,
+          correlationId: requestId,
+          template: payload.notification.template,
+          recipient: payload.notification.to,
+        })
+        return NextResponse.json(
+          { success: true, jobId, correlationId: requestId },
+          { status: 202 }
+        )
       }
       case "in-app": {
-        const result = await sendInAppNotification(payload.notification)
-        const status = result.success ? 200 : 400
-        return NextResponse.json(result, { status })
+        const { jobId } = await enqueueInAppNotification(
+          payload.notification,
+          { correlationId: requestId }
+        )
+        console.info("Enqueued in-app notification", {
+          jobId,
+          correlationId: requestId,
+          userId: payload.notification.userId,
+          type: payload.notification.type,
+        })
+        return NextResponse.json(
+          { success: true, jobId, correlationId: requestId },
+          { status: 202 }
+        )
       }
       case "bulk": {
-        const results = await sendBulkNotifications(payload.notifications)
-        const success = results.every((entry) => entry.success)
+        const { jobId } = await enqueueBulkNotifications(
+          payload.notifications,
+          { correlationId: requestId }
+        )
+        console.info("Enqueued bulk notification job", {
+          jobId,
+          correlationId: requestId,
+          totalNotifications: payload.notifications.length,
+        })
         return NextResponse.json(
-          { success, results },
-          { status: success ? 200 : 400 }
+          {
+            success: true,
+            jobId,
+            correlationId: requestId,
+            totalNotifications: payload.notifications.length,
+          },
+          { status: 202 }
         )
       }
       default: {
