@@ -5,6 +5,7 @@ Based on your terminal errors, you're missing several API keys and configuration
 ## 🚨 **CRITICAL MISSING CONFIGURATIONS**
 
 ### 1. **SUPABASE DATABASE ISSUES**
+
 ```
 Error: Could not find the table 'public.documents' in the schema cache
 ```
@@ -14,6 +15,7 @@ Error: Could not find the table 'public.documents' in the schema cache
 **Solution**: You need to run the database migrations or create the tables manually.
 
 ### 2. **DOCUMENSO API KEY**
+
 ```
 DOCUMENSO_API_KEY is not configured
 ```
@@ -21,6 +23,7 @@ DOCUMENSO_API_KEY is not configured
 **Solution**: Get your Documenso API key from your Documenso instance.
 
 ### 3. **SUPABASE BROWSER CLIENT ISSUE**
+
 ```
 Attempted import error: 'createClient' is not exported from '@/utils/supabase-browser'
 ```
@@ -32,6 +35,7 @@ Attempted import error: 'createClient' is not exported from '@/utils/supabase-br
 Create a `.env.local` file in your project root with these variables:
 
 ### **SUPABASE (REQUIRED)**
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
@@ -40,6 +44,7 @@ SUPABASE_JWT_SECRET="your_jwt_secret"
 ```
 
 ### **APPLICATION**
+
 ```bash
 NEXT_PUBLIC_SITE_URL="http://localhost:3002"
 NEXT_PUBLIC_APP_URL="http://localhost:3002"
@@ -47,6 +52,7 @@ NEXT_PUBLIC_FEATURE_STREAMING_DASHBOARDS="false"
 ```
 
 ### **STRIPE (FOR PAYMENTS)**
+
 ```bash
 STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key"
 STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret"
@@ -54,18 +60,21 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_your_publishable_key"
 ```
 
 ### **DOCUMENSO (FOR DOCUMENTS)**
+
 ```bash
 DOCUMENSO_API_KEY="your_documenso_api_key"
 DOCUMENSO_BASE_URL="https://your-documenso-instance.com"
 ```
 
 ### **CAL.COM (FOR BOOKINGS)**
+
 ```bash
 CALCOM_BASE_URL="https://your-calcom-instance.com"
 CALCOM_API_KEY="your_calcom_api_key"
 ```
 
 ### **GOOGLE CALENDAR (OPTIONAL)**
+
 ```bash
 GOOGLE_CLIENT_ID="your_google_client_id"
 GOOGLE_CLIENT_SECRET="your_google_client_secret"
@@ -73,6 +82,7 @@ GOOGLE_OWNER_REFRESH_TOKEN="your_google_refresh_token"
 ```
 
 ### **EMAIL SERVICE (OPTIONAL)**
+
 ```bash
 RESEND_API_KEY="re_your_resend_api_key"
 ```
@@ -80,6 +90,7 @@ RESEND_API_KEY="re_your_resend_api_key"
 ## 🛠️ **HOW TO GET THESE KEYS**
 
 ### **1. Supabase Setup**
+
 1. Go to [supabase.com](https://supabase.com)
 2. Create a new project
 3. Go to Settings > API
@@ -87,7 +98,8 @@ RESEND_API_KEY="re_your_resend_api_key"
 5. Copy the service_role key (keep this secret!)
 6. Get JWT secret from Settings > API > JWT Settings
 
-### **2. Stripe Setup** 
+### **2. Stripe Setup**
+
 1. Go to [stripe.com](https://stripe.com)
 2. Create account or sign in
 3. Go to Developers > API keys
@@ -95,22 +107,26 @@ RESEND_API_KEY="re_your_resend_api_key"
 5. For webhook secret, use Stripe CLI: `stripe listen --forward-to localhost:3002/api/stripe/webhook`
 
 ### **3. Documenso Setup**
+
 1. Set up Documenso instance (self-hosted or hosted)
 2. Generate API key from your Documenso dashboard
 3. Note your base URL
 
 ### **4. Cal.com Setup**
-1. Set up Cal.com instance (self-hosted or hosted) 
+
+1. Set up Cal.com instance (self-hosted or hosted)
 2. Generate API key from Cal.com settings
 3. Note your base URL
 
 ### **5. Google Calendar (Optional)**
+
 1. Go to Google Cloud Console
 2. Create project and enable Calendar API
 3. Create OAuth 2.0 credentials
 4. Generate refresh token
 
 ### **6. Resend (Optional)**
+
 1. Go to [resend.com](https://resend.com)
 2. Create account
 3. Generate API key
@@ -141,7 +157,22 @@ CREATE TABLE public.documents (
 1. Copy this template to `.env.local`
 2. Fill in your actual API keys
 3. Run database migrations or create tables manually in Supabase
-4. Restart your development server: `npm run dev`
+4. Install dependencies with `pnpm install` (or run your package manager's install command followed by `pnpm run prepare` to bootstrap Git hooks)
+5. Restart your development server: `npm run dev`
+
+## 🪝 **Git Hooks & lint-staged**
+
+- We use Husky + lint-staged to run ESLint and Prettier on staged files before every commit. This keeps formatting and lint rules consistent across the team.
+- Onboarding scripts or local setup helpers must invoke `pnpm install` (or explicitly run `pnpm run prepare`) so Husky installs `.husky/` hooks for every developer.
+- If you need to bypass the hook temporarily (e.g., an emergency commit), prefix the command with `HUSKY=0`:
+
+  ```bash
+  HUSKY=0 git commit -m "hotfix: unblock release"
+  ```
+
+  Use this only as a last resort and follow up with `pnpm exec lint-staged --no-stash` to clean up.
+
+- To re-enable or repair hooks, run `pnpm run prepare` after ensuring dependencies are installed.
 
 ## ⚠️ **SECURITY NOTES**
 
