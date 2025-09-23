@@ -62,6 +62,41 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        highContrast: {
+          background: "hsl(var(--hc-background))",
+          foreground: "hsl(var(--hc-foreground))",
+          border: "hsl(var(--hc-border))",
+          input: "hsl(var(--hc-input))",
+          ring: "hsl(var(--hc-ring))",
+          card: {
+            DEFAULT: "hsl(var(--hc-card))",
+            foreground: "hsl(var(--hc-card-foreground))",
+          },
+          popover: {
+            DEFAULT: "hsl(var(--hc-popover))",
+            foreground: "hsl(var(--hc-popover-foreground))",
+          },
+          primary: {
+            DEFAULT: "hsl(var(--hc-primary))",
+            foreground: "hsl(var(--hc-primary-foreground))",
+          },
+          secondary: {
+            DEFAULT: "hsl(var(--hc-secondary))",
+            foreground: "hsl(var(--hc-secondary-foreground))",
+          },
+          muted: {
+            DEFAULT: "hsl(var(--hc-muted))",
+            foreground: "hsl(var(--hc-muted-foreground))",
+          },
+          accent: {
+            DEFAULT: "hsl(var(--hc-accent))",
+            foreground: "hsl(var(--hc-accent-foreground))",
+          },
+          destructive: {
+            DEFAULT: "hsl(var(--hc-destructive))",
+            foreground: "hsl(var(--hc-destructive-foreground))",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

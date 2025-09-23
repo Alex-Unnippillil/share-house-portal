@@ -3,9 +3,17 @@
 @tailwind utilities;
 
 /* Minimal base colors */
-:root {}
+:root {
+  color-scheme: light;
+}
 
-.dark {}
+.dark {
+  color-scheme: dark;
+}
+
+.high-contrast {
+  color-scheme: dark;
+}
 
 body {}
 
@@ -32,6 +40,27 @@ body {}
     --input: 214 32% 91%;
     --ring: 222 47% 11%;
     --radius: 0.375rem;
+
+    /* High contrast palette tokens */
+    --hc-background: 222 87% 8%;
+    --hc-foreground: 210 40% 98%;
+    --hc-card: 222 84% 12%;
+    --hc-card-foreground: 210 40% 98%;
+    --hc-popover: 222 84% 12%;
+    --hc-popover-foreground: 210 40% 98%;
+    --hc-primary: 50 100% 56%;
+    --hc-primary-foreground: 222 87% 8%;
+    --hc-secondary: 196 100% 58%;
+    --hc-secondary-foreground: 222 87% 8%;
+    --hc-muted: 222 64% 22%;
+    --hc-muted-foreground: 210 35% 88%;
+    --hc-accent: 142 80% 52%;
+    --hc-accent-foreground: 222 87% 8%;
+    --hc-destructive: 0 100% 75%;
+    --hc-destructive-foreground: 222 87% 8%;
+    --hc-border: 196 100% 58%;
+    --hc-input: 196 100% 58%;
+    --hc-ring: 50 100% 56%;
   }
 
   .dark {
@@ -49,11 +78,33 @@ body {}
     --muted-foreground: 215 20% 65%;
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 222 47% 11%;
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 210 40% 98%;
+  }
+
+  .high-contrast {
+    --background: var(--hc-background);
+    --foreground: var(--hc-foreground);
+    --card: var(--hc-card);
+    --card-foreground: var(--hc-card-foreground);
+    --popover: var(--hc-popover);
+    --popover-foreground: var(--hc-popover-foreground);
+    --primary: var(--hc-primary);
+    --primary-foreground: var(--hc-primary-foreground);
+    --secondary: var(--hc-secondary);
+    --secondary-foreground: var(--hc-secondary-foreground);
+    --muted: var(--hc-muted);
+    --muted-foreground: var(--hc-muted-foreground);
+    --accent: var(--hc-accent);
+    --accent-foreground: var(--hc-accent-foreground);
+    --destructive: var(--hc-destructive);
+    --destructive-foreground: var(--hc-destructive-foreground);
+    --border: var(--hc-border);
+    --input: var(--hc-input);
+    --ring: var(--hc-ring);
   }
 }
 
