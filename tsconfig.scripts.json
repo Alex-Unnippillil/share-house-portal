@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": ".ts-node-cache"
+  },
+  "include": [
+    "scripts/run-performance-budgets.ts",
+    "config/performance.ts"
+  ]
+}

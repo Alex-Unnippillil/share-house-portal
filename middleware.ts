@@ -3,6 +3,11 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import {
+  formatServerTimingHeader,
+  resolveBudgetForPath,
+} from '@/config/performance'
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -57,6 +62,15 @@ export async function middleware(request: NextRequest) {
   )
 
   await supabase.auth.getUser()
+
+  const budget = resolveBudgetForPath(request.nextUrl.pathname)
+  const serverTimingValue = formatServerTimingHeader(budget)
+  const existingTiming = response.headers.get('Server-Timing')
+
+  response.headers.set(
+    'Server-Timing',
+    existingTiming ? `${existingTiming}, ${serverTimingValue}` : serverTimingValue
+  )
 
   return response
 }
