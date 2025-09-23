@@ -42,5 +42,83 @@
       "platform": "play",
       "url": "https://play.google.com/store/apps/details?id=yourApp"
     }
+  ],
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "image/*",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/plain"
+          ]
+        }
+      ]
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "Log rent receipt",
+      "short_name": "Receipt",
+      "description": "Attach a shared rent or utility receipt to roommate ledgers.",
+      "url": "/share/intent?destination=payments",
+      "icons": [
+        {
+          "src": "images/touch/homescreen96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "File document",
+      "short_name": "Document",
+      "description": "Route shared agreements and attachments into the Roomsily vault.",
+      "url": "/share/intent?destination=documents",
+      "icons": [
+        {
+          "src": "images/touch/homescreen96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Escalate maintenance",
+      "short_name": "Maintenance",
+      "description": "Send shared photos or notes directly to the maintenance intake flow.",
+      "url": "/share/intent?destination=maintenance",
+      "icons": [
+        {
+          "src": "images/touch/homescreen96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Coordinate visitor",
+      "short_name": "Visitor",
+      "description": "Turn shared contact cards into overnight visitor bookings.",
+      "url": "/share/intent?destination=visitors",
+      "icons": [
+        {
+          "src": "images/touch/homescreen96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }

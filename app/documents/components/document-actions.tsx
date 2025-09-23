@@ -21,6 +21,7 @@ import {
 import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
+import { shareDocument } from '@/lib/share/outbound';
 import {
   MoreHorizontal,
   Eye,
@@ -84,16 +85,21 @@ export function DocumentActions({ document }: DocumentActionsProps) {
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share && document.file_url) {
-      navigator.share({
-        title: document.title,
-        url: document.file_url,
-      });
-    } else {
-      // Fallback: copy URL to clipboard
-      navigator.clipboard.writeText(document.file_url || '');
-      toast.success('Document URL copied to clipboard');
+  const handleShare = async () => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : undefined
+    try {
+      const status = await shareDocument(document, { baseUrl })
+
+      if (status === 'shared') {
+        toast.success('Document shared successfully')
+      } else if (status === 'copied') {
+        toast.success('Document URL copied to clipboard')
+      } else if (status === 'unsupported') {
+        toast.error('Sharing is not supported on this device')
+      }
+    } catch (error) {
+      console.error('Error sharing document:', error)
+      toast.error('Unable to share document')
     }
   };
 

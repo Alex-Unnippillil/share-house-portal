@@ -17,6 +17,7 @@ import {
   createPaymentHistoryCsv,
   summarizeReceiptHistory,
 } from "@/lib/payments/receipts"
+import { ShareReceiptButton } from "./share-receipt-button"
 import type { PaymentReceiptHistoryEntry } from "@/types/payments"
 
 interface ReceiptHistoryCardProps {
@@ -224,6 +225,7 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                       </td>
                       <td className="p-4">
                         <div className="flex flex-col items-end gap-2">
+                          <ShareReceiptButton receipt={receipt} />
                           <a
                             href={receipt.receiptUrl}
                             target="_blank"
