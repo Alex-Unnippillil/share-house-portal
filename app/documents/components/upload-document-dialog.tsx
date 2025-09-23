@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useState, type ClipboardEvent as ReactClipboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +24,65 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Upload, FileText, X } from 'lucide-react';
+import { useDropzone, type FileRejection } from 'react-dropzone';
+import { toast } from 'sonner';
+
+import { cn } from '@/lib/utils';
 import { uploadDocumentAction } from '../actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import { Upload, FileText } from 'lucide-react';
-import { toast } from 'sonner';
+
+const ACCEPTED_FILE_TYPES = {
+  'application/pdf': ['.pdf'],
+  'application/msword': ['.doc'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'image/jpeg': ['.jpeg', '.jpg'],
+  'image/png': ['.png'],
+  'image/gif': ['.gif'],
+} as const;
+
+const ACCEPTED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif'];
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_FILE_MESSAGE = 'Supported formats: PDF, Word, or image files up to 10MB.';
+
+type FileError = {
+  name: string;
+  message: string;
+};
+
+const formatRejectionError = (error: FileRejection['errors'][number], file: File): string => {
+  switch (error.code) {
+    case 'file-invalid-type':
+      return `${file.name} is not an accepted file type. ${ACCEPTED_FILE_MESSAGE}`;
+    case 'file-too-large':
+      return `${file.name} exceeds the 10MB limit.`;
+    case 'too-many-files':
+      return `Only one file can be uploaded at a time. Please remove ${file.name} and try again.`;
+    default:
+      return error.message;
+  }
+};
+
+const isAcceptedFileType = (file: File) => {
+  if (file.type && Object.prototype.hasOwnProperty.call(ACCEPTED_FILE_TYPES, file.type)) {
+    return true;
+  }
+
+  const lowerName = file.name?.toLowerCase() ?? '';
+  return ACCEPTED_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+};
+
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) {
+    return '0 B';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, exponent);
+  const precision = exponent === 0 ? 0 : 1;
+  return `${value.toFixed(precision)} ${units[exponent]}`;
+};
 
 export function UploadDocumentDialog() {
   const [open, setOpen] = useState(false);
@@ -41,41 +97,123 @@ export function UploadDocumentDialog() {
     expires_at: '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileErrors, setFileErrors] = useState<FileError[]>([]);
   const router = useRouter();
   const permissions = useDocumentPermissions();
+
+  const acceptConfig = useMemo(() => ({ ...ACCEPTED_FILE_TYPES }), []);
+
+  const resetFileState = useCallback(() => {
+    setPreviewUrl(prev => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return null;
+    });
+    setFile(null);
+    setFileErrors([]);
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      resetFileState();
+    }
+  }, [open, resetFileState]);
 
   // Don't render upload button if user doesn't have permission
   if (!permissions.canUploadDocuments) {
     return null;
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      // Validate file type
-      const allowedTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-
-      if (!allowedTypes.includes(selectedFile.type)) {
-        toast.error('Please select a valid file type (PDF, Word, or image)');
-        return;
+  const handleAcceptedFile = useCallback((nextFile: File) => {
+    setPreviewUrl(prev => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
       }
 
-      // Validate file size (10MB max)
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
-        return;
+      if (nextFile.type.startsWith('image/')) {
+        return URL.createObjectURL(nextFile);
       }
 
-      setFile(selectedFile);
+      return null;
+    });
+    setFile(nextFile);
+  }, []);
+
+  const handleDrop = useCallback((acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    const errors: FileError[] = fileRejections.flatMap(rejection =>
+      rejection.errors.map(error => ({
+        name: rejection.file.name,
+        message: formatRejectionError(error, rejection.file),
+      }))
+    );
+
+    if (acceptedFiles.length > 0) {
+      handleAcceptedFile(acceptedFiles[0]);
     }
-  };
+
+    setFileErrors(errors);
+  }, [handleAcceptedFile]);
+
+  const validatePastedFiles = useCallback((files: File[]): { accepted: File | null; errors: FileError[] } => {
+    const errors: FileError[] = [];
+    let accepted: File | null = null;
+
+    files.forEach((item, index) => {
+      if (!isAcceptedFileType(item)) {
+        errors.push({
+          name: item.name || `Pasted file ${index + 1}`,
+          message: `${item.name || 'This file'} is not an accepted file type. ${ACCEPTED_FILE_MESSAGE}`,
+        });
+        return;
+      }
+
+      if (item.size > MAX_FILE_SIZE_BYTES) {
+        errors.push({
+          name: item.name || `Pasted file ${index + 1}`,
+          message: `${item.name || 'This file'} exceeds the 10MB limit.`,
+        });
+        return;
+      }
+
+      if (accepted) {
+        errors.push({
+          name: item.name || `Pasted file ${index + 1}`,
+          message: `Only one file can be uploaded at a time. Please remove ${item.name || 'this file'} and try again.`,
+        });
+        return;
+      }
+
+      accepted = item;
+    });
+
+    return { accepted, errors };
+  }, []);
+
+  const handlePaste = useCallback((event: ReactClipboardEvent<HTMLDivElement>) => {
+    const pastedFiles = Array.from(event.clipboardData?.files ?? []);
+    if (pastedFiles.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const { accepted, errors } = validatePastedFiles(pastedFiles);
+    if (accepted) {
+      handleAcceptedFile(accepted);
+    }
+
+    setFileErrors(errors);
+  }, [handleAcceptedFile, validatePastedFiles]);
+
+  const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
+    accept: acceptConfig,
+    maxFiles: 1,
+    maxSize: MAX_FILE_SIZE_BYTES,
+    multiple: true,
+    onDrop: handleDrop,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +254,7 @@ export function UploadDocumentDialog() {
           requires_signature: false,
           expires_at: '',
         });
-        setFile(null);
+        resetFileState();
         router.refresh();
       } else {
         toast.error(result.error || 'Failed to upload document');
@@ -149,29 +287,87 @@ export function UploadDocumentDialog() {
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="file">Document File</Label>
-            <div className="rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 text-center">
+            <div
+              {...getRootProps({
+                className: cn(
+                  'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition',
+                  isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+                ),
+                tabIndex: 0,
+                role: 'button',
+                'aria-label': 'Document upload area',
+                'data-testid': 'document-dropzone',
+              })}
+              onPaste={handlePaste}
+            >
               <input
-                id="file"
-                type="file"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                className="hidden"
+                {...getInputProps({
+                  id: 'file',
+                  name: 'file',
+                })}
               />
-              <label htmlFor="file" className="cursor-pointer">
-                <FileText className="mx-auto mb-2 size-12 text-muted-foreground" />
-                <div className="text-sm text-muted-foreground">
-                  {file ? (
-                    <span className="font-medium text-foreground">{file.name}</span>
+              {file ? (
+                <div className="flex w-full flex-col items-center gap-3">
+                  {previewUrl ? (
+                    <div className="relative h-40 w-full overflow-hidden rounded-md border bg-muted">
+                      <Image
+                        src={previewUrl}
+                        alt={`Preview of ${file.name}`}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
                   ) : (
-                    <>
-                      Click to select a file or drag and drop
-                      <br />
-                      <span className="text-xs">PDF, Word, or image files up to 10MB</span>
-                    </>
+                    <FileText className="size-12 text-muted-foreground" />
                   )}
+                  <div className="flex w-full flex-col items-center gap-1 text-sm">
+                    <span className="font-medium text-foreground">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      resetFileState();
+                    }}
+                    className="flex items-center gap-1"
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    <X className="size-4" />
+                    Remove file
+                  </Button>
                 </div>
-              </label>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <FileText className="size-12" />
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Drag &amp; drop, paste, or click to upload</p>
+                    <p className="text-xs">{ACCEPTED_FILE_MESSAGE}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      openFileDialog();
+                    }}
+                  >
+                    Browse files
+                  </Button>
+                </div>
+              )}
             </div>
+            {fileErrors.length > 0 && (
+              <ul className="space-y-1 text-xs text-destructive">
+                {fileErrors.map((error, index) => (
+                  <li key={`${error.name}-${index}`}>{error.message}</li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Title */}
