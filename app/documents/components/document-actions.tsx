@@ -10,27 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DocumentWithLease } from '@/types/documents';
-import {
-  signDocumentAction,
-  createSigningRequestAction,
-  getSigningUrlAction,
-  publishDocumentAction,
-  unpublishDocumentAction,
-  rollbackDocumentAction,
-} from '../actions';
+import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '../actions';
 import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
-import {
-  MoreHorizontal,
-  Eye,
-  PenTool,
-  Download,
-  Share2,
-  Rocket,
-  Undo2,
-  RotateCcw,
-} from 'lucide-react';
+import { MoreHorizontal, Eye, PenTool, Download, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DocumentActionsProps {
@@ -100,75 +84,10 @@ export function DocumentActions({ document }: DocumentActionsProps) {
   // Permission checks
   const canView = permissions.canViewDocument(document);
   const canSign = permissions.canSignDocument(document);
-  const canCreateSignature =
-    permissions.canCreateSigningRequests &&
-    document.state === 'published' &&
+  const canCreateSignature = permissions.canCreateSigningRequests &&
+    document.status === 'draft' &&
     document.requires_signature;
   const canEdit = permissions.canEditDocument(document);
-  const previousVersion = document.versions?.find(
-    version => version.version < document.version
-  );
-
-  const handlePublish = async () => {
-    setLoading('publishing');
-    try {
-      const result = await publishDocumentAction(document.id);
-      if (result.success) {
-        toast.success('Document published');
-        window.location.reload();
-      } else {
-        toast.error(result.error || 'Failed to publish document');
-      }
-    } catch (error) {
-      console.error('Error publishing document:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleUnpublish = async () => {
-    setLoading('unpublishing');
-    try {
-      const result = await unpublishDocumentAction(document.id);
-      if (result.success) {
-        toast.success('Document returned to draft');
-        window.location.reload();
-      } else {
-        toast.error(result.error || 'Failed to unpublish document');
-      }
-    } catch (error) {
-      console.error('Error unpublishing document:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleRollback = async () => {
-    if (!previousVersion) {
-      return;
-    }
-
-    setLoading('rollback');
-    try {
-      const result = await rollbackDocumentAction({
-        documentId: document.id,
-        targetVersion: previousVersion.version,
-      });
-      if (result.success) {
-        toast.success('Document restored to previous version');
-        window.location.reload();
-      } else {
-        toast.error(result.error || 'Failed to restore document');
-      }
-    } catch (error) {
-      console.error('Error rolling back document:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setLoading(null);
-    }
-  };
 
   // Don't render anything if user can't view this document
   if (!canView) {
@@ -201,36 +120,6 @@ export function DocumentActions({ document }: DocumentActionsProps) {
             <DropdownMenuItem onClick={handleCreateSigningRequest}>
               <Share2 className="mr-2 size-4" />
               Create Signing Request
-            </DropdownMenuItem>
-          )}
-
-          {canEdit && document.state === 'draft' && (
-            <DropdownMenuItem
-              onClick={handlePublish}
-              disabled={loading === 'publishing'}
-            >
-              <Rocket className="mr-2 size-4" />
-              {loading === 'publishing' ? 'Publishing...' : 'Publish'}
-            </DropdownMenuItem>
-          )}
-
-          {canEdit && document.state === 'published' && (
-            <DropdownMenuItem
-              onClick={handleUnpublish}
-              disabled={loading === 'unpublishing'}
-            >
-              <Undo2 className="mr-2 size-4" />
-              {loading === 'unpublishing' ? 'Unpublishing...' : 'Unpublish'}
-            </DropdownMenuItem>
-          )}
-
-          {canEdit && previousVersion && (
-            <DropdownMenuItem
-              onClick={handleRollback}
-              disabled={loading === 'rollback'}
-            >
-              <RotateCcw className="mr-2 size-4" />
-              {loading === 'rollback' ? 'Restoring...' : 'Restore Previous Version'}
             </DropdownMenuItem>
           )}
 
