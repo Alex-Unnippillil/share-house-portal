@@ -237,6 +237,14 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      notification_preferences: SupabaseTable<{
+        user_id: string
+        digest_frequency: 'daily' | 'weekly'
+        quiet_hours_start: string | null
+        quiet_hours_end: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string

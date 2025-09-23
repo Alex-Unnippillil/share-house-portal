@@ -10,6 +10,12 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  normalizePreferencesRow,
+  shouldSuppressPush,
+  type NotificationPreferences,
+} from "@/lib/notification-preferences";
 
 interface Notification {
   id: string;
@@ -19,6 +25,7 @@ interface Notification {
   action_url?: string;
   read: boolean;
   created_at: string;
+  metadata?: Record<string, any> | null;
 }
 
 export function NotificationCenter() {
@@ -26,6 +33,9 @@ export function NotificationCenter() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [preferences, setPreferences] = useState<NotificationPreferences>(() => ({
+    ...DEFAULT_NOTIFICATION_PREFERENCES,
+  }));
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
 
@@ -50,9 +60,66 @@ export function NotificationCenter() {
   }, [supabase]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const applyPreferences = (next: NotificationPreferences) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setPreferences((previous) => {
+        if (
+          previous.digestFrequency === next.digestFrequency &&
+          previous.quietHoursStart === next.quietHoursStart &&
+          previous.quietHoursEnd === next.quietHoursEnd
+        ) {
+          return previous;
+        }
+
+        return next;
+      });
+    };
+
+    const loadPreferences = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          applyPreferences({ ...DEFAULT_NOTIFICATION_PREFERENCES });
+          return;
+        }
+
+        const { data, error } = await (supabase as any)
+          .from('notification_preferences')
+          .select('digest_frequency, quiet_hours_start, quiet_hours_end')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Failed to load notification preferences:', error);
+          applyPreferences({ ...DEFAULT_NOTIFICATION_PREFERENCES });
+          return;
+        }
+
+        applyPreferences(normalizePreferencesRow(data));
+      } catch (error) {
+        console.error('Failed to load notification preferences:', error);
+        applyPreferences({ ...DEFAULT_NOTIFICATION_PREFERENCES });
+      }
+    };
+
+    loadPreferences();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
+
+  useEffect(() => {
     fetchNotifications();
 
-    // Subscribe to real-time notifications
     const channel = supabase
       .channel('notifications')
       .on(
@@ -64,24 +131,38 @@ export function NotificationCenter() {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
+          setNotifications((prev) => [newNotification, ...prev]);
+          setUnreadCount((prev) => prev + 1);
 
-          // Show toast for new notification
+          const metadata = (newNotification.metadata ?? {}) as {
+            quietHours?: { suppressed?: boolean };
+          };
+          const metadataSuppressed = Boolean(metadata.quietHours?.suppressed);
+          const quietWindowActive = shouldSuppressPush(
+            new Date(),
+            preferences,
+          );
+
+          if (metadataSuppressed || quietWindowActive) {
+            return;
+          }
+
           toast({
             title: newNotification.title,
             description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' :
-                    newNotification.type === 'warning' ? 'default' : 'default',
+            variant:
+              newNotification.type === 'error'
+                ? 'destructive'
+                : 'default',
           });
-        }
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, supabase, toast]);
+  }, [fetchNotifications, preferences, supabase, toast]);
 
   const markAsRead = async (notificationId: string) => {
     try {

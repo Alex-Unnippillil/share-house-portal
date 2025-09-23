@@ -1,6 +1,17 @@
 "use server"
 
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  getQuietHoursResume,
+  shouldSuppressPush,
+} from "@/lib/notification-preferences"
+import { fetchNotificationPreferences } from "@/lib/notification-preferences-repository"
+import {
+  generateNotificationDigests,
+  type NotificationDigestBatch,
+} from "@/lib/notification-scheduler"
 import { createSupbaseServerClient } from "@/utils/supaone"
+import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
 import { Resend } from "resend"
 
 export interface NotificationData {
@@ -89,6 +100,34 @@ class NotificationService {
   async sendInAppNotification(notification: InAppNotification) {
     try {
       const supabase = await createSupbaseServerClient()
+      const typedSupabase = supabase as unknown as TypedSupabaseClient
+
+      let preferences = { ...DEFAULT_NOTIFICATION_PREFERENCES }
+      try {
+        preferences = await fetchNotificationPreferences(
+          typedSupabase,
+          notification.userId,
+        )
+      } catch (prefError) {
+        console.error("Failed to load notification preferences:", prefError)
+      }
+
+      const now = new Date()
+      const quietHoursSuppressed = shouldSuppressPush(now, preferences)
+      const quietHoursResume = quietHoursSuppressed
+        ? getQuietHoursResume(now, preferences)
+        : null
+
+      const metadata = {
+        ...notification.metadata,
+        digestFrequency: preferences.digestFrequency,
+        quietHours: {
+          suppressed: quietHoursSuppressed,
+          resumeAt: quietHoursResume ? quietHoursResume.toISOString() : null,
+          start: preferences.quietHoursStart,
+          end: preferences.quietHoursEnd,
+        },
+      }
 
       const { data, error } = await (supabase as any)
         .from("notifications")
@@ -98,9 +137,9 @@ class NotificationService {
           message: notification.message,
           type: notification.type,
           action_url: notification.actionUrl,
-          metadata: notification.metadata,
+          metadata,
           read: false,
-          created_at: new Date().toISOString(),
+          created_at: now.toISOString(),
         })
 
       if (error) {
@@ -262,3 +301,6 @@ export async function sendBulkNotifications(
 ) {
   return notificationService.sendBulkNotification(notifications)
 }
+
+export { generateNotificationDigests }
+export type { NotificationDigestBatch }
