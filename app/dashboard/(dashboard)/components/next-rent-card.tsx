@@ -1,20 +1,27 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import SmartLink from "@/components/navigation/SmartLink"
-import { getRentSummary } from "../data"
 import { CalendarDays, Clock, RefreshCcw } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import SmartLink from "@/components/navigation/SmartLink"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getRentSummary } from "../data"
+import { formatCurrency } from "@/lib/payments/currency"
+import { formatDate } from "@/lib/utils"
+import { detectRequestLocale } from "@/lib/server/request-locale"
+import { resolveUserSettings } from "@/lib/user-settings"
 
 export async function NextRentCard() {
   const summary = await getRentSummary()
-  const formattedAmount = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(summary.amount)
-  const formattedBalance = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(summary.balance)
+  const locale = detectRequestLocale()
+  const userSettings = resolveUserSettings({ locale })
+  const formattedAmount = formatCurrency(summary.amount, {
+    currency: userSettings.currency,
+    locale: userSettings.locale,
+  })
+  const formattedBalance = formatCurrency(summary.balance, {
+    currency: userSettings.currency,
+    locale: userSettings.locale,
+  })
 
   const dueDate = new Date(summary.dueDate)
   const today = new Date()
@@ -29,6 +36,15 @@ export async function NextRentCard() {
         : diffInDays === 0
           ? "Due today"
           : `Overdue by ${Math.abs(diffInDays)} days`
+
+  const dueDateLabel = formatDate(dueDate, {
+    locale: userSettings.locale,
+    formatOptions: { month: "long", day: "numeric" },
+  })
+  const lastPaidLabel = formatDate(summary.lastPaymentDate, {
+    locale: userSettings.locale,
+    formatOptions: { month: "short", day: "numeric" },
+  })
 
   return (
     <Card className="h-full">
@@ -57,34 +73,28 @@ export async function NextRentCard() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-md border border-dashed border-border/60 p-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <CalendarDays className="size-5" />
+            <div className="flex items-center gap-3 rounded-md border border-dashed border-border/60 p-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <CalendarDays className="size-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">
+                  {dueDateLabel}
+                </p>
+                <p className="text-xs text-muted-foreground">{dueDescriptor}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium">
-                {dueDate.toLocaleDateString(undefined, {
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-              <p className="text-xs text-muted-foreground">{dueDescriptor}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-md border border-dashed border-border/60 p-3">
+            <div className="flex items-center gap-3 rounded-md border border-dashed border-border/60 p-3">
             <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Clock className="size-5" />
             </div>
-            <div>
-              <p className="text-sm font-medium">
-                Last paid {new Date(summary.lastPaymentDate).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
-              <p className="text-xs text-muted-foreground">We’ll email receipts after processing</p>
+              <div>
+                <p className="text-sm font-medium">
+                  Last paid {lastPaidLabel}
+                </p>
+                <p className="text-xs text-muted-foreground">We’ll email receipts after processing</p>
+              </div>
             </div>
-          </div>
         </div>
 
         <SmartLink href="/payments" className="inline-flex" intent="critical">

@@ -47,7 +47,7 @@ export async function submitCatchUpPayment(
   const outstanding = calculateOutstanding(balance.charges)
   if (amount > outstanding) {
     throw new Error(
-      `Catch-up amount exceeds outstanding balance of ${formatCurrency(outstanding, balance.currency)}.`,
+      `Catch-up amount exceeds outstanding balance of ${formatCurrency(outstanding, { currency: balance.currency })}.`,
     )
   }
 

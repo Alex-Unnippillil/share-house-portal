@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
+import { resolveUserSettings } from "@/lib/user-settings"
 import { cn } from "@/lib/utils"
 import type {
   LedgerActorRole,
@@ -20,6 +21,7 @@ import type {
 
 interface RoommateLedgerProps {
   ledgers: RoommateLedger[]
+  locale?: string
 }
 
 type LedgerRow = RoommateLedger["entries"][number] & { balanceAfter: number }
@@ -37,10 +39,14 @@ const actorRoleLabels: Record<LedgerActorRole, string> = {
   property_manager: "Property manager",
 }
 
-export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
+export function RoommateLedger({ ledgers, locale }: RoommateLedgerProps) {
   if (ledgers.length === 0) {
     return null
   }
+
+  const userSettings = resolveUserSettings({ locale })
+  const formatCurrencyForUser = (amount: number, currency: string) =>
+    formatCurrency(amount, { currency, locale: userSettings.locale })
 
   const derivedLedgers = ledgers.map((ledger) => {
     let running = roundToCurrency(ledger.startingBalance)
@@ -124,10 +130,10 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                         Outstanding
                       </p>
                       <p className="text-sm font-semibold">
-                        {formatCurrency(currentOutstanding, ledger.currency)}
+                        {formatCurrencyForUser(currentOutstanding, ledger.currency)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Started at {formatCurrency(ledger.startingBalance, ledger.currency)}
+                        Started at {formatCurrencyForUser(ledger.startingBalance, ledger.currency)}
                       </p>
                     </div>
                   </div>
@@ -178,7 +184,7 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                               </div>
                               <div className="flex flex-col items-end gap-1 text-right">
                                 <span className={cn("font-semibold", amountClass)}>
-                                  {formatLedgerChange(entry.amount, ledger.currency)}
+                                  {formatLedgerChange(entry.amount, ledger.currency, userSettings.locale)}
                                 </span>
                                 <Badge
                                   variant={entryTypeMeta.badgeVariant}
@@ -189,7 +195,7 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                               </div>
                               <div className="text-right">
                                 <p className="font-semibold">
-                                  {formatCurrency(entry.balanceAfter, ledger.currency)}
+                                  {formatCurrencyForUser(entry.balanceAfter, ledger.currency)}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   Running balance
@@ -216,11 +222,11 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
   )
 }
 
-function formatLedgerChange(amount: number, currency: string): string {
+function formatLedgerChange(amount: number, currency: string, locale: string): string {
   if (amount === 0) {
-    return formatCurrency(0, currency)
+    return formatCurrency(0, { currency, locale })
   }
 
   const prefix = amount > 0 ? "+" : "-"
-  return `${prefix}${formatCurrency(Math.abs(amount), currency)}`
+  return `${prefix}${formatCurrency(Math.abs(amount), { currency, locale })}`
 }

@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+import { resolveUserSettings, type UserSettingsOverrides } from "@/lib/user-settings"
+
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -30,20 +32,40 @@ export async function fetcher<JSON = any>(
   return res.json()
 }
 
-export function formatDate(input: string | number | Date): string {
-  const date = new Date(input)
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  })
+export interface FormatDateOptions extends UserSettingsOverrides {
+  readonly formatOptions?: Intl.DateTimeFormatOptions
 }
 
-export const formatNumber = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(value)
+export function formatDate(input: string | number | Date, options?: FormatDateOptions): string {
+  const date = new Date(input)
+  const { locale } = resolveUserSettings({ locale: options?.locale })
+  const formatOptions =
+    options?.formatOptions ?? ({ month: "long", day: "numeric", year: "numeric" } as const)
+
+  return new Intl.DateTimeFormat(locale, formatOptions).format(date)
+}
+
+export interface FormatNumberOptions extends UserSettingsOverrides {
+  readonly style?: Intl.NumberFormatOptions["style"]
+  readonly formatOptions?: Intl.NumberFormatOptions
+}
+
+export const formatNumber = (value: number, options?: FormatNumberOptions) => {
+  const { locale, currency } = resolveUserSettings({
+    locale: options?.locale,
+    currency: options?.currency,
+  })
+
+  const baseOptions: Intl.NumberFormatOptions = options?.formatOptions
+    ? { ...options.formatOptions }
+    : { style: options?.style ?? "currency" }
+
+  if (baseOptions.style === "currency" && !baseOptions.currency) {
+    baseOptions.currency = currency
+  }
+
+  return new Intl.NumberFormat(locale, baseOptions).format(value)
+}
 
 export const runAsyncFnWithoutBlocking = (
   fn: (...args: any) => Promise<any>

@@ -1,4 +1,7 @@
-import * as React from 'react';
+import * as React from "react"
+
+import { formatCurrency } from "@/lib/payments/currency"
+import { formatDate } from "@/lib/utils"
 
 export interface PaymentReceiptLineItem {
   description: string;
@@ -12,6 +15,7 @@ export interface PaymentReceiptEmailProps {
   paymentId: string;
   amountPaid: number;
   currency: string;
+  locale?: string;
   paymentDate: Date;
   items?: PaymentReceiptLineItem[];
   businessName?: string;
@@ -23,28 +27,10 @@ export interface PaymentReceiptEmailProps {
   discountAmount?: number;
 }
 
-const formatCurrency = (amount: number, currency: string) => {
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(amount);
-  } catch (error) {
-    const formattedAmount = amount.toFixed(2);
-    return `${formattedAmount} ${currency}`;
-  }
-};
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
-};
-
 const renderLineItems = (
   items: PaymentReceiptLineItem[] | undefined,
   currency: string,
+  locale?: string,
 ) => {
   if (!items?.length) return null;
 
@@ -66,14 +52,16 @@ const renderLineItems = (
               {item.quantity ?? '-'}
             </td>
             <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
-              {item.unitAmount != null ? formatCurrency(item.unitAmount, currency) : '—'}
+              {item.unitAmount != null
+                ? formatCurrency(item.unitAmount, { currency, locale })
+                : "—"}
             </td>
             <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>
               {item.totalAmount != null
-                ? formatCurrency(item.totalAmount, currency)
+                ? formatCurrency(item.totalAmount, { currency, locale })
                 : item.unitAmount != null && item.quantity != null
-                  ? formatCurrency(item.unitAmount * item.quantity, currency)
-                  : '—'}
+                  ? formatCurrency(item.unitAmount * item.quantity, { currency, locale })
+                  : "—"}
             </td>
           </tr>
         ))}
@@ -85,18 +73,18 @@ const renderLineItems = (
 const renderTotals = (
   props: Pick<
     PaymentReceiptEmailProps,
-    'subtotalAmount' | 'taxAmount' | 'discountAmount' | 'amountPaid' | 'currency'
-  >,
+    "subtotalAmount" | "taxAmount" | "discountAmount" | "amountPaid" | "currency"
+  > & { locale?: string },
 ) => {
-  const { subtotalAmount, taxAmount, discountAmount, amountPaid, currency } = props;
+  const { subtotalAmount, taxAmount, discountAmount, amountPaid, currency, locale } = props;
 
   const hasAdjustments =
     subtotalAmount != null || taxAmount != null || discountAmount != null;
 
   if (!hasAdjustments) {
     return (
-      <p style={{ textAlign: 'right', fontWeight: 600, marginTop: '16px' }}>
-        Total: {formatCurrency(amountPaid, currency)}
+      <p style={{ textAlign: "right", fontWeight: 600, marginTop: "16px" }}>
+        Total: {formatCurrency(amountPaid, { currency, locale })}
       </p>
     );
   }
@@ -108,31 +96,31 @@ const renderTotals = (
           {subtotalAmount != null && (
             <tr>
               <td style={{ padding: '4px 0', textAlign: 'right', color: '#475569' }}>Subtotal</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
-                {formatCurrency(subtotalAmount, currency)}
+              <td style={{ padding: "4px 0", textAlign: "right", fontWeight: 500 }}>
+                {formatCurrency(subtotalAmount, { currency, locale })}
               </td>
             </tr>
           )}
           {taxAmount != null && (
             <tr>
               <td style={{ padding: '4px 0', textAlign: 'right', color: '#475569' }}>Tax</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
-                {formatCurrency(taxAmount, currency)}
+              <td style={{ padding: "4px 0", textAlign: "right", fontWeight: 500 }}>
+                {formatCurrency(taxAmount, { currency, locale })}
               </td>
             </tr>
           )}
           {discountAmount != null && (
             <tr>
               <td style={{ padding: '4px 0', textAlign: 'right', color: '#475569' }}>Discount</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
-                -{formatCurrency(discountAmount, currency)}
+              <td style={{ padding: "4px 0", textAlign: "right", fontWeight: 500 }}>
+                -{formatCurrency(discountAmount, { currency, locale })}
               </td>
             </tr>
           )}
           <tr>
             <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 600 }}>Total Paid</td>
-            <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 600 }}>
-              {formatCurrency(amountPaid, currency)}
+            <td style={{ padding: "8px 0", textAlign: "right", fontWeight: 600 }}>
+              {formatCurrency(amountPaid, { currency, locale })}
             </td>
           </tr>
         </tbody>
@@ -146,9 +134,10 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
   paymentId,
   amountPaid,
   currency,
+  locale,
   paymentDate,
   items,
-  businessName = 'Roomsily',
+  businessName = "Roomsily",
   supportEmail,
   billingAddress,
   notes,
@@ -156,6 +145,8 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
   taxAmount,
   discountAmount,
 }) => {
+  const formatCurrencyForUser = (value: number) => formatCurrency(value, { currency, locale })
+
   return (
     <div
       style={{
@@ -210,7 +201,10 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
                 Paid On
               </p>
               <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
-                {formatDate(paymentDate)}
+                {formatDate(paymentDate, {
+                  locale,
+                  formatOptions: { dateStyle: 'medium', timeStyle: 'short' },
+                })}
               </p>
             </div>
             <div>
@@ -218,12 +212,12 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
                 Amount Paid
               </p>
               <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
-                {formatCurrency(amountPaid, currency)}
+                {formatCurrencyForUser(amountPaid)}
               </p>
             </div>
           </div>
 
-          {renderLineItems(items, currency)}
+          {renderLineItems(items, currency, locale)}
 
           {renderTotals({
             subtotalAmount,
@@ -231,6 +225,7 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
             discountAmount,
             amountPaid,
             currency,
+            locale,
           })}
 
           {billingAddress && (

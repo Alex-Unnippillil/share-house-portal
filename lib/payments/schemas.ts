@@ -59,7 +59,7 @@ export const createCatchUpFormSchema = (balances: CatchUpBalance[]) =>
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["amount"],
-          message: `Amount exceeds outstanding balance of ${formatCurrency(outstanding, balance.currency)}`,
+          message: `Amount exceeds outstanding balance of ${formatCurrency(outstanding, { currency: balance.currency })}`,
         })
       }
     })
