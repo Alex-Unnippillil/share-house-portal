@@ -1,3 +1,6 @@
+import ModerationControls from "@/components/messaging/moderation-controls"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { Paperclip } from "lucide-react"
@@ -592,6 +596,7 @@ export default function MessagingPage() {
           </Card>
         </div>
       </div>
+      <ModerationControls />
     </div>
   )
 }
