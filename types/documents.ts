@@ -143,6 +143,21 @@ export interface DocumentUploadRequest {
   expires_at?: string;
 }
 
+export type DocumentFilterField =
+  | 'status'
+  | 'type'
+  | 'tenant_id'
+  | 'unit_id'
+  | 'created_at';
+
+export type DocumentFilterOperator = 'eq' | 'in' | 'gte' | 'lte';
+
+export interface DocumentFilterCondition {
+  field: DocumentFilterField;
+  operator: DocumentFilterOperator;
+  value: string | string[];
+}
+
 export interface DocumentListFilters {
   status?: DocumentStatus[];
   type?: DocumentType[];
@@ -150,6 +165,16 @@ export interface DocumentListFilters {
   unit_id?: string;
   date_from?: string;
   date_to?: string;
+  conditions?: DocumentFilterCondition[];
+}
+
+export interface DocumentSavedView {
+  id: string;
+  name: string;
+  user_id: string;
+  filters: DocumentListFilters;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface DocumentStats {
