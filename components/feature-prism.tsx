@@ -17,7 +17,14 @@ import {
 import * as THREE from "three"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CuboidIcon, Shield, Zap, Link, Cog, Database } from "lucide-react"
+import {
+  CalendarClock,
+  CreditCard,
+  Database,
+  FileSignature,
+  MessageSquare,
+  ShieldCheck,
+} from "lucide-react"
 
 // Add this after the imports
 class ErrorBoundary extends React.Component {
@@ -61,56 +68,58 @@ class ErrorBoundary extends React.Component {
 // Define our features
 const features = [
   {
-    name: "Traceability",
-    icon: CuboidIcon,
+    name: "Stripe autopay lanes",
+    icon: CreditCard,
     description:
-      "End-to-end visibility of products throughout the supply chain, ensuring authenticity and origin verification.",
-    color: "#3b82f6",
+      "Split rent across roommates, run autopay, and reconcile every receipt with Stripe Billing + Supabase.",
+    color: "#635bff",
     icon3D: "Cube",
-    pulseOffset: 0, // Offset for pulsing effect
+    pulseOffset: 0,
   },
   {
-    name: "Security",
-    icon: Shield,
-    description:
-      "Immutable and encrypted data storage protecting sensitive information across the entire logistics network.",
-    color: "#10b981",
-    icon3D: "Shield",
-    pulseOffset: 1, // Offset for pulsing effect
-  },
-  {
-    name: "Efficiency",
-    icon: Zap,
-    description:
-      "Streamlined processes and reduced costs through optimized routing and real-time inventory management.",
-    color: "#f59e0b",
-    icon3D: "Lightning",
-    pulseOffset: 2, // Offset for pulsing effect
-  },
-  {
-    name: "Integration",
-    icon: Link,
-    description:
-      "Seamless connection with existing systems including ERP, WMS, and other supply chain management tools.",
-    color: "#8b5cf6",
-    icon3D: "Chain",
-    pulseOffset: 3, // Offset for pulsing effect
-  },
-  {
-    name: "Automation",
-    icon: Cog,
-    description: "AI-driven decision making and operations that reduce human error and increase operational speed.",
-    color: "#ec4899",
-    icon3D: "Gear",
-    pulseOffset: 5, // Offset for pulsing effect (Fibonacci)
-  },
-  {
-    name: "Data",
+    name: "Supabase roommate graph",
     icon: Database,
-    description: "Comprehensive analytics and insights derived from blockchain-secured supply chain data.",
-    color: "#06b6d4",
+    description:
+      "Centralize unit rosters, balances, and activity feeds in Supabase with realtime updates for every roommate.",
+    color: "#3ecf8e",
     icon3D: "Database",
-    pulseOffset: 8, // Offset for pulsing effect (Fibonacci)
+    pulseOffset: 1,
+  },
+  {
+    name: "Cal.com amenity grid",
+    icon: CalendarClock,
+    description:
+      "Reserve kitchens, TVs, and parking with conflict-aware scheduling that syncs instantly to the household calendar.",
+    color: "#0ea5e9",
+    icon3D: "Gear",
+    pulseOffset: 2,
+  },
+  {
+    name: "Documenso eSign vault",
+    icon: FileSignature,
+    description:
+      "Issue leases, renewals, and addenda through Documenso while keeping every signed version auditable.",
+    color: "#f97316",
+    icon3D: "Shield",
+    pulseOffset: 3,
+  },
+  {
+    name: "Roommate message loop",
+    icon: MessageSquare,
+    description:
+      "Broadcast announcements, polls, and maintenance updates with Supabase realtime channels.",
+    color: "#22d3ee",
+    icon3D: "Lightning",
+    pulseOffset: 5,
+  },
+  {
+    name: "Visitor & compliance guardrails",
+    icon: ShieldCheck,
+    description:
+      "Track overnight guests, deliveries, and access logs with policy checks before notifying every roommate.",
+    color: "#10b981",
+    icon3D: "Chain",
+    pulseOffset: 8,
   },
 ]
 
@@ -1296,9 +1305,9 @@ export default function FeaturePrism() {
         {/* Instructions overlay */}
         <div className="absolute inset-x-4 bottom-4 rounded-md bg-black/70 p-3 text-center text-white">
           <p className="text-sm md:text-base">
-            Click on any hexagon to learn more about each feature.
+            Tap a panel to explore how Roomsily orchestrates rent, bookings, docs, and messaging for shared homes.
             <br className="hidden md:block" />
-            Click and drag to rotate and create cosmic trails.
+            Drag to orbit the network and watch the household pathways ignite.
           </p>
         </div>
       </div>
