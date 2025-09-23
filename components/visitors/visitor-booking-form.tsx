@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
-const visitorBookingSchema = z.object({
+export const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
   guestEmail: z.string().email("Please enter a valid email address"),
   guestPhone: z.string().optional(),

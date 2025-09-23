@@ -23,7 +23,7 @@ import {
 // --- Zod Schema for Client-Side Validation ---
 // This schema validates the data *after* the user has made selections
 // and we've constructed the initial Date objects.
-const clientScheduleSchema = z.object({
+export const clientScheduleSchema = z.object({
     startDateTime: z.date({
         // Error if we somehow fail to create a valid Date object
         invalid_type_error: "Invalid date or time selected.",
