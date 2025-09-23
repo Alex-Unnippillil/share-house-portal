@@ -1,7 +1,5 @@
 import dynamic from "next/dynamic"
 import Image from "next/image"
-import Link from "next/link"
-
 import SmartLink from "@/components/navigation/SmartLink"
 
 import { redirect } from "next/navigation"
@@ -230,24 +228,26 @@ export default async function IndexPage() {
                 </p>
               </div>
               <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
-                <Link
+                <SmartLink
                   href={siteConfig.links.login}
                   className={cn(
                     buttonVariants({ size: "lg" }),
                     "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                   )}
+                  intent="critical"
                 >
                   <span>Sign in</span>
-                </Link>
-                <Link
+                </SmartLink>
+                <SmartLink
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
                   )}
+                  intent="critical"
                 >
                   <span>Create your household</span>
-                </Link>
+                </SmartLink>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 {heroHighlights.map((item) => (
@@ -348,9 +348,13 @@ export default async function IndexPage() {
                 <CardDescription>{feature.description}</CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">
-                <Link href={feature.href} className="text-sm font-medium text-primary hover:underline">
+                <SmartLink
+                  href={feature.href}
+                  className="text-sm font-medium text-primary hover:underline"
+                  intent="navigation"
+                >
                   <span>{feature.ctaLabel}</span>
-                </Link>
+                </SmartLink>
               </CardContent>
             </Card>
           ))}
@@ -420,21 +424,26 @@ export default async function IndexPage() {
                 </li>
               </ul>
               <div className="flex flex-wrap gap-3 pt-2">
-                <Link
+                <SmartLink
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
                     "border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
                   )}
+                  intent="navigation"
                 >
                   <span>Book a walkthrough</span>
-                </Link>
-                <Link
+                </SmartLink>
+                <SmartLink
                   href={siteConfig.links.signup}
-                  className={cn(buttonVariants({ size: "sm" }), "bg-primary text-primary-foreground hover:bg-primary/90")}
+                  className={cn(
+                    buttonVariants({ size: "sm" }),
+                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                  )}
+                  intent="critical"
                 >
                   <span>Start onboarding</span>
-                </Link>
+                </SmartLink>
               </div>
             </div>
             <div className="relative h-[320px] w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-xl shadow-primary/20 md:h-[420px]">

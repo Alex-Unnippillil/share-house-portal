@@ -12,6 +12,7 @@ import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { CookieButton } from "@/components/cookie-button"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
+import RouteChangeMonitor from "@/components/navigation/RouteChangeMonitor"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
@@ -124,12 +125,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
             fontSans.variable
           )}
         >
-<ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
+            <RouteChangeMonitor />
              <div className="relative flex min-h-screen flex-col">
               {/* <SiteHeader /> */}
               <div className="flex-1">
