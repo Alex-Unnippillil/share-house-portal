@@ -1,8 +1,15 @@
 import { NextRequest } from "next/server"
+
+import { authenticatePaymentRequest } from "@/lib/payments/permissions"
 import { getStripe, getAppBaseUrl } from "@/lib/stripe"
 
 export async function POST(req: NextRequest) {
   try {
+    const authResult = await authenticatePaymentRequest()
+    if (!authResult.success) {
+      return authResult.response
+    }
+
     const stripe = getStripe()
     const { customerId } = await req.json()
     if (!customerId || typeof customerId !== "string") {

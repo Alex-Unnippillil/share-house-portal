@@ -1,10 +1,23 @@
 import { NextRequest } from "next/server"
+
+import { authenticatePaymentRequest } from "@/lib/payments/permissions"
 import { getStripe, getAppBaseUrl } from "@/lib/stripe"
 
 export async function POST(req: NextRequest) {
   try {
+    const authResult = await authenticatePaymentRequest()
+    if (!authResult.success) {
+      return authResult.response
+    }
+
     const stripe = getStripe()
-    const { priceId, quantity = 1, mode = "payment", metadata } = await req.json()
+    const body = await req.json()
+    const {
+      priceId,
+      quantity = 1,
+      mode = "payment",
+      metadata,
+    } = body ?? {}
 
     if (!priceId || typeof priceId !== "string") {
       return Response.json({ error: "priceId is required" }, { status: 400 })

@@ -1,4 +1,5 @@
 import { PaymentReceiptEmail } from '@/components/emails/payment-receipt';
+import { authenticatePaymentRequest } from '@/lib/payments/permissions';
 import { Resend } from 'resend';
 import { z } from 'zod';
 
@@ -28,6 +29,11 @@ const paymentReceiptSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authResult = await authenticatePaymentRequest()
+  if (!authResult.success) {
+    return authResult.response
+  }
+
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
     return Response.json(
