@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "db:push": "supabase db push",
+    "db:bootstrap": "node scripts/bootstrap-supabase.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
