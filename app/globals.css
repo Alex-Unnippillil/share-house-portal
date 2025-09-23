@@ -55,6 +55,64 @@ body {}
     --input: 217 33% 17%;
     --ring: 210 40% 98%;
   }
+
+  @media (prefers-contrast: more) {
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222 47% 5%;
+      --primary: 221 83% 53%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 210 40% 92%;
+      --secondary-foreground: 222 47% 8%;
+      --muted-foreground: 222 43% 18%;
+      --accent: 210 40% 92%;
+      --accent-foreground: 222 47% 8%;
+      --border: 222 47% 35%;
+      --ring: 221 83% 53%;
+    }
+
+    .dark {
+      --background: 222 47% 3%;
+      --foreground: 210 40% 98%;
+      --primary: 210 40% 96%;
+      --primary-foreground: 222 47% 5%;
+      --secondary: 217 33% 24%;
+      --secondary-foreground: 210 40% 98%;
+      --muted-foreground: 210 25% 78%;
+      --accent: 217 33% 24%;
+      --accent-foreground: 210 40% 98%;
+      --border: 210 40% 82%;
+      --ring: 210 40% 96%;
+    }
+  }
+
+  @media (prefers-contrast: less) {
+    :root {
+      --foreground: 222 20% 25%;
+      --primary: 215 25% 45%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 210 32% 96%;
+      --secondary-foreground: 222 20% 30%;
+      --muted-foreground: 215 15% 50%;
+      --accent: 210 32% 96%;
+      --accent-foreground: 222 20% 30%;
+      --border: 214 24% 88%;
+      --ring: 215 25% 45%;
+    }
+
+    .dark {
+      --foreground: 210 25% 92%;
+      --primary: 210 25% 88%;
+      --primary-foreground: 222 33% 12%;
+      --secondary: 217 20% 22%;
+      --secondary-foreground: 210 25% 92%;
+      --muted-foreground: 210 15% 70%;
+      --accent: 217 20% 22%;
+      --accent-foreground: 210 25% 92%;
+      --border: 217 20% 22%;
+      --ring: 210 25% 88%;
+    }
+  }
 }
 
 @layer base {
