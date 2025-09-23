@@ -4,6 +4,12 @@ import * as React from "react"
 import NextLink from "next/link"
 import { useRouter } from "next/navigation"
 
+import {
+  logNavigationPrefetchComplete,
+  logNavigationPrefetchStart,
+  type NavigationPrefetchTrigger,
+} from "@/lib/analytics"
+
 export type SmartLinkIntent = "standard" | "critical" | "passive" | "navigation"
 
 export interface SmartLinkProps
@@ -20,17 +26,35 @@ export interface SmartLinkProps
    * Custom root margin applied to the IntersectionObserver used for viewport based prefetching.
    */
   viewportMargin?: string
+  /**
+   * Fine tune the IntersectionObserver threshold used for viewport based prefetching.
+   */
+  viewportThreshold?: number | number[]
+  /**
+   * Opt-in flag to enable viewport driven prefetching even for hover-focused intents.
+   */
+  prefetchOnViewport?: boolean
 }
 
 type PrefetchHint = "never" | "hover" | "viewport" | "immediate"
 
 type AnchorRef = HTMLAnchorElement | null
 
+const createPrefetchRequestId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+
+  return `prefetch-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
   (props, forwardedRef) => {
     const {
       intent = "standard",
       viewportMargin = "200px",
+      viewportThreshold,
+      prefetchOnViewport = false,
       prefetch: prefetchProp,
       onPointerEnter,
       onFocus,
@@ -62,9 +86,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       return false
     }, [href])
 
-    const [isVisible, setIsVisible] = React.useState(false)
     const hasPrefetchedRef = React.useRef(false)
-
     const prefetchHint = React.useMemo<PrefetchHint>(() => {
       if (!isInternalHref) {
         return "never"
@@ -101,8 +123,97 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       return undefined
     }, [href, isInternalHref])
 
+    const computedPrefetchProp = React.useMemo(() => {
+      if (typeof prefetchProp === "boolean") {
+        return prefetchProp
+      }
+
+      return false
+    }, [prefetchProp])
+
+    const allowManualPrefetch = computedPrefetchProp === false
+
+    const triggerPrefetch = React.useCallback(
+      (trigger: NavigationPrefetchTrigger) => {
+        if (!allowManualPrefetch) {
+          return
+        }
+
+        if (hasPrefetchedRef.current) {
+          return
+        }
+
+        if (!prefetchHref) {
+          return
+        }
+
+        hasPrefetchedRef.current = true
+
+        const requestId = createPrefetchRequestId()
+        const startedAt = Date.now()
+
+        logNavigationPrefetchStart({
+          id: requestId,
+          href: prefetchHref,
+          trigger,
+          startedAt,
+        })
+
+        const finalize = (status: "success" | "error", error?: unknown) => {
+          const finishedAt = Date.now()
+
+          logNavigationPrefetchComplete({
+            id: requestId,
+            href: prefetchHref,
+            trigger,
+            startedAt,
+            finishedAt,
+            status,
+            errorMessage:
+              status === "error"
+                ? error instanceof Error
+                  ? error.message
+                  : String(error)
+                : undefined,
+          })
+        }
+
+        try {
+          const result = router.prefetch(prefetchHref)
+          Promise.resolve(result)
+            .then(() => {
+              finalize("success")
+            })
+            .catch((error) => {
+              finalize("error", error)
+            })
+        } catch (error) {
+          finalize("error", error)
+        }
+      },
+      [allowManualPrefetch, prefetchHref, router]
+    )
+
     React.useEffect(() => {
-      if (prefetchHint !== "viewport") {
+      if (prefetchHint === "immediate") {
+        triggerPrefetch("immediate")
+      }
+    }, [prefetchHint, triggerPrefetch])
+
+    const enableViewportPrefetch = React.useMemo(() => {
+      if (!allowManualPrefetch) {
+        return false
+      }
+
+      if (prefetchHint === "never") {
+        return false
+      }
+
+      return prefetchHint === "viewport" || prefetchOnViewport
+    }, [allowManualPrefetch, prefetchHint, prefetchOnViewport])
+
+    React.useEffect(() => {
+      if (!enableViewportPrefetch) {
         return
       }
 
@@ -115,11 +226,14 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
         (entries) => {
           const entry = entries[0]
           if (entry?.isIntersecting) {
-            setIsVisible(true)
+            triggerPrefetch("viewport")
             observer.disconnect()
           }
         },
-        { rootMargin: viewportMargin }
+        {
+          rootMargin: viewportMargin,
+          threshold: viewportThreshold,
+        }
       )
 
       observer.observe(node)
@@ -127,32 +241,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       return () => {
         observer.disconnect()
       }
-    }, [prefetchHint, viewportMargin])
-
-    const triggerPrefetch = React.useCallback(() => {
-      if (hasPrefetchedRef.current) {
-        return
-      }
-
-      if (!prefetchHref) {
-        return
-      }
-
-      router.prefetch(prefetchHref)
-      hasPrefetchedRef.current = true
-    }, [prefetchHref, router])
-
-    React.useEffect(() => {
-      if (prefetchHint === "immediate") {
-        triggerPrefetch()
-      }
-    }, [prefetchHint, triggerPrefetch])
-
-    React.useEffect(() => {
-      if (prefetchHint === "viewport" && isVisible && prefetchHref) {
-        hasPrefetchedRef.current = true
-      }
-    }, [isVisible, prefetchHint, prefetchHref])
+    }, [enableViewportPrefetch, triggerPrefetch, viewportMargin, viewportThreshold])
 
     const handlePointerEnter = React.useCallback(
       (event: React.PointerEvent<HTMLAnchorElement>) => {
@@ -165,7 +254,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
           return
         }
 
-        triggerPrefetch()
+        triggerPrefetch("hover")
       },
       [onPointerEnter, prefetchHint, triggerPrefetch]
     )
@@ -181,33 +270,16 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
           return
         }
 
-        triggerPrefetch()
+        triggerPrefetch("focus")
       },
       [onFocus, prefetchHint, triggerPrefetch]
     )
-
-    const shouldPrefetch = React.useMemo(() => {
-      if (!isInternalHref) {
-        return false
-      }
-
-      switch (prefetchHint) {
-        case "immediate":
-          return true
-        case "viewport":
-          return isVisible
-        case "hover":
-        case "never":
-        default:
-          return false
-      }
-    }, [isInternalHref, isVisible, prefetchHint])
 
     return (
       <NextLink
         ref={combinedRef}
         href={href}
-        prefetch={shouldPrefetch}
+        prefetch={computedPrefetchProp}
         onPointerEnter={handlePointerEnter}
         onFocus={handleFocus}
         {...rest}
