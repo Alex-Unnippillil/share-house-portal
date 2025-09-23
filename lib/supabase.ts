@@ -17,6 +17,18 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
 export type Database = {
   public: {
     Tables: {
+      amenity_bookings: SupabaseTable<{
+        id: string
+        amenity_id: string
+        household_id: string | null
+        created_by: string
+        status: 'pending' | 'confirmed' | 'cancelled'
+        start_time: string
+        end_time: string
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
@@ -118,7 +130,9 @@ export type Database = {
         description: string | null
         receipt_url: string | null
         metadata: Json | null
+        payer_name: string | null
         tenant_id: string | null
+        unit: string | null
         unit_id: string | null
         processed_at: string | null
         billing_period_start: string | null
@@ -247,6 +261,16 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      check_amenity_conflicts: {
+        Args: {
+          p_amenity_id: string
+          p_start_time: string
+          p_end_time: string
+          p_household_id?: string | null
+          p_booking_id?: string | null
+        }
+        Returns: Json
+      }
       get_unread_notification_count: {
         Args: { user_uuid?: string | null }
         Returns: number

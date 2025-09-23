@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import Image from "next/image"
-import Link from "next/link"
+import SmartLink from "@/components/navigation/SmartLink"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -32,7 +32,7 @@ export default function OnboardingPage() {
         />
       </div>
       <div className="container relative mx-auto grid h-[640px] grid-cols-1 flex-col items-center justify-center md:grid-cols-2 lg:max-w-none lg:px-0">
-        <Link
+        <SmartLink
           href="/auth"
           className={cn(
             buttonVariants({ variant: "ghost" }),
@@ -40,7 +40,7 @@ export default function OnboardingPage() {
           )}
         >
           Login
-        </Link>
+        </SmartLink>
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
           <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
           <Image
@@ -70,8 +70,8 @@ export default function OnboardingPage() {
           <div className="relative z-20 mt-auto">
             <blockquote className="space-y-2">
               <p className="text-lg">
-                &ldquo;In 6 months, Onyx has increased our conversions and NPS by 68% and
-                58% respectively.&rdquo;
+                &ldquo;In 6 months, Roomsily has increased our conversions and NPS by 68%
+                and 58% respectively.&rdquo;
               </p>
               <footer className="text-sm">Sofia Davis</footer>
             </blockquote>
@@ -90,19 +90,19 @@ export default function OnboardingPage() {
             <AuthFormLegacy />
             <p className="px-8 text-center text-sm text-muted-foreground">
               By clicking continue, you agree to our{" "}
-              <Link
+              <SmartLink
                 href="#"
                 className="underline underline-offset-4 hover:text-primary"
               >
                 Terms of Service
-              </Link>{" "}
+              </SmartLink>{" "}
               and{" "}
-              <Link
+              <SmartLink
                 href="#"
                 className="underline underline-offset-4 hover:text-primary"
               >
                 Privacy Policy
-              </Link>
+              </SmartLink>
               .
             </p>
           </div>

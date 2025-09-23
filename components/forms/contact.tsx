@@ -103,7 +103,7 @@ const router = useRouter();
                                                         <FormItem>
                                                                 <FormLabel>Email</FormLabel>
                                                                 <FormControl>
-                                                                        <Input placeholder="onyx@example.com" {...field} disabled={isLoading}/>
+                                                                        <Input placeholder="roomsily@example.com" {...field} disabled={isLoading}/>
                                                                 </FormControl>
 
                                                                 <FormMessage />

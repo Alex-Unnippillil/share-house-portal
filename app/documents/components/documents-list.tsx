@@ -23,9 +23,11 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     const fetchDocuments = async () => {
       try {
         setLoading(true);
+        setError(null);
         const result = await getDocumentsAction(filter);
         if (result.success && result.data) {
           setDocuments(result.data);
+          setError(null);
         } else {
           setError(result.error || 'Failed to fetch documents');
         }

@@ -1,18 +1,12 @@
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { Separator } from "@/components/ui/separator"
-import { createClient } from "@/utils/supa-server-actions"
 
 import AccountForm from "./supa-account-form"
+import { loadAccountPageData } from "./loaders"
 
 export default async function SettingsAccountPage() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { user, profile } = await loadAccountPageData()
 
   if (!user) {
     redirect("/auth")
@@ -28,7 +22,7 @@ export default async function SettingsAccountPage() {
           </p>
         </div>
         <Separator />
-        <AccountForm user={user} />
+        <AccountForm profile={profile} user={user} />
       </div>
     </div>
   )
