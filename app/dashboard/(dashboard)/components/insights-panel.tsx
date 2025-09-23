@@ -12,12 +12,19 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 function LoadingState({ label }: { label: string }) {
   return (
-    <div className="flex h-56 items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/30 text-sm text-muted-foreground">
-      {label}
+    <div
+      className="space-y-3 rounded-lg border border-dashed border-border/60 bg-muted/20 p-4"
+      role="status"
+      aria-live="polite"
+    >
+      <Skeleton className="h-4 w-1/3" />
+      <Skeleton className="h-32 w-full rounded-lg" />
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   )
 }

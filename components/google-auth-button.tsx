@@ -49,7 +49,14 @@ export default function AuthButton() {
   };
 
   if (loading) {
-    return <button className="animate-pulse rounded bg-gray-200 px-4 py-2 text-gray-600" disabled>Loading...</button>;
+    return (
+      <button
+        className="animate-[pulse_0.35s_ease-in-out_infinite] rounded bg-gray-200 px-4 py-2 text-gray-600"
+        disabled
+      >
+        Loading...
+      </button>
+    );
   }
 
   return user ? (
