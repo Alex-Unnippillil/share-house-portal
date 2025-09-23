@@ -1,13 +1,38 @@
 import React from "react"
 
 import { Button } from "@/components/ui/button"
-import { TrashIcon } from "@radix-ui/react-icons"
+import { EmptyState } from "@/components/empty-states/EmptyState"
+import {
+        MEMBERS_EMPTY_STATE_ROUTE,
+        MEMBERS_EMPTY_STATE_SAMPLES,
+} from "@/components/empty-states/presets"
 import { cn } from "@/lib/utils"
+import { TrashIcon } from "@radix-ui/react-icons"
+import { Users } from "lucide-react"
 
 import { DashboardMember } from "../data"
 import EditMember from "./edit/EditMember"
 
 export default function ListOfMembers({ members }: { members: DashboardMember[] }) {
+        if (members.length === 0) {
+                return (
+                        <div className="px-5 pb-8">
+                                <EmptyState
+                                        surface="dashboard:members"
+                                        className="w-full"
+                                        title="Invite your first household member"
+                                        description="Track roles, onboarding progress, and payment permissions by adding roommates and managers."
+                                        illustration={<Users className="size-12 text-muted-foreground" />}
+                                        sampleItems={MEMBERS_EMPTY_STATE_SAMPLES}
+                                        primaryAction={{
+                                                href: MEMBERS_EMPTY_STATE_ROUTE,
+                                                label: "Create",
+                                        }}
+                                />
+                        </div>
+                )
+        }
+
         return (
                 <div className="mx-2 rounded-sm bg-white dark:bg-inherit">
                         {members.map((member, index) => {

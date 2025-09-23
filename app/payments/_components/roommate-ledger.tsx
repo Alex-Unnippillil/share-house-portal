@@ -2,6 +2,11 @@ import { Fragment } from "react"
 import { format, parseISO } from "date-fns"
 
 import { Badge, type BadgeProps } from "@/components/ui/badge"
+import { EmptyState } from "@/components/empty-states/EmptyState"
+import {
+  ROOMMATE_LEDGER_EMPTY_STATE_ROUTE,
+  ROOMMATE_LEDGER_EMPTY_STATE_SAMPLES,
+} from "@/components/empty-states/presets"
 import {
   Card,
   CardContent,
@@ -17,6 +22,7 @@ import type {
   LedgerEntryType,
   RoommateLedger,
 } from "@/types/payments"
+import { PiggyBank } from "lucide-react"
 
 interface RoommateLedgerProps {
   ledgers: RoommateLedger[]
@@ -39,7 +45,20 @@ const actorRoleLabels: Record<LedgerActorRole, string> = {
 
 export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
   if (ledgers.length === 0) {
-    return null
+    return (
+      <EmptyState
+        surface="payments:roommate-ledger"
+        className="w-full"
+        title="Start tracking roommate balances"
+        description="Log contributions and adjustments so every roommate sees the same running total."
+        illustration={<PiggyBank className="size-12 text-muted-foreground" />}
+        sampleItems={ROOMMATE_LEDGER_EMPTY_STATE_SAMPLES}
+        primaryAction={{
+          href: ROOMMATE_LEDGER_EMPTY_STATE_ROUTE,
+          label: "Create",
+        }}
+      />
+    )
   }
 
   const derivedLedgers = ledgers.map((ledger) => {
