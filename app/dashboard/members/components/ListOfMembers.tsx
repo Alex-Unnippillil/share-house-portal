@@ -1,22 +1,58 @@
-import React from "react"
+'use client'
+
+import React, { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { TrashIcon } from "@radix-ui/react-icons"
 import { cn } from "@/lib/utils"
+import { EditableTextCell } from "@/components/editable/editable-text-cell"
 
 import { DashboardMember } from "../data"
 import EditMember from "./edit/EditMember"
+import { updateMemberNameAction } from "../actions/update-member"
 
 export default function ListOfMembers({ members }: { members: DashboardMember[] }) {
+        const [rows, setRows] = useState(members)
+
+        useEffect(() => {
+                setRows(members)
+        }, [members])
+
+        const handleNameSave = (memberId: string) => async (value: string) => {
+                const result = await updateMemberNameAction({ memberId, name: value })
+
+                if (result.success && result.data) {
+                        setRows((previous) =>
+                                previous.map((member) =>
+                                        member.id === memberId
+                                                ? { ...member, name: result.data?.name ?? value }
+                                                : member
+                                )
+                        )
+                }
+
+                return result
+        }
+
         return (
                 <div className="mx-2 rounded-sm bg-white dark:bg-inherit">
-                        {members.map((member, index) => {
+                        {rows.map((member) => {
                                 return (
                                         <div
                                                 className="grid grid-cols-5 rounded-sm p-3 align-middle font-normal"
-                                                key={member.name + index}
+                                                key={member.id}
                                         >
-                                                <h1>{member.name}</h1>
+                                                <EditableTextCell
+                                                        id={`${member.id}-name`}
+                                                        label={`${member.name} name`}
+                                                        value={member.name}
+                                                        onSave={handleNameSave(member.id)}
+                                                        required
+                                                        maxLength={120}
+                                                        displayClassName="text-base font-medium"
+                                                        className="max-w-xs"
+                                                        editButtonLabel="Edit"
+                                                />
 
                                                 <div>
                                                         <span
