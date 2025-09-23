@@ -9,6 +9,7 @@ import {
   Wallet,
 } from "lucide-react"
 
+import { FeaturePrismLazy } from "@/components/feature-prism-lazy"
 import { readUserSession } from "@/utils/actions"
 import { siteConfig } from "@/config/site"
 import { Badge } from "@/components/ui/badge"
@@ -211,6 +212,21 @@ export default async function IndexPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-3xl space-y-4 text-center">
+            <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+              Explore the Roomsily feature prism
+            </h2>
+            <p className="text-muted-foreground">
+              Navigate our interactive 3D showcase to see how payments, bookings, messaging, and automations connect inside the
+              portal.
+            </p>
+          </div>
+          <FeaturePrismLazy className="mx-auto mt-12 max-w-6xl" />
         </div>
       </section>
 
