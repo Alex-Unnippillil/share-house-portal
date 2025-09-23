@@ -1,0 +1,13 @@
+# This file defines the default reviewers responsible for various parts of the codebase.
+# Keep the mapping in sync with the teams documented in SECURITY.md.
+
+*       @roomsily/engineering-leads
+
+# Next.js app surfaces and front-end experience
+app/    @roomsily/tenant-experience
+
+# Shared libraries used across the monorepo
+lib/    @roomsily/shared-libraries
+
+# Supabase database schema, migrations, and auth configuration
+supabase/ @roomsily/platform-infra
