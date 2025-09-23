@@ -1,4 +1,6 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import ReplyComposer from "@/components/messaging/reply-composer"
+import ThreadPresenceIndicator from "@/components/messaging/thread-presence-indicator"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -443,6 +445,7 @@ export default function MessagingPage() {
                 <span>{activeThread.participants} roommates involved</span>
                 <span>Updated {activeThread.updated}</span>
               </div>
+              <ThreadPresenceIndicator threadId="chore-rotation" className="pt-2" />
             </CardHeader>
             <CardContent className="space-y-8">
               {threadPosts.map((post, index) => (
@@ -562,6 +565,7 @@ export default function MessagingPage() {
                   {index < threadPosts.length - 1 ? <Separator /> : null}
                 </div>
               ))}
+              <ReplyComposer threadId="chore-rotation" />
             </CardContent>
           </Card>
 
