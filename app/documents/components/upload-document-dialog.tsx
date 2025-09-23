@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type ComponentProps, type ReactNode, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
@@ -27,8 +27,17 @@ import { uploadDocumentAction } from '../actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
-export function UploadDocumentDialog() {
+export interface UploadDocumentDialogProps {
+  triggerLabel?: string;
+  triggerIcon?: ReactNode | null;
+  triggerProps?: ComponentProps<typeof Button>;
+  onOpen?: () => void;
+}
+
+export function UploadDocumentDialog(props?: UploadDocumentDialogProps) {
+  const { triggerLabel = 'Upload Document', triggerIcon, triggerProps, onOpen } = props ?? {};
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,6 +57,25 @@ export function UploadDocumentDialog() {
   if (!permissions.canUploadDocuments) {
     return null;
   }
+
+  const resolvedIcon = useMemo(() => {
+    if (triggerIcon === null) {
+      return null;
+    }
+
+    if (triggerIcon !== undefined) {
+      return triggerIcon;
+    }
+
+    return <Upload className="size-4" />;
+  }, [triggerIcon]);
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value);
+    if (value) {
+      onOpen?.();
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -129,12 +157,21 @@ export function UploadDocumentDialog() {
     }
   };
 
+  const { className, ...buttonProps } = triggerProps ?? {};
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>
-          <Upload className="mr-2 size-4" />
-          Upload Document
+        <Button
+          {...buttonProps}
+          className={cn('gap-2', className)}
+        >
+          {resolvedIcon ? (
+            <span className="inline-flex size-4 items-center justify-center">
+              {resolvedIcon}
+            </span>
+          ) : null}
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
