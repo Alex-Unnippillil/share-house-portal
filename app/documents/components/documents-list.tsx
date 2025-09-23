@@ -4,11 +4,33 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FavoriteToggle } from '@/components/navigation/FavoriteToggle';
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
+
+const documentTypeLabels: Record<string, string> = {
+  lease: 'Lease',
+  addendum: 'Addendum',
+  insurance: 'Insurance',
+  maintenance: 'Maintenance',
+  other: 'Document',
+};
+
+const documentStatusLabels: Record<string, string> = {
+  draft: 'Draft',
+  pending_signature: 'Pending Signature',
+  signed: 'Signed',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
+};
+
+const documentStateLabels: Record<string, string> = {
+  draft: 'Draft',
+  published: 'Published',
+};
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -51,33 +73,24 @@ export function DocumentsList({ filter }: DocumentsListProps) {
       cancelled: 'secondary',
     } as const;
 
-    const labels = {
-      draft: 'Draft',
-      pending_signature: 'Pending Signature',
-      signed: 'Signed',
-      expired: 'Expired',
-      cancelled: 'Cancelled',
-    };
+    const label = documentStatusLabels[status] ?? status;
 
     return (
       <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-        {labels[status as keyof typeof labels] || status}
+        {label}
       </Badge>
     );
   };
 
   const getStateBadge = (state: string) => {
-    const labels = {
-      draft: 'Draft',
-      published: 'Published',
-    } as const;
+    const label = documentStateLabels[state] ?? state;
 
     return (
       <Badge
         variant={state === 'published' ? 'default' : 'secondary'}
         className="uppercase"
       >
-        {labels[state as keyof typeof labels] || state}
+        {label}
       </Badge>
     );
   };
@@ -172,8 +185,23 @@ export function DocumentsList({ filter }: DocumentsListProps) {
 
   return (
     <div className="space-y-4">
-      {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
+      {documents.map((doc) => {
+        const typeLabel = documentTypeLabels[doc.document_type] ?? 'Document';
+        const statusLabel = documentStatusLabels[doc.status] ?? doc.status;
+        const signedSummary =
+          doc.signatures && doc.signatures.length > 0
+            ? `${doc.signatures.filter(s => s.status === 'signed').length}/${doc.signatures.length} signed`
+            : undefined;
+        const tenantSummary = doc.lease?.tenant_ids?.length
+          ? `${doc.lease.tenant_ids.length} tenants`
+          : undefined;
+        const favoriteDescription =
+          [signedSummary, tenantSummary].filter(Boolean).join(' • ') || statusLabel;
+        const favoriteSubtitle =
+          doc.description || `${typeLabel} • ${statusLabel}`;
+
+        return (
+          <Card key={doc.id} className="transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-3">
@@ -215,6 +243,18 @@ export function DocumentsList({ filter }: DocumentsListProps) {
               <div className="flex items-center space-x-2">
                 {getStateBadge(doc.state)}
                 {getStatusBadge(doc.status)}
+                <FavoriteToggle
+                  entityType="document"
+                  entityId={doc.id}
+                  metadata={{
+                    title: doc.title,
+                    subtitle: favoriteSubtitle,
+                    description: favoriteDescription,
+                    href: '/documents',
+                    badge: typeLabel,
+                  }}
+                  label={`Toggle favorite for ${doc.title}`}
+                />
                 <DocumentActions document={doc} />
               </div>
             </div>
@@ -277,8 +317,9 @@ export function DocumentsList({ filter }: DocumentsListProps) {
               </div>
             </CardContent>
           )}
-        </Card>
-      ))}
+          </Card>
+        )
+      })}
     </div>
   );
 }

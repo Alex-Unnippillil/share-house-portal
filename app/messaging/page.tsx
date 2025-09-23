@@ -1,4 +1,10 @@
+"use client"
+
+import { useMemo } from "react"
+
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { FavoriteToggle } from "@/components/navigation/FavoriteToggle"
+import { useFavorites } from "@/components/navigation/FavoritesProvider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -303,6 +309,14 @@ const pollSnapshots: PollSnapshot[] = [
 ]
 
 export default function MessagingPage() {
+  const { favorites } = useFavorites()
+  const pinnedThreadIds = useMemo(() => {
+    const pinned = favorites
+      .filter((favorite) => favorite.entityType === 'thread')
+      .map((favorite) => favorite.entityId)
+    return new Set(pinned)
+  }, [favorites])
+
   return (
     <div className="container max-w-6xl space-y-10 py-12">
       <header className="space-y-4">
@@ -345,51 +359,70 @@ export default function MessagingPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {threadList.map((thread) => (
-                <div
-                  key={thread.id}
-                  className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4 transition hover:border-primary/50 hover:bg-background"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary">{thread.category}</Badge>
-                        {thread.pinned ? (
-                          <Badge variant="outline" className="uppercase">
-                            Pinned
-                          </Badge>
-                        ) : null}
+              {threadList.map((thread) => {
+                const isPinned = pinnedThreadIds.has(thread.id)
+                const containerClasses = cn(
+                  "space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4 transition hover:border-primary/50 hover:bg-background",
+                  isPinned && "border-primary/70 bg-background shadow-sm",
+                )
+                const subtitle = `${thread.category} • ${thread.lastMessageAt}`
+
+                return (
+                  <div key={thread.id} className={containerClasses}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary">{thread.category}</Badge>
+                          {isPinned ? (
+                            <Badge variant="outline" className="uppercase">
+                              Pinned
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">{thread.title}</p>
+                        <p className="text-xs text-muted-foreground">{thread.summary}</p>
                       </div>
-                      <p className="text-sm font-semibold text-foreground">{thread.title}</p>
-                      <p className="text-xs text-muted-foreground">{thread.summary}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 text-xs">
-                      <span className="text-muted-foreground">{thread.lastMessageAt}</span>
-                      {thread.unreadCount > 0 ? (
-                        <span className="rounded-full bg-primary/10 px-2 py-1 font-medium text-primary">
-                          {thread.unreadCount} new
-                        </span>
-                      ) : null}
-                      <div className="flex gap-1">
-                        {thread.reactions.map((reaction) => (
-                          <span
-                            key={`${thread.id}-${reaction}`}
-                            className="inline-flex size-6 items-center justify-center rounded-full bg-background text-sm"
-                            aria-hidden
-                          >
-                            {reaction}
+                      <div className="flex flex-col items-end gap-2 text-xs">
+                        <FavoriteToggle
+                          entityType="thread"
+                          entityId={thread.id}
+                          metadata={{
+                            title: thread.title,
+                            subtitle,
+                            description: thread.summary,
+                            href: '/messaging',
+                            badge: thread.category,
+                          }}
+                          label={`Toggle favorite for ${thread.title}`}
+                          className="self-end text-muted-foreground"
+                        />
+                        <span className="text-muted-foreground">{thread.lastMessageAt}</span>
+                        {thread.unreadCount > 0 ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-1 font-medium text-primary">
+                            {thread.unreadCount} new
                           </span>
-                        ))}
+                        ) : null}
+                        <div className="flex gap-1">
+                          {thread.reactions.map((reaction) => (
+                            <span
+                              key={`${thread.id}-${reaction}`}
+                              className="inline-flex size-6 items-center justify-center rounded-full bg-background text-sm"
+                              aria-hidden
+                            >
+                              {reaction}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex flex-wrap gap-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span>{thread.participants} participants</span>
+                      <span>{thread.attachments} attachments</span>
+                      <span>{thread.activity}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    <span>{thread.participants} participants</span>
-                    <span>{thread.attachments} attachments</span>
-                    <span>{thread.activity}</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </CardContent>
           </Card>
 
