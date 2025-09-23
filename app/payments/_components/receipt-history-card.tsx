@@ -13,10 +13,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/payments/currency"
-import {
-  createPaymentHistoryCsv,
-  summarizeReceiptHistory,
-} from "@/lib/payments/receipts"
+import { formatReceiptPeriod, summarizeReceiptHistory } from "@/lib/payments/receipts"
 import type { PaymentReceiptHistoryEntry } from "@/types/payments"
 
 interface ReceiptHistoryCardProps {
@@ -30,28 +27,6 @@ const statusStyles: Record<
   paid: { label: "Paid", variant: "secondary" },
   processing: { label: "Processing", variant: "outline" },
   refunded: { label: "Refunded", variant: "destructive" },
-}
-
-function formatPeriod(
-  periodStart: string | undefined,
-  periodEnd: string | undefined,
-) {
-  if (!periodStart && !periodEnd) {
-    return "—"
-  }
-
-  if (periodStart && periodEnd) {
-    const start = format(parseISO(periodStart), "MMM d")
-    const end = format(parseISO(periodEnd), "MMM d, yyyy")
-    return `${start} – ${end}`
-  }
-
-  const singleDate = periodStart ?? periodEnd
-  return singleDate ? format(parseISO(singleDate), "MMM d, yyyy") : "—"
-}
-
-function encodeCsvForDownload(content: string) {
-  return `data:text/csv;charset=utf-8,${encodeURIComponent(content)}`
 }
 
 export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
@@ -70,8 +45,6 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
   }
 
   const summary = summarizeReceiptHistory(receipts)
-  const csvContent = createPaymentHistoryCsv(receipts)
-  const csvDownloadHref = encodeCsvForDownload(csvContent)
 
   const currentYear = new Date().getFullYear()
   const paidReceiptsThisYear = receipts.filter((receipt) => {
@@ -98,14 +71,6 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
             Download itemized receipts and export the full payment ledger for
             reimbursements, tax season, or dispute resolution.
           </CardDescription>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline" size="sm" className="gap-2">
-            <a href={csvDownloadHref} download="roomsily-payment-history.csv">
-              <Download className="size-4" aria-hidden="true" />
-              Export CSV
-            </a>
-          </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -177,7 +142,7 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                         </div>
                       </td>
                       <td className="p-4 text-sm text-muted-foreground">
-                        {formatPeriod(receipt.periodStart, receipt.periodEnd)}
+                        {formatReceiptPeriod(receipt.periodStart, receipt.periodEnd)}
                       </td>
                       <td className="p-4">
                         <ul className="space-y-1">

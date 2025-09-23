@@ -40,7 +40,7 @@ const documentSigningSchema = z.object({
   expires_in_days: z.number().min(1).max(365).optional(),
 });
 
-const documentListFiltersSchema = z.object({
+export const documentListFiltersSchema = z.object({
   status: z.array(z.enum(['draft', 'pending_signature', 'signed', 'expired', 'cancelled'])).optional(),
   type: z.array(z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other'])).optional(),
   tenant_id: z.string().uuid().optional(),
