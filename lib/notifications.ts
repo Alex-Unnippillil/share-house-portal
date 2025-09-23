@@ -1,7 +1,10 @@
 "use server"
 
-import { createSupbaseServerClient } from "@/utils/supaone"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
+
+import type { Database } from "@/lib/supabase"
+import { getSupabaseServiceRoleClient } from "@/lib/supabase-admin"
 
 export interface NotificationData {
   to: string | string[]
@@ -22,6 +25,7 @@ export interface InAppNotification {
 
 class NotificationService {
   private resend: Resend | null = null
+  private supabase: SupabaseClient<Database> | null = null
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY
@@ -30,7 +34,20 @@ class NotificationService {
     }
   }
 
-  async sendEmail(notification: NotificationData) {
+  private getSupabaseClient() {
+    if (!this.supabase) {
+      try {
+        this.supabase = getSupabaseServiceRoleClient()
+      } catch (error) {
+        console.error("Supabase service role client unavailable", error)
+        return null
+      }
+    }
+
+    return this.supabase
+  }
+
+  async sendEmail(notification: NotificationData, context?: { jobId?: string }) {
     if (!this.resend) {
       console.warn(
         "Resend API key not configured. Skipping email notification."
@@ -73,7 +90,7 @@ class NotificationService {
 
       // Store email notification in database for tracking
       if (notification.userId) {
-        await this.storeEmailNotification(notification)
+        await this.storeEmailNotification(notification, context)
       }
 
       return { success: true, data }
@@ -86,11 +103,17 @@ class NotificationService {
     }
   }
 
-  async sendInAppNotification(notification: InAppNotification) {
+  async sendInAppNotification(
+    notification: InAppNotification,
+    context?: { jobId?: string }
+  ) {
     try {
-      const supabase = await createSupbaseServerClient()
+      const supabase = this.getSupabaseClient()
+      if (!supabase) {
+        throw new Error("Supabase client is not configured")
+      }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("notifications")
         .insert({
           user_id: notification.userId,
@@ -98,7 +121,13 @@ class NotificationService {
           message: notification.message,
           type: notification.type,
           action_url: notification.actionUrl,
-          metadata: notification.metadata,
+          metadata:
+            notification.metadata || context?.jobId
+              ? {
+                  ...(notification.metadata ?? {}),
+                  ...(context?.jobId ? { jobId: context.jobId } : {}),
+                }
+              : null,
           read: false,
           created_at: new Date().toISOString(),
         })
@@ -138,11 +167,17 @@ class NotificationService {
     }))
   }
 
-  private async storeEmailNotification(notification: NotificationData) {
+  private async storeEmailNotification(
+    notification: NotificationData,
+    context?: { jobId?: string }
+  ) {
     try {
-      const supabase = await createSupbaseServerClient()
+      const supabase = this.getSupabaseClient()
+      if (!supabase) {
+        throw new Error("Supabase client is not configured")
+      }
 
-      await (supabase as any).from("email_notifications").insert({
+      await supabase.from("email_notifications").insert({
         user_id: notification.userId,
         recipient: Array.isArray(notification.to)
           ? notification.to.join(", ")
@@ -151,6 +186,13 @@ class NotificationService {
         template: notification.template,
         status: "sent",
         sent_at: new Date().toISOString(),
+        metadata:
+          notification.data || context?.jobId
+            ? {
+                ...(notification.data ?? {}),
+                ...(context?.jobId ? { jobId: context.jobId } : {}),
+              }
+            : null,
       })
     } catch (error) {
       console.error("Failed to store email notification:", error)
@@ -249,12 +291,18 @@ class NotificationService {
 
 const notificationService = new NotificationService()
 
-export async function sendEmailNotification(notification: NotificationData) {
-  return notificationService.sendEmail(notification)
+export async function sendEmailNotification(
+  notification: NotificationData,
+  context?: { jobId?: string }
+) {
+  return notificationService.sendEmail(notification, context)
 }
 
-export async function sendInAppNotification(notification: InAppNotification) {
-  return notificationService.sendInAppNotification(notification)
+export async function sendInAppNotification(
+  notification: InAppNotification,
+  context?: { jobId?: string }
+) {
+  return notificationService.sendInAppNotification(notification, context)
 }
 
 export async function sendBulkNotifications(

@@ -210,6 +210,30 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      notification_jobs: SupabaseTable<{
+        id: string
+        job_type: 'email' | 'in_app' | 'bulk' | 'payment_receipt'
+        payload: Json
+        status: 'pending' | 'processing' | 'completed' | 'failed'
+        attempts: number
+        max_attempts: number
+        scheduled_at: string
+        locked_at: string | null
+        completed_at: string | null
+        last_error: string | null
+        correlation_id: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      notification_dead_letters: SupabaseTable<{
+        id: string
+        job_type: string
+        payload: Json
+        attempts: number
+        error: string | null
+        correlation_id: string | null
+        failed_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string

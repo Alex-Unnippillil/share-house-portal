@@ -1,29 +1,13 @@
 import { headers } from "next/headers"
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 import {
-  sendEmailNotification,
-  sendInAppNotification,
-} from "@/lib/notifications"
+  enqueueEmailNotification,
+  enqueueInAppNotification,
+} from "@/lib/notification-queue"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
-
-function createSupabaseAdminClient(): SupabaseClient<Database> | null {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Supabase admin credentials are not configured")
-    return null
-  }
-
-  return createClient<Database>(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-}
+import { getSupabaseServiceRoleClient } from "@/lib/supabase-admin"
 
 export async function POST(req: Request) {
   const stripe = getStripe()
@@ -34,8 +18,11 @@ export async function POST(req: Request) {
     return new Response("Webhook not configured", { status: 500 })
   }
 
-  const supabase = createSupabaseAdminClient()
-  if (!supabase) {
+  let supabase: SupabaseClient<Database>
+  try {
+    supabase = getSupabaseServiceRoleClient()
+  } catch (error) {
+    console.error("Supabase admin credentials are not configured", error)
     return new Response("Supabase client not configured", { status: 500 })
   }
 
@@ -132,28 +119,47 @@ async function handleCheckoutSessionCompleted(
               .single()
 
             if (tenantProfile?.email) {
-              await sendEmailNotification({
-                to: tenantProfile.email,
-                subject: `Payment Receipt - $${paymentData.amount}`,
-                template: "payment-receipt",
-                data: {
-                  tenantName: tenantProfile.full_name || tenantProfile.email,
-                  amount: `$${paymentData.amount}`,
-                  description: paymentData.description,
-                  date: new Date(
-                    paymentData.processed_at ?? new Date().toISOString()
-                  ).toLocaleDateString(),
+              const correlationId = `stripe-session:${session.id}`
+              const { jobId: emailJobId } = await enqueueEmailNotification(
+                {
+                  to: tenantProfile.email,
+                  subject: `Payment Receipt - $${paymentData.amount}`,
+                  template: "payment-receipt",
+                  data: {
+                    tenantName:
+                      tenantProfile.full_name || tenantProfile.email,
+                    amount: `$${paymentData.amount}`,
+                    description: paymentData.description,
+                    date: new Date(
+                      paymentData.processed_at ?? new Date().toISOString()
+                    ).toLocaleDateString(),
+                  },
+                  userId: tenantId,
                 },
-                userId: tenantId,
+                { correlationId }
+              )
+
+              console.info("Enqueued payment receipt email job", {
+                jobId: emailJobId,
+                correlationId,
+                tenantId,
               })
 
-              // Also send in-app notification
-              await sendInAppNotification({
-                userId: tenantId,
-                title: "Payment Successful",
-                message: `Your payment of $${paymentData.amount} has been processed successfully.`,
-                type: "success",
-                actionUrl: "/payments",
+              const { jobId: inAppJobId } = await enqueueInAppNotification(
+                {
+                  userId: tenantId,
+                  title: "Payment Successful",
+                  message: `Your payment of $${paymentData.amount} has been processed successfully.`,
+                  type: "success",
+                  actionUrl: "/payments",
+                },
+                { correlationId }
+              )
+
+              console.info("Enqueued payment success in-app notification", {
+                jobId: inAppJobId,
+                correlationId,
+                tenantId,
               })
             }
           } catch (notificationError) {
