@@ -1,0 +1,13 @@
+{
+  "Dashboard": {
+    "Welcome": {
+      "badge": "Panel de residentes",
+      "title": "Bienvenido de nuevo, {name}",
+      "subtitle": "Esto es lo que ocurre con la unidad {unit} hoy.",
+      "actions": {
+        "settleRent": "Pagar la renta",
+        "bookAmenity": "Reservar un servicio"
+      }
+    }
+  }
+}

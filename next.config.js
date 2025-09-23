@@ -2,6 +2,7 @@
 
 const withPlugins = require("next-compose-plugins")
 const withMDX = require('@next/mdx')()
+const withNextIntl = require("next-intl/plugin")("./i18n/request.ts")
 // Temporarily disable PWA to fix build issue
 // const withPWA = require("@ducanh2912/next-pwa").default({
 //   dest: "public",
@@ -132,6 +133,6 @@ const nextConfig = {
    pageExtensions: ['ts', 'tsx', 'mdx', 'js', 'jsx', 'rs'],
 }
 
-module.exports = withMDX(nextConfig)
+module.exports = withNextIntl(withMDX(nextConfig))
 // module.exports = withPlugins([withPWA, withMDX], nextConfig)
 

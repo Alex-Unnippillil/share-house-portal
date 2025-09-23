@@ -1,0 +1,13 @@
+{
+  "Dashboard": {
+    "Welcome": {
+      "badge": "Resident dashboard",
+      "title": "Welcome back, {name}",
+      "subtitle": "Here’s what’s happening with Unit {unit} today.",
+      "actions": {
+        "settleRent": "Settle rent",
+        "bookAmenity": "Book an amenity"
+      }
+    }
+  }
+}
