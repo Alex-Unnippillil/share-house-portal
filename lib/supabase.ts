@@ -214,6 +214,16 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      user_favorites: SupabaseTable<{
+        id: string
+        profile_id: string
+        entity_type: 'document' | 'thread' | 'booking'
+        entity_id: string
+        position: number
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       notifications: SupabaseTable<{
         id: string
         user_id: string

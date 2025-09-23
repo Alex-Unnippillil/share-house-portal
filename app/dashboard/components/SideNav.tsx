@@ -4,6 +4,7 @@ import NavLinks from "./NavLinks";
 import { cn } from "@/lib/utils";
 import SignOut from "./SignOut";
 import { ThemeToggle } from "@/components/theme-toggle"
+import FavoritesPanel from "@/components/navigation/FavoritesPanel"
 export default function SideNav() {
 	return (
 		<SideBar className=" dark:bg-gradient-dark hidden flex-1 lg:block" />
@@ -27,7 +28,8 @@ export const SideBar = ({ className }: { className?: string }) => {
 
 						<ThemeToggle />
 					</div>
-					<NavLinks />
+                                        <FavoritesPanel />
+                                        <NavLinks />
 				</div>
 				<div className="">
 					<SignOut />

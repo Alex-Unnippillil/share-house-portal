@@ -15,6 +15,7 @@ import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { FavoritesProvider } from "@/components/navigation/FavoritesProvider"
 import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
@@ -119,18 +120,20 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
     <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-             <div className="relative flex min-h-screen flex-col">
+          <FavoritesProvider>
+            <div className="relative flex min-h-screen flex-col">
               {/* <SiteHeader /> */}
               <div className="flex-1">
                 <ErrorBoundary>
@@ -142,25 +145,22 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <Analytics />
                 <SpeedInsights />
               </div>
+            </div>
 
-   </div>
-{/* <SiteFooter/> */}
+            {/* <SiteFooter/> */}
 
+            {/*
+              enter your api info from termly.io or a provider of your choice
+              <Script
+                type="text/javascript"
+                src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
- */}
-   <CookieButton />
-   <TailwindIndicator />
-          </ThemeProvider>
-
-
-
-</body>
+            */}
+            <CookieButton />
+            <TailwindIndicator />
+          </FavoritesProvider>
+        </ThemeProvider>
+      </body>
     </html>
     </ReactQueryClientProvider>
   )
