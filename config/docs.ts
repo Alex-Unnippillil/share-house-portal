@@ -16,6 +16,10 @@ export const docsConfig: DocsConfig = {
       href: "/dashboard",
     },
     {
+      title: "Members",
+      href: "/dashboard/members",
+    },
+    {
       title: "Payments",
       href: "/payments",
     },

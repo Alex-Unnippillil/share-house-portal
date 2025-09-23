@@ -8,6 +8,9 @@ import { DashboardMetrics } from "./components/dashboard-metrics"
 import { DashboardQuickActions } from "./components/dashboard-quick-actions"
 import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
 import { MaintenanceOverviewCard } from "./components/maintenance-overview-card"
+import { UnitOverviewCard } from "./components/unit-overview-card"
+import { ManagerPortfolioCard } from "./components/manager-portfolio-card"
+import { getDashboardAudience } from "./data"
 import {
   DashboardBoardSkeleton,
   DashboardCardSkeleton,
@@ -15,7 +18,9 @@ import {
   DashboardStatsSkeleton,
 } from "./components/skeletons"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const audience = await getDashboardAudience()
+
   return (
     <div className="space-y-8">
       <Suspense fallback={<DashboardHeaderSkeleton />}>
@@ -47,6 +52,14 @@ export default function DashboardPage() {
               <RecentDocumentsCard />
             </Suspense>
           </div>
+
+          <Suspense fallback={<DashboardCardSkeleton />}>
+            {audience === "manager" ? (
+              <ManagerPortfolioCard />
+            ) : (
+              <UnitOverviewCard />
+            )}
+          </Suspense>
 
           <Suspense fallback={<DashboardBoardSkeleton />}>
             <RoommateBoardCard />

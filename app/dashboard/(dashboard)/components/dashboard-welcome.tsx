@@ -1,15 +1,20 @@
 import { Button } from "@/components/ui/button"
 import SmartLink from "@/components/navigation/SmartLink"
-import { getWelcomeMessage } from "../data"
+import { getDashboardAudience, getWelcomeMessage } from "../data"
 
 export async function DashboardWelcome() {
-  const message = await getWelcomeMessage()
+  const [message, audience] = await Promise.all([
+    getWelcomeMessage(),
+    getDashboardAudience(),
+  ])
+  const sectionLabel =
+    audience === "manager" ? "Portfolio dashboard" : "Resident dashboard"
 
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-1">
         <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-          Resident dashboard
+          {sectionLabel}
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {message.title}
