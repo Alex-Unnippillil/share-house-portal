@@ -13,6 +13,7 @@ import { DocumentWithLease } from '@/types/documents';
 import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '../actions';
 import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
+import { EditDocumentDialog } from './edit-document-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { MoreHorizontal, Eye, PenTool, Download, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ interface DocumentActionsProps {
 export function DocumentActions({ document }: DocumentActionsProps) {
   const [showViewer, setShowViewer] = useState(false);
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const permissions = useDocumentPermissions();
 
@@ -60,6 +62,10 @@ export function DocumentActions({ document }: DocumentActionsProps) {
 
   const handleCreateSigningRequest = () => {
     setShowSignatureDialog(true);
+  };
+
+  const handleEdit = () => {
+    setShowEditDialog(true);
   };
 
   const handleDownload = () => {
@@ -123,6 +129,13 @@ export function DocumentActions({ document }: DocumentActionsProps) {
             </DropdownMenuItem>
           )}
 
+          {canEdit && (
+            <DropdownMenuItem onClick={handleEdit}>
+              <PenTool className="mr-2 size-4" />
+              Edit Details
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={handleDownload}>
@@ -147,6 +160,12 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       <CreateSignatureDialog
         open={showSignatureDialog}
         onOpenChange={setShowSignatureDialog}
+        document={document}
+      />
+
+      <EditDocumentDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
         document={document}
       />
     </>
