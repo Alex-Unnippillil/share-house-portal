@@ -1,5 +1,6 @@
 'use server';
 
+import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supa-server-actions';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
@@ -8,6 +9,7 @@ import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
+import { getServiceRoleSupabaseClient } from '@/utils/supabase-service-role';
 import {
   Document,
   DocumentWithLease,
@@ -83,21 +85,55 @@ async function insertDocumentVersion(
   versionOverride?: number,
 ) {
   const version = versionOverride ?? (document.version ?? 1);
+  const versionPayload = {
+    document_id: document.id,
+    version,
+    state: document.state,
+    status: document.status,
+    snapshot: buildVersionSnapshot(document),
+    created_by: actorId,
+    published_at: document.published_at,
+  };
+
   const { error } = await (supabase as any)
     .from('document_versions')
-    .insert({
-      document_id: document.id,
-      version,
-      state: document.state,
-      status: document.status,
-      snapshot: buildVersionSnapshot(document),
-      created_by: actorId,
-      published_at: document.published_at,
-    });
+    .insert(versionPayload);
 
-  if (error) {
+  if (!error) {
+    return;
+  }
+
+  if (!isRowLevelSecurityViolation(error)) {
     throw new Error(`Failed to append document version: ${error.message}`);
   }
+
+  const serviceRoleClient = getServiceRoleSupabaseClient();
+
+  if (!serviceRoleClient) {
+    throw new Error(
+      'Failed to append document version: service role client not configured.'
+    );
+  }
+
+  const { error: serviceError } = await serviceRoleClient
+    .from('document_versions')
+    .insert(versionPayload);
+
+  if (serviceError) {
+    throw new Error(
+      `Failed to append document version with service role: ${serviceError.message}`
+    );
+  }
+}
+
+function isRowLevelSecurityViolation(error: PostgrestError) {
+  const code = error.code?.toUpperCase();
+  if (code === '42501') {
+    return true;
+  }
+
+  const message = `${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return message.includes('row-level security');
 }
 
 // Get documents with optional filters
