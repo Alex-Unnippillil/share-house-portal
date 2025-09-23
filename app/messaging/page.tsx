@@ -1,4 +1,5 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import PresenceAvatars from "@/components/presence/PresenceAvatars"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -94,6 +95,13 @@ const threadFilters = [
   { label: "Maintenance", active: false },
   { label: "Social", active: false },
 ]
+
+const threadViewerPresence = {
+  id: "resident-maya",
+  displayName: "Maya Patel",
+  avatarUrl: null,
+  accentColor: "#0ea5e9",
+}
 
 const threadList: ThreadListItem[] = [
   {
@@ -443,6 +451,11 @@ export default function MessagingPage() {
                 <span>{activeThread.participants} roommates involved</span>
                 <span>Updated {activeThread.updated}</span>
               </div>
+              <PresenceAvatars
+                entity={{ type: "thread", id: "chore-rotation" }}
+                currentUser={threadViewerPresence}
+                className="pt-1"
+              />
             </CardHeader>
             <CardContent className="space-y-8">
               {threadPosts.map((post, index) => (

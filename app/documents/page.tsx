@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import PresenceAvatars from "@/components/presence/PresenceAvatars";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FileText, Users, Clock, Upload } from 'lucide-react';
@@ -9,18 +10,32 @@ import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
 import { DocumentListFilters } from '@/types/documents';
 
+const documentsPresenceViewer = {
+  id: "manager-avery",
+  displayName: "Avery Chen",
+  avatarUrl: null,
+  accentColor: "#8b5cf6",
+};
+
 export default function DocumentsPage() {
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
             <p className="text-base text-muted-foreground sm:text-lg">
               Manage leases, agreements, and household documents with secure signing and version control.
             </p>
           </div>
-          <UploadDocumentDialog />
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4 lg:items-end">
+            <PresenceAvatars
+              entity={{ type: "documents", id: "household-archive" }}
+              currentUser={documentsPresenceViewer}
+              className="sm:order-2"
+            />
+            <UploadDocumentDialog />
+          </div>
         </div>
         <Separator />
       </header>
