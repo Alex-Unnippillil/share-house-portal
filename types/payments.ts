@@ -103,3 +103,32 @@ export interface PaymentReceiptHistoryEntry {
   lineItems: PaymentReceiptLineItem[]
 
 }
+
+export type LedgerActorRole = "roommate" | "property_manager"
+
+export interface LedgerActor {
+  id: string
+  name: string
+  role: LedgerActorRole
+}
+
+export type LedgerEntryType = "contribution" | "adjustment"
+
+export interface LedgerEntry {
+  id: string
+  date: string
+  description: string
+  note?: string
+  amount: number
+  type: LedgerEntryType
+  actor: LedgerActor
+}
+
+export interface RoommateLedger {
+  roommateId: string
+  roommateName: string
+  unitLabel: string
+  currency: string
+  startingBalance: number
+  entries: LedgerEntry[]
+}

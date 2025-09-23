@@ -24,7 +24,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import SmartLink from "@/components/navigation/SmartLink"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
