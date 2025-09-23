@@ -1,14 +1,94 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { track } from '@vercel/analytics/react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
+import { DocumentWithLease, DocumentListFilters, DocumentStatus, DocumentType } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { Calendar, Eye, FileText, Filter, PlusCircle, Search, Sparkles, Users } from 'lucide-react';
+import { UploadDocumentDialog } from './upload-document-dialog';
+
+type HelperContext = {
+  current: DocumentListFilters;
+  initial: DocumentListFilters;
+};
+
+type FilterHelper = {
+  id: string;
+  label: string;
+  description?: string;
+  nextFilter: (context: HelperContext) => DocumentListFilters;
+};
+
+const STATUS_LABELS: Record<DocumentStatus, string> = {
+  draft: 'Draft',
+  pending_signature: 'Pending Signature',
+  signed: 'Signed',
+  expired: 'Expired',
+  cancelled: 'Cancelled',
+};
+
+const TYPE_LABELS: Record<DocumentType, string> = {
+  lease: 'Lease',
+  addendum: 'Addendum',
+  insurance: 'Insurance',
+  maintenance: 'Maintenance',
+  other: 'Other',
+};
+
+function normalizeFilter(filter: DocumentListFilters) {
+  return {
+    ...filter,
+    status: filter.status ? [...filter.status].sort() : undefined,
+    type: filter.type ? [...filter.type].sort() : undefined,
+} satisfies DocumentListFilters;
+}
+
+function filterToKey(filter: DocumentListFilters) {
+  return JSON.stringify(normalizeFilter(filter));
+}
+
+const EMPTY_FILTER_KEY = filterToKey({});
+
+function describeFilter(filter: DocumentListFilters) {
+  const parts: string[] = [];
+
+  if (filter.status?.length) {
+    const statusDescription = filter.status
+      .map((status) => STATUS_LABELS[status] ?? status)
+      .join(', ');
+    parts.push(statusDescription);
+  }
+
+  if (filter.type?.length) {
+    const typeDescription = filter.type
+      .map((type) => TYPE_LABELS[type] ?? type)
+      .join(', ');
+    parts.push(`${typeDescription} documents`);
+  }
+
+  if (filter.tenant_id) {
+    parts.push('tenant specific');
+  }
+
+  if (filter.unit_id) {
+    parts.push('unit scoped');
+  }
+
+  if (filter.date_from || filter.date_to) {
+    parts.push('date range');
+  }
+
+  if (parts.length === 0) {
+    return 'all documents';
+  }
+
+  return parts.join(' • ');
+}
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -18,29 +98,130 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<DocumentListFilters>(filter);
+  const initialFilterRef = useRef<DocumentListFilters>(filter);
+  const initialFilterKeyRef = useRef(filterToKey(filter));
 
   useEffect(() => {
+    const incomingKey = filterToKey(filter);
+    if (incomingKey !== initialFilterKeyRef.current) {
+      initialFilterRef.current = filter;
+      initialFilterKeyRef.current = incomingKey;
+      setActiveFilter(filter);
+    }
+  }, [filter]);
+
+  const activeFilterKey = useMemo(() => filterToKey(activeFilter), [activeFilter]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
     const fetchDocuments = async () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await getDocumentsAction(filter);
+        const result = await getDocumentsAction(activeFilter);
+        if (!isCurrent) {
+          return;
+        }
+
         if (result.success && result.data) {
           setDocuments(result.data);
           setError(null);
         } else {
+          setDocuments([]);
           setError(result.error || 'Failed to fetch documents');
         }
       } catch (err) {
         console.error('Error fetching documents:', err);
+        setDocuments([]);
         setError('An unexpected error occurred');
       } finally {
-        setLoading(false);
+        if (isCurrent) {
+          setLoading(false);
+        }
       }
     };
 
     fetchDocuments();
-  }, [filter]);
+    return () => {
+      isCurrent = false;
+    };
+  }, [activeFilter, activeFilterKey]);
+
+  const initialFilterKeySnapshot = initialFilterKeyRef.current;
+  const initialDescriptor = describeFilter(initialFilterRef.current);
+
+  const helperCards = useMemo<FilterHelper[]>(() => {
+    const defaults: FilterHelper[] = [
+      {
+        id: 'show_all_documents',
+        label: 'Show all documents',
+        description: 'Clear filters and review the complete document library.',
+        nextFilter: () => ({}),
+      },
+      {
+        id: 'view_pending_signatures',
+        label: 'View pending signatures',
+        description: 'Focus on agreements waiting for roommates to sign.',
+        nextFilter: () => ({ status: ['pending_signature'] }),
+      },
+      {
+        id: 'review_signed_documents',
+        label: 'Review signed agreements',
+        description: 'Jump to finalized leases and completed addendums.',
+        nextFilter: () => ({ status: ['signed'] }),
+      },
+    ];
+
+    if (initialFilterKeySnapshot !== EMPTY_FILTER_KEY) {
+      defaults.unshift({
+        id: 'reset_to_initial',
+        label: `Reset to ${initialDescriptor}`,
+        description: 'Return to the tab default that you started from.',
+        nextFilter: () => ({ ...initialFilterRef.current }),
+      });
+    }
+
+    return defaults;
+  }, [initialDescriptor, initialFilterKeySnapshot]);
+
+  const sampleChips = useMemo<FilterHelper[]>(() => (
+    [
+      {
+        id: 'chip_lease',
+        label: 'Lease agreements',
+        nextFilter: () => ({ type: ['lease'] }),
+      },
+      {
+        id: 'chip_insurance',
+        label: 'Insurance certificates',
+        nextFilter: () => ({ type: ['insurance'] }),
+      },
+      {
+        id: 'chip_addendum',
+        label: 'Roommate addendums',
+        nextFilter: () => ({ type: ['addendum'] }),
+      },
+    ]
+  ), []);
+
+  const handleHelperSelection = (helper: FilterHelper, surface: 'card' | 'chip') => {
+    const nextFilter = helper.nextFilter({
+      current: activeFilter,
+      initial: initialFilterRef.current,
+    });
+
+    setError(null);
+    setActiveFilter(nextFilter);
+
+    track('documents_empty_helper_selected', {
+      helper_id: helper.id,
+      surface,
+      previous_filter: activeFilterKey,
+      next_filter: filterToKey(nextFilter),
+    });
+  };
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -155,16 +336,89 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   }
 
   if (documents.length === 0) {
+    const activeDescriptor = describeFilter(activeFilter);
+    const hasActiveFilters = Boolean(
+      (activeFilter.status && activeFilter.status.length > 0) ||
+      (activeFilter.type && activeFilter.type.length > 0) ||
+      activeFilter.tenant_id ||
+      activeFilter.unit_id ||
+      activeFilter.date_from ||
+      activeFilter.date_to
+    );
+
+    const headline = hasActiveFilters
+      ? 'No documents match these filters'
+      : 'Your document library is empty';
+    const supportingCopy = hasActiveFilters ? (
+      <>
+        We couldn’t find any documents for <span className="font-medium text-foreground">{activeDescriptor}</span>. Try one of the quick adjustments below or create a new document.
+      </>
+    ) : (
+      'Upload your first document to centralize leases, policies, and shared agreements for the household.'
+    );
+
     return (
-      <Card className="p-12">
-        <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(filter).length > 0
-              ? "No documents match your current filters."
-              : "Get started by uploading your first document."}
-          </p>
+      <Card className="p-10">
+        <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
+          <div className="flex size-14 items-center justify-center rounded-full border border-dashed border-primary/40 bg-primary/5 text-primary">
+            <Sparkles className="size-6" aria-hidden />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">{headline}</h3>
+            <p className="text-sm text-muted-foreground">{supportingCopy}</p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-2">
+            {sampleChips.map((chip) => (
+              <Button
+                key={chip.id}
+                size="sm"
+                variant="secondary"
+                onClick={() => handleHelperSelection(chip, 'chip')}
+                className="flex items-center gap-1"
+              >
+                <Search className="size-3" aria-hidden />
+                {chip.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="grid w-full gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {helperCards.map((helper) => (
+              <button
+                key={helper.id}
+                type="button"
+                onClick={() => handleHelperSelection(helper, 'card')}
+                className="flex h-full flex-col gap-2 rounded-lg border border-border/60 bg-muted/30 p-4 text-left transition hover:border-primary/40 hover:bg-background"
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Filter className="size-4 text-muted-foreground" aria-hidden />
+                  {helper.label}
+                </div>
+                {helper.description ? (
+                  <p className="text-xs text-muted-foreground">{helper.description}</p>
+                ) : null}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <UploadDocumentDialog
+              triggerLabel="Create document"
+              triggerIcon={<PlusCircle className="size-4" aria-hidden />}
+              triggerProps={{ size: 'sm' }}
+              onOpen={() =>
+                track('documents_empty_helper_selected', {
+                  helper_id: 'create_document',
+                  surface: 'create_action',
+                  previous_filter: activeFilterKey,
+                })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Need to log something new? Uploading immediately adds it to the shared library.
+            </p>
+          </div>
         </div>
       </Card>
     );
