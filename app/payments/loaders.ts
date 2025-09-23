@@ -2,10 +2,15 @@
 
 import "server-only"
 
-import { catchUpBalances, receiptHistory } from "@/lib/payments/mock-data"
+import {
+  catchUpBalances,
+  receiptHistory,
+  roommateLedgers,
+} from "@/lib/payments/mock-data"
 import type {
   CatchUpBalance,
   PaymentReceiptHistoryEntry,
+  RoommateLedger,
 } from "@/types/payments"
 
 
@@ -15,5 +20,8 @@ export async function loadCatchUpBalances(): Promise<CatchUpBalance[]> {
 
 export async function loadReceiptHistory(): Promise<PaymentReceiptHistoryEntry[]> {
   return receiptHistory
+}
 
+export async function loadRoommateLedgers(): Promise<RoommateLedger[]> {
+  return roommateLedgers
 }
