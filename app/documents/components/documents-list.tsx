@@ -1,46 +1,63 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
-import { DocumentActions } from './document-actions';
-import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { DocumentWithLease, DocumentListFilters } from "@/types/documents";
+import { getDocumentsAction } from "../actions";
+import { DocumentActions } from "./document-actions";
+import { formatDistanceToNow } from "date-fns";
+import { FileText, Users, Calendar, Eye } from "lucide-react";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
 }
 
 export function DocumentsList({ filter }: DocumentsListProps) {
-  const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<DocumentWithLease[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(
+    async ({ silent } = { silent: false }) => {
       try {
-        setLoading(true);
-        setError(null);
-        const result = await getDocumentsAction(filter);
-        if (result.success && result.data) {
-          setDocuments(result.data);
-          setError(null);
+        if (silent) {
+          setRefreshing(true)
         } else {
-          setError(result.error || 'Failed to fetch documents');
+          setLoading(true)
+        }
+        setError(null)
+        const result = await getDocumentsAction(filter)
+        if (result.success && result.data) {
+          setDocuments(result.data)
+          setError(null)
+        } else {
+          setError(result.error || "Failed to fetch documents")
         }
       } catch (err) {
-        console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
+        console.error("Error fetching documents:", err)
+        setError("An unexpected error occurred")
       } finally {
-        setLoading(false);
+        if (silent) {
+          setRefreshing(false)
+        } else {
+          setLoading(false)
+        }
       }
-    };
+    },
+    [filter]
+  )
 
-    fetchDocuments();
-  }, [filter]);
+  useEffect(() => {
+    fetchDocuments()
+  }, [fetchDocuments])
+
+  const handleRefresh = useCallback(async () => {
+    await fetchDocuments({ silent: true })
+  }, [fetchDocuments])
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -143,7 +160,8 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <PullToRefresh onRefresh={handleRefresh} isRefreshing={refreshing}>
+      <div className="space-y-4">
       {documents.map((doc) => (
         <Card key={doc.id} className="transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
@@ -213,6 +231,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
           )}
         </Card>
       ))}
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }

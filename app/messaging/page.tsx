@@ -1,4 +1,5 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { ThreadPostsRefresh } from "@/components/messaging/thread-posts-refresh"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -444,15 +445,16 @@ export default function MessagingPage() {
                 <span>Updated {activeThread.updated}</span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-8">
-              {threadPosts.map((post, index) => (
-                <div key={post.id} className="space-y-4">
-                  <article className="space-y-4 rounded-lg border border-border/60 bg-background/90 p-4">
-                    <div className="flex items-start gap-3">
-                      <Avatar>
-                        <AvatarFallback className={cn("text-sm font-medium", post.author.accent)}>
-                          {post.author.initials}
-                        </AvatarFallback>
+            <CardContent>
+              <ThreadPostsRefresh>
+                {threadPosts.map((post, index) => (
+                  <div key={post.id} className="space-y-4">
+                    <article className="space-y-4 rounded-lg border border-border/60 bg-background/90 p-4">
+                      <div className="flex items-start gap-3">
+                        <Avatar>
+                          <AvatarFallback className={cn("text-sm font-medium", post.author.accent)}>
+                            {post.author.initials}
+                          </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -558,10 +560,11 @@ export default function MessagingPage() {
                         </Button>
                       </div>
                     ) : null}
-                  </article>
-                  {index < threadPosts.length - 1 ? <Separator /> : null}
-                </div>
-              ))}
+                    </article>
+                    {index < threadPosts.length - 1 ? <Separator /> : null}
+                  </div>
+                ))}
+              </ThreadPostsRefresh>
             </CardContent>
           </Card>
 
