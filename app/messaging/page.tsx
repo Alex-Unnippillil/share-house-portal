@@ -1,4 +1,6 @@
+import MessageComposer from "@/components/messaging/message-composer"
 import ModerationControls from "@/components/messaging/moderation-controls"
+import SanitizedMessageContent from "@/components/messaging/sanitized-message-content"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,10 +12,13 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-
 import { Separator } from "@/components/ui/separator"
+import { fetchThreadMessages } from "@/lib/data/messages"
 import { cn } from "@/lib/utils"
+import createSupabaseServer from "@/utils/supabase-server"
+import { formatDistanceToNow } from "date-fns"
 import { Paperclip } from "lucide-react"
+import { cookies } from "next/headers"
 
 type ThreadListItem = {
   id: string
@@ -63,7 +68,9 @@ type ThreadPost = {
     accent: string
   }
   timestamp: string
-  content: string[]
+  contentHtml: string[]
+  sourceMarkdown?: string
+  persisted?: boolean
   attachments?: Attachment[]
   poll?: ThreadPoll
   reactions?: PostReaction[]
@@ -85,6 +92,23 @@ type PollSnapshot = {
   leadingOption: string
   votes: number
   progress: number
+}
+
+const ACTIVE_THREAD_ID = "chore-rotation"
+
+const composerProfile = {
+  id: "11111111-1111-1111-1111-111111111111",
+  name: "Jordan Lee",
+  role: "Roommate",
+  initials: "JL",
+  accent: "bg-amber-500/20 text-amber-700",
+}
+
+const fallbackAuthor = {
+  name: "Roommate update",
+  role: "Roommate",
+  initials: "RU",
+  accent: "bg-primary/10 text-primary",
 }
 
 const threadFilters = [
@@ -149,6 +173,7 @@ const threadList: ThreadListItem[] = [
 ]
 
 const activeThread = {
+  id: ACTIVE_THREAD_ID,
   title: "Q2 chore rotation plan",
   summary:
     "Keep the shared areas sparkling with a rotation everyone can reference — vote on the deep clean weekend and review updated checklists in one place.",
@@ -168,9 +193,9 @@ const threadPosts: ThreadPost[] = [
       accent: "bg-sky-500/20 text-sky-700",
     },
     timestamp: "Today • 8:45 AM",
-    content: [
-      "Kicking off the Q2 chore rotation thread so we can stay ahead of the spring deep clean.",
-      "Please vote in the poll for when we should tackle the deep clean together. I added the updated checklist and rotation calendar so everyone can review before voting.",
+    contentHtml: [
+      "<p>Kicking off the Q2 chore rotation thread so we can stay ahead of the spring deep clean.</p>",
+      "<p>Please vote in the poll for when we should tackle the deep clean together. I added the updated checklist and rotation calendar so everyone can review before voting.</p>",
     ],
     attachments: [
       {
@@ -211,9 +236,9 @@ const threadPosts: ThreadPost[] = [
       accent: "bg-amber-500/20 text-amber-700",
     },
     timestamp: "Today • 9:05 AM",
-    content: [
-      "Looks good to me. I left a couple of notes in the sheet about trading weekends because of my travel schedule.",
-      "If we go with the Saturday 10 AM block, I can take recycling duty during the week so Sunday stays open.",
+    contentHtml: [
+      "<p>Looks good to me. I left a couple of notes in the sheet about trading weekends because of my travel schedule.</p>",
+      "<p>If we go with the Saturday 10 AM block, I can take recycling duty during the week so Sunday stays open.</p>",
     ],
     attachments: [
       {
@@ -237,9 +262,9 @@ const threadPosts: ThreadPost[] = [
       accent: "bg-purple-500/20 text-purple-700",
     },
     timestamp: "Today • 9:42 AM",
-    content: [
-      "Thanks everyone! Once the poll closes I'll lock the rotation and post a PDF to the documents hub.",
-      "Reminder that the spring inspection is on April 18 — make sure kitchen counters and the entryway are cleared the night before.",
+    contentHtml: [
+      "<p>Thanks everyone! Once the poll closes I'll lock the rotation and post a PDF to the documents hub.</p>",
+      "<p>Reminder that the spring inspection is on April 18 — make sure kitchen counters and the entryway are cleared the night before.</p>",
     ],
     reactions: [
       { emoji: "📌", count: 2 },
@@ -302,7 +327,40 @@ const pollSnapshots: PollSnapshot[] = [
   },
 ]
 
-export default function MessagingPage() {
+export default async function MessagingPage() {
+  const cookieStore = cookies()
+  let persistedPosts: ThreadPost[] = []
+
+  try {
+    const supabase = createSupabaseServer(cookieStore)
+    const messages = await fetchThreadMessages({
+      client: supabase,
+      threadId: ACTIVE_THREAD_ID,
+    })
+
+    persistedPosts = messages.map((message) => {
+      const author =
+        message.author_id === composerProfile.id ? composerProfile : fallbackAuthor
+      const timestampSource =
+        message.created_at ?? message.updated_at ?? new Date().toISOString()
+
+      return {
+        id: `persisted-${message.id}`,
+        author,
+        timestamp: formatDistanceToNow(new Date(timestampSource), {
+          addSuffix: true,
+        }),
+        contentHtml: [message.content_html],
+        sourceMarkdown: message.content_markdown,
+        persisted: true,
+      }
+    })
+  } catch (error) {
+    console.error("messaging-page", error)
+  }
+
+  const postsToRender = [...threadPosts, ...persistedPosts]
+
   return (
     <div className="container max-w-6xl space-y-10 py-12">
       <header className="space-y-4">
@@ -445,7 +503,7 @@ export default function MessagingPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-8">
-              {threadPosts.map((post, index) => (
+              {postsToRender.map((post, index) => (
                 <div key={post.id} className="space-y-4">
                   <article className="space-y-4 rounded-lg border border-border/60 bg-background/90 p-4">
                     <div className="flex items-start gap-3">
@@ -458,17 +516,29 @@ export default function MessagingPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-semibold text-foreground">{post.author.name}</span>
                           <Badge variant="outline">{post.author.role}</Badge>
+                          {post.persisted ? (
+                            <Badge variant="secondary" className="uppercase">
+                              Saved
+                            </Badge>
+                          ) : null}
                         </div>
                         <span className="text-xs text-muted-foreground">{post.timestamp}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3 text-sm leading-6 text-foreground">
-                      {post.content.map((paragraph, idx) => (
-                        <p key={`${post.id}-content-${idx}`} className="text-muted-foreground">
-                          {paragraph}
-                        </p>
+                      {post.contentHtml.map((html, idx) => (
+                        <SanitizedMessageContent
+                          key={`${post.id}-content-${idx}`}
+                          html={html}
+                          className="text-muted-foreground"
+                        />
                       ))}
+                      {post.persisted && post.sourceMarkdown ? (
+                        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Stored markdown: <code>{post.sourceMarkdown}</code>
+                        </div>
+                      ) : null}
                     </div>
 
                     {post.attachments?.length ? (
@@ -559,9 +629,15 @@ export default function MessagingPage() {
                       </div>
                     ) : null}
                   </article>
-                  {index < threadPosts.length - 1 ? <Separator /> : null}
+                  {index < postsToRender.length - 1 ? <Separator /> : null}
                 </div>
               ))}
+              <Separator />
+              <MessageComposer
+                threadId={ACTIVE_THREAD_ID}
+                authorId={composerProfile.id}
+                authorName={composerProfile.name}
+              />
             </CardContent>
           </Card>
 
