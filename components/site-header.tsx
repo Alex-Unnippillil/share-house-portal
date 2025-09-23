@@ -1,10 +1,9 @@
-import SmartLink from "@/components/navigation/SmartLink"
-import { readUserSession } from "@/utils/actions"
-
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
+import CommandPalette from "@/components/navigation/CommandPalette"
+import SmartLink from "@/components/navigation/SmartLink"
+import { readUserSession } from "@/utils/actions"
 import { buttonVariants } from "@/components/ui/button"
-import { Icons } from "@/components/icons"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
@@ -68,6 +67,7 @@ export async function SiteHeader() {
             )}
           </div>
           <nav className="flex items-center space-x-1">
+            <CommandPalette />
             {isAuthenticated && <NotificationCenter />}
             <ThemeToggle />
           </nav>
