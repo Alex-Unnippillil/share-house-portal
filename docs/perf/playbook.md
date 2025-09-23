@@ -25,6 +25,11 @@ This playbook documents how Roomsily measures and protects critical experience-l
 | Stripe Payments Overview | Checkout conversion, webhook failures | <https://dashboard.stripe.com/live/payments>
 | Statuspage (Public) | External communication for incidents | <https://status.roomsily.com>
 
+## Third-party Analytics Loading
+
+- Vercel Analytics and Speed Insights are injected via a deferred client component that waits for hydration (and browser idle time when supported) before dynamically importing the libraries. This keeps their script evaluation off the initial navigation path and preserves first-load responsiveness.
+- Any new observability or marketing pixels must follow the same pattern: load them with `next/script` using `strategy="lazyOnload"` or gate them behind a post-hydration dynamic import so they do not block the main thread.
+
 ## Alert Channels
 | Trigger | Channel | Notes |
 | --- | --- | --- |
