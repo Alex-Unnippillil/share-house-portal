@@ -4,4 +4,5 @@ export interface AccountProfile {
   website: string | null
   avatarUrl: string | null
   email: string | null
+  updatedAt: string | null
 }

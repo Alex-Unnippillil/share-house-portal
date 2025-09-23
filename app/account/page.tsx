@@ -13,17 +13,16 @@ export default async function SettingsAccountPage() {
   }
 
   return (
-    <div className="mt-10 px-2 lg:p-8">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 px-2">
-        <div className="flex flex-col space-y-2 text-left">
-          <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Account Profile</h1>
-          <p className="text-base text-muted-foreground">
-            Keep your contact details current so rent reminders, booking updates, and document alerts reach you without delay.
-          </p>
-        </div>
-        <Separator />
-        <AccountForm profile={profile} user={user} />
+    <div className="mx-auto w-full max-w-5xl space-y-10 px-4 py-10 lg:px-8">
+      <div className="flex flex-col gap-3">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Profile &amp; preferences</h1>
+        <p className="text-base text-muted-foreground sm:max-w-2xl">
+          Keep your information polished so rent reminders, amenity bookings, and document alerts reach the right roommate every
+          time.
+        </p>
       </div>
+      <Separator />
+      <AccountForm profile={profile} user={user} />
     </div>
   )
 }
