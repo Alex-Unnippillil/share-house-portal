@@ -21,7 +21,9 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import { describeAutopayStatus } from "@/lib/payments/status"
 
-import { loadCatchUpBalances, loadRoommateLedgers } from "./loaders"
+import { loadCatchUpBalances, loadReceiptHistory } from "./loaders"
+import { ReceiptHistoryCard } from "./_components/receipt-history-card"
+
 
 const paymentHighlights = [
   {
@@ -71,9 +73,10 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
-  const [catchUpBalances, roommateLedgers] = await Promise.all([
+  const [catchUpBalances, receiptHistory] = await Promise.all([
     loadCatchUpBalances(),
-    loadRoommateLedgers(),
+    loadReceiptHistory(),
+
   ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
@@ -240,7 +243,8 @@ export default async function PaymentsPage() {
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
       </section>
-      <RoommateLedger ledgers={roommateLedgers} />
+      <ReceiptHistoryCard receipts={receiptHistory} />
+
     </div>
   )
 }

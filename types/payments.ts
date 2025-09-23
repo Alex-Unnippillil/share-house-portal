@@ -76,30 +76,30 @@ export interface CatchUpPaymentFormValues {
   note?: string
 }
 
-export type LedgerEntryType = "contribution" | "adjustment"
+export type PaymentReceiptStatus = "paid" | "processing" | "refunded"
 
-export type LedgerActorRole = "roommate" | "property_manager"
-
-export interface LedgerEntryActor {
-  name: string
-  role: LedgerActorRole
-}
-
-export interface LedgerEntry {
+export interface PaymentReceiptLineItem {
   id: string
-  date: string
   description: string
-  amount: number
-  type: LedgerEntryType
-  actor: LedgerEntryActor
-  note?: string
+  category: CatchUpChargeCategory
+  quantity?: number
+  unitAmount?: number
+  totalAmount: number
 }
 
-export interface RoommateLedger {
-  roommateId: string
-  roommateName: string
-  unitLabel: string
+export interface PaymentReceiptHistoryEntry {
+  id: string
+  issuedTo: string
+  paymentDate: string
   currency: string
-  startingBalance: number
-  entries: LedgerEntry[]
+  amount: number
+  status: PaymentReceiptStatus
+  paymentMethod: string
+  periodStart?: string
+  periodEnd?: string
+  receiptUrl: string
+  invoiceUrl?: string
+  memo?: string
+  lineItems: PaymentReceiptLineItem[]
+
 }
