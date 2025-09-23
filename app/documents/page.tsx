@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { FileText, Users, Clock, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadDocumentDialog } from "./components/upload-document-dialog";
+import { CSVImportDialog } from '@/components/import/CSVImportDialog';
 import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
@@ -13,14 +14,17 @@ export default function DocumentsPage() {
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
             <p className="text-base text-muted-foreground sm:text-lg">
               Manage leases, agreements, and household documents with secure signing and version control.
             </p>
           </div>
-          <UploadDocumentDialog />
+          <div className="flex flex-wrap items-center gap-2">
+            <CSVImportDialog entity="documents" triggerLabel="Import CSV" />
+            <UploadDocumentDialog />
+          </div>
         </div>
         <Separator />
       </header>
