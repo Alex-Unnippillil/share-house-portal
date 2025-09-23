@@ -19,6 +19,7 @@ import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
+import { ShortcutsModal } from "@/components/shortcuts/shortcuts-modal"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -154,6 +155,7 @@ enter your api info from termly.io or a provider of your choice
   src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
  */}
+   <ShortcutsModal />
    <CookieButton />
    <TailwindIndicator />
           </ThemeProvider>
