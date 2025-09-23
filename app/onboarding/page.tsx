@@ -15,13 +15,14 @@ export const metadata: Metadata = {
 export default function OnboardingPage() {
   return (
     <>
-      <div className="hidden">
+      <div aria-hidden className="hidden">
         <Image
           src="/images/house-portal-1.jpg"
           width={1280}
           height={843}
           alt="Roomsily household workspace"
           className="block dark:hidden"
+          sizes="100vw"
         />
         <Image
           src="/images/house-portal-2.jpg"
@@ -29,6 +30,7 @@ export default function OnboardingPage() {
           height={843}
           alt="Roommate Collaboration"
           className="hidden"
+          sizes="100vw"
         />
       </div>
       <div className="container relative mx-auto grid h-[640px] grid-cols-1 flex-col items-center justify-center md:grid-cols-2 lg:max-w-none lg:px-0">
@@ -41,17 +43,19 @@ export default function OnboardingPage() {
         >
           Login
         </SmartLink>
-        <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
+        <div className="relative hidden h-full flex-col overflow-hidden bg-muted p-10 text-white md:flex dark:border-r">
           <Image
-          src="/images/house-portal-2.jpg"
-          width={2048}
-          height={2048}
-          alt="Roommate Collaboration"
-          style={{objectFit: "contain"}}
-          
-        />
-          </div>
+            src="/images/house-portal-2.jpg"
+            alt="Roommate collaboration"
+            fill
+            priority
+            sizes="(min-width: 1280px) 640px, (min-width: 768px) 50vw, 100vw"
+            className="object-cover"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black opacity-80"
+          />
           <div className="relative z-20 flex items-center text-lg font-medium">
             <svg
               xmlns="http://www.w3.org/2000/svg"
