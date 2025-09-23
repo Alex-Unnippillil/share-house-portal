@@ -15,6 +15,7 @@ import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useSessionAutoSave } from "@/hooks/use-session-auto-save";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -60,6 +61,17 @@ export function MaintenanceRequestForm() {
       priority: "normal",
       category: "",
       location: "",
+    },
+  });
+
+  const { clearDraft } = useSessionAutoSave<MaintenanceRequestFormData>({
+    storageKey: "maintenance-request-draft",
+    getValues: form.getValues,
+    onRestore: (draft) => {
+      form.reset({
+        ...form.getValues(),
+        ...draft,
+      });
     },
   });
 
@@ -124,6 +136,7 @@ export function MaintenanceRequestForm() {
         description: "Your maintenance request has been submitted and notifications sent.",
       });
 
+      clearDraft();
       form.reset();
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
