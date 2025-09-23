@@ -55,6 +55,28 @@ body {}
     --input: 217 33% 17%;
     --ring: 210 40% 98%;
   }
+
+  .high-contrast {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 52 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 100%;
+    --accent: 193 100% 41%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 35%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 52 100% 50%;
+  }
 }
 
 @layer base {
