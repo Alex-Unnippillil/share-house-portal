@@ -8,6 +8,9 @@ import type { User } from "@supabase/supabase-js"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
+import { BioMarkdownEditor } from "@/components/forms/bio-markdown-editor"
+import { BioPreview } from "@/components/forms/bio-preview"
+import { renderBioMarkdown } from "@/lib/bio"
 import useSupabaseBrowser from "@/utils/supabase-browser"
 
 import Avatar from "./avatar"
@@ -24,15 +27,22 @@ type ProfileState = {
   website: string
   avatarUrl: string
   email: string
+  bioMarkdown: string
+  bioHtml: string
 }
 
 function createProfileState(user: User, profile: AccountProfile | null): ProfileState {
+  const initialMarkdown = profile?.bioMarkdown ?? ""
+  const initialHtml = profile?.bioHtml ?? renderBioMarkdown(initialMarkdown)
+
   return {
     fullName: profile?.fullName ?? "",
     username: profile?.username ?? "",
     website: profile?.website ?? "",
     avatarUrl: profile?.avatarUrl ?? "",
     email: profile?.email ?? user.email ?? "",
+    bioMarkdown: initialMarkdown,
+    bioHtml: initialHtml,
   }
 }
 
@@ -43,7 +53,15 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
 
   const persistProfile = useCallback(
     async (overrides: Partial<ProfileState> = {}) => {
-      const payload = { ...profileState, ...overrides }
+      const nextState = { ...profileState, ...overrides }
+      const normalizedMarkdown = nextState.bioMarkdown?.trim() ?? ""
+      const normalizedHtml = renderBioMarkdown(normalizedMarkdown)
+      const payload = {
+        ...nextState,
+        bioMarkdown: normalizedMarkdown,
+        bioHtml: normalizedHtml,
+      }
+
       setProfileState(payload)
 
       setIsSaving(true)
@@ -55,6 +73,8 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
           website: payload.website || null,
           avatar_url: payload.avatarUrl || null,
           email: payload.email || null,
+          bio_markdown: payload.bioMarkdown || null,
+          bio_html: payload.bioHtml || null,
           updated_at: new Date().toISOString(),
         })
 
@@ -86,6 +106,23 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
   const handleChange = (field: keyof ProfileState) => (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     setProfileState((previous) => ({ ...previous, [field]: value }))
+  }
+
+  const handleBioChange = (payload: { markdown: string; html: string }) => {
+    setProfileState((previous) => {
+      if (
+        previous.bioMarkdown === payload.markdown &&
+        previous.bioHtml === payload.html
+      ) {
+        return previous
+      }
+
+      return {
+        ...previous,
+        bioMarkdown: payload.markdown,
+        bioHtml: payload.html,
+      }
+    })
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -157,6 +194,26 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
             onChange={handleChange("website")}
             placeholder="https://sharehouse.example"
           />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            htmlFor="bio"
+          >
+            Bio
+          </label>
+          <BioMarkdownEditor
+            value={profileState.bioHtml}
+            onChange={({ markdown, html }) => handleBioChange({ markdown, html })}
+            disabled={isSaving}
+          />
+          <p className="text-sm text-muted-foreground">
+            Supports Markdown shortcuts like <code>**bold**</code>, <code>_italic_</code>, and <code>`code`</code> as you type.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium leading-none">Bio preview</span>
+          <BioPreview html={profileState.bioHtml || renderBioMarkdown(profileState.bioMarkdown)} />
         </div>
         <button
           className={buttonVariants({ variant: "outline" })}
