@@ -2,6 +2,7 @@
 
 import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
+import { getLogger } from "@/lib/logger"
 
 export interface NotificationData {
   to: string | string[]
@@ -22,6 +23,7 @@ export interface InAppNotification {
 
 class NotificationService {
   private resend: Resend | null = null
+  private log = getLogger({ module: "notifications" })
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY
@@ -32,7 +34,7 @@ class NotificationService {
 
   async sendEmail(notification: NotificationData) {
     if (!this.resend) {
-      console.warn(
+      this.log.warn(
         "Resend API key not configured. Skipping email notification."
       )
       return { success: false, error: "Email service not configured" }
@@ -67,7 +69,7 @@ class NotificationService {
       })
 
       if (error) {
-        console.error("Failed to send email:", error)
+        this.log.error({ err: error, template: notification.template }, "Failed to send email notification")
         return { success: false, error: error.message }
       }
 
@@ -78,7 +80,7 @@ class NotificationService {
 
       return { success: true, data }
     } catch (error) {
-      console.error("Email sending error:", error)
+      this.log.error({ err: error, template: notification.template }, "Email sending error")
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -104,13 +106,13 @@ class NotificationService {
         })
 
       if (error) {
-        console.error("Failed to create in-app notification:", error)
+        this.log.error({ err: error, notification }, "Failed to create in-app notification")
         return { success: false, error: error.message }
       }
 
       return { success: true, data }
     } catch (error) {
-      console.error("In-app notification error:", error)
+      this.log.error({ err: error, notification }, "In-app notification error")
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -153,7 +155,7 @@ class NotificationService {
         sent_at: new Date().toISOString(),
       })
     } catch (error) {
-      console.error("Failed to store email notification:", error)
+      this.log.error({ err: error, notification }, "Failed to store email notification")
     }
   }
 

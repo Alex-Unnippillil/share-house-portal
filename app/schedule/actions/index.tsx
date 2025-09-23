@@ -5,8 +5,11 @@ import { createGoogleCalendarEvent } from '@/lib/calendar-service';
 import { revalidatePath } from 'next/cache';
 import type { Database } from '@/lib/supabase';
 import { z } from 'zod';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { formatISO, isPast } from 'date-fns'; // Import formatISO here
+import { getLogger, withRequestContext } from '@/lib/logger';
+
+const log = getLogger({ module: 'schedule.actions' });
 
 // --- Updated Zod Schema for Server Action ---
 const scheduleSchema = z.object({
@@ -47,16 +50,27 @@ export async function scheduleMeetingAction(
   prevState: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const requestHeaders = headers();
 
- const cookieStore = cookies();
- const supabase = createClient(cookieStore);
+  return withRequestContext(
+    async () => {
+      const cookieStore = cookies();
+      const supabase = createClient(cookieStore);
 
-  // 1. Check Authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    console.error('Authentication error in server action:', authError);
-    return { success: false, message: null, error: 'You must be logged in to schedule a meeting.', googleEventLink: null };
-  }
+      // 1. Check Authentication
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+      if (authError || !user) {
+        log.error({ authError }, 'Authentication error in scheduleMeetingAction');
+        return {
+          success: false,
+          message: null,
+          error: 'You must be logged in to schedule a meeting.',
+          googleEventLink: null,
+        };
+      }
 
    // 2. Validate Form Data (using the updated schema with coerce)
    const rawData = {
@@ -73,7 +87,10 @@ export async function scheduleMeetingAction(
    const validationResult = scheduleSchema.safeParse(rawData);
 
    if (!validationResult.success) {
-       console.error("Server validation failed:", validationResult.error.flatten());
+       log.warn(
+         { validationErrors: validationResult.error.flatten() },
+         "Server validation failed"
+       );
        // Combine Zod error messages
        const errorMessages = Object.values(validationResult.error.flatten().fieldErrors)
            .map(errors => errors?.join('. '))
@@ -87,7 +104,13 @@ export async function scheduleMeetingAction(
 
    // 3. Basic check: User email from form should match logged-in user
    if (validatedData.userEmail !== user.email) {
-       console.error(`Security Alert: Form email (${validatedData.userEmail}) does not match authenticated user (${user.email})`);
+       log.warn(
+         {
+           formEmail: validatedData.userEmail,
+           authenticatedEmail: user.email,
+         },
+         'Security alert: user email mismatch in scheduleMeetingAction'
+       );
        return { success: false, message: null, error: 'User email mismatch.', googleEventLink: null };
    }
 
@@ -105,13 +128,22 @@ export async function scheduleMeetingAction(
     });
 
     if (!calendarResult.success || !calendarResult.eventId) {
-      console.error("Failed to create Google Calendar event:", calendarResult.error);
+      log.error(
+        { calendarError: calendarResult.error },
+        "Failed to create Google Calendar event"
+      );
       // Pass specific Google error back if available
       const errorMessage = calendarResult.error || 'Failed to create Google Calendar event.';
       return { success: false, message: null, error: errorMessage, googleEventLink: null };
     }
 
-    console.log(`Google Event created: ${calendarResult.eventId}, Link: ${calendarResult.link}`);
+    log.info(
+      {
+        eventId: calendarResult.eventId,
+        eventLink: calendarResult.link,
+      },
+      'Google Calendar event created'
+    );
 
     // 5. Store meeting info in Supabase DB
     //    Pass the validated Date objects directly to the Supabase client.
@@ -128,11 +160,11 @@ export async function scheduleMeetingAction(
 
     if (dbError) {
       // Log the error, but don't necessarily fail if calendar event succeeded
-      console.error('Error saving meeting to database:', dbError);
+      log.error({ dbError }, 'Error saving meeting to database');
       // Optional: Return a partial success message or specific DB error
       // return { success: false, message: null, error: 'Meeting scheduled, but failed to save record.', googleEventLink: calendarResult.link };
     } else {
-       console.log("Meeting details saved to database.");
+       log.info('Meeting details saved to database');
     }
 
     // 6. Revalidate the path if needed
@@ -147,11 +179,14 @@ export async function scheduleMeetingAction(
     };
 
   } catch (error) {
-    console.error('Unexpected error in scheduleMeetingAction:', error);
+    log.error({ err: error }, 'Unexpected error in scheduleMeetingAction');
      let errorMessage = 'An unexpected error occurred while scheduling.';
      if (error instanceof Error) {
          errorMessage = error.message;
      }
     return { success: false, message: null, error: errorMessage, googleEventLink: null };
   }
+    },
+    { headers: requestHeaders }
+  );
 }

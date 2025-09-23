@@ -1,8 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
 import { createClient } from "@/utils/supa-server-actions"
+import { getLogger, withRequestContext } from "@/lib/logger"
 
 type formData = {
   name: string
@@ -11,27 +12,35 @@ type formData = {
 }
 
 export async function submitInquiry(data: formData) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const requestHeaders = headers()
+  const log = getLogger({ module: "contact.submitInquiry" })
 
-  try {
-    const { error } = await supabase.from("inquiries").insert([
-      {
-        name: data.name,
-        email: data.email,
-        message: data.message,
-      },
-    ])
+  return withRequestContext(
+    async () => {
+      const cookieStore = cookies()
+      const supabase = createClient(cookieStore)
 
-    if (error) throw error
+      try {
+        const { error } = await supabase.from("inquiries").insert([
+          {
+            name: data.name,
+            email: data.email,
+            message: data.message,
+          },
+        ])
 
-    revalidatePath("/contact")
-    return { success: true, message: "Message sent successfully!" }
-  } catch (error) {
-    console.error("Error submitting inquiry:", error)
-    return {
-      success: false,
-      message: "Error sending message. Please try again.",
-    }
-  }
+        if (error) throw error
+
+        revalidatePath("/contact")
+        return { success: true, message: "Message sent successfully!" }
+      } catch (error) {
+        log.error({ err: error, inquiry: data }, "Error submitting inquiry")
+        return {
+          success: false,
+          message: "Error sending message. Please try again.",
+        }
+      }
+    },
+    { headers: requestHeaders }
+  )
 }
