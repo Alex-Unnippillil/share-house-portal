@@ -19,6 +19,10 @@ import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
+import ResumeActivityBanner from "@/components/navigation/ResumeActivityBanner"
+import { fetchRecentActivity } from "@/lib/data/recent-activity"
+import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -114,6 +118,47 @@ interface RootLayoutProps {
 }
 
 
+async function ResumeLastRouteCTA() {
+  const supabase = (await createSupbaseServerClientReadOnly()) as TypedSupabaseClient
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return null
+  }
+
+  try {
+    const { items, lastRoute } = await fetchRecentActivity({
+      client: supabase,
+      userId: user.id,
+    })
+
+    if (!lastRoute || items.length === 0) {
+      return null
+    }
+
+    const latest = items[0]
+
+    return (
+      <div className="border-b border-border/70 bg-muted/30">
+        <div className="container mx-auto px-4 py-3">
+          <ResumeActivityBanner
+            href={lastRoute}
+            label={latest.label}
+            entityType={latest.entity_type}
+            entityId={latest.entity_id}
+          />
+        </div>
+      </div>
+    )
+  } catch (error) {
+    console.error("Failed to load resume activity CTA", error)
+    return null
+  }
+}
+
+
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
@@ -132,6 +177,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
           >
              <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
+              <Suspense fallback={null}>
+                <ResumeLastRouteCTA />
+              </Suspense>
               <div className="flex-1">
                 <ErrorBoundary>
                   <Suspense fallback={<RouteSkeleton />}>
