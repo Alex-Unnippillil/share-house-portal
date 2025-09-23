@@ -13,6 +13,12 @@ import {
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
 
+const NDJSON_CONTENT_TYPE = "application/x-ndjson"
+
+function serializeNdjsonChunk(payload: unknown) {
+  return `${JSON.stringify(payload)}\n`
+}
+
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
 const MAX_PAGE = 50
@@ -203,18 +209,70 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({
-    data: data ?? [],
+  const notifications = data ?? []
+
+  const meta = {
     pagination: {
       page,
       limit,
       total: count,
       hasMore:
-        typeof count === "number" ? from + (data?.length ?? 0) < count : null,
+        typeof count === "number" ? from + notifications.length < count : null,
     },
     filters: {
       startDate: normalizedStartDate.toISOString(),
       endDate: normalizedEndDate.toISOString(),
+    },
+  }
+
+  const acceptHeader = request.headers.get("accept") ?? ""
+
+  if (!acceptHeader.includes(NDJSON_CONTENT_TYPE)) {
+    return NextResponse.json({
+      data: notifications,
+      ...meta,
+    })
+  }
+
+  const encoder = new TextEncoder()
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      try {
+        controller.enqueue(
+          encoder.encode(
+            serializeNdjsonChunk({
+              type: "meta",
+              meta,
+            })
+          )
+        )
+
+        for (const notification of notifications) {
+          controller.enqueue(
+            encoder.encode(
+              serializeNdjsonChunk({
+                type: "notification",
+                data: notification,
+              })
+            )
+          )
+        }
+
+        controller.enqueue(
+          encoder.encode(serializeNdjsonChunk({ type: "end" }))
+        )
+        controller.close()
+      } catch (streamError) {
+        controller.error(streamError)
+      }
+    },
+  })
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": NDJSON_CONTENT_TYPE,
+      "Cache-Control": "no-store",
     },
   })
 }

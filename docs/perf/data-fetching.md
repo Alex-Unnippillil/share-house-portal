@@ -2,6 +2,16 @@
 
 Roomsily consolidates common Supabase queries into shared helpers to minimize network chatter and keep client components lean. Use these modules whenever you need document or member data so filters and role-based scoping stay consistent across the app.
 
+## Streaming API responses
+
+- **Endpoints:** `GET /api/notifications` and `GET /api/documents` emit newline-delimited JSON (`application/x-ndjson`) when clients send the matching `Accept` header. Each stream begins with a `meta` object, yields one object per record (`type: "notification"` or `type: "document"`), and terminates with `{ "type": "end" }` so consumers know the batch is complete.【F:app/api/notifications/route.ts†L1-L214】【F:app/api/documents/route.ts†L1-L147】
+- **Client helper:** `utils/streaming.ts` parses the NDJSON stream, updates UI incrementally, and automatically falls back to plain JSON when a browser does not expose a readable body (the API responds with standard JSON whenever the `Accept` header omits the NDJSON content type).【F:utils/streaming.ts†L1-L104】【F:components/notifications/notification-center.tsx†L1-L317】【F:app/documents/components/documents-list.tsx†L1-L214】
+- **Fallback behaviour:** Legacy clients can simply request `application/json`; the routes return the full payload in a single JSON object, and the helper treats it as the same shape. This keeps progressive rendering opt-in and backwards compatible.【F:app/api/notifications/route.ts†L162-L190】【F:app/api/documents/route.ts†L95-L112】
+
+### Latency measurements
+
+`scripts/benchmark-streaming.mjs` simulates large batches and contrasts full JSON parsing with the new streaming reader. On a local run with 1,500 notifications and 500 document rows, the stream started delivering data ~1.1–1.4 ms after the request began while plain JSON required 3–4.5 ms before any records were available.【9d5435†L1-L7】 Use `node scripts/benchmark-streaming.mjs` to regenerate these numbers when payload shapes change.【F:scripts/benchmark-streaming.mjs†L1-L135】
+
 ## `lib/data/documents.ts`
 
 ### `fetchDocumentsList`

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
+import { documentListFiltersSchema } from '@/lib/validation/documents';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
@@ -34,15 +35,6 @@ const documentSigningSchema = z.object({
   signer_name: z.string().optional(),
   message: z.string().optional(),
   expires_in_days: z.number().min(1).max(365).optional(),
-});
-
-const documentListFiltersSchema = z.object({
-  status: z.array(z.enum(['draft', 'pending_signature', 'signed', 'expired', 'cancelled'])).optional(),
-  type: z.array(z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other'])).optional(),
-  tenant_id: z.string().uuid().optional(),
-  unit_id: z.string().optional(),
-  date_from: z.string().datetime().optional(),
-  date_to: z.string().datetime().optional(),
 });
 
 // Action result interface
