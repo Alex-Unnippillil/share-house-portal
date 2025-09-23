@@ -11,15 +11,16 @@ export default function SideNav() {
 }
 
 export const SideBar = ({ className }: { className?: string }) => {
-	return (
-		<div className={className}>
-			<div
-				className={cn(
-					"flex size-full flex-col space-y-5 lg:w-96 lg:border-r lg:p-10 "
-				)}
-			>
-				<div className="flex-1 space-y-5">
-					<div className="flex flex-1 items-center gap-2">
+        return (
+                <div className={className}>
+                        <div
+                                className={cn(
+                                        "flex size-full flex-col space-y-5 lg:w-96 lg:border-r lg:p-10 "
+                                )}
+                                data-tour-id="dashboard-navigation"
+                        >
+                                <div className="flex-1 space-y-5">
+                                        <div className="flex flex-1 items-center gap-2">
                                         <div>
                                                 <h1 className="text-3xl font-semibold">Roomsily</h1>
                                                 <p className="text-sm text-muted-foreground">www.roomsily household hub</p>

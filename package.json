@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "css:purge": "node scripts/check-css-size.mjs"
   },
   "dependencies": {
@@ -78,6 +79,7 @@
     "@types/node": "^20.19.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@playwright/test": "^1.41.2",
     "@typescript-eslint/parser": "^7.16.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
