@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { Paperclip } from "lucide-react"
+import { ShareThreadButton } from "./_components/share-thread-button"
 
 type ThreadListItem = {
   id: string
@@ -149,6 +150,7 @@ const threadList: ThreadListItem[] = [
 ]
 
 const activeThread = {
+  id: "chore-rotation",
   title: "Q2 chore rotation plan",
   summary:
     "Keep the shared areas sparkling with a rotation everyone can reference — vote on the deep clean weekend and review updated checklists in one place.",
@@ -436,7 +438,20 @@ export default function MessagingPage() {
                   <CardTitle>{activeThread.title}</CardTitle>
                   <CardDescription>{activeThread.summary}</CardDescription>
                 </div>
-                <Badge variant="secondary">{activeThread.category}</Badge>
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                  <Badge variant="secondary" className="w-fit">{activeThread.category}</Badge>
+                  <ShareThreadButton
+                    thread={{
+                      id: activeThread.id,
+                      title: activeThread.title,
+                      summary: activeThread.summary,
+                      category: activeThread.category,
+                      participants: activeThread.participants,
+                      lastMessageAt: activeThread.updated,
+                      href: `/messaging?thread=${activeThread.id}`,
+                    }}
+                  />
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                 <span>Owner: {activeThread.owner}</span>
