@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,7 +42,39 @@ export function UploadDocumentDialog() {
   });
   const [file, setFile] = useState<File | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [shareApplied, setShareApplied] = useState(false);
+  const [shareInfo, setShareInfo] = useState<{ url?: string; fileName?: string } | null>(null);
   const permissions = useDocumentPermissions();
+
+  useEffect(() => {
+    if (shareApplied) return;
+
+    const intent = searchParams.get('shareIntent');
+    if (intent !== 'document') return;
+
+    const sharedTitle = searchParams.get('shareTitle') ?? undefined;
+    const sharedDescription = searchParams.get('shareDescription') ?? undefined;
+    const sharedUrl = searchParams.get('shareUrl') ?? undefined;
+    const sharedFileName = searchParams.get('shareFileName') ?? undefined;
+
+    setFormData(prev => ({
+      ...prev,
+      title: sharedTitle ?? sharedFileName ?? prev.title,
+      description: sharedDescription ?? prev.description,
+    }));
+
+    setShareInfo(sharedUrl || sharedFileName ? { url: sharedUrl, fileName: sharedFileName ?? undefined } : null);
+    setShareApplied(true);
+    setOpen(true);
+    toast.success('Document details imported from share');
+
+    if (typeof window !== 'undefined') {
+      const next = new URL(window.location.href);
+      ['shareIntent', 'shareTitle', 'shareDescription', 'shareUrl', 'shareFileName'].forEach(param => next.searchParams.delete(param));
+      router.replace(`${next.pathname}${next.search}`, { scroll: false });
+    }
+  }, [searchParams, router, shareApplied]);
 
   // Don't render upload button if user doesn't have permission
   if (!permissions.canUploadDocuments) {
@@ -146,6 +178,16 @@ export function UploadDocumentDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {shareInfo && (
+            <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 text-sm text-primary">
+              <p className="font-medium">Imported from share</p>
+              <p className="text-xs text-primary/80">
+                {shareInfo.fileName ? shareInfo.fileName : 'Document details'}
+                {shareInfo.url ? ` • ${shareInfo.url}` : ''}
+              </p>
+            </div>
+          )}
+
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="file">Document File</Label>

@@ -5,6 +5,31 @@
   "start_url": "/", 
   "display": "standalone",
   "background_color": "#fff",
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "documents",
+          "accept": [
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "image/*"
+          ]
+        },
+        {
+          "name": "calendar",
+          "accept": ["text/calendar", "application/ics", "application/x-ics"]
+        }
+      ]
+    }
+  },
   "icons": [
     {
       "src": "images/touch/homescreen48.png",
