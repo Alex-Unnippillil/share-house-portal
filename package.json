@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "perf:check": "ts-node --project tsconfig.scripts.json scripts/run-performance-budgets.ts",
+    "perf:ci": "pnpm run build && pnpm run perf:check"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -80,13 +82,17 @@
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/parser": "^7.16.0",
     "autoprefixer": "^10.4.16",
+    "chrome-launcher": "^1.2.0",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.2.4",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-tailwindcss": "^3.14.2",
+    "lighthouse": "^12.8.2",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "typescript": "^5.5.4",
     "vitest": "^3.2.4"
   }
