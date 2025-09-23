@@ -45,6 +45,7 @@ export type Database = {
         stripe_customer_id: string | null
         rent_share: number | null
         metadata: Json | null
+        onboarding_steps: Json | null
       }>
       documents: SupabaseTable<{
         id: string
