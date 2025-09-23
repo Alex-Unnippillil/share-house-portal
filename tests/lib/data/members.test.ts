@@ -85,13 +85,14 @@ describe('fetchMemberProfile', () => {
       full_name: 'User Example',
       role: 'tenant',
       unit_id: 'unit-1',
+      rent_share: 50,
     };
     const builder = createSingleBuilder({ data: profile, error: null });
     const supabase = createProfilesStub(builder);
 
     const result = await fetchMemberProfile(supabase as any, 'user-1');
 
-    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id');
+    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id, rent_share');
     expect(builder.eq).toHaveBeenCalledWith('id', 'user-1');
     expect(result).toEqual(profile);
   });
@@ -109,8 +110,22 @@ describe('fetchMemberProfile', () => {
 describe('fetchMembersByUnit', () => {
   it('applies filters and returns members', async () => {
     const members = [
-      { id: 'user-1', email: '1@example.com', full_name: 'One', role: 'tenant', unit_id: 'unit-1' },
-      { id: 'user-2', email: '2@example.com', full_name: 'Two', role: 'roommate', unit_id: 'unit-1' },
+      {
+        id: 'user-1',
+        email: '1@example.com',
+        full_name: 'One',
+        role: 'tenant',
+        unit_id: 'unit-1',
+        rent_share: 60,
+      },
+      {
+        id: 'user-2',
+        email: '2@example.com',
+        full_name: 'Two',
+        role: 'roommate',
+        unit_id: 'unit-1',
+        rent_share: 40,
+      },
     ];
     const builder = createMultiBuilder({ data: members, error: null });
     const supabase = createProfilesStub(builder);
@@ -120,7 +135,7 @@ describe('fetchMembersByUnit', () => {
       roles: ['tenant'],
     });
 
-    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id');
+    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id, rent_share');
     expect(builder.eq).toHaveBeenCalledWith('unit_id', 'unit-1');
     expect(builder.neq).toHaveBeenCalledWith('id', 'user-2');
     expect(builder.in).toHaveBeenCalledWith('role', ['tenant']);
