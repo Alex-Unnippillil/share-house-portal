@@ -10,6 +10,7 @@ import "./globals.css"
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { CookieButton } from "@/components/cookie-button"
+import { BottomNav } from "@/components/bottom-nav"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
@@ -132,7 +133,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           >
              <div className="relative flex min-h-screen flex-col">
               {/* <SiteHeader /> */}
-              <div className="flex-1">
+              <div className="flex-1 pb-24 md:pb-0">
                 <ErrorBoundary>
                   <Suspense fallback={<RouteSkeleton />}>
                     {children}
@@ -155,6 +156,7 @@ enter your api info from termly.io or a provider of your choice
 
  */}
    <CookieButton />
+   <BottomNav />
    <TailwindIndicator />
           </ThemeProvider>
 
