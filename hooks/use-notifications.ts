@@ -178,6 +178,9 @@ export function useNotifications() {
       type: "info",
       actionUrl: "/visitors",
       metadata: templateData,
+      threadId: "visitor-bookings",
+      threadLabel: "Visitor Bookings",
+      source: "visitors",
     })
 
     for (const roommate of data.roommates) {
@@ -198,6 +201,9 @@ export function useNotifications() {
         type: "info",
         actionUrl: "/visitors",
         metadata: templateData,
+        threadId: "visitor-bookings",
+        threadLabel: "Visitor Bookings",
+        source: "visitors",
       })
     }
 
@@ -227,6 +233,9 @@ export function useNotifications() {
         message: `${data.requesterName} reported: ${data.title}`,
         type: "warning" as const,
         actionUrl: "/dashboard",
+        threadId: "maintenance-requests",
+        threadLabel: "Maintenance Requests",
+        source: "maintenance",
       },
     ]
 
@@ -257,6 +266,9 @@ export function useNotifications() {
         message: `Your payment of $${data.amount} has been processed.`,
         type: "success" as const,
         actionUrl: "/payments",
+        threadId: "payments",
+        threadLabel: "Payments",
+        source: "payments",
       },
     ]
 
@@ -286,6 +298,9 @@ export function useNotifications() {
         message: `You have successfully signed "${data.documentTitle}"`,
         type: "success" as const,
         actionUrl: "/documents",
+        threadId: "documents",
+        threadLabel: "Documents",
+        source: "documents",
       },
     ]
 

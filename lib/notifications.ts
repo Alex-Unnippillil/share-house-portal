@@ -1,7 +1,14 @@
 "use server"
 
-import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
+import type { SupabaseClient } from "@supabase/supabase-js"
+
+import {
+  ensureThreadId,
+  ensureThreadSource,
+  formatThreadLabel,
+} from "@/lib/notifications/thread-utils"
+import { createSupbaseServerClient } from "@/utils/supaone"
 
 export interface NotificationData {
   to: string | string[]
@@ -18,6 +25,9 @@ export interface InAppNotification {
   type: "info" | "success" | "warning" | "error"
   actionUrl?: string
   metadata?: Record<string, any>
+  threadId?: string
+  threadLabel?: string
+  source?: string
 }
 
 class NotificationService {
@@ -90,6 +100,34 @@ class NotificationService {
     try {
       const supabase = await createSupbaseServerClient()
 
+      const threadId = ensureThreadId(notification.threadId)
+      const source = ensureThreadSource(notification.source)
+      const metadataLabel =
+        notification.metadata &&
+        typeof notification.metadata === "object" &&
+        !Array.isArray(notification.metadata) &&
+        typeof (notification.metadata as Record<string, unknown>).threadLabel ===
+          "string"
+          ? String(
+              (notification.metadata as Record<string, unknown>).threadLabel
+            )
+          : undefined
+
+      const threadLabel = formatThreadLabel(
+        source,
+        notification.threadLabel ?? metadataLabel
+      )
+
+      const isMuted = await this.isThreadMuted(
+        supabase as SupabaseClient,
+        notification.userId,
+        threadId
+      )
+
+      if (isMuted) {
+        return { success: true, skipped: true as const }
+      }
+
       const { data, error } = await (supabase as any)
         .from("notifications")
         .insert({
@@ -101,6 +139,9 @@ class NotificationService {
           metadata: notification.metadata,
           read: false,
           created_at: new Date().toISOString(),
+          thread_id: threadId,
+          source,
+          thread_label: threadLabel,
         })
 
       if (error) {
@@ -115,6 +156,31 @@ class NotificationService {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       }
+    }
+  }
+
+  private async isThreadMuted(
+    supabase: SupabaseClient,
+    userId: string,
+    threadId: string
+  ): Promise<boolean> {
+    try {
+      const { data, error } = await (supabase as any)
+        .from("notification_thread_preferences")
+        .select("muted")
+        .eq("user_id", userId)
+        .eq("thread_id", threadId)
+        .maybeSingle()
+
+      if (error) {
+        console.error("Failed to read notification preference:", error)
+        return false
+      }
+
+      return Boolean(data?.muted)
+    } catch (error) {
+      console.error("Notification preference lookup failed:", error)
+      return false
     }
   }
 

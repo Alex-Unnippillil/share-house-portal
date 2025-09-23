@@ -154,6 +154,9 @@ async function handleCheckoutSessionCompleted(
                 message: `Your payment of $${paymentData.amount} has been processed successfully.`,
                 type: "success",
                 actionUrl: "/payments",
+                threadId: "payments",
+                threadLabel: "Payments",
+                source: "payments",
               })
             }
           } catch (notificationError) {
