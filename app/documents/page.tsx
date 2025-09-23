@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { cookies } from 'next/headers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FileText, Users, Clock, Upload } from 'lucide-react';
@@ -8,8 +9,64 @@ import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
 import { DocumentListFilters } from '@/types/documents';
+import {
+  parseDocumentFiltersFromSearchParams,
+  normalizeDocumentFilters,
+  isDocumentFilterEmpty,
+} from '@/lib/document-filter-params';
+import { fetchSavedDocumentViewBySlug } from '@/lib/data/documents';
+import createSupabaseServer from '@/utils/supabase-server';
+import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 
-export default function DocumentsPage() {
+export const dynamic = 'force-dynamic';
+
+type DocumentsPageSearchParams = Record<string, string | string[] | undefined>;
+
+interface DocumentsPageProps {
+  searchParams?: DocumentsPageSearchParams;
+}
+
+function toViewSlug(value: string | string[] | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function mergeFilters(
+  urlFilters: DocumentListFilters,
+  savedViewFilters: DocumentListFilters | undefined
+): DocumentListFilters {
+  if (savedViewFilters && isDocumentFilterEmpty(urlFilters)) {
+    return normalizeDocumentFilters(savedViewFilters);
+  }
+
+  return normalizeDocumentFilters(urlFilters);
+}
+
+export default async function DocumentsPage({ searchParams = {} }: DocumentsPageProps) {
+  const filtersFromParams = parseDocumentFiltersFromSearchParams(searchParams);
+  const viewSlug = toViewSlug(searchParams.view);
+
+  let initialSavedView: Awaited<ReturnType<typeof fetchSavedDocumentViewBySlug>> = null;
+
+  if (viewSlug) {
+    try {
+      const cookieStore = cookies();
+      const supabase = createSupabaseServer(cookieStore);
+      const typedSupabase = supabase as unknown as TypedSupabaseClient;
+      initialSavedView = await fetchSavedDocumentViewBySlug({
+        client: typedSupabase,
+        slug: viewSlug,
+      });
+    } catch (error) {
+      console.error('Failed to load saved document view:', error);
+    }
+  }
+
+  const effectiveFilters = mergeFilters(filtersFromParams, initialSavedView?.filters);
+
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
@@ -26,36 +83,45 @@ export default function DocumentsPage() {
       </header>
 
       {/* Stats Overview */}
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
+      <Suspense
+        fallback={<div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="pb-2">
+                <div className="h-4 w-3/4 rounded bg-muted"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-1/2 rounded bg-muted"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>}
+      >
         <DocumentsStats />
       </Suspense>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="all" className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <TabsList className="grid w-full max-w-md grid-cols-4">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="leases">Leases</TabsTrigger>
             <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="signed">Signed</TabsTrigger>
           </TabsList>
-          <DocumentsFilters />
+          <DocumentsFilters
+            initialFilters={effectiveFilters}
+            initialSavedView={initialSavedView ? {
+              slug: initialSavedView.slug,
+              name: initialSavedView.name,
+              filters: initialSavedView.filters,
+            } : null}
+          />
         </div>
 
         <TabsContent value="all" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
+            <DocumentsList filter={effectiveFilters} />
           </Suspense>
         </TabsContent>
 

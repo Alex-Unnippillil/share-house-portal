@@ -95,6 +95,16 @@ export type Database = {
         user_agent: string | null
         metadata: Json | null
       }>
+      saved_views: SupabaseTable<{
+        id: string
+        slug: string
+        name: string
+        resource: string
+        filters: Json | null
+        created_by: string
+        created_at: string | null
+        updated_at: string | null
+      }>
       leases: SupabaseTable<{
         id: string
         document_id: string
