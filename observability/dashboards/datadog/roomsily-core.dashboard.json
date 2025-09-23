@@ -1,0 +1,210 @@
+{
+  "id": "roomsily-core-health",
+  "title": "Roomsily Core Health",
+  "description": "Roomsily core services dashboard exported via API. Tracks Next.js, Supabase, and Stripe performance baselines.",
+  "layout_type": "ordered",
+  "is_read_only": false,
+  "notify_list": ["observability@roomsily.com"],
+  "template_variables": [
+    {
+      "name": "service",
+      "prefix": "service",
+      "available_values": ["roomsily-portal", "supabase-api", "stripe-webhooks"],
+      "default": "roomsily-portal"
+    },
+    {
+      "name": "env",
+      "prefix": "env",
+      "available_values": ["production", "staging"],
+      "default": "production"
+    }
+  ],
+  "widgets": [
+    {
+      "definition": {
+        "title": "HTTP 5xx rate",
+        "type": "timeseries",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "q": "sum:trace.http.request.hits{service:$service,env:$env,status:5xx}.as_rate()",
+            "display_type": "line",
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            }
+          }
+        ],
+        "yaxis": {
+          "scale": "linear",
+          "include_zero": true,
+          "min": "auto",
+          "max": "auto"
+        }
+      },
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 47,
+        "height": 16
+      }
+    },
+    {
+      "definition": {
+        "title": "Average latency by tier",
+        "type": "timeseries",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "q": "avg:last_5m:trace.http.request.duration{service:roomsily-portal,env:$env}.rollup(avg, 60)",
+            "display_type": "line",
+            "style": {
+              "palette": "cool",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:last_5m:trace.http.request.duration{service:roomsily-portal,env:$env}.rollup(avg, 60)",
+                "alias_name": "Next.js"
+              }
+            ]
+          },
+          {
+            "response_format": "timeseries",
+            "q": "avg:last_5m:db.query.duration{service:supabase-api,env:$env}.rollup(avg, 60)",
+            "display_type": "line",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:last_5m:db.query.duration{service:supabase-api,env:$env}.rollup(avg, 60)",
+                "alias_name": "Supabase"
+              }
+            ]
+          },
+          {
+            "response_format": "timeseries",
+            "q": "avg:last_5m:trace.http.request.duration{service:stripe-webhooks,env:$env}.rollup(avg, 60)",
+            "display_type": "line",
+            "style": {
+              "palette": "orange",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "metadata": [
+              {
+                "expression": "avg:last_5m:trace.http.request.duration{service:stripe-webhooks,env:$env}.rollup(avg, 60)",
+                "alias_name": "Stripe webhooks"
+              }
+            ]
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 16,
+        "width": 47,
+        "height": 16
+      }
+    },
+    {
+      "definition": {
+        "type": "group",
+        "layout_type": "ordered",
+        "title": "Error budgets",
+        "widgets": [
+          {
+            "definition": {
+              "title": "Tenant web experience availability (30d)",
+              "type": "query_value",
+              "requests": [
+                {
+                  "formulas": [
+                    {
+                      "formula": "query1"
+                    }
+                  ],
+                  "response_format": "scalar",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "query1",
+                      "query": "100 - (sum:synthetics.http.up{test:roomsily-tenant,env:$env}.fill(null,0)/sum:synthetics.http.tests{test:roomsily-tenant,env:$env}) * 100"
+                    }
+                  ]
+                }
+              ],
+              "autoscale": true,
+              "precision": 2
+            },
+            "layout": {
+              "x": 0,
+              "y": 0,
+              "width": 23,
+              "height": 8
+            }
+          },
+          {
+            "definition": {
+              "title": "Supabase error budget burn (30d)",
+              "type": "query_value",
+              "requests": [
+                {
+                  "formulas": [
+                    {
+                      "formula": "query1"
+                    }
+                  ],
+                  "response_format": "scalar",
+                  "queries": [
+                    {
+                      "data_source": "metrics",
+                      "name": "query1",
+                      "query": "sum:last_30d:trace.http.request.errors{service:supabase-api,env:$env}.as_rate()"
+                    }
+                  ]
+                }
+              ],
+              "autoscale": true,
+              "precision": 2
+            },
+            "layout": {
+              "x": 23,
+              "y": 0,
+              "width": 23,
+              "height": 8
+            }
+          }
+        ]
+      },
+      "layout": {
+        "x": 0,
+        "y": 32,
+        "width": 47,
+        "height": 12
+      }
+    },
+    {
+      "definition": {
+        "title": "Incident timeline",
+        "type": "event_stream",
+        "query": "sources:roomsily.incidents priority:(p0 OR p1)",
+        "event_size": "s",
+        "tags_execution": "and"
+      },
+      "layout": {
+        "x": 0,
+        "y": 44,
+        "width": 47,
+        "height": 12
+      }
+    }
+  ],
+  "reflow_type": "auto",
+  "tags": ["roomsily", "observability", "exported:v1"]
+}

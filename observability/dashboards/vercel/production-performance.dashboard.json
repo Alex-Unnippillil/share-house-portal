@@ -1,0 +1,71 @@
+{
+  "projectId": "roomsily-portal",
+  "slug": "production-performance",
+  "title": "Production Web Vitals",
+  "description": "Exported Vercel Web Analytics queries powering the Roomsily production dashboard.",
+  "timeRange": {
+    "unit": "day",
+    "value": 7
+  },
+  "panels": [
+    {
+      "id": "core-web-vitals",
+      "title": "Core Web Vitals",
+      "type": "timeseries",
+      "query": {
+        "endpoint": "/v1/analytics/queries",
+        "metric": "web_vitals",
+        "params": {
+          "projectId": "roomsily-portal",
+          "fields": ["lcp", "fid", "cls"],
+          "environment": "production"
+        }
+      }
+    },
+    {
+      "id": "lambda-duration",
+      "title": "Edge & Serverless duration p95",
+      "type": "timeseries",
+      "query": {
+        "endpoint": "/v1/insights/requests",
+        "metric": "duration",
+        "params": {
+          "projectId": "roomsily-portal",
+          "groupBy": ["deploymentId"],
+          "aggregation": "p95"
+        }
+      }
+    },
+    {
+      "id": "deployment-health",
+      "title": "Deployment success rate",
+      "type": "stat",
+      "query": {
+        "endpoint": "/v6/deployments",
+        "metric": "deployment_success_rate",
+        "params": {
+          "projectId": "roomsily-portal",
+          "environment": "production"
+        }
+      },
+      "thresholds": [
+        {
+          "level": "warning",
+          "lte": 98
+        },
+        {
+          "level": "critical",
+          "lte": 95
+        }
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "type": "maintenance",
+      "label": "Scheduled Supabase maintenance",
+      "start": "2024-06-12T02:00:00Z",
+      "end": "2024-06-12T04:00:00Z"
+    }
+  ]
+}
