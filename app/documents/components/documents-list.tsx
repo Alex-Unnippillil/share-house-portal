@@ -1,6 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+'use client'
+
+import React, { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,37 +13,45 @@ import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
 
+void React;
+
 interface DocumentsListProps {
   filter: DocumentListFilters;
 }
 
 export function DocumentsList({ filter }: DocumentsListProps) {
-  const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const normalizedFilter = useMemo(() => normalizeFilter(filter), [filter])
+  const filterSignature = useMemo(
+    () => JSON.stringify(normalizedFilter),
+    [normalizedFilter],
+  )
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await getDocumentsAction(filter);
-        if (result.success && result.data) {
-          setDocuments(result.data);
-          setError(null);
-        } else {
-          setError(result.error || 'Failed to fetch documents');
-        }
-      } catch (err) {
-        console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
-      } finally {
-        setLoading(false);
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['documents', filterSignature],
+    queryFn: async () => {
+      const result = await getDocumentsAction(normalizedFilter)
+      if (result.success && result.data) {
+        return result.data
       }
-    };
 
-    fetchDocuments();
-  }, [filter]);
+      throw new Error(result.error || 'Failed to fetch documents')
+    },
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+  })
+
+  const documents = data ?? []
+  const errorMessage = isError
+    ? error instanceof Error
+      ? error.message
+      : 'Failed to fetch documents'
+    : null
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -79,7 +90,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     }
   };
 
-  if (loading) {
+  if (isPending && documents.length === 0) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
@@ -108,16 +119,18 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   }
 
-  if (error) {
+  if (errorMessage) {
     return (
       <Card className="p-6">
         <div className="text-center">
           <p className="mb-2 text-destructive">Error loading documents</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-sm text-muted-foreground">{errorMessage}</p>
           <Button
             variant="outline"
             className="mt-4"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              void refetch()
+            }}
           >
             Try Again
           </Button>
@@ -216,3 +229,36 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     </div>
   );
 }
+
+function normalizeFilter(filter: DocumentListFilters): DocumentListFilters {
+  const source = filter ?? {}
+  const normalized: DocumentListFilters = {}
+
+  if (source.status?.length) {
+    normalized.status = [...source.status].sort()
+  }
+
+  if (source.type?.length) {
+    normalized.type = [...source.type].sort()
+  }
+
+  if (source.tenant_id) {
+    normalized.tenant_id = source.tenant_id
+  }
+
+  if (source.unit_id) {
+    normalized.unit_id = source.unit_id
+  }
+
+  if (source.date_from) {
+    normalized.date_from = source.date_from
+  }
+
+  if (source.date_to) {
+    normalized.date_to = source.date_to
+  }
+
+  return normalized
+}
+
+export { DocumentsList as DocumentList }
