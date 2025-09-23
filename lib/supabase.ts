@@ -179,6 +179,18 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      support_feedback: SupabaseTable<{
+        id: string
+        created_at: string | null
+        notes: string | null
+        page_url: string | null
+        user_agent: string | null
+        timezone: string | null
+        console_logs: Json | null
+        network_har: Json | null
+        attachments: Json | null
+        submitted_by: string | null
+      }>
       maintenance_requests: SupabaseTable<{
         id: string
         title: string
