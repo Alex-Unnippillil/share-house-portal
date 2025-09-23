@@ -197,6 +197,26 @@ export type Database = {
         attachments: Json | null
         metadata: Json | null
       }>
+      nps_responses: SupabaseTable<{
+        id: string
+        user_id: string
+        score: number
+        feedback: string | null
+        quarter_start: string
+        quarter_end: string
+        submitted_at: string | null
+        metadata: Json | null
+      }>
+      csat_responses: SupabaseTable<{
+        id: string
+        user_id: string
+        flow: string
+        context_identifier: string
+        score: number
+        comment: string | null
+        submitted_at: string | null
+        metadata: Json | null
+      }>
       visitor_logs: SupabaseTable<{
         id: string
         guest_name: string
