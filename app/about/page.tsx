@@ -3,25 +3,26 @@
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { ChevronRight, Star, Zap, Shield } from "lucide-react"
-import { Contact } from '@/components/forms/contact'
+import { Star, Zap, Shield } from "lucide-react"
+import { Contact } from "@/components/forms/contact"
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion"
 
 export default function AboutPage() {
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const animationEnabled = !prefersReducedMotion
+
   return (
     <div className="container mx-auto px-4 py-12">
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={animationEnabled ? { opacity: 0, y: 20 } : false}
+        animate={animationEnabled ? { opacity: 1, y: 0 } : undefined}
+        transition={animationEnabled ? { duration: 0.5 } : undefined}
         className="mb-16 text-center"
       >
         <motion.h1
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5 }}
+          initial={animationEnabled ? { scale: 0.9 } : false}
+          animate={animationEnabled ? { scale: 1 } : undefined}
+          transition={animationEnabled ? { duration: 0.5 } : undefined}
           className="mb-4 text-4xl font-bold"
         >
           About Our Company
@@ -32,9 +33,9 @@ export default function AboutPage() {
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        initial={animationEnabled ? { opacity: 0 } : false}
+        animate={animationEnabled ? { opacity: 1 } : undefined}
+        transition={animationEnabled ? { duration: 0.5, delay: 0.2 } : undefined}
         className="mb-16"
       >
         <h2 className="mb-8 text-center text-2xl font-semibold">Our Team</h2>
@@ -42,9 +43,9 @@ export default function AboutPage() {
           {teamMembers.map((member, index) => (
             <motion.div
               key={member.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              initial={animationEnabled ? { opacity: 0, y: 20 } : false}
+              animate={animationEnabled ? { opacity: 1, y: 0 } : undefined}
+              transition={animationEnabled ? { duration: 0.5, delay: index * 0.1 } : undefined}
             >
               <Card>
                 <CardHeader className="text-center">
@@ -70,9 +71,9 @@ export default function AboutPage() {
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
+        initial={animationEnabled ? { opacity: 0 } : false}
+        animate={animationEnabled ? { opacity: 1 } : undefined}
+        transition={animationEnabled ? { duration: 0.5, delay: 0.4 } : undefined}
         className="mb-16"
       >
         <h2 className="mb-8 text-center text-2xl font-semibold">Our Values</h2>
@@ -80,9 +81,9 @@ export default function AboutPage() {
           {values.map((value, index) => (
             <motion.div
               key={value.title}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              initial={animationEnabled ? { opacity: 0, scale: 0.9 } : false}
+              animate={animationEnabled ? { opacity: 1, scale: 1 } : undefined}
+              transition={animationEnabled ? { duration: 0.5, delay: index * 0.1 } : undefined}
               className="text-center"
             >
               <div className="mb-4">{value.icon}</div>
@@ -94,9 +95,9 @@ export default function AboutPage() {
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
+        initial={animationEnabled ? { opacity: 0 } : false}
+        animate={animationEnabled ? { opacity: 1 } : undefined}
+        transition={animationEnabled ? { duration: 0.5, delay: 0.6 } : undefined}
         className="mb-16"
       >
         <Card>

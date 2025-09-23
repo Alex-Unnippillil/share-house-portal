@@ -2,8 +2,8 @@
 
 "use client"
 
-import React, { useState, useRef, useEffect, useMemo } from "react"
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { Canvas, useFrame } from "@react-three/fiber"
 import {
   Text,
   PerspectiveCamera,
@@ -18,6 +18,7 @@ import * as THREE from "three"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CuboidIcon, Shield, Zap, Link, Cog, Database } from "lucide-react"
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion"
 
 // Add this after the imports
 class ErrorBoundary extends React.Component {
@@ -120,6 +121,12 @@ const PHI = 1.618033988749895
 // Fibonacci sequence for timing
 const FIBONACCI = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55]
 
+const MotionPreferenceContext = createContext(false)
+
+function useMotionPreference() {
+  return useContext(MotionPreferenceContext)
+}
+
 // Create a hexagon shape
 function createHexagonShape(radius = 1) {
   const shape = new THREE.Shape()
@@ -156,22 +163,31 @@ function createHexagonalPrismGeometry(radius = 1, height = 0.2) {
 function PulsatingLight({ color, intensity = 1, frequency = 1, offset = 0, position = [0, 0, 0], scale = 1 }) {
   const lightRef = useRef()
   const materialRef = useRef()
+  const prefersReducedMotion = useMotionPreference()
 
   useFrame(({ clock }) => {
-    if (materialRef.current) {
-      // Use Fibonacci sequence to create natural-looking pulsation
-      const time = clock.getElapsedTime() * frequency
-      const fibIndex = Math.floor(time % 10)
-      const fibFactor = FIBONACCI[fibIndex] / 34 // Normalize to 0-1 range approximately
-
-      // Create pulsation with golden ratio influence
-      const pulse = Math.sin(time + offset * PHI) * 0.5 + 0.5
-      const finalIntensity = intensity * pulse * (1 + fibFactor / PHI)
-
-      // Reduced opacity and intensity values
-      materialRef.current.opacity = finalIntensity * 0.6 // Reduced from 1.0 to 0.6
-      materialRef.current.emissiveIntensity = finalIntensity * 1.2 // Reduced from 2.0 to 1.2
+    if (!materialRef.current) {
+      return
     }
+
+    if (prefersReducedMotion) {
+      materialRef.current.opacity = Math.min(intensity * 0.4, 1)
+      materialRef.current.emissiveIntensity = intensity * 0.8
+      return
+    }
+
+    // Use Fibonacci sequence to create natural-looking pulsation
+    const time = clock.getElapsedTime() * frequency
+    const fibIndex = Math.floor(time % 10)
+    const fibFactor = FIBONACCI[fibIndex] / 34 // Normalize to 0-1 range approximately
+
+    // Create pulsation with golden ratio influence
+    const pulse = Math.sin(time + offset * PHI) * 0.5 + 0.5
+    const finalIntensity = intensity * pulse * (1 + fibFactor / PHI)
+
+    // Reduced opacity and intensity values
+    materialRef.current.opacity = finalIntensity * 0.6 // Reduced from 1.0 to 0.6
+    materialRef.current.emissiveIntensity = finalIntensity * 1.2 // Reduced from 2.0 to 1.2
   })
 
   return (
@@ -193,6 +209,7 @@ function PulsatingLight({ color, intensity = 1, frequency = 1, offset = 0, posit
 function EnergyFlow({ from, to, color, active, speed = 1 }) {
   const particlesRef = useRef()
   const count = 20
+  const prefersReducedMotion = useMotionPreference()
   const [positions, sizes] = useMemo(() => {
     const positions = new Float32Array(count * 3)
     const sizes = new Float32Array(count)
@@ -211,37 +228,39 @@ function EnergyFlow({ from, to, color, active, speed = 1 }) {
   }, [from])
 
   useFrame(({ clock }) => {
-    if (particlesRef.current && active) {
-      const time = clock.getElapsedTime() * speed
-      const positions = particlesRef.current.geometry.attributes.position.array
-
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3
-        const particleOffset = (i / count) * PHI * 2 // Use golden ratio for offset
-
-        // Calculate progress along the path (0 to 1)
-        const progress = (time * 0.5 + particleOffset) % 1
-
-        // Interpolate position between from and to
-        positions[i3] = from[0] + (to[0] - from[0]) * progress
-        positions[i3 + 1] = from[1] + (to[1] - from[1]) * progress
-        positions[i3 + 2] = from[2] + (to[2] - from[2]) * progress
-
-        // Add some sinusoidal movement perpendicular to the path
-        const perpX = -(to[1] - from[1])
-        const perpZ = to[0] - from[0]
-        const perpLength = Math.sqrt(perpX * perpX + perpZ * perpZ)
-        if (perpLength > 0) {
-          const normalizedPerpX = perpX / perpLength
-          const normalizedPerpZ = perpZ / perpLength
-          const sineWave = Math.sin(progress * Math.PI * 2 * 3) * 0.1
-          positions[i3] += normalizedPerpX * sineWave
-          positions[i3 + 2] += normalizedPerpZ * sineWave
-        }
-      }
-
-      particlesRef.current.geometry.attributes.position.needsUpdate = true
+    if (!particlesRef.current || !active || prefersReducedMotion) {
+      return
     }
+
+    const time = clock.getElapsedTime() * speed
+    const positions = particlesRef.current.geometry.attributes.position.array
+
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3
+      const particleOffset = (i / count) * PHI * 2 // Use golden ratio for offset
+
+      // Calculate progress along the path (0 to 1)
+      const progress = (time * 0.5 + particleOffset) % 1
+
+      // Interpolate position between from and to
+      positions[i3] = from[0] + (to[0] - from[0]) * progress
+      positions[i3 + 1] = from[1] + (to[1] - from[1]) * progress
+      positions[i3 + 2] = from[2] + (to[2] - from[2]) * progress
+
+      // Add some sinusoidal movement perpendicular to the path
+      const perpX = -(to[1] - from[1])
+      const perpZ = to[0] - from[0]
+      const perpLength = Math.sqrt(perpX * perpX + perpZ * perpZ)
+      if (perpLength > 0) {
+        const normalizedPerpX = perpX / perpLength
+        const normalizedPerpZ = perpZ / perpLength
+        const sineWave = Math.sin(progress * Math.PI * 2 * 3) * 0.1
+        positions[i3] += normalizedPerpX * sineWave
+        positions[i3 + 2] += normalizedPerpZ * sineWave
+      }
+    }
+
+    particlesRef.current.geometry.attributes.position.needsUpdate = true
   })
 
   return (
@@ -254,7 +273,7 @@ function EnergyFlow({ from, to, color, active, speed = 1 }) {
         size={0.1}
         color={color}
         transparent
-        opacity={active ? 0.8 : 0}
+        opacity={prefersReducedMotion ? (active ? 0.3 : 0) : active ? 0.8 : 0}
         blending={THREE.AdditiveBlending}
         sizeAttenuation
       />
@@ -265,11 +284,14 @@ function EnergyFlow({ from, to, color, active, speed = 1 }) {
 // 3D Icon Components
 const Icon3D = ({ type, color, scale = 0.3, position = [0, 0, 0], rotation = [0, 0, 0] }) => {
   const meshRef = useRef()
+  const prefersReducedMotion = useMotionPreference()
 
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01
+  useFrame(() => {
+    if (!meshRef.current || prefersReducedMotion) {
+      return
     }
+
+    meshRef.current.rotation.y += 0.01
   })
 
   // Create different 3D geometries based on icon type
@@ -388,6 +410,7 @@ function HolographicIcon({ type, color, scale = 0.3, position = [0, 0, 0], rotat
   const groupRef = useRef()
   const materialRef = useRef()
   const glitchRef = useRef()
+  const prefersReducedMotion = useMotionPreference()
 
   // Create a scan line effect
   const scanLineTexture = useMemo(() => {
@@ -419,24 +442,34 @@ function HolographicIcon({ type, color, scale = 0.3, position = [0, 0, 0], rotat
   // Animation for holographic effect
   useFrame(({ clock }) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += 0.01
+      if (prefersReducedMotion) {
+        groupRef.current.rotation.y = 0
+      } else {
+        groupRef.current.rotation.y += 0.01
+      }
     }
 
     if (materialRef.current) {
-      // Pulsating opacity
-      const time = clock.getElapsedTime()
-      materialRef.current.opacity = 0.7 + Math.sin(time * 2) * 0.15
+      if (prefersReducedMotion) {
+        materialRef.current.opacity = 0.8
+        materialRef.current.emissive.set(color)
+        scanLineTexture.offset.y = 0
+      } else {
+        // Pulsating opacity
+        const time = clock.getElapsedTime()
+        materialRef.current.opacity = 0.7 + Math.sin(time * 2) * 0.15
 
-      // Color shifting
-      const hue = (time * 0.1) % 1
-      materialRef.current.emissive.setHSL(hue, 0.5, 0.5)
+        // Color shifting
+        const hue = (time * 0.1) % 1
+        materialRef.current.emissive.setHSL(hue, 0.5, 0.5)
 
-      // Scan line movement
-      scanLineTexture.offset.y = (time * 0.2) % 1
+        // Scan line movement
+        scanLineTexture.offset.y = (time * 0.2) % 1
+      }
     }
 
     // Random glitches
-    if (glitchRef.current && Math.random() < 0.01) {
+    if (!prefersReducedMotion && glitchRef.current && Math.random() < 0.01) {
       glitchRef.current.position.x = (Math.random() - 0.5) * 0.05
       setTimeout(() => {
         if (glitchRef.current) glitchRef.current.position.x = 0
@@ -757,13 +790,21 @@ function HolographicIcon({ type, color, scale = 0.3, position = [0, 0, 0], rotat
 function EnhancedCosmicTrail({ target, active, color }) {
   const trailRef = useRef()
   const trailMaterialRef = useRef()
+  const prefersReducedMotion = useMotionPreference()
 
   useFrame(() => {
-    if (trailMaterialRef.current) {
-      trailMaterialRef.current.opacity = active
-        ? THREE.MathUtils.lerp(trailMaterialRef.current.opacity, 0.7, 0.1)
-        : THREE.MathUtils.lerp(trailMaterialRef.current.opacity, 0, 0.05)
+    if (!trailMaterialRef.current) {
+      return
     }
+
+    if (prefersReducedMotion) {
+      trailMaterialRef.current.opacity = active ? 0.2 : 0
+      return
+    }
+
+    trailMaterialRef.current.opacity = active
+      ? THREE.MathUtils.lerp(trailMaterialRef.current.opacity, 0.7, 0.1)
+      : THREE.MathUtils.lerp(trailMaterialRef.current.opacity, 0, 0.05)
   })
 
   return (
@@ -785,6 +826,7 @@ function EnhancedNorthernLights({ active, intensity = 1 }) {
   const count = 200 // Increased particle count
   const pointsRef = useRef()
   const materialRef = useRef()
+  const prefersReducedMotion = useMotionPreference()
 
   // Create points for northern lights effect
   const [positions, colors, sizes] = useMemo(() => {
@@ -823,28 +865,35 @@ function EnhancedNorthernLights({ active, intensity = 1 }) {
 
   // Animate the northern lights
   useFrame(({ clock }) => {
-    if (pointsRef.current && materialRef.current) {
-      const time = clock.getElapsedTime() * 0.2
-
-      const positions = pointsRef.current.geometry.attributes.position.array
-
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3
-
-        // Create more dynamic wave-like motion using golden ratio
-        positions[i3 + 1] =
-          Math.sin(time + positions[i3] * 0.1) * 3 +
-          Math.sin(time * 0.8 + positions[i3 + 2] * 0.1) * 3 +
-          Math.sin(time * PHI + positions[i3] * 0.05) * 2 // Additional wave with golden ratio timing
-      }
-
-      pointsRef.current.geometry.attributes.position.needsUpdate = true
-
-      // Adjust opacity based on active state with higher base visibility
-      materialRef.current.opacity = active
-        ? THREE.MathUtils.lerp(materialRef.current.opacity, 0.9 * intensity, 0.05)
-        : THREE.MathUtils.lerp(materialRef.current.opacity, 0.2, 0.05) // Keep some visibility even when not active
+    if (!pointsRef.current || !materialRef.current) {
+      return
     }
+
+    if (prefersReducedMotion) {
+      materialRef.current.opacity = active ? 0.3 * intensity : 0.1
+      return
+    }
+
+    const time = clock.getElapsedTime() * 0.2
+
+    const positions = pointsRef.current.geometry.attributes.position.array
+
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3
+
+      // Create more dynamic wave-like motion using golden ratio
+      positions[i3 + 1] =
+        Math.sin(time + positions[i3] * 0.1) * 3 +
+        Math.sin(time * 0.8 + positions[i3 + 2] * 0.1) * 3 +
+        Math.sin(time * PHI + positions[i3] * 0.05) * 2 // Additional wave with golden ratio timing
+    }
+
+    pointsRef.current.geometry.attributes.position.needsUpdate = true
+
+    // Adjust opacity based on active state with higher base visibility
+    materialRef.current.opacity = active
+      ? THREE.MathUtils.lerp(materialRef.current.opacity, 0.9 * intensity, 0.05)
+      : THREE.MathUtils.lerp(materialRef.current.opacity, 0.2, 0.05) // Keep some visibility even when not active
   })
 
   return (
@@ -868,7 +917,7 @@ function EnhancedNorthernLights({ active, intensity = 1 }) {
 }
 
 // Hexagonal face component with golden ratio proportions and pulsating inner light
-function HexagonalFace({ index, position, rotation, feature, onClick, hovered }) {
+function HexagonalFace({ index, position, rotation, feature, onClick, hovered, onHover, onUnhover }) {
   const IconComponent = feature.icon
   const hexRadius = 1 // Base radius
   const innerRadius = hexRadius / PHI // Golden ratio for inner elements
@@ -881,22 +930,29 @@ function HexagonalFace({ index, position, rotation, feature, onClick, hovered })
   const groupRef = useRef()
   const glowRef = useRef()
   const innerLightRef = useRef()
+  const prefersReducedMotion = useMotionPreference()
 
   // Hover animation
   useFrame(() => {
-    if (groupRef.current) {
-      if (hovered) {
-        groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, 0.2, 0.1)
-      } else {
-        groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, 0, 0.1)
-      }
+    if (!groupRef.current || !glowRef.current) {
+      return
     }
 
-    if (glowRef.current) {
-      glowRef.current.material.opacity = hovered
-        ? THREE.MathUtils.lerp(glowRef.current.material.opacity, 0.8, 0.1)
-        : THREE.MathUtils.lerp(glowRef.current.material.opacity, 0.3, 0.1)
+    if (prefersReducedMotion) {
+      groupRef.current.position.z = hovered ? 0.1 : 0
+      glowRef.current.material.opacity = hovered ? 0.6 : 0.25
+      return
     }
+
+    if (hovered) {
+      groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, 0.2, 0.1)
+    } else {
+      groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, 0, 0.1)
+    }
+
+    glowRef.current.material.opacity = hovered
+      ? THREE.MathUtils.lerp(glowRef.current.material.opacity, 0.8, 0.1)
+      : THREE.MathUtils.lerp(glowRef.current.material.opacity, 0.3, 0.1)
   })
 
   return (
@@ -909,9 +965,11 @@ function HexagonalFace({ index, position, rotation, feature, onClick, hovered })
         }}
         onPointerOver={(e) => {
           document.body.style.cursor = "pointer"
+          onHover?.()
         }}
         onPointerOut={(e) => {
           document.body.style.cursor = "auto"
+          onUnhover?.()
         }}
       >
         {/* Base hexagonal prism */}
@@ -996,6 +1054,14 @@ function EnhancedConnectionLine({ start, end, color, visible }) {
 
 // Particles effect component
 function EnhancedParticlesEffect() {
+  const prefersReducedMotion = useMotionPreference()
+
+  if (prefersReducedMotion) {
+    return (
+      <Sparkles count={60} scale={12} size={0.4} speed={0.1} opacity={0.3} color="#ffffff" />
+    )
+  }
+
   return (
     <Sparkles
       count={150} // More particles
@@ -1017,10 +1083,16 @@ function HexagonalPrism({ setSelectedFeature }) {
   const [centerPoint] = useState([0, 0, 0])
   const [isDragging, setIsDragging] = useState(false)
   const [dragIntensity, setDragIntensity] = useState(0)
-  const { camera } = useThree()
+  const prefersReducedMotion = useMotionPreference()
 
   // Change rotation randomly
-  const changeRotation = () => {
+  const changeRotation = useCallback(() => {
+    if (prefersReducedMotion) {
+      setRotationAxis({ x: 0, y: 0, z: 0 })
+      setRotationSpeed(0)
+      return
+    }
+
     // Generate random rotation axis
     const newAxis = {
       x: Math.random() * 0.2,
@@ -1039,7 +1111,7 @@ function HexagonalPrism({ setSelectedFeature }) {
 
     setRotationAxis(newAxis)
     setRotationSpeed(newSpeed)
-  }
+  }, [prefersReducedMotion])
 
   // Initial random rotation
   useEffect(() => {
@@ -1064,37 +1136,50 @@ function HexagonalPrism({ setSelectedFeature }) {
       window.removeEventListener("mouseup", handleDragEnd)
       window.removeEventListener("touchend", handleDragEnd)
     }
-  }, [])
+  }, [changeRotation])
 
   // Previous rotation for calculating velocity
   const prevRotation = useRef({ x: 0, y: 0, z: 0 })
 
   // Animation loop
   useFrame(() => {
-    if (groupRef.current) {
-      // Auto rotation when not dragging
-      if (!isDragging) {
-        groupRef.current.rotation.x += rotationAxis.x * rotationSpeed
-        groupRef.current.rotation.y += rotationAxis.y * rotationSpeed
-        groupRef.current.rotation.z += rotationAxis.z * rotationSpeed
-      }
+    if (!groupRef.current) {
+      return
+    }
 
-      // Calculate rotation velocity for trail intensity
-      const rotVelocity = {
-        x: Math.abs(groupRef.current.rotation.x - prevRotation.current.x),
-        y: Math.abs(groupRef.current.rotation.y - prevRotation.current.y),
-        z: Math.abs(groupRef.current.rotation.z - prevRotation.current.z),
+    if (prefersReducedMotion) {
+      groupRef.current.rotation.x = 0
+      groupRef.current.rotation.y = 0
+      groupRef.current.rotation.z = 0
+      prevRotation.current = { x: 0, y: 0, z: 0 }
+      if (dragIntensity !== 0) {
+        setDragIntensity(0)
       }
+      return
+    }
 
-      const totalVelocity = rotVelocity.x + rotVelocity.y + rotVelocity.z
-      setDragIntensity(isDragging ? Math.min(totalVelocity * 200, 1) : dragIntensity * 0.95) // Slower decay
+    // Auto rotation when not dragging
+    if (!isDragging) {
+      groupRef.current.rotation.x += rotationAxis.x * rotationSpeed
+      groupRef.current.rotation.y += rotationAxis.y * rotationSpeed
+      groupRef.current.rotation.z += rotationAxis.z * rotationSpeed
+    }
 
-      // Store current rotation for next frame
-      prevRotation.current = {
-        x: groupRef.current.rotation.x,
-        y: groupRef.current.rotation.y,
-        z: groupRef.current.rotation.z,
-      }
+    // Calculate rotation velocity for trail intensity
+    const rotVelocity = {
+      x: Math.abs(groupRef.current.rotation.x - prevRotation.current.x),
+      y: Math.abs(groupRef.current.rotation.y - prevRotation.current.y),
+      z: Math.abs(groupRef.current.rotation.z - prevRotation.current.z),
+    }
+
+    const totalVelocity = rotVelocity.x + rotVelocity.y + rotVelocity.z
+    setDragIntensity((prev) => (isDragging ? Math.min(totalVelocity * 200, 1) : prev * 0.95))
+
+    // Store current rotation for next frame
+    prevRotation.current = {
+      x: groupRef.current.rotation.x,
+      y: groupRef.current.rotation.y,
+      z: groupRef.current.rotation.z,
     }
   })
 
@@ -1123,80 +1208,84 @@ function HexagonalPrism({ setSelectedFeature }) {
 
   const facePositions = getFacePositions()
 
-  return (
-    <Float
-      speed={2} // Animation speed
-      rotationIntensity={0.2} // XYZ rotation intensity
-      floatIntensity={0.2} // Up/down float intensity
-    >
-      <group ref={groupRef} onClick={() => changeRotation()} onPointerMissed={() => changeRotation()}>
-        {/* Central node with enhanced visibility */}
-        <mesh position={centerPoint} castShadow>
-          <dodecahedronGeometry args={[0.45, 0]} /> {/* Slightly larger */}
-          <MeshTransmissionMaterial
-            backside={true}
-            samples={10}
-            thickness={0.2}
-            chromaticAberration={0.05}
-            anisotropy={0.1}
-            distortion={0.5}
-            distortionScale={0.3}
-            temporalDistortion={0.1}
-            iridescence={1}
-            iridescenceIOR={1}
-            iridescenceThicknessRange={[0, 1400]}
-            transmission={0.95} // More transparent
-            clearcoat={1} // Add clearcoat for more shine
-          />
-        </mesh>
-
-        {/* Pulsating core light - enhanced */}
-        <PulsatingLight
-          color="#40C4FF"
-          intensity={1.2}
-          frequency={0.3}
-          offset={0}
-          position={centerPoint}
-          scale={1.2} // Larger light
+  const prismGroup = (
+    <group ref={groupRef} onClick={() => changeRotation()} onPointerMissed={() => changeRotation()}>
+      {/* Central node with enhanced visibility */}
+      <mesh position={centerPoint} castShadow>
+        <dodecahedronGeometry args={[0.45, 0]} /> {/* Slightly larger */}
+        <MeshTransmissionMaterial
+          backside={true}
+          samples={10}
+          thickness={0.2}
+          chromaticAberration={0.05}
+          anisotropy={0.1}
+          distortion={0.5}
+          distortionScale={0.3}
+          temporalDistortion={0.1}
+          iridescence={1}
+          iridescenceIOR={1}
+          iridescenceThicknessRange={[0, 1400]}
+          transmission={0.95} // More transparent
+          clearcoat={1} // Add clearcoat for more shine
         />
+      </mesh>
 
-        {/* Enhanced cosmic trails for central node - now ionic electric blue rays */}
-        <EnhancedCosmicTrail target={groupRef} active={isDragging || dragIntensity > 0.1} color="#00BFFF" />
-        <EnhancedCosmicTrail target={groupRef} active={isDragging || dragIntensity > 0.1} color="#4FC3F7" />
-        <EnhancedCosmicTrail target={groupRef} active={isDragging || dragIntensity > 0.1} color="#40C4FF" />
+      {/* Pulsating core light - enhanced */}
+      <PulsatingLight
+        color="#40C4FF"
+        intensity={1.2}
+        frequency={0.3}
+        offset={0}
+        position={centerPoint}
+        scale={1.2} // Larger light
+      />
 
-        {/* Enhanced Northern Lights Effect */}
-        <EnhancedNorthernLights active={isDragging || dragIntensity > 0.2} intensity={dragIntensity} />
+      {/* Enhanced cosmic trails for central node - now ionic electric blue rays */}
+      <EnhancedCosmicTrail target={groupRef} active={isDragging || dragIntensity > 0.1} color="#00BFFF" />
+      <EnhancedCosmicTrail target={groupRef} active={isDragging || dragIntensity > 0.1} color="#4FC3F7" />
+      <EnhancedCosmicTrail target={groupRef} active={isDragging || dragIntensity > 0.1} color="#40C4FF" />
 
-        {/* Connection lines with energy flow */}
-        {facePositions.map((face, index) => (
-          <EnhancedConnectionLine
-            key={`connection-${index}`}
-            start={face.connectionStart}
-            end={face.connectionEnd}
-            color={features[index].color}
-            visible={hoveredIndex === index || Math.random() < 0.2} // Occasionally show connections
-          />
-        ))}
+      {/* Enhanced Northern Lights Effect */}
+      <EnhancedNorthernLights active={isDragging || dragIntensity > 0.2} intensity={dragIntensity} />
 
-        {/* Feature faces with pulsating inner light */}
-        {features.map((feature, index) => (
-          <HexagonalFace
-            key={index}
-            index={index}
-            position={facePositions[index].position}
-            rotation={facePositions[index].rotation}
-            feature={feature}
-            onClick={setSelectedFeature}
-            hovered={hoveredIndex === index}
-            onHover={() => setHoveredIndex(index)}
-            onUnhover={() => setHoveredIndex(null)}
-          />
-        ))}
+      {/* Connection lines with energy flow */}
+      {facePositions.map((face, index) => (
+        <EnhancedConnectionLine
+          key={`connection-${index}`}
+          start={face.connectionStart}
+          end={face.connectionEnd}
+          color={features[index].color}
+          visible={hoveredIndex === index || (!prefersReducedMotion && Math.random() < 0.2)} // Occasionally show connections
+        />
+      ))}
 
-        {/* Enhanced particle effects */}
-        <EnhancedParticlesEffect />
-      </group>
+      {/* Feature faces with pulsating inner light */}
+      {features.map((feature, index) => (
+        <HexagonalFace
+          key={index}
+          index={index}
+          position={facePositions[index].position}
+          rotation={facePositions[index].rotation}
+          feature={feature}
+          onClick={setSelectedFeature}
+          hovered={hoveredIndex === index}
+          onHover={() => setHoveredIndex(index)}
+          onUnhover={() => setHoveredIndex(null)}
+        />
+      ))}
+
+      {/* Enhanced particle effects */}
+      <EnhancedParticlesEffect />
+    </group>
+  )
+
+  if (prefersReducedMotion) {
+    return prismGroup
+  }
+
+  return (
+    <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
+      {prismGroup}
     </Float>
   )
 }
@@ -1205,6 +1294,7 @@ function HexagonalPrism({ setSelectedFeature }) {
 export default function FeaturePrism() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [cameraPosition, setCameraPosition] = useState([0, 0, 8])
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   // Responsive camera position
   useEffect(() => {
@@ -1219,9 +1309,10 @@ export default function FeaturePrism() {
   }, [])
 
   return (
-    <ErrorBoundary>
-      <div className="relative size-full">
-        <Canvas shadows dpr={[1, 2]}>
+    <MotionPreferenceContext.Provider value={prefersReducedMotion}>
+      <ErrorBoundary>
+        <div className="relative size-full">
+          <Canvas shadows dpr={[1, 2]}>
           <color attach="background" args={["#030712"]} />
           <fog attach="fog" args={["#030712", 5, 20]} />
 
@@ -1243,65 +1334,66 @@ export default function FeaturePrism() {
           <Environment preset="night" />
 
           {/* Main 3D content */}
-          <HexagonalPrism setSelectedFeature={setSelectedFeature} />
+            <HexagonalPrism setSelectedFeature={setSelectedFeature} />
 
-          {/* Controls */}
-          <OrbitControls
-            enableZoom={true}
-            enablePan={false}
-            minPolarAngle={Math.PI / 4}
-            maxPolarAngle={Math.PI / 1.5}
-            autoRotate={false}
-            dampingFactor={0.05}
-            enableDamping={true}
-          />
-        </Canvas>
+            {/* Controls */}
+            <OrbitControls
+              enableZoom={true}
+              enablePan={false}
+              minPolarAngle={Math.PI / 4}
+              maxPolarAngle={Math.PI / 1.5}
+              autoRotate={false}
+              dampingFactor={prefersReducedMotion ? 0 : 0.05}
+              enableDamping={!prefersReducedMotion}
+            />
+          </Canvas>
 
-        {/* Feature Modal */}
-        <Dialog open={!!selectedFeature} onOpenChange={() => setSelectedFeature(null)}>
-          <DialogContent className="border-gray-700 bg-gray-900 text-white sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                {selectedFeature && (
-                  <>
-                    {React.createElement(selectedFeature.icon, {
-                      className: "h-6 w-6",
-                      style: { color: selectedFeature.color },
-                    })}
-                    <span style={{ color: selectedFeature.color }}>{selectedFeature.name}</span>
-                  </>
-                )}
-              </DialogTitle>
-            </DialogHeader>
+          {/* Feature Modal */}
+          <Dialog open={!!selectedFeature} onOpenChange={() => setSelectedFeature(null)}>
+            <DialogContent className="border-gray-700 bg-gray-900 text-white sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  {selectedFeature && (
+                    <>
+                      {React.createElement(selectedFeature.icon, {
+                        className: "h-6 w-6",
+                        style: { color: selectedFeature.color },
+                      })}
+                      <span style={{ color: selectedFeature.color }}>{selectedFeature.name}</span>
+                    </>
+                  )}
+                </DialogTitle>
+              </DialogHeader>
 
-            <div className="py-4">
-              <p className="text-lg leading-relaxed text-gray-200">{selectedFeature?.description}</p>
-            </div>
+              <div className="py-4">
+                <p className="text-lg leading-relaxed text-gray-200">{selectedFeature?.description}</p>
+              </div>
 
-            <DialogFooter>
-              <Button
-                onClick={() => setSelectedFeature(null)}
-                style={{
-                  backgroundColor: selectedFeature?.color,
-                  borderColor: selectedFeature?.color,
-                }}
-                className="hover:opacity-90"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button
+                  onClick={() => setSelectedFeature(null)}
+                  style={{
+                    backgroundColor: selectedFeature?.color,
+                    borderColor: selectedFeature?.color,
+                  }}
+                  className="hover:opacity-90"
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-        {/* Instructions overlay */}
-        <div className="absolute inset-x-4 bottom-4 rounded-md bg-black/70 p-3 text-center text-white">
-          <p className="text-sm md:text-base">
-            Click on any hexagon to learn more about each feature.
-            <br className="hidden md:block" />
-            Click and drag to rotate and create cosmic trails.
-          </p>
+          {/* Instructions overlay */}
+          <div className="absolute inset-x-4 bottom-4 rounded-md bg-black/70 p-3 text-center text-white">
+            <p className="text-sm md:text-base">
+              Click on any hexagon to learn more about each feature.
+              <br className="hidden md:block" />
+              Click and drag to rotate and create cosmic trails.
+            </p>
+          </div>
         </div>
-      </div>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </MotionPreferenceContext.Provider>
   )
 }
