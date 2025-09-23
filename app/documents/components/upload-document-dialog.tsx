@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
@@ -23,14 +23,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { uploadDocumentAction } from '../actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUploadDocumentMutation } from '@/hooks/use-document-mutations';
+import type { DocumentWithLease } from '@/types/documents';
+
+void React;
 
 export function UploadDocumentDialog() {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -41,8 +43,26 @@ export function UploadDocumentDialog() {
     expires_at: '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [optimisticMessage, setOptimisticMessage] = useState<string | null>(null);
   const router = useRouter();
   const permissions = useDocumentPermissions();
+
+  const uploadMutation = useUploadDocumentMutation({
+    onOptimistic: () => {
+      setOptimisticMessage('Document uploaded successfully. Syncing with server...');
+    },
+    onRollback: (error) => {
+      setOptimisticMessage(null);
+      const message =
+        error instanceof Error ? error.message : 'Failed to upload document';
+      toast.error(message);
+    },
+    onConfirmed: () => {
+      setOptimisticMessage('Document upload synced successfully.');
+    },
+  });
+
+  const isSubmitting = uploadMutation.isPending;
 
   // Don't render upload button if user doesn't have permission
   if (!permissions.canUploadDocuments) {
@@ -90,7 +110,6 @@ export function UploadDocumentDialog() {
       return;
     }
 
-    setLoading(true);
     try {
       const submitData = new FormData();
       submitData.append('file', file);
@@ -102,30 +121,37 @@ export function UploadDocumentDialog() {
       submitData.append('requires_signature', formData.requires_signature.toString());
       submitData.append('expires_at', formData.expires_at);
 
-      const result = await uploadDocumentAction(submitData);
+      const optimisticDocument = buildOptimisticDocument({
+        formData,
+        file,
+      });
 
-      if (result.success) {
-        toast.success('Document uploaded successfully');
-        setOpen(false);
-        setFormData({
-          title: '',
-          description: '',
-          document_type: 'other',
-          tenant_id: '',
-          unit_id: '',
-          requires_signature: false,
-          expires_at: '',
-        });
-        setFile(null);
-        router.refresh();
-      } else {
-        toast.error(result.error || 'Failed to upload document');
-      }
+      await uploadMutation.mutateAsync(
+        {
+          formData: submitData,
+          optimisticDocument,
+        },
+        {
+          onSuccess: () => {
+            toast.success('Document uploaded successfully');
+            setOpen(false);
+            setFormData({
+              title: '',
+              description: '',
+              document_type: 'other',
+              tenant_id: '',
+              unit_id: '',
+              requires_signature: false,
+              expires_at: '',
+            });
+            setFile(null);
+            router.refresh();
+            setOptimisticMessage(null);
+          },
+        },
+      );
     } catch (error) {
       console.error('Error uploading document:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -146,6 +172,12 @@ export function UploadDocumentDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {optimisticMessage && (
+            <div className="rounded-md border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
+              {optimisticMessage}
+            </div>
+          )}
+
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="file">Document File</Label>
@@ -248,16 +280,63 @@ export function UploadDocumentDialog() {
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
-              disabled={loading}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !file}>
-              {loading ? 'Uploading...' : 'Upload Document'}
+            <Button type="submit" disabled={isSubmitting || !file}>
+              {isSubmitting ? 'Uploading...' : 'Upload Document'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+function buildOptimisticDocument({
+  formData,
+  file,
+}: {
+  formData: {
+    title: string;
+    description: string;
+    document_type: DocumentWithLease['document_type'];
+    tenant_id: string;
+    unit_id: string;
+    requires_signature: boolean;
+    expires_at: string;
+  };
+  file: File;
+}): DocumentWithLease {
+  const timestamp = new Date().toISOString();
+  const optimisticId = `temp-${timestamp}`;
+
+  return {
+    id: optimisticId,
+    created_at: timestamp,
+    updated_at: timestamp,
+    title: formData.title,
+    description: formData.description,
+    document_type: formData.document_type,
+    status: formData.requires_signature ? 'pending_signature' : 'draft',
+    file_url: undefined,
+    documenso_envelope_id: undefined,
+    documenso_template_id: undefined,
+    metadata: {
+      optimistic: true,
+      originalFileName: file.name,
+    },
+    created_by: undefined,
+    property_id: undefined,
+    tenant_id: formData.tenant_id || undefined,
+    unit_id: formData.unit_id || undefined,
+    requires_signature: formData.requires_signature,
+    expires_at: formData.expires_at || undefined,
+    signed_at: undefined,
+    version: 1,
+    parent_document_id: undefined,
+    lease: undefined,
+    signatures: [],
+  };
 }

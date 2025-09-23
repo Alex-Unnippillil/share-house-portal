@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,6 +20,11 @@ import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { OptimisticContext } from "@/lib/optimistic";
+import { finalizeOptimisticUpdate, rollbackOptimisticUpdate, startOptimisticUpdate } from "@/lib/optimistic";
+
+void React;
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -38,38 +43,57 @@ const visitorBookingSchema = z.object({
 
 type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
-export function VisitorBookingForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+type VisitorBookingCacheItem = {
+  id: string;
+  guestName: string;
+  status: string;
+  checkInDate: string;
+  checkOutDate: string;
+};
+
+interface VisitorBookingFormProps {
+  initialValues?: Partial<VisitorBookingFormData>;
+}
+
+interface VisitorMutationContext {
+  optimisticContext: OptimisticContext<VisitorBookingCacheItem[]>;
+  optimisticBooking: VisitorBookingCacheItem;
+}
+
+export function VisitorBookingForm({ initialValues }: VisitorBookingFormProps = {}) {
+  const [optimisticMessage, setOptimisticMessage] = useState<string | null>(null);
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
   const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const queryClient = useQueryClient();
+
+  const defaultValues = useMemo(
+    () => ({
+      guestName: initialValues?.guestName ?? "",
+      guestEmail: initialValues?.guestEmail ?? "",
+      guestPhone: initialValues?.guestPhone ?? "",
+      purpose: initialValues?.purpose ?? "",
+      emergencyContact: initialValues?.emergencyContact ?? "",
+      specialNotes: initialValues?.specialNotes ?? "",
+      checkInDate: initialValues?.checkInDate ?? undefined,
+      checkOutDate: initialValues?.checkOutDate ?? undefined,
+    }),
+    [initialValues],
+  );
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
-    defaultValues: {
-      guestName: "",
-      guestEmail: "",
-      guestPhone: "",
-      purpose: "",
-      emergencyContact: "",
-      specialNotes: "",
-    },
+    defaultValues,
   });
 
-  const onSubmit = async (data: VisitorBookingFormData) => {
-    setIsSubmitting(true);
-
-    try {
-      // Get current user info
+  const visitorMutation = useMutation<any, Error, VisitorBookingFormData, VisitorMutationContext>({
+    mutationFn: async (data) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get user profile
       const profile = await fetchMemberProfile(typedSupabase, user.id);
-
       if (!profile) throw new Error("Profile not found");
-
       if (!profile.unit_id) {
         throw new Error("User is not assigned to a unit");
       }
@@ -87,7 +111,6 @@ export function VisitorBookingForm() {
         throw new Error("Property manager not found for this unit");
       }
 
-      // Create visitor booking record
       const { data: booking, error: bookingError } = await (supabase as any)
         .from('visitor_logs')
         .insert({
@@ -105,9 +128,10 @@ export function VisitorBookingForm() {
         .select()
         .single();
 
-      if (bookingError) throw bookingError;
+      if (bookingError) {
+        throw new Error(bookingError.message ?? 'Failed to submit visitor booking');
+      }
 
-      // Send notifications
       await notifyVisitorBooking({
         guestName: data.guestName,
         hostName: profile.full_name || user.email || 'Unknown',
@@ -126,27 +150,78 @@ export function VisitorBookingForm() {
         },
       });
 
-      toast({
-        title: "Visitor booking submitted",
-        description: "Your visitor booking has been submitted and notifications sent.",
+      return booking;
+    },
+    onMutate: (data) => {
+      const optimisticBooking = createOptimisticVisitorBooking(data);
+      const optimisticContext = startOptimisticUpdate<VisitorBookingCacheItem[]>({
+        queryClient,
+        filters: { queryKey: ['visitor-bookings'] },
+        operation: 'create-visitor-booking',
+        updateFn: (current = []) => [optimisticBooking, ...current],
       });
 
-      form.reset();
-    } catch (error) {
-      console.error('Error submitting visitor booking:', error);
+      setOptimisticMessage('Visitor booking submitted. Syncing with server...');
+
+      return { optimisticContext, optimisticBooking } satisfies VisitorMutationContext;
+    },
+    onError: (error, _variables, context) => {
+      rollbackOptimisticUpdate(queryClient, context?.optimisticContext, error);
+      setOptimisticMessage(null);
+
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit visitor booking",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+    },
+    onSuccess: (booking, _variables, context) => {
+      const cacheItem = toVisitorBookingCacheItem(booking);
+      finalizeOptimisticUpdate<VisitorBookingCacheItem[]>({
+        queryClient,
+        context: context?.optimisticContext,
+        reconcileFn: (current) => {
+          if (!current) return current;
+          const placeholderId = context?.optimisticBooking.id;
+          const hasPlaceholder = current.some(item => item.id === placeholderId);
+          const next = current.map(item => item.id === placeholderId ? cacheItem : item);
+          return hasPlaceholder ? next : [cacheItem, ...current];
+        },
+      });
+
+      setOptimisticMessage('Visitor booking synced successfully.');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['visitor-bookings'] });
+    },
+  });
+
+  const onSubmit = async (data: VisitorBookingFormData) => {
+    try {
+      await visitorMutation.mutateAsync(data, {
+        onSuccess: () => {
+          toast({
+            title: "Visitor booking submitted",
+            description: "Your visitor booking has been submitted and notifications sent.",
+          });
+          form.reset(defaultValues);
+        },
+      });
+    } catch (error) {
+      console.error('Error submitting visitor booking:', error);
     }
   };
+
+  const isSubmitting = visitorMutation.isPending;
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {optimisticMessage && (
+          <div className="rounded-md border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
+            {optimisticMessage}
+          </div>
+        )}
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -333,4 +408,27 @@ export function VisitorBookingForm() {
       </form>
     </Form>
   );
+}
+
+function createOptimisticVisitorBooking(
+  data: VisitorBookingFormData,
+): VisitorBookingCacheItem {
+  const created_at = new Date().toISOString();
+  return {
+    id: `temp-visitor-${created_at}`,
+    guestName: data.guestName,
+    status: 'pending',
+    checkInDate: data.checkInDate.toISOString(),
+    checkOutDate: data.checkOutDate.toISOString(),
+  };
+}
+
+function toVisitorBookingCacheItem(booking: any): VisitorBookingCacheItem {
+  return {
+    id: booking.id,
+    guestName: booking.guest_name ?? booking.guestName ?? 'Guest',
+    status: booking.status ?? 'pending',
+    checkInDate: booking.check_in_date ?? booking.checkInDate ?? new Date().toISOString(),
+    checkOutDate: booking.check_out_date ?? booking.checkOutDate ?? new Date().toISOString(),
+  };
 }

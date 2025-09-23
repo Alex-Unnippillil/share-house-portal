@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,6 +15,11 @@ import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { OptimisticContext } from "@/lib/optimistic";
+import { finalizeOptimisticUpdate, rollbackOptimisticUpdate, startOptimisticUpdate } from "@/lib/optimistic";
+
+void React;
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -25,6 +30,23 @@ const maintenanceRequestSchema = z.object({
 });
 
 type MaintenanceRequestFormData = z.infer<typeof maintenanceRequestSchema>;
+
+type MaintenanceRequestCacheItem = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  created_at: string;
+};
+
+interface MaintenanceRequestFormProps {
+  initialValues?: Partial<MaintenanceRequestFormData>;
+}
+
+interface MaintenanceMutationContext {
+  optimisticContext: OptimisticContext<MaintenanceRequestCacheItem[]>;
+  optimisticRequest: MaintenanceRequestCacheItem;
+}
 
 const categories = [
   "Plumbing",
@@ -45,37 +67,37 @@ const priorities = [
   { value: "urgent", label: "Urgent - Emergency fix needed" },
 ];
 
-export function MaintenanceRequestForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export function MaintenanceRequestForm({ initialValues }: MaintenanceRequestFormProps = {}) {
+  const [optimisticMessage, setOptimisticMessage] = useState<string | null>(null);
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
   const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const queryClient = useQueryClient();
+
+  const defaultValues = useMemo(
+    () => ({
+      title: initialValues?.title ?? "",
+      description: initialValues?.description ?? "",
+      priority: initialValues?.priority ?? "normal",
+      category: initialValues?.category ?? "",
+      location: initialValues?.location ?? "",
+    }),
+    [initialValues],
+  );
 
   const form = useForm<MaintenanceRequestFormData>({
     resolver: zodResolver(maintenanceRequestSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      priority: "normal",
-      category: "",
-      location: "",
-    },
+    defaultValues,
   });
 
-  const onSubmit = async (data: MaintenanceRequestFormData) => {
-    setIsSubmitting(true);
-
-    try {
-      // Get current user info
+  const maintenanceMutation = useMutation<any, Error, MaintenanceRequestFormData, MaintenanceMutationContext>({
+    mutationFn: async (data) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get user profile
       const profile = await fetchMemberProfile(typedSupabase, user.id);
-
       if (!profile) throw new Error("Profile not found");
-
       if (!profile.unit_id) {
         throw new Error("User is not assigned to a unit");
       }
@@ -88,7 +110,6 @@ export function MaintenanceRequestForm() {
         throw new Error("Property manager not found for this unit");
       }
 
-      // Create maintenance request record
       const { data: request, error: requestError } = await (supabase as any)
         .from('maintenance_requests')
         .insert({
@@ -104,9 +125,10 @@ export function MaintenanceRequestForm() {
         .select()
         .single();
 
-      if (requestError) throw requestError;
+      if (requestError) {
+        throw new Error(requestError.message ?? 'Failed to submit maintenance request');
+      }
 
-      // Send notifications
       await notifyMaintenanceRequest({
         requesterName: profile.full_name || user.email || 'Unknown',
         title: data.title,
@@ -119,27 +141,79 @@ export function MaintenanceRequestForm() {
         },
       });
 
-      toast({
-        title: "Maintenance request submitted",
-        description: "Your maintenance request has been submitted and notifications sent.",
+      return request;
+    },
+    onMutate: (data) => {
+      const optimisticRequest = createOptimisticMaintenanceRequest(data);
+      const optimisticContext = startOptimisticUpdate<MaintenanceRequestCacheItem[]>({
+        queryClient,
+        filters: { queryKey: ['maintenance-requests'] },
+        operation: 'create-maintenance-request',
+        updateFn: (current = []) => [optimisticRequest, ...current],
       });
 
-      form.reset();
-    } catch (error) {
-      console.error('Error submitting maintenance request:', error);
+      setOptimisticMessage('Maintenance request submitted. Syncing with server...');
+
+      return { optimisticContext, optimisticRequest } satisfies MaintenanceMutationContext;
+    },
+    onError: (error, _variables, context) => {
+      rollbackOptimisticUpdate(queryClient, context?.optimisticContext, error);
+      setOptimisticMessage(null);
+
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit maintenance request",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+    },
+    onSuccess: (request, _variables, context) => {
+      const cacheItem = toMaintenanceCacheItem(request);
+      finalizeOptimisticUpdate<MaintenanceRequestCacheItem[]>({
+        queryClient,
+        context: context?.optimisticContext,
+        reconcileFn: (current) => {
+          if (!current) return current;
+          const placeholderId = context?.optimisticRequest.id;
+          const hasPlaceholder = current.some(item => item.id === placeholderId);
+          const next = current.map(item => item.id === placeholderId ? cacheItem : item);
+          return hasPlaceholder ? next : [cacheItem, ...current];
+        },
+      });
+
+      setOptimisticMessage('Maintenance request synced successfully.');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance-requests'] });
+    },
+  });
+
+  const onSubmit = async (data: MaintenanceRequestFormData) => {
+    try {
+      await maintenanceMutation.mutateAsync(data, {
+        onSuccess: () => {
+          toast({
+            title: "Maintenance request submitted",
+            description: "Your maintenance request has been submitted and notifications sent.",
+          });
+          form.reset(defaultValues);
+        },
+      });
+    } catch (error) {
+      console.error('Error submitting maintenance request:', error);
     }
   };
+
+  const isSubmitting = maintenanceMutation.isPending;
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {optimisticMessage && (
+          <div className="rounded-md border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
+            {optimisticMessage}
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="title"
@@ -244,4 +318,27 @@ export function MaintenanceRequestForm() {
       </form>
     </Form>
   );
+}
+
+function createOptimisticMaintenanceRequest(
+  data: MaintenanceRequestFormData,
+): MaintenanceRequestCacheItem {
+  const created_at = new Date().toISOString();
+  return {
+    id: `temp-maintenance-${created_at}`,
+    title: data.title,
+    status: 'pending',
+    priority: data.priority,
+    created_at,
+  };
+}
+
+function toMaintenanceCacheItem(request: any): MaintenanceRequestCacheItem {
+  return {
+    id: request.id,
+    title: request.title,
+    status: request.status ?? 'pending',
+    priority: request.priority ?? 'normal',
+    created_at: request.created_at ?? new Date().toISOString(),
+  };
 }
