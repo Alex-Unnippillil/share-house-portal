@@ -2,6 +2,8 @@ import { Metadata } from "next"
 import Image from "next/image"
 import SmartLink from "@/components/navigation/SmartLink"
 
+import { TenantOnboardingForm } from './components/tenant-onboarding-form'
+
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import AuthForm from "@/app/auth/components/AuthForm"
@@ -105,6 +107,9 @@ export default function OnboardingPage() {
               </SmartLink>
               .
             </p>
+          </div>
+          <div className="mt-10 max-w-3xl">
+            <TenantOnboardingForm />
           </div>
         </div>
       </div>
