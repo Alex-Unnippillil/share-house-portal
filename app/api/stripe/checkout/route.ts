@@ -4,7 +4,13 @@ import { getStripe, getAppBaseUrl } from "@/lib/stripe"
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe()
-    const { priceId, quantity = 1, mode = "payment", metadata } = await req.json()
+    const {
+      priceId,
+      quantity = 1,
+      mode = "payment",
+      metadata,
+      customerId,
+    } = await req.json()
 
     if (!priceId || typeof priceId !== "string") {
       return Response.json({ error: "priceId is required" }, { status: 400 })
@@ -27,6 +33,10 @@ export async function POST(req: NextRequest) {
     // Add metadata if provided
     if (metadata) {
       sessionConfig.metadata = metadata
+    }
+
+    if (typeof customerId === "string" && customerId.trim().length > 0) {
+      sessionConfig.customer = customerId.trim()
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig)

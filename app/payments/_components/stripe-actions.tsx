@@ -1,112 +1,123 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
-export function StripeActions() {
-  const [priceId, setPriceId] = useState("")
-  const [customerId, setCustomerId] = useState("")
-  const [tenantId, setTenantId] = useState("")
-  const [unitId, setUnitId] = useState("")
+import { Button } from "@/components/ui/button"
+import { formatCurrency } from "@/lib/payments/currency"
+import {
+  buildCheckoutSessionPayload,
+  type TenantBillingContext,
+} from "@/lib/payments/billing"
+
+interface StripeActionsProps {
+  billingContext: TenantBillingContext | null
+}
+
+export function StripeActions({ billingContext }: StripeActionsProps) {
   const [loadingCheckout, setLoadingCheckout] = useState(false)
   const [loadingPortal, setLoadingPortal] = useState(false)
 
+  const plan = billingContext?.plan ?? null
+  const tenantId = billingContext?.tenantId ?? null
+  const unitId = billingContext?.unitId ?? null
+  const stripeCustomerId = billingContext?.stripeCustomerId ?? null
+
+  const checkoutLabel = plan
+    ? `Start ${formatCurrency(plan.amount, plan.currency)} checkout`
+    : "Select a plan to checkout"
+
   const startCheckout = async () => {
-    if (!priceId) return
+    if (!plan) return
     setLoadingCheckout(true)
     try {
+      const payload = buildCheckoutSessionPayload({
+        plan,
+        tenantId,
+        unitId,
+        stripeCustomerId,
+      })
+
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          priceId,
-          quantity: 1,
-          mode: "payment",
-          metadata: {
-            tenant_id: tenantId || undefined,
-            unit_id: unitId || undefined,
-          }
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || "Unable to create session")
       if (data?.url) window.location.assign(data.url)
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      console.error(error)
     } finally {
       setLoadingCheckout(false)
     }
   }
 
   const openBillingPortal = async () => {
-    if (!customerId) return
+    if (!stripeCustomerId) return
     setLoadingPortal(true)
     try {
       const res = await fetch("/api/stripe/billing-portal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || "Unable to create billing portal session")
+      if (!res.ok)
+        throw new Error(data?.error || "Unable to create billing portal session")
       if (data?.url) window.location.assign(data.url)
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      console.error(error)
     } finally {
       setLoadingPortal(false)
     }
   }
 
+  const checkoutDisabled = !plan || loadingCheckout
+  const portalDisabled = !stripeCustomerId || loadingPortal
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="tenant-id">Tenant ID (optional)</Label>
-            <Input
-              id="tenant-id"
-              value={tenantId}
-              onChange={(e) => setTenantId(e.target.value)}
-              placeholder="user-uuid"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="unit-id">Unit ID (optional)</Label>
-            <Input
-              id="unit-id"
-              value={unitId}
-              onChange={(e) => setUnitId(e.target.value)}
-              placeholder="unit-123"
-            />
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={priceId}
-            onChange={(e) => setPriceId(e.target.value)}
-            placeholder="price_123 (test price id)"
-            className="min-w-56 flex-1"
-          />
-          <Button onClick={startCheckout} disabled={!priceId || loadingCheckout} variant="outline">
-            {loadingCheckout ? "Creating..." : "Create Checkout"}
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            placeholder="cus_123 (Stripe customer id)"
-            className="min-w-56 flex-1"
-          />
-          <Button onClick={openBillingPortal} disabled={!customerId || loadingPortal} variant="outline">
-            {loadingPortal ? "Opening..." : "Open Billing Portal"}
-          </Button>
+      <div className="space-y-2 rounded-lg border bg-muted/40 p-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold text-foreground">Plan details</p>
+          {plan ? (
+            <>
+              <p className="text-sm text-foreground">{plan.label}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatCurrency(plan.amount, plan.currency)} per {plan.interval}
+              </p>
+              <p className="text-xs text-muted-foreground">{plan.description}</p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Assign a Roomsily billing plan in account settings to enable Stripe checkout.
+            </p>
+          )}
         </div>
       </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          onClick={startCheckout}
+          disabled={checkoutDisabled}
+          className="sm:flex-1"
+        >
+          {loadingCheckout ? "Redirecting..." : checkoutLabel}
+        </Button>
+        <Button
+          onClick={openBillingPortal}
+          disabled={portalDisabled}
+          variant="outline"
+          className="sm:flex-1"
+        >
+          {loadingPortal ? "Opening..." : "Open Billing Portal"}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Checkout sessions are prefilled with your tenant and unit metadata for reconciliation.
+      </p>
+      {!stripeCustomerId ? (
+        <p className="text-xs text-muted-foreground">
+          Add a payment method through Stripe to unlock billing portal downloads.
+        </p>
+      ) : null}
     </div>
   )
 }
-
-

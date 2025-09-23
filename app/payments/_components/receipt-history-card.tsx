@@ -1,5 +1,5 @@
 import { format, parseISO } from "date-fns"
-import { Download, FileText } from "lucide-react"
+import { Download, FileText, ReceiptText } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
@@ -95,8 +95,8 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
         <div className="space-y-1.5">
           <CardTitle>Receipt history</CardTitle>
           <CardDescription>
-            Download itemized receipts and export the full payment ledger for
-            reimbursements, tax season, or dispute resolution.
+            Download itemized receipts, official tax forms, and export the full
+            payment ledger for reimbursements or dispute resolution.
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -248,6 +248,20 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                             >
                               <FileText className="size-4" aria-hidden="true" />
                               <span>Invoice</span>
+                            </a>
+                          ) : null}
+                          {receipt.taxReceiptUrl ? (
+                            <a
+                              href={receipt.taxReceiptUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={cn(
+                                buttonVariants({ variant: "ghost", size: "sm" }),
+                                "w-full justify-center gap-1",
+                              )}
+                            >
+                              <ReceiptText className="size-4" aria-hidden="true" />
+                              <span>Tax receipt</span>
                             </a>
                           ) : null}
                         </div>

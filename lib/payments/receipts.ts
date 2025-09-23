@@ -67,6 +67,7 @@ export function createPaymentHistoryCsv(
     "Memo",
     "Receipt URL",
     "Invoice URL",
+    "Tax Document URL",
   ]
 
   const rows = receipts.map((receipt) => {
@@ -91,6 +92,7 @@ export function createPaymentHistoryCsv(
       receipt.memo ?? "",
       receipt.receiptUrl,
       receipt.invoiceUrl ?? "",
+      receipt.taxReceiptUrl ?? "",
     ]
   })
 

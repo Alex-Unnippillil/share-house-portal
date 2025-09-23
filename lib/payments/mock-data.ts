@@ -186,6 +186,7 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
     paymentMethod: "Visa •••• 4242 (Autopay)",
     receiptUrl: "https://receipts.roomsily.dev/rcpt_avery_2024_06.pdf",
     invoiceUrl: "https://receipts.roomsily.dev/invoice_avery_2024_06",
+    taxReceiptUrl: "https://receipts.roomsily.dev/tax_avery_2024_ytd.pdf",
     memo: "Includes rent share plus reimbursable Wi-Fi and maintenance fees.",
     lineItems: [
       {
@@ -226,6 +227,7 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
     paymentMethod: "ACH checking •••• 1100",
     receiptUrl: "https://receipts.roomsily.dev/rcpt_jordan_2024_05.pdf",
     invoiceUrl: "https://receipts.roomsily.dev/invoice_jordan_2024_05",
+    taxReceiptUrl: "https://receipts.roomsily.dev/tax_jordan_2024_ytd.pdf",
     memo: "Manual catch-up payment covering parking and partial rent.",
     lineItems: [
       {
@@ -258,6 +260,7 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
     paymentMethod: "Visa •••• 3188",
     receiptUrl: "https://receipts.roomsily.dev/rcpt_priya_2024_04.pdf",
     invoiceUrl: "https://receipts.roomsily.dev/invoice_priya_2024_04",
+    taxReceiptUrl: "https://receipts.roomsily.dev/tax_priya_2024_ytd.pdf",
     memo: "Autopay rent receipt for April billing period.",
     lineItems: [
       {

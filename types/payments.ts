@@ -99,6 +99,7 @@ export interface PaymentReceiptHistoryEntry {
   periodEnd?: string
   receiptUrl: string
   invoiceUrl?: string
+  taxReceiptUrl?: string
   memo?: string
   lineItems: PaymentReceiptLineItem[]
 
