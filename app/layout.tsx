@@ -10,6 +10,13 @@ import "./globals.css"
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { CookieButton } from "@/components/cookie-button"
+import { fontSans } from "@/lib/font"
+import { siteConfig } from '@/config/site'
+import { ReactQueryClientProvider } from '@/components/react-query-client-provider'
+import { ServiceWorkerManager } from "@/components/service-worker-manager"
+import { Toaster } from "@/components/ui/toaster"
+import { SiteHeader } from "@/components/site-header"
+
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
@@ -133,17 +140,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
              <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
               <div className="flex-1">
-                <ErrorBoundary>
-                  <Suspense fallback={<RouteSkeleton />}>
-                    {children}
-                  </Suspense>
-                </ErrorBoundary>
-                <Toaster />
-                <Analytics />
-                <SpeedInsights />
+                {children}
+                <ServiceWorkerManager />
+                <Toaster/>
+                <Analytics/>
+                <SpeedInsights/>
               </div>
+              
+   </div>           
 
-   </div>
 <SiteFooter/>
 
 
