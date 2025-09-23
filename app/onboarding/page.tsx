@@ -1,113 +1,57 @@
 import { Metadata } from "next"
-import Image from "next/image"
-import SmartLink from "@/components/navigation/SmartLink"
+import { redirect } from "next/navigation"
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
-import AuthForm from "@/app/auth/components/AuthForm"
-import { AuthFormLegacy } from '@/app/auth-server-action/components/AuthFormLegacy'
+import OnboardingFlow from "./_components/onboarding-flow"
+import { getOnboardingProgress } from "./actions"
+import { createSupbaseServerClient } from "@/utils/supaone"
 
 export const metadata: Metadata = {
   title: "Onboarding",
   description: "Roomsily household onboarding",
 }
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  const supabase = await createSupbaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/auth")
+  }
+
+  const { data, error } = await getOnboardingProgress(user.id)
+
+  if (error || !data) {
+    return (
+      <div className="container py-16">
+        <div className="mx-auto max-w-2xl space-y-4 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Tenant onboarding
+          </h1>
+          <p className="text-muted-foreground">
+            We couldn&apos;t load your onboarding checklist right now. Please
+            refresh the page or contact support if the issue persists.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <>
-      <div className="hidden">
-        <Image
-          src="/images/house-portal-1.jpg"
-          width={1280}
-          height={843}
-          alt="Roomsily household workspace"
-          className="block dark:hidden"
-        />
-        <Image
-          src="/images/house-portal-2.jpg"
-          width={1280}
-          height={843}
-          alt="Roommate Collaboration"
-          className="hidden"
-        />
-      </div>
-      <div className="container relative mx-auto grid h-[640px] grid-cols-1 flex-col items-center justify-center md:grid-cols-2 lg:max-w-none lg:px-0">
-        <SmartLink
-          href="/auth"
-          className={cn(
-            buttonVariants({ variant: "ghost" }),
-            "absolute right-4 top-4 md:right-8 md:top-8"
-          )}
-        >
-          Login
-        </SmartLink>
-        <div className="relative hidden h-full flex-col bg-muted p-10 text-white md:flex dark:border-r">
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-700 via-gray-900 to-black">
-          <Image
-          src="/images/house-portal-2.jpg"
-          width={2048}
-          height={2048}
-          alt="Roommate Collaboration"
-          style={{objectFit: "contain"}}
-          
-        />
-          </div>
-          <div className="relative z-20 flex items-center text-lg font-medium">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2 size-6"
-            >
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-            </svg>
-            
-          </div>
-          <div className="relative z-20 mt-auto">
-            <blockquote className="space-y-2">
-              <p className="text-lg">
-                &ldquo;In 6 months, Roomsily has increased our conversions and NPS by 68%
-                and 58% respectively.&rdquo;
-              </p>
-              <footer className="text-sm">Sofia Davis</footer>
-            </blockquote>
-          </div>
+    <div className="container py-10">
+      <div className="mx-auto max-w-3xl space-y-10">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Finish setting up your household
+          </h1>
+          <p className="text-muted-foreground">
+            Work through the required steps below to unlock the full Share
+            House Portal experience.
+          </p>
         </div>
-        <div className="lg:p-8">
-          <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-            <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Create an account
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Enter your email below to create your account
-              </p>
-            </div>
-            <AuthFormLegacy />
-            <p className="px-8 text-center text-sm text-muted-foreground">
-              By clicking continue, you agree to our{" "}
-              <SmartLink
-                href="#"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Terms of Service
-              </SmartLink>{" "}
-              and{" "}
-              <SmartLink
-                href="#"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Privacy Policy
-              </SmartLink>
-              .
-            </p>
-          </div>
-        </div>
+        <OnboardingFlow initialProgress={data} />
       </div>
-    </>
+    </div>
   )
 }
