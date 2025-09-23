@@ -17,6 +17,8 @@ import {
   getNextOutstandingCharge,
 } from "@/lib/payments/catch-up"
 import { formatCurrency } from "@/lib/payments/currency"
+import { detectRequestLocale } from "@/lib/server/request-locale"
+import { resolveUserSettings } from "@/lib/user-settings"
 import type { CatchUpBalance } from "@/types/payments"
 
 import { loadCatchUpBalances, loadRoommateLedgers } from "./loaders"
@@ -64,6 +66,9 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
+  const locale = detectRequestLocale()
+  const userSettings = resolveUserSettings({ locale })
+
   const [catchUpBalances, roommateLedgers] = await Promise.all([
     loadCatchUpBalances(),
     loadRoommateLedgers(),
@@ -94,7 +99,10 @@ export default async function PaymentsPage() {
       ? Math.round((activeAutopays / catchUpBalances.length) * 100)
       : 0
 
-  const defaultCurrency = catchUpBalances[0]?.currency ?? "USD"
+  const defaultCurrency = catchUpBalances[0]?.currency ?? userSettings.currency
+
+  const formatCurrencyForUser = (amount: number, currency: string) =>
+    formatCurrency(amount, { currency, locale: userSettings.locale })
 
   const roommateSummaries = [...outstandingSummaries].sort(
     (a, b) => b.outstanding - a.outstanding,
@@ -137,7 +145,7 @@ export default async function PaymentsPage() {
                     Outstanding total
                   </dt>
                   <dd className="text-lg font-semibold">
-                    {formatCurrency(totalOutstanding, defaultCurrency)}
+                    {formatCurrencyForUser(totalOutstanding, defaultCurrency)}
                   </dd>
                   <p className="text-xs text-muted-foreground">
                     {catchUpBalances.length} roommates tracked
@@ -187,7 +195,7 @@ export default async function PaymentsPage() {
                       {balance.unitLabel} · {describeAutopayStatus(balance)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrency(
+                      Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrencyForUser(
                         balance.lastPaymentAmount,
                         balance.currency,
                       )}
@@ -195,7 +203,7 @@ export default async function PaymentsPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold">
-                      {formatCurrency(outstanding, balance.currency)}
+                      {formatCurrencyForUser(outstanding, balance.currency)}
                     </p>
                     {nextCharge ? (
                       <p className="text-xs text-muted-foreground">
@@ -221,7 +229,7 @@ export default async function PaymentsPage() {
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
       </section>
-      <RoommateLedger ledgers={roommateLedgers} />
+      <RoommateLedger ledgers={roommateLedgers} locale={userSettings.locale} />
     </div>
   )
 }
