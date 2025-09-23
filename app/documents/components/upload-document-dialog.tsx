@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +28,11 @@ import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function UploadDocumentDialog() {
+interface UploadDocumentDialogProps {
+  triggerProps?: Omit<ComponentProps<typeof Button>, 'children'>;
+}
+
+export function UploadDocumentDialog({ triggerProps }: UploadDocumentDialogProps = {}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -132,7 +136,7 @@ export function UploadDocumentDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button {...triggerProps}>
           <Upload className="mr-2 size-4" />
           Upload Document
         </Button>

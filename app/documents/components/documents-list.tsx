@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
 import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { DocumentsEmptyState } from './documents-empty-state';
+import { UploadDocumentDialog } from './upload-document-dialog';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -18,6 +21,7 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -154,19 +158,43 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   }
 
+  const handleTemplateSelect = (templateId: string) => {
+    router.push(`/documents/templates/${templateId}`);
+  };
+
+  const handleClearFilters = () => {
+    router.push('/documents?view=all');
+    router.refresh();
+  };
+
   if (documents.length === 0) {
     return (
-      <Card className="p-12">
-        <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(filter).length > 0
-              ? "No documents match your current filters."
-              : "Get started by uploading your first document."}
-          </p>
-        </div>
-      </Card>
+      <DocumentsEmptyState
+        filter={filter}
+        primaryAction={(
+          <UploadDocumentDialog
+            triggerProps={{
+              size: 'lg',
+              className: 'h-12 px-6 text-base font-medium',
+            }}
+          />
+        )}
+        secondaryActions={[
+          (
+            <Button
+              key="templates"
+              variant="outline"
+              size="lg"
+              className="h-12 px-6 text-base"
+              onClick={() => handleTemplateSelect('lease-template')}
+            >
+              Browse templates
+            </Button>
+          ),
+        ]}
+        onSelectTemplate={handleTemplateSelect}
+        onClearFilters={Object.keys(filter).length > 0 ? handleClearFilters : undefined}
+      />
     );
   }
 
