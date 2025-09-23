@@ -1,14 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Table, { TableSelectionProvider, useTableSelection } from "@/components/ui/Table";
+import { Checkbox } from "@/components/ui/checkbox";
+import BulkActionsBar from "@/components/tables/BulkActionsBar";
+import { cn } from "@/lib/utils";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { FileText, Users } from 'lucide-react';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -142,77 +147,95 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     );
   }
 
+  const headers = ['Document', 'Type', 'Status', 'Updated', 'Actions'];
+
   return (
-    <div className="space-y-4">
-      {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className="mt-1">
-                  {getTypeIcon(doc.document_type)}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium leading-none">{doc.title}</h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
-                  )}
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    {doc.lease && (
-                      <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
-                        <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
-                      </div>
-                    )}
-                    {doc.signatures && doc.signatures.length > 0 && (
-                      <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
-                        <span>
-                          {doc.signatures.filter(s => s.status === 'signed').length}/
-                          {doc.signatures.length} signed
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {getStatusBadge(doc.status)}
-                <DocumentActions document={doc} />
-              </div>
-            </div>
-          </CardHeader>
-          {doc.signatures && doc.signatures.length > 0 && (
-            <CardContent className="pt-0">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground">Signers:</span>
-                {doc.signatures.slice(0, 3).map((signature) => (
-                  <Badge
-                    key={signature.id}
-                    variant={signature.status === 'signed' ? 'default' : 'outline'}
-                    className="text-xs"
-                  >
-                    {signature.signer_name || signature.signer_email.split('@')[0]}
-                  </Badge>
-                ))}
-                {doc.signatures.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{doc.signatures.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      ))}
+    <TableSelectionProvider>
+      <div className="space-y-4">
+        <BulkActionsBar entityType="documents" />
+        <Table headers={headers} selectable>
+          {documents.map((doc) => (
+            <DocumentRow
+              key={doc.id}
+              document={doc}
+              renderStatus={getStatusBadge}
+              renderTypeIcon={getTypeIcon}
+            />
+          ))}
+        </Table>
+      </div>
+    </TableSelectionProvider>
+  );
+}
+
+const rowGridStyle = {
+  gridTemplateColumns: 'var(--table-grid-template)',
+} satisfies CSSProperties;
+
+function DocumentRow({
+  document,
+  renderStatus,
+  renderTypeIcon,
+}: {
+  document: DocumentWithLease;
+  renderStatus: (status: string) => ReactNode;
+  renderTypeIcon: (type: string) => ReactNode;
+}) {
+  const { toggleRowSelection, isRowSelected, registerRow, unregisterRow } = useTableSelection();
+
+  useEffect(() => {
+    registerRow(document.id);
+    return () => unregisterRow(document.id);
+  }, [document.id, registerRow, unregisterRow]);
+
+  const selected = isRowSelected(document.id);
+  const signedCount = document.signatures?.filter((signature) => signature.status === 'signed').length ?? 0;
+
+  return (
+    <div
+      className={cn(
+        'grid items-center gap-4 px-5 py-3 text-sm transition-colors',
+        'bg-white dark:bg-inherit',
+        selected && 'bg-zinc-100 dark:bg-zinc-900/60'
+      )}
+      style={rowGridStyle}
+    >
+      <Checkbox
+        checked={selected}
+        onCheckedChange={() => toggleRowSelection(document.id)}
+        aria-label={`Select ${document.title}`}
+      />
+
+      <div className="flex flex-col gap-1 overflow-hidden">
+        <span className="truncate font-medium text-zinc-900 dark:text-zinc-100">{document.title}</span>
+        {document.description && (
+          <span className="truncate text-xs text-muted-foreground">{document.description}</span>
+        )}
+        {document.lease && (
+          <span className="truncate text-xs text-muted-foreground">
+            Lease • {document.lease.tenant_ids?.length || 0} tenants
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        {renderTypeIcon(document.document_type)}
+        <span className="capitalize">{document.document_type}</span>
+      </div>
+
+      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+        {renderStatus(document.status)}
+        {document.signatures && document.signatures.length > 0 && (
+          <span className="text-xs text-muted-foreground">
+            {signedCount}/{document.signatures.length} signed
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col items-end gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+        <span>{formatDistanceToNow(new Date(document.created_at), { addSuffix: true })}</span>
+        <DocumentActions document={document} />
+      </div>
     </div>
   );
 }
