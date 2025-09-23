@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
+import { ConflictDetails, evaluateConflict, extractChangedFields } from '@/lib/conflicts';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
@@ -45,12 +46,53 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const documentUpdateFieldsSchema = z.object({
+  title: z.string().min(1, 'Title cannot be empty').optional(),
+  description: z.string().optional().nullable(),
+  status: z.enum(['draft', 'pending_signature', 'signed', 'expired', 'cancelled']).optional(),
+  requires_signature: z.boolean().optional(),
+  expires_at: z.string().datetime().optional().nullable(),
+});
+
+const documentUpdatePayloadSchema = z.object({
+  documentId: z.string().uuid(),
+  updates: documentUpdateFieldsSchema,
+  expectedVersion: z.number().int().nonnegative().nullable().optional(),
+  expectedUpdatedAt: z.string().datetime().nullable().optional(),
+  resolution: z
+    .object({
+      type: z.enum(['keep_mine', 'keep_theirs', 'manual']),
+      mergedFields: z.record(z.any()).optional(),
+      baseVersion: z.number().int().nonnegative().nullable().optional(),
+    })
+    .optional(),
+});
+
+type DocumentUpdatePayload = z.infer<typeof documentUpdatePayloadSchema>;
+
+type EditableDocumentSnapshot = Pick<
+  Document,
+  'id' | 'title' | 'description' | 'status' | 'requires_signature' | 'expires_at' | 'updated_at' | 'version'
+>;
+
+export type DocumentConflictPayload = ConflictDetails<
+  EditableDocumentSnapshot,
+  Partial<Pick<Document, 'title' | 'description' | 'status' | 'requires_signature' | 'expires_at'>>
+>;
+
+type DocumentUpdateRecord = EditableDocumentSnapshot & {
+  created_by?: string | null;
+  tenant_id?: string | null;
+};
+
 // Action result interface
-interface ActionResult<T = any> {
+interface ActionResult<T = any, TConflict = any> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
+  status?: 'conflict';
+  conflict?: TConflict;
 }
 
 // Get documents with optional filters
@@ -209,6 +251,150 @@ export async function uploadDocumentAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function updateDocumentAction(
+  payload: DocumentUpdatePayload
+): Promise<ActionResult<DocumentWithLease, DocumentConflictPayload>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const parsed = documentUpdatePayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      const flattened = parsed.error.flatten();
+      const firstError = flattened.fieldErrors?.[Object.keys(flattened.fieldErrors)[0]]?.[0];
+      return { success: false, error: firstError || 'Invalid document update payload.' };
+    }
+
+    const { documentId, updates, expectedVersion, expectedUpdatedAt, resolution } = parsed.data;
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to update documents.' };
+    }
+
+    const { data: document, error: documentError } = await (supabase as any)
+      .from('documents')
+      .select(
+        'id, title, description, status, requires_signature, expires_at, updated_at, version, created_by, tenant_id'
+      )
+      .eq('id', documentId)
+      .single<DocumentUpdateRecord>();
+
+    if (documentError || !document) {
+      console.error('Document not found for update', documentError);
+      return { success: false, error: 'Document not found.' };
+    }
+
+    let role: Awaited<ReturnType<typeof fetchMemberRole>> | null = null;
+    try {
+      role = await fetchMemberRole(typedSupabase, user.id);
+    } catch (roleError) {
+      console.warn('Unable to resolve role when updating document:', roleError);
+    }
+
+    const canEdit =
+      role === 'property_manager' ||
+      role === 'admin' ||
+      document.created_by === user.id ||
+      document.tenant_id === user.id;
+
+    if (!canEdit) {
+      return { success: false, error: 'You do not have permission to edit this document.' };
+    }
+
+    const conflictCheck = evaluateConflict({
+      current: document,
+      incoming: updates,
+      expectedVersion: expectedVersion ?? undefined,
+      expectedUpdatedAt: expectedUpdatedAt ?? undefined,
+      message: 'This document was updated by someone else while you were editing.',
+    });
+
+    if (conflictCheck.hasConflict) {
+      return {
+        success: false,
+        status: 'conflict',
+        error: conflictCheck.details.message,
+        conflict: conflictCheck.details,
+      };
+    }
+
+    const sanitizedUpdates: Record<string, any> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === undefined) continue;
+      if (key === 'description' && value === '') {
+        sanitizedUpdates.description = null;
+        continue;
+      }
+      if (key === 'expires_at') {
+        sanitizedUpdates.expires_at = value || null;
+        continue;
+      }
+      sanitizedUpdates[key] = value;
+    }
+
+    if (Object.keys(sanitizedUpdates).length === 0) {
+      return {
+        success: true,
+        data: document as unknown as DocumentWithLease,
+        message: 'No changes detected.',
+      };
+    }
+
+    const nextVersion = (document.version ?? 1) + 1;
+
+    const { data: updatedDocument, error: updateError } = await (supabase as any)
+      .from('documents')
+      .update({
+        ...sanitizedUpdates,
+        version: nextVersion,
+      })
+      .eq('id', documentId)
+      .select(DOCUMENT_SELECT)
+      .single();
+
+    if (updateError || !updatedDocument) {
+      console.error('Error updating document record:', updateError);
+      return { success: false, error: 'Failed to update document.' };
+    }
+
+    if (resolution) {
+      const mergedFields = resolution.mergedFields ?? extractChangedFields(sanitizedUpdates, document as any);
+      try {
+        await supabase.rpc('log_conflict_resolution', {
+          p_entity_type: 'document',
+          p_entity_id: documentId,
+          p_resolution: resolution.type,
+          p_local_version: resolution.baseVersion ?? expectedVersion ?? null,
+          p_remote_version: document.version ?? null,
+          p_merged_fields: mergedFields,
+        });
+      } catch (logError) {
+        console.warn('Failed to log document conflict resolution:', logError);
+      }
+    }
+
+    revalidatePath('/documents');
+
+    return {
+      success: true,
+      data: updatedDocument as DocumentWithLease,
+      message: 'Document updated successfully.',
+    };
+  } catch (error) {
+    console.error('Unexpected error in updateDocumentAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
     };
   }
 }

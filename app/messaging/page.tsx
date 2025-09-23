@@ -1,4 +1,6 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { MessageEditor } from "@/components/messaging/message-editor"
+import type { Message } from "@/app/messaging/actions"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -248,6 +250,17 @@ const threadPosts: ThreadPost[] = [
   },
 ]
 
+const featuredMessage: Message = {
+  id: "msg-featured-announcement",
+  content:
+    "Thanks everyone for jumping in on the spring reset! Here's the summary of next steps and the links we'll keep pinned for quick reference.",
+  updated_at: "2024-05-18T16:30:00.000Z",
+  version: 1,
+  thread_id: "chore-rotation",
+  author_id: "pm_maya",
+  created_at: "2024-05-18T15:45:00.000Z",
+}
+
 const attachmentSummary: AttachmentSummary[] = [
   {
     id: "rotation",
@@ -317,6 +330,8 @@ export default function MessagingPage() {
 
       <div className="grid gap-6 lg:grid-cols-[320px,1fr] xl:grid-cols-[320px,1fr]">
         <div className="space-y-6">
+          <MessageEditor message={featuredMessage} />
+
           <Card>
             <CardHeader className="space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
