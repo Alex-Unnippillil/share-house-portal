@@ -8,10 +8,12 @@ import type {
   PaymentReceiptHistoryEntry,
 } from "@/types/payments"
 
+
 export async function loadCatchUpBalances(): Promise<CatchUpBalance[]> {
   return catchUpBalances
 }
 
 export async function loadReceiptHistory(): Promise<PaymentReceiptHistoryEntry[]> {
   return receiptHistory
+
 }

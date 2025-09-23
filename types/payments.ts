@@ -101,4 +101,5 @@ export interface PaymentReceiptHistoryEntry {
   invoiceUrl?: string
   memo?: string
   lineItems: PaymentReceiptLineItem[]
+
 }

@@ -1,5 +1,6 @@
 import type { CatchUpBalance, PaymentReceiptHistoryEntry } from "@/types/payments"
 
+
 export const catchUpBalances: CatchUpBalance[] = [
   {
     roommateId: "rm_avery",
@@ -35,6 +36,14 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-18",
         originalAmount: 30,
         outstandingAmount: 30,
+      },
+      {
+        id: "rm_avery_deposit_topup",
+        description: "Security deposit top-up",
+        category: "deposit",
+        dueDate: "2024-06-20",
+        originalAmount: 300,
+        outstandingAmount: 150,
       },
     ],
     contacts: {
@@ -87,6 +96,14 @@ export const catchUpBalances: CatchUpBalance[] = [
         originalAmount: 80,
         outstandingAmount: 40,
       },
+      {
+        id: "rm_jordan_deposit_adjustment",
+        description: "Deposit replenishment",
+        category: "deposit",
+        dueDate: "2024-06-25",
+        originalAmount: 200,
+        outstandingAmount: 80,
+      },
     ],
     contacts: {
       primary: {
@@ -129,6 +146,14 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-08",
         originalAmount: 38,
         outstandingAmount: 38,
+      },
+      {
+        id: "rm_priya_deposit_catchup",
+        description: "Security deposit catch-up",
+        category: "deposit",
+        dueDate: "2024-06-22",
+        originalAmount: 250,
+        outstandingAmount: 200,
       },
     ],
     contacts: {
@@ -263,6 +288,7 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         quantity: 1,
         unitAmount: -60,
         totalAmount: -60,
+
       },
     ],
   },

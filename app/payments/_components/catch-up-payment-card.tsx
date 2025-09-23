@@ -39,8 +39,8 @@ import {
 } from "@/lib/payments/catch-up"
 import { formatCurrency, parseCurrencyInput, roundToCurrency } from "@/lib/payments/currency"
 import { createCatchUpFormSchema } from "@/lib/payments/schemas"
+import { AUTOPAY_STATUS_BADGES } from "@/lib/payments/status"
 import type {
-  AutopayStatus,
   CatchUpBalance,
   CatchUpPaymentFormValues,
   CatchUpPaymentSubmissionResult,
@@ -50,15 +50,6 @@ import { submitCatchUpPayment } from "../actions"
 
 interface CatchUpPaymentCardProps {
   balances: CatchUpBalance[]
-}
-
-const autopayBadgeCopy: Record<
-  AutopayStatus,
-  { label: string; variant: "complete" | "secondary" | "outline" }
-> = {
-  active: { label: "Autopay active", variant: "complete" },
-  paused: { label: "Autopay paused", variant: "secondary" },
-  disabled: { label: "Autopay off", variant: "outline" },
 }
 
 type QuickAmountKey = "next" | "half" | "full"
@@ -277,8 +268,8 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
             </CardDescription>
           </div>
           {selectedBalance ? (
-            <Badge variant={autopayBadgeCopy[selectedBalance.autopayStatus].variant}>
-              {autopayBadgeCopy[selectedBalance.autopayStatus].label}
+            <Badge variant={AUTOPAY_STATUS_BADGES[selectedBalance.autopayStatus].variant}>
+              {AUTOPAY_STATUS_BADGES[selectedBalance.autopayStatus].label}
             </Badge>
           ) : null}
         </div>
