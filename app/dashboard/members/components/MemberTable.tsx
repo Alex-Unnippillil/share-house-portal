@@ -1,15 +1,9 @@
-import Table from "@/components/ui/Table"
+import { MembersTableClient } from "./MembersTableClient"
 
 import { getDashboardMembers } from "../data"
-import ListOfMembers from "./ListOfMembers"
 
 export default async function MemberTable() {
-        const members = await getDashboardMembers()
-        const tableHeader = ["Name", "Role", "Joined", "Status"]
+  const members = await getDashboardMembers()
 
-        return (
-                <Table headers={tableHeader}>
-                        <ListOfMembers members={members} />
-                </Table>
-        )
+  return <MembersTableClient data={members} tableId="dashboard-members" />
 }

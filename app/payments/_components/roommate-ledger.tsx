@@ -1,6 +1,10 @@
+"use client"
+
 import { Fragment } from "react"
+import { ColumnDef } from "@tanstack/react-table"
 import { format, parseISO } from "date-fns"
 
+import Table from "@/components/ui/Table"
 import { Badge, type BadgeProps } from "@/components/ui/badge"
 import {
   Card,
@@ -35,6 +39,94 @@ const ledgerEntryTypeMeta: Record<
 const actorRoleLabels: Record<LedgerActorRole, string> = {
   roommate: "Roommate",
   property_manager: "Property manager",
+}
+
+function getLedgerColumns(currency: string): ColumnDef<LedgerRow>[] {
+  return [
+    {
+      id: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        const entryDate = parseISO(row.original.date)
+        return (
+          <div>
+            <p className="font-medium">{format(entryDate, "MMM d")}</p>
+            <p className="text-xs text-muted-foreground">{format(entryDate, "yyyy")}</p>
+          </div>
+        )
+      },
+      size: 150,
+      meta: {
+        cellClassName: "whitespace-nowrap",
+      },
+    },
+    {
+      id: "details",
+      header: "Details",
+      cell: ({ row }) => {
+        const entry = row.original
+        return (
+          <div className="space-y-1">
+            <p className="font-medium">{entry.description}</p>
+            <p className="text-xs text-muted-foreground">
+              Logged by {entry.actor.name} · {actorRoleLabels[entry.actor.role]}
+            </p>
+            {entry.note ? (
+              <p className="text-xs text-muted-foreground">{entry.note}</p>
+            ) : null}
+          </div>
+        )
+      },
+      size: 320,
+    },
+    {
+      id: "change",
+      header: "Change",
+      cell: ({ row }) => {
+        const entry = row.original
+        const amountClass =
+          entry.amount < 0
+            ? "text-emerald-600 dark:text-emerald-300"
+            : entry.amount > 0
+              ? "text-rose-600 dark:text-rose-300"
+              : "text-muted-foreground"
+        const entryTypeMeta = ledgerEntryTypeMeta[entry.type]
+
+        return (
+          <div className="flex flex-col items-end gap-1 text-right">
+            <span className={cn("font-semibold", amountClass)}>
+              {formatLedgerChange(entry.amount, currency)}
+            </span>
+            <Badge variant={entryTypeMeta.badgeVariant} className="w-fit">
+              {entryTypeMeta.label}
+            </Badge>
+          </div>
+        )
+      },
+      size: 180,
+      meta: {
+        headerClassName: "text-right",
+        cellClassName: "text-right",
+      },
+    },
+    {
+      id: "balance",
+      header: "Balance",
+      cell: ({ row }) => (
+        <div className="text-right">
+          <p className="font-semibold">
+            {formatCurrency(row.original.balanceAfter, currency)}
+          </p>
+          <p className="text-xs text-muted-foreground">Running balance</p>
+        </div>
+      ),
+      size: 200,
+      meta: {
+        headerClassName: "text-right",
+        cellClassName: "text-right",
+      },
+    },
+  ]
 }
 
 export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
@@ -131,80 +223,12 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                       </p>
                     </div>
                   </div>
-                  {rows.length > 0 ? (
-                    <div className="overflow-hidden rounded-lg border">
-                      <div className="grid grid-cols-[110px_minmax(0,1fr)_140px_140px] bg-muted/40 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid-cols-[120px_minmax(0,1fr)_150px_150px]">
-                        <span>Date</span>
-                        <span>Details</span>
-                        <span className="text-right">Change</span>
-                        <span className="text-right">Balance</span>
-                      </div>
-                      <div className="[&>div:not(:last-child)]:border-b">
-                        {rows.map((entry) => {
-                          const entryDate = parseISO(entry.date)
-                          const formattedDate = format(entryDate, "MMM d")
-                          const formattedYear = format(entryDate, "yyyy")
-                          const amountClass =
-                            entry.amount < 0
-                              ? "text-emerald-600"
-                              : entry.amount > 0
-                                ? "text-rose-600"
-                                : "text-muted-foreground"
-                          const entryTypeMeta = ledgerEntryTypeMeta[entry.type]
-
-                          return (
-                            <div
-                              key={entry.id}
-                              className="grid grid-cols-[110px_minmax(0,1fr)_140px_140px] gap-x-4 px-4 py-3 text-sm sm:grid-cols-[120px_minmax(0,1fr)_150px_150px]"
-                            >
-                              <div>
-                                <p className="font-medium">{formattedDate}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formattedYear}
-                                </p>
-                              </div>
-                              <div className="space-y-1">
-                                <p className="font-medium">{entry.description}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Logged by {entry.actor.name} ·
-                                  {" "}
-                                  {actorRoleLabels[entry.actor.role]}
-                                </p>
-                                {entry.note ? (
-                                  <p className="text-xs text-muted-foreground">
-                                    {entry.note}
-                                  </p>
-                                ) : null}
-                              </div>
-                              <div className="flex flex-col items-end gap-1 text-right">
-                                <span className={cn("font-semibold", amountClass)}>
-                                  {formatLedgerChange(entry.amount, ledger.currency)}
-                                </span>
-                                <Badge
-                                  variant={entryTypeMeta.badgeVariant}
-                                  className="w-fit"
-                                >
-                                  {entryTypeMeta.label}
-                                </Badge>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-semibold">
-                                  {formatCurrency(entry.balanceAfter, ledger.currency)}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Running balance
-                                </p>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-sm text-muted-foreground">
-                      No ledger activity recorded yet.
-                    </div>
-                  )}
+                  <Table
+                    columns={getLedgerColumns(ledger.currency)}
+                    data={rows}
+                    tableId={`ledger-${ledger.roommateId}`}
+                    emptyState="No ledger activity recorded yet."
+                  />
                 </div>
                 {index < sortedLedgers.length - 1 ? <Separator /> : null}
               </Fragment>
