@@ -1,4 +1,5 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { MessageComposer } from "@/components/messaging/message-composer"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -429,6 +430,19 @@ export default function MessagingPage() {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Post to a thread</CardTitle>
+              <CardDescription>
+                Share quick updates with roommates. We'll queue them if you're offline and sync
+                once you're back.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MessageComposer />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">

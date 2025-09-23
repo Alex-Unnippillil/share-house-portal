@@ -4,22 +4,18 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -40,10 +36,14 @@ type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
 export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
-  const supabase = createClient();
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const {
+    submit,
+    isOnline,
+    queuedCount,
+    statusLabel,
+    lastSyncedAt,
+  } = useOfflineQueue("visitors", "/api/visitors");
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
@@ -61,74 +61,42 @@ export function VisitorBookingForm() {
     setIsSubmitting(true);
 
     try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Get user profile
-      const profile = await fetchMemberProfile(typedSupabase, user.id);
-
-      if (!profile) throw new Error("Profile not found");
-
-      if (!profile.unit_id) {
-        throw new Error("User is not assigned to a unit");
-      }
-
-      const unitMembers = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        excludeUserId: user.id,
-      });
-
-      const roommates = unitMembers.filter(
-        member => member.role === 'tenant' || member.role === 'roommate'
-      );
-      const propertyManager = unitMembers.find(member => member.role === 'property_manager');
-
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
-      }
-
-      // Create visitor booking record
-      const { data: booking, error: bookingError } = await (supabase as any)
-        .from('visitor_logs')
-        .insert({
-          guest_name: data.guestName,
-          guest_email: data.guestEmail,
-          guest_phone: data.guestPhone,
-          host_id: user.id,
-          check_in_date: data.checkInDate.toISOString(),
-          check_out_date: data.checkOutDate.toISOString(),
-          purpose: data.purpose,
-          emergency_contact: data.emergencyContact,
-          special_notes: data.specialNotes,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (bookingError) throw bookingError;
-
-      // Send notifications
-      await notifyVisitorBooking({
+      const { response, queued } = await submit({
         guestName: data.guestName,
-        hostName: profile.full_name || user.email || 'Unknown',
-        checkInDate: format(data.checkInDate, 'MMM dd, yyyy'),
-        checkOutDate: format(data.checkOutDate, 'MMM dd, yyyy'),
+        guestEmail: data.guestEmail,
+        guestPhone: data.guestPhone || null,
+        checkInDate: data.checkInDate.toISOString(),
+        checkOutDate: data.checkOutDate.toISOString(),
         purpose: data.purpose,
-        roommates: roommates.map(r => ({
-          id: r.id,
-          email: r.email || '',
-          name: r.full_name || r.email || 'Unknown',
-        })),
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
-        },
+        emergencyContact: data.emergencyContact || null,
+        specialNotes: data.specialNotes || null,
       });
+
+      if (queued) {
+        toast({
+          title: "Booking queued offline",
+          description:
+            "You're offline. We'll send this visitor registration once you're reconnected.",
+        });
+        form.reset();
+        return;
+      }
+
+      const result = (await response.json().catch(() => null)) as
+        | { success?: boolean; error?: unknown }
+        | null;
+
+      if (!response.ok || !result?.success) {
+        const errorMessage =
+          typeof result?.error === "string"
+            ? result.error
+            : "Failed to submit visitor booking";
+        throw new Error(errorMessage);
+      }
 
       toast({
         title: "Visitor booking submitted",
-        description: "Your visitor booking has been submitted and notifications sent.",
+        description: "We'll notify your roommates and property manager.",
       });
 
       form.reset();
@@ -147,6 +115,28 @@ export function VisitorBookingForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {!isOnline && (
+          <div className="rounded-md border border-dashed border-amber-500/60 bg-amber-50 p-3 text-sm text-amber-900">
+            You're offline. We'll queue this visitor log and sync it when the connection returns.
+          </div>
+        )}
+
+        <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-xs">
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">{statusLabel}</p>
+            <p className="text-muted-foreground">
+              {queuedCount > 0
+                ? `Queued submissions: ${queuedCount}`
+                : lastSyncedAt
+                ? `Last synced ${formatDistanceToNow(lastSyncedAt, { addSuffix: true })}`
+                : "Ready to submit"}
+            </p>
+          </div>
+          <Badge variant={queuedCount > 0 ? "secondary" : "outline"}>
+            {queuedCount > 0 ? `${queuedCount} queued` : "Up to date"}
+          </Badge>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
