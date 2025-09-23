@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  tests:
+    name: Run ${{ matrix.suite }} tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unit, integration, e2e]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ${{ matrix.suite }} suite
+        run: npm run test:${{ matrix.suite }}
+
+      - name: Publish ${{ matrix.suite }} summary
+        if: always()
+        env:
+          SUITE: ${{ matrix.suite }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "## ${SUITE^} test suite";
+            if [ "${JOB_STATUS}" = "success" ]; then
+              echo "✅ Passed";
+            else
+              echo "❌ Failed";
+            fi
+            echo "";
+            echo "Logs: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID";
+          } >> "$GITHUB_STEP_SUMMARY"

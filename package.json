@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "test:unit": "TEST_SCOPE=unit vitest run",
+    "test:integration": "TEST_SCOPE=integration vitest run --passWithNoTests",
+    "test:e2e": "TEST_SCOPE=e2e vitest run --passWithNoTests",
     "css:purge": "node scripts/check-css-size.mjs"
   },
   "dependencies": {
