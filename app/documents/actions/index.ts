@@ -7,6 +7,13 @@ import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
+import {
+  applyDocumentImportPlan,
+  buildDocumentImportPlan,
+  parseCsvRecords,
+  type DocumentImportMapping,
+  type DocumentImportPlan,
+} from '@/lib/documents/import';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
@@ -520,6 +527,136 @@ export async function getSigningUrlAction(
   }
 }
 
+export async function previewDocumentImportAction(
+  formData: FormData,
+): Promise<ActionResult<{ headers: string[]; plan: DocumentImportPlan }>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to preview document imports.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return {
+        success: false,
+        error: permissionError instanceof Error ? permissionError.message : 'Permission denied.',
+      };
+    }
+
+    const prepared = await prepareDocumentImportPlan({ formData, supabase: typedSupabase });
+
+    return {
+      success: true,
+      data: {
+        headers: prepared.headers,
+        plan: prepared.plan,
+      },
+    };
+  } catch (error) {
+    console.error('Unexpected error in previewDocumentImportAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
+    };
+  }
+}
+
+export async function commitDocumentImportAction(
+  formData: FormData,
+): Promise<ActionResult<{ plan: DocumentImportPlan; inserted: number; updated: number }>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to import documents.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return {
+        success: false,
+        error: permissionError instanceof Error ? permissionError.message : 'Permission denied.',
+      };
+    }
+
+    const prepared = await prepareDocumentImportPlan({ formData, supabase: typedSupabase });
+
+    if (prepared.plan.summary.valid === 0) {
+      return { success: false, error: 'No valid rows found in the uploaded CSV.' };
+    }
+
+    const repository = {
+      insert: async (payload: Record<string, unknown>) => {
+        const { data, error } = await (supabase as any)
+          .from('documents')
+          .insert(payload)
+          .select()
+          .single();
+
+        if (error || !data) {
+          throw new Error(error?.message ?? 'Failed to insert document.');
+        }
+
+        return data as DocumentRow;
+      },
+      update: async (id: string, payload: Record<string, unknown>) => {
+        const { data, error } = await (supabase as any)
+          .from('documents')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error || !data) {
+          throw new Error(error?.message ?? 'Failed to update document.');
+        }
+
+        return data as DocumentRow;
+      },
+      recordVersion: (document: DocumentRow, actorId: string, versionOverride?: number) =>
+        insertDocumentVersion(typedSupabase, document, actorId, versionOverride),
+    } satisfies {
+      insert: (payload: Record<string, unknown>) => Promise<DocumentRow>;
+      update: (id: string, payload: Record<string, unknown>) => Promise<DocumentRow>;
+      recordVersion: (document: DocumentRow, actorId: string, versionOverride?: number) => Promise<void>;
+    };
+
+    const execution = await applyDocumentImportPlan({
+      plan: prepared.plan,
+      repository,
+      actorId: user.id,
+    });
+
+    revalidatePath('/documents');
+
+    return {
+      success: true,
+      data: {
+        plan: prepared.plan,
+        inserted: execution.inserted,
+        updated: execution.updated,
+      },
+      message: `Imported ${execution.inserted} new documents and updated ${execution.updated}.`,
+    };
+  } catch (error) {
+    console.error('Unexpected error in commitDocumentImportAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
+    };
+  }
+}
+
 // Get document statistics
 export async function getDocumentStatsAction(): Promise<ActionResult<DocumentStats>> {
   const cookieStore = cookies();
@@ -561,4 +698,120 @@ export async function getDocumentStatsAction(): Promise<ActionResult<DocumentSta
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
     };
   }
+}
+
+async function prepareDocumentImportPlan({
+  formData,
+  supabase,
+}: {
+  formData: FormData;
+  supabase: TypedSupabaseClient;
+}): Promise<{ headers: string[]; plan: DocumentImportPlan }> {
+  const file = formData.get('file');
+  if (!(file instanceof File)) {
+    throw new Error('Please upload a CSV file.');
+  }
+
+  const mapping = parseImportMapping(formData);
+  const csvText = await file.text();
+  const { headers, rows } = parseCsvRecords(csvText);
+
+  if (headers.length === 0) {
+    throw new Error('CSV file must include a header row.');
+  }
+
+  if (rows.length === 0) {
+    throw new Error('CSV file does not contain any data rows.');
+  }
+
+  const { emails, documentIds } = collectImportReferences(rows, mapping);
+
+  const [profilesResult, documentsResult] = await Promise.all([
+    emails.length > 0
+      ? (supabase as any)
+          .from('profiles')
+          .select('id,email')
+          .in('email', emails)
+      : Promise.resolve({ data: [], error: null }),
+    documentIds.length > 0
+      ? (supabase as any)
+          .from('documents')
+          .select('*')
+          .in('id', documentIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (profilesResult.error) {
+    throw new Error(`Failed to load tenant records: ${profilesResult.error.message}`);
+  }
+
+  if (documentsResult.error) {
+    throw new Error(`Failed to load documents for import: ${documentsResult.error.message}`);
+  }
+
+  const plan = buildDocumentImportPlan({
+    headers,
+    rows,
+    mapping,
+    documents: documentsResult.data ?? [],
+    profiles: profilesResult.data ?? [],
+  });
+
+  return { headers, plan };
+}
+
+function parseImportMapping(formData: FormData): DocumentImportMapping {
+  const raw = formData.get('mapping');
+  if (typeof raw !== 'string') {
+    throw new Error('Column mapping payload is required.');
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Invalid column mapping payload.');
+    }
+    return parsed as DocumentImportMapping;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error('Invalid column mapping payload.');
+    }
+    throw error;
+  }
+}
+
+function collectImportReferences(
+  rows: Record<string, string>[],
+  mapping: DocumentImportMapping,
+) {
+  const emails = new Set<string>();
+  const documentIds = new Set<string>();
+
+  const emailColumn = typeof mapping.tenant_email === 'string' ? mapping.tenant_email : undefined;
+  const documentColumn = typeof mapping.document_id === 'string' ? mapping.document_id : undefined;
+
+  for (const row of rows) {
+    if (emailColumn) {
+      const value = row[emailColumn];
+      if (value && value.trim()) {
+        emails.add(value.trim().toLowerCase());
+      }
+    }
+
+    if (documentColumn) {
+      const value = row[documentColumn];
+      if (value && value.trim()) {
+        documentIds.add(value.trim());
+      }
+    }
+  }
+
+  const validEmails = [...emails].filter((email) => z.string().email().safeParse(email).success);
+  const validDocumentIds = [...documentIds].filter(isUuid);
+
+  return { emails: validEmails, documentIds: validDocumentIds };
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
