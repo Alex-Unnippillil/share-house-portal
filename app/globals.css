@@ -69,3 +69,29 @@ body {}
 @layer components {}
 
 @layer utilities {}
+
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: hsl(var(--primary));
+  height: 0.25rem;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 9999;
+}
+
+#nprogress .peg {
+  box-shadow:
+    0 0 10px hsl(var(--primary)),
+    0 0 5px hsl(var(--primary));
+  opacity: 0.6;
+  transform: rotate(3deg) translateY(-0.25rem);
+}
+
+#nprogress .spinner {
+  display: none !important;
+}
