@@ -9,6 +9,7 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { InstallPromptCta } from "@/components/pwa/InstallPrompt"
 import { NotificationCenter } from "@/components/notifications/notification-center"
 
 export async function SiteHeader() {
@@ -23,6 +24,7 @@ export async function SiteHeader() {
         <MainNav items={siteConfig.mainNav} />
         <MobileNav isAuthenticated={isAuthenticated} />
         <div className="flex flex-1 items-center justify-end gap-4">
+          <InstallPromptCta />
           <div className="hidden items-center gap-2 md:flex">
             {isAuthenticated ? (
               <>

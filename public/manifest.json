@@ -2,7 +2,7 @@
   "name": "Roomsily",
   "short_name": "Roomsily",
   "description": "www.roomsily keeps rent, roommates, amenities, and documents perfectly aligned.",
-  "start_url": "/", 
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#fff",
   "icons": [
@@ -41,6 +41,26 @@
     {
       "platform": "play",
       "url": "https://play.google.com/store/apps/details?id=yourApp"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pay Rent",
+      "short_name": "Pay Rent",
+      "description": "Review balances and submit rent payments.",
+      "url": "/payments"
+    },
+    {
+      "name": "Book Amenity",
+      "short_name": "Book Amenity",
+      "description": "Reserve shared spaces like the kitchen, TV room, or parking.",
+      "url": "/bookings"
+    },
+    {
+      "name": "Log Maintenance",
+      "short_name": "Maintenance",
+      "description": "Report an issue to property management with photos and priority.",
+      "url": "/maintenance"
     }
   ]
 }
