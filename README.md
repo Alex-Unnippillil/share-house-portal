@@ -52,6 +52,7 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 - Node.js 18+
 - npm/yarn/pnpm
 - Supabase account
+- PostgreSQL CLI (`psql`) or Supabase CLI (for database seeding)
 - Stripe account
 - Vercel account (for deployment)
 
@@ -65,6 +66,7 @@ NEXT_PUBLIC_SUPABASE_URL="your_supabase_project_url"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
 SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
 SUPABASE_JWT_SECRET="your_jwt_secret"
+SUPABASE_DB_URL="postgresql://username:password@db.host:5432/postgres?sslmode=require"
 
 # Stripe
 STRIPE_SECRET_KEY="your_stripe_secret_key"
@@ -88,6 +90,22 @@ Run the Supabase migrations to set up the required database tables:
 # Apply database migrations (requires Supabase CLI)
 supabase db push
 ```
+
+### Demo Data Seeding
+
+The repository includes an idempotent seed (`supabase/demo/seed.sql`) that keeps development and preview environments populated
+with realistic households and chore data.
+
+1. Ensure the `psql` CLI (or Supabase CLI, which bundles `psql`) is installed locally.
+2. Provide a Postgres connection string via `SUPABASE_DB_URL` (or `DATABASE_URL`) in `.env.local`.
+3. Load the seed with:
+
+```bash
+npm run dev:seed
+```
+
+The script wraps the seed in a single transaction and uses `ON CONFLICT`/`WHERE NOT EXISTS` guards so it is safe to re-run whenever
+sample data needs to be refreshed.
 
 ### Development
 
@@ -114,6 +132,9 @@ Deploy to Vercel with the following environment variables configured in your Ver
 - All Supabase environment variables
 - Stripe keys (use live keys for production)
 - Document and calendar service URLs/keys
+
+Preview deployments automatically execute `npm run dev:seed` (via the `vercel-build` script) when `SUPABASE_DB_URL` is present so
+shared demo data stays up-to-date. Update `supabase/demo/seed.sql` whenever sample records change to keep environments in sync.
 
 ## Operations & Reliability
 

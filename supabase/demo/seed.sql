@@ -1,5 +1,6 @@
 -- Demo seed script for validating household chore relationships
 -- Inserts sample households and related chores for local development/testing
+-- NOTE: Keep statements idempotent (use ON CONFLICT/WHERE NOT EXISTS guards) so the seed can run repeatedly in preview builds.
 
 -- Ensure demo households exist
 INSERT INTO public.households (id, name)
