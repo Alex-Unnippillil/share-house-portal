@@ -49,6 +49,23 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const bulkDocumentIdsSchema = z.array(z.string().uuid()).min(1, 'Select at least one document.');
+
+const bulkTagPayloadSchema = z
+  .object({
+    documentIds: bulkDocumentIdsSchema,
+    tag: z
+      .string()
+      .min(1, 'Tag cannot be empty.')
+      .max(64, 'Tags must be fewer than 64 characters.')
+      .optional(),
+    unitId: z.string().uuid('Unit ID must be a valid UUID.').optional(),
+  })
+  .refine(
+    (value) => Boolean(value.tag) || Boolean(value.unitId),
+    { message: 'Provide a tag or destination unit to update.', path: ['tag'] },
+  );
+
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
@@ -58,6 +75,12 @@ interface ActionResult<T = any> {
 }
 
 type DocumentRow = Database['public']['Tables']['documents']['Row'];
+
+type BulkTagInput = {
+  documentIds: string[];
+  tag?: string;
+  unitId?: string;
+};
 
 function buildVersionSnapshot(document: DocumentRow): DocumentVersionSnapshot {
   return {
@@ -635,6 +658,206 @@ export async function rollbackDocumentAction({
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function bulkDeleteDocumentsAction(
+  documentIds: string[],
+): Promise<ActionResult<{ deleted_ids: string[] }>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to manage documents.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return {
+        success: false,
+        error:
+          permissionError instanceof Error ? permissionError.message : 'Permission denied.',
+      };
+    }
+
+    let validatedIds: string[];
+    try {
+      validatedIds = bulkDocumentIdsSchema.parse(documentIds);
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        return { success: false, error: validationError.errors[0]?.message ?? 'Invalid request.' };
+      }
+      throw validationError;
+    }
+
+    const { data, error } = await supabase.rpc('documents_bulk_delete', {
+      document_ids: validatedIds,
+    });
+
+    if (error) {
+      console.error('Error deleting documents in bulk:', error);
+      return { success: false, error: 'Failed to delete documents.' };
+    }
+
+    revalidatePath('/documents');
+    return {
+      success: true,
+      data: (data as { deleted_ids: string[] } | null) ?? { deleted_ids: validatedIds },
+      message: `Deleted ${validatedIds.length} document${validatedIds.length === 1 ? '' : 's'}.`,
+    };
+  } catch (error) {
+    console.error('Unexpected error in bulkDeleteDocumentsAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
+    };
+  }
+}
+
+export async function bulkTagDocumentsAction(
+  input: BulkTagInput,
+): Promise<
+  ActionResult<{
+    updated_ids: string[];
+    applied_tag?: string;
+    destination_unit_id?: string | null;
+  }>
+> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to manage documents.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return {
+        success: false,
+        error:
+          permissionError instanceof Error ? permissionError.message : 'Permission denied.',
+      };
+    }
+
+    let parsedInput: z.infer<typeof bulkTagPayloadSchema>;
+    try {
+      parsedInput = bulkTagPayloadSchema.parse({
+        documentIds: input.documentIds,
+        tag: input.tag?.trim() || undefined,
+        unitId: input.unitId?.trim() || undefined,
+      });
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        return { success: false, error: validationError.errors[0]?.message ?? 'Invalid request.' };
+      }
+      throw validationError;
+    }
+
+    const { data, error } = await supabase.rpc('documents_bulk_tag', {
+      document_ids: parsedInput.documentIds,
+      tag: parsedInput.tag ?? null,
+      destination_unit_id: parsedInput.unitId ?? null,
+    });
+
+    if (error) {
+      console.error('Error applying bulk document updates:', error);
+      return { success: false, error: 'Failed to update documents.' };
+    }
+
+    revalidatePath('/documents');
+    return {
+      success: true,
+      data:
+        (data as {
+          updated_ids: string[];
+          applied_tag?: string | null;
+          destination_unit_id?: string | null;
+        } | null) ?? {
+          updated_ids: parsedInput.documentIds,
+          applied_tag: parsedInput.tag,
+          destination_unit_id: parsedInput.unitId ?? null,
+        },
+      message: 'Bulk updates applied to selected documents.',
+    };
+  } catch (error) {
+    console.error('Unexpected error in bulkTagDocumentsAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
+    };
+  }
+}
+
+export async function bulkExportDocumentsAction(
+  documentIds: string[],
+): Promise<ActionResult<{ export_url?: string; signed_url?: string }>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to export documents.' };
+    }
+
+    try {
+      await assertDocumentManager(typedSupabase, user.id);
+    } catch (permissionError) {
+      return {
+        success: false,
+        error:
+          permissionError instanceof Error ? permissionError.message : 'Permission denied.',
+      };
+    }
+
+    let validatedIds: string[];
+    try {
+      validatedIds = bulkDocumentIdsSchema.parse(documentIds);
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        return { success: false, error: validationError.errors[0]?.message ?? 'Invalid request.' };
+      }
+      throw validationError;
+    }
+
+    const { data, error } = await supabase.rpc('documents_bulk_export', {
+      document_ids: validatedIds,
+    });
+
+    if (error) {
+      console.error('Error exporting documents in bulk:', error);
+      return { success: false, error: 'Failed to export documents.' };
+    }
+
+    return {
+      success: true,
+      data: (data as { export_url?: string; signed_url?: string } | null) ?? undefined,
+      message: 'Export started for selected documents.',
+    };
+  } catch (error) {
+    console.error('Unexpected error in bulkExportDocumentsAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
     };
   }
 }
