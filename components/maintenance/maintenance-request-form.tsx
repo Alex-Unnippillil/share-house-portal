@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,11 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useMaintenanceMutation } from "@/hooks/mutations/use-maintenance-mutation";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -46,11 +42,8 @@ const priorities = [
 ];
 
 export function MaintenanceRequestForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
-  const supabase = createClient();
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const maintenanceMutation = useMaintenanceMutation();
 
   const form = useForm<MaintenanceRequestFormData>({
     resolver: zodResolver(maintenanceRequestSchema),
@@ -64,76 +57,50 @@ export function MaintenanceRequestForm() {
   });
 
   const onSubmit = async (data: MaintenanceRequestFormData) => {
-    setIsSubmitting(true);
-
     try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Get user profile
-      const profile = await fetchMemberProfile(typedSupabase, user.id);
-
-      if (!profile) throw new Error("Profile not found");
-
-      if (!profile.unit_id) {
-        throw new Error("User is not assigned to a unit");
-      }
-
-      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        roles: ['property_manager'],
-      });
-
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
-      }
-
-      // Create maintenance request record
-      const { data: request, error: requestError } = await (supabase as any)
-        .from('maintenance_requests')
-        .insert({
+      const result = await maintenanceMutation.mutate({
+        request: {
           title: data.title,
           description: data.description,
           priority: data.priority,
           category: data.category || null,
           location: data.location || null,
-          requested_by: user.id,
-          unit_id: profile.unit_id,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (requestError) throw requestError;
-
-      // Send notifications
-      await notifyMaintenanceRequest({
-        requesterName: profile.full_name || user.email || 'Unknown',
-        title: data.title,
-        description: data.description,
-        priority: data.priority,
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
         },
       });
 
-      toast({
-        title: "Maintenance request submitted",
-        description: "Your maintenance request has been submitted and notifications sent.",
-      });
+      if (result.status === "synced") {
+        toast({
+          title: "Maintenance request submitted",
+          description: "Your maintenance request has been submitted and notifications sent.",
+        });
+        form.reset();
+        return;
+      }
 
-      form.reset();
+      if (result.status === "queued") {
+        toast({
+          title: "Offline - request queued",
+          description: "We'll submit your maintenance request once you're back online.",
+        });
+        form.reset();
+        return;
+      }
+
+      if (result.status === "conflict") {
+        toast({
+          title: "Maintenance request already logged",
+          description: result.error.message,
+          variant: "destructive",
+        });
+        return;
+      }
     } catch (error) {
-      console.error('Error submitting maintenance request:', error);
+      console.error("Error submitting maintenance request:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit maintenance request",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -238,9 +205,16 @@ export function MaintenanceRequestForm() {
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Submitting..." : "Submit Maintenance Request"}
+        <Button type="submit" disabled={maintenanceMutation.isMutating} className="w-full">
+          {maintenanceMutation.isMutating ? "Submitting..." : "Submit Maintenance Request"}
         </Button>
+
+        {maintenanceMutation.pendingCount > 0 && (
+          <p className="text-sm text-muted-foreground" role="status">
+            {maintenanceMutation.pendingCount} pending maintenance request
+            {maintenanceMutation.pendingCount > 1 ? "s" : ""} will sync once you're back online.
+          </p>
+        )}
       </form>
     </Form>
   );
