@@ -258,6 +258,47 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      referral_codes: SupabaseTable<{
+        id: string
+        user_id: string
+        code: string
+        usage_count: number
+        max_uses: number | null
+        expires_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      referrals: SupabaseTable<{
+        id: string
+        referral_code_id: string
+        referrer_id: string
+        referred_email: string
+        referred_user_id: string | null
+        status: 'invited' | 'signed_up' | 'qualified' | 'rewarded' | 'cancelled'
+        household_id: string | null
+        invited_at: string | null
+        signed_up_at: string | null
+        qualified_at: string | null
+        rewarded_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      rewards: SupabaseTable<{
+        id: string
+        referral_id: string
+        user_id: string
+        reward_type: 'referrer' | 'referee'
+        amount: number
+        currency: string
+        status: 'pending' | 'earned' | 'paid' | 'cancelled'
+        issued_at: string | null
+        paid_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
     }
     Views: Record<string, never>
     Functions: {
