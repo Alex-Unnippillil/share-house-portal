@@ -1,4 +1,3 @@
-import { format, parseISO } from "date-fns"
 import { CheckCircle2 } from "lucide-react"
 
 import {
@@ -20,8 +19,13 @@ import {
 } from "@/lib/payments/catch-up"
 import { formatCurrency } from "@/lib/payments/currency"
 import { describeAutopayStatus } from "@/lib/payments/status"
+import { formatDate, type IntlPreferences } from "@/lib/utils"
 
-import { loadCatchUpBalances, loadReceiptHistory } from "./loaders"
+import {
+  loadCatchUpBalances,
+  loadReceiptHistory,
+  loadViewerFormattingPreferences,
+} from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 
 
@@ -68,15 +72,21 @@ const paymentHighlights = [
   },
 ]
 
-function formatFullDate(date: string) {
-  return format(parseISO(date), "MMM d, yyyy")
+function formatFullDate(date: string, intl: IntlPreferences) {
+  return formatDate(date, {
+    locale: intl.locale,
+    timeZone: intl.timeZone,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
 export default async function PaymentsPage() {
-  const [catchUpBalances, receiptHistory] = await Promise.all([
+  const [catchUpBalances, receiptHistory, formatting] = await Promise.all([
     loadCatchUpBalances(),
     loadReceiptHistory(),
-
+    loadViewerFormattingPreferences(),
   ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
@@ -157,7 +167,9 @@ export default async function PaymentsPage() {
                     Outstanding total
                   </dt>
                   <dd className="text-lg font-semibold">
-                    {formatCurrency(totalOutstanding, defaultCurrency)}
+                    {formatCurrency(totalOutstanding, defaultCurrency, {
+                      locale: formatting.locale,
+                    })}
                   </dd>
                   <p className="text-xs text-muted-foreground">
                     {catchUpBalances.length} roommates tracked
@@ -207,19 +219,27 @@ export default async function PaymentsPage() {
                       {balance.unitLabel} · {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrency(
-                        balance.lastPaymentAmount,
-                        balance.currency,
-                      )}
+                      Last payment {formatFullDate(balance.lastPaymentDate, formatting)} ·{' '}
+                      {formatCurrency(balance.lastPaymentAmount, balance.currency, {
+                        locale: formatting.locale,
+                      })}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold">
-                      {formatCurrency(outstanding, balance.currency)}
+                      {formatCurrency(outstanding, balance.currency, {
+                        locale: formatting.locale,
+                      })}
                     </p>
                     {nextCharge ? (
                       <p className="text-xs text-muted-foreground">
-                        Next: {nextCharge.description} due {format(parseISO(nextCharge.dueDate), "MMM d")}
+                        Next: {nextCharge.description} due{' '}
+                        {formatDate(nextCharge.dueDate, {
+                          locale: formatting.locale,
+                          timeZone: formatting.timeZone,
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">No outstanding charges</p>
@@ -229,8 +249,8 @@ export default async function PaymentsPage() {
               ))}
             </CardContent>
           </Card>
-          <PaymentStatusFeed balances={catchUpBalances} />
-          <ContributionSummaryCard balances={catchUpBalances} />
+          <PaymentStatusFeed balances={catchUpBalances} intl={formatting} />
+          <ContributionSummaryCard balances={catchUpBalances} intl={formatting} />
           <Card>
             <CardHeader>
               <CardTitle>Pay with Stripe</CardTitle>
@@ -241,9 +261,9 @@ export default async function PaymentsPage() {
             </CardContent>
           </Card>
         </div>
-        <CatchUpPaymentCard balances={catchUpBalances} />
+        <CatchUpPaymentCard balances={catchUpBalances} intl={formatting} />
       </section>
-      <ReceiptHistoryCard receipts={receiptHistory} />
+      <ReceiptHistoryCard receipts={receiptHistory} intl={formatting} />
 
     </div>
   )

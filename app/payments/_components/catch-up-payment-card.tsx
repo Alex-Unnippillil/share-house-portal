@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format, parseISO } from "date-fns"
 import { useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -40,6 +39,7 @@ import {
 import { formatCurrency, parseCurrencyInput, roundToCurrency } from "@/lib/payments/currency"
 import { createCatchUpFormSchema } from "@/lib/payments/schemas"
 import { AUTOPAY_STATUS_BADGES } from "@/lib/payments/status"
+import { formatDate, type IntlPreferences } from "@/lib/utils"
 import type {
   CatchUpBalance,
   CatchUpPaymentFormValues,
@@ -50,6 +50,7 @@ import { submitCatchUpPayment } from "../actions"
 
 interface CatchUpPaymentCardProps {
   balances: CatchUpBalance[]
+  intl?: IntlPreferences
 }
 
 type QuickAmountKey = "next" | "half" | "full"
@@ -60,7 +61,7 @@ type QuickAmount = {
   value: number
 }
 
-export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
+export function CatchUpPaymentCard({ balances, intl }: CatchUpPaymentCardProps) {
   const schema = useMemo(() => createCatchUpFormSchema(balances), [balances])
   const form = useForm<CatchUpPaymentFormValues>({
     resolver: zodResolver(schema),
@@ -173,7 +174,9 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
     if (nextCharge) {
       amounts.push({
         key: "next",
-        label: `Next charge (${formatCurrency(nextCharge.outstandingAmount, selectedBalance.currency)})`,
+        label: `Next charge (${formatCurrency(nextCharge.outstandingAmount, selectedBalance.currency, {
+          locale: intl?.locale,
+        })})`,
         value: roundToCurrency(nextCharge.outstandingAmount),
       })
     }
@@ -182,14 +185,18 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
     if (half > 0) {
       amounts.push({
         key: "half",
-        label: `Half balance (${formatCurrency(half, selectedBalance.currency)})`,
+        label: `Half balance (${formatCurrency(half, selectedBalance.currency, {
+          locale: intl?.locale,
+        })})`,
         value: half,
       })
     }
 
     amounts.push({
       key: "full",
-      label: `Pay in full (${formatCurrency(outstandingBalance, selectedBalance.currency)})`,
+      label: `Pay in full (${formatCurrency(outstandingBalance, selectedBalance.currency, {
+        locale: intl?.locale,
+      })})`,
       value: roundToCurrency(outstandingBalance),
     })
 
@@ -230,7 +237,11 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
         setLastResult(result)
         toast({
           title: `Catch-up scheduled for ${result.roommateName}`,
-          description: `${formatCurrency(result.amount, result.currency)} applied • New balance ${formatCurrency(result.projectedBalance, result.currency)}`,
+          description: `${formatCurrency(result.amount, result.currency, {
+            locale: intl?.locale,
+          })} applied • New balance ${formatCurrency(result.projectedBalance, result.currency, {
+            locale: intl?.locale,
+          })}`,
         })
 
         form.setValue(
@@ -307,7 +318,9 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                   <span className="font-medium">Outstanding</span>
                   <span>
                     {selectedBalance
-                      ? formatCurrency(outstandingBalance, selectedBalance.currency)
+                      ? formatCurrency(outstandingBalance, selectedBalance.currency, {
+                          locale: intl?.locale,
+                        })
                       : "—"}
                   </span>
                 </div>
@@ -321,7 +334,15 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                     </div>
                     <div>
                       <p className="font-medium text-foreground">Last payment</p>
-                      <p>{format(parseISO(selectedBalance.lastPaymentDate), "MMM d, yyyy")}</p>
+                      <p>
+                        {formatDate(selectedBalance.lastPaymentDate, {
+                          locale: intl?.locale,
+                          timeZone: intl?.timeZone,
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
                     </div>
                   </div>
                 ) : null}
@@ -344,7 +365,9 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                     </FormControl>
                     <FormDescription>
                       {selectedBalance
-                        ? `${formatCurrency(outstandingBalance, selectedBalance.currency)} outstanding`
+                        ? `${formatCurrency(outstandingBalance, selectedBalance.currency, {
+                            locale: intl?.locale,
+                          })} outstanding`
                         : "Enter an amount to distribute across open charges."}
                     </FormDescription>
                     <FormMessage />
@@ -371,7 +394,9 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                   <span>Projected remaining</span>
                   <span>
                     {selectedBalance
-                      ? formatCurrency(projectedBalance, selectedBalance.currency)
+                      ? formatCurrency(projectedBalance, selectedBalance.currency, {
+                          locale: intl?.locale,
+                        })
                       : "—"}
                   </span>
                 </div>
@@ -420,18 +445,29 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                               </div>
                             </td>
                             <td className="py-2 pr-2 text-sm text-muted-foreground">
-                              {format(parseISO(charge.dueDate), "MMM d")}
+                              {formatDate(charge.dueDate, {
+                                locale: intl?.locale,
+                                timeZone: intl?.timeZone,
+                                month: "short",
+                                day: "numeric",
+                              })}
                             </td>
                             <td className="py-2 pr-2 text-right">
-                              {formatCurrency(charge.outstandingAmount, selectedBalance.currency)}
+                              {formatCurrency(charge.outstandingAmount, selectedBalance.currency, {
+                                locale: intl?.locale,
+                              })}
                             </td>
                             <td className="py-2 pr-2 text-right text-emerald-600">
                               {applyingAmount > 0
-                                ? `-${formatCurrency(applyingAmount, selectedBalance.currency)}`
+                                ? `-${formatCurrency(applyingAmount, selectedBalance.currency, {
+                                    locale: intl?.locale,
+                                  })}`
                                 : "—"}
                             </td>
                             <td className="py-2 pr-4 text-right">
-                              {formatCurrency(remainingAmount, selectedBalance.currency)}
+                              {formatCurrency(remainingAmount, selectedBalance.currency, {
+                                locale: intl?.locale,
+                              })}
                             </td>
                           </tr>
                         )
@@ -518,11 +554,18 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                 </p>
               </div>
               <div className="text-sm font-semibold">
-                {formatCurrency(lastResult.amount, lastResult.currency)}
+                {formatCurrency(lastResult.amount, lastResult.currency, {
+                  locale: intl?.locale,
+                })}
               </div>
             </div>
             <div className="flex w-full flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span>Remaining balance {formatCurrency(lastResult.projectedBalance, lastResult.currency)}</span>
+              <span>
+                Remaining balance{' '}
+                {formatCurrency(lastResult.projectedBalance, lastResult.currency, {
+                  locale: intl?.locale,
+                })}
+              </span>
               <span aria-hidden="true">•</span>
               <span>
                 Allocated to {lastResult.allocations.length} charge{lastResult.allocations.length === 1 ? "" : "s"}
@@ -531,7 +574,10 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
             <div className="flex w-full flex-wrap gap-2">
               {lastResult.allocations.map((allocation) => (
                 <Badge key={allocation.chargeId} variant="outline">
-                  {allocation.description}: {formatCurrency(allocation.amount, lastResult.currency)}
+                  {allocation.description}:{' '}
+                  {formatCurrency(allocation.amount, lastResult.currency, {
+                    locale: intl?.locale,
+                  })}
                 </Badge>
               ))}
             </div>

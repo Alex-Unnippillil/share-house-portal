@@ -14,7 +14,7 @@ import type { AccountProfile } from "./types"
 
 type ProfileRow = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
-  "full_name" | "username" | "website" | "avatar_url" | "email"
+  "full_name" | "username" | "website" | "avatar_url" | "email" | "locale" | "timezone"
 >
 
 export interface AccountPageData {
@@ -36,7 +36,7 @@ export async function loadAccountPageData(): Promise<AccountPageData> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("full_name, username, website, avatar_url, email")
+    .select("full_name, username, website, avatar_url, email, locale, timezone")
     .eq("id", user.id)
     .maybeSingle<ProfileRow>()
 
@@ -45,14 +45,16 @@ export async function loadAccountPageData(): Promise<AccountPageData> {
   }
 
   const profile: AccountProfile | null = data
-    ? {
-        fullName: data.full_name,
-        username: data.username,
-        website: data.website,
-        avatarUrl: data.avatar_url,
-        email: data.email,
-      }
-    : null
+      ? {
+          fullName: data.full_name,
+          username: data.username,
+          website: data.website,
+          avatarUrl: data.avatar_url,
+          email: data.email,
+          locale: data.locale,
+          timeZone: data.timezone,
+        }
+      : null
 
   return { user, profile }
 }

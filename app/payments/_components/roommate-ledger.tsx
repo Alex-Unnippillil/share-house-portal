@@ -1,5 +1,4 @@
 import { Fragment } from "react"
-import { format, parseISO } from "date-fns"
 
 import { Badge, type BadgeProps } from "@/components/ui/badge"
 import {
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
-import { cn } from "@/lib/utils"
+import { cn, formatDate, type IntlPreferences } from "@/lib/utils"
 import type {
   LedgerActorRole,
   LedgerEntryType,
@@ -20,6 +19,7 @@ import type {
 
 interface RoommateLedgerProps {
   ledgers: RoommateLedger[]
+  intl?: IntlPreferences
 }
 
 type LedgerRow = RoommateLedger["entries"][number] & { balanceAfter: number }
@@ -37,7 +37,7 @@ const actorRoleLabels: Record<LedgerActorRole, string> = {
   property_manager: "Property manager",
 }
 
-export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
+export function RoommateLedger({ ledgers, intl }: RoommateLedgerProps) {
   if (ledgers.length === 0) {
     return null
   }
@@ -90,7 +90,13 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
             index,
           ) => {
             const lastUpdatedLabel = lastUpdated
-              ? format(parseISO(lastUpdated), "MMM d, yyyy")
+              ? formatDate(lastUpdated, {
+                  locale: intl?.locale,
+                  timeZone: intl?.timeZone,
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
               : null
             const contributionsCopy =
               contributionsCount === 1
@@ -124,10 +130,15 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                         Outstanding
                       </p>
                       <p className="text-sm font-semibold">
-                        {formatCurrency(currentOutstanding, ledger.currency)}
+                        {formatCurrency(currentOutstanding, ledger.currency, {
+                          locale: intl?.locale,
+                        })}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Started at {formatCurrency(ledger.startingBalance, ledger.currency)}
+                        Started at{' '}
+                        {formatCurrency(ledger.startingBalance, ledger.currency, {
+                          locale: intl?.locale,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -141,9 +152,17 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                       </div>
                       <div className="[&>div:not(:last-child)]:border-b">
                         {rows.map((entry) => {
-                          const entryDate = parseISO(entry.date)
-                          const formattedDate = format(entryDate, "MMM d")
-                          const formattedYear = format(entryDate, "yyyy")
+                          const formattedDate = formatDate(entry.date, {
+                            locale: intl?.locale,
+                            timeZone: intl?.timeZone,
+                            month: "short",
+                            day: "numeric",
+                          })
+                          const formattedYear = formatDate(entry.date, {
+                            locale: intl?.locale,
+                            timeZone: intl?.timeZone,
+                            year: "numeric",
+                          })
                           const amountClass =
                             entry.amount < 0
                               ? "text-emerald-600"
@@ -178,7 +197,7 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                               </div>
                               <div className="flex flex-col items-end gap-1 text-right">
                                 <span className={cn("font-semibold", amountClass)}>
-                                  {formatLedgerChange(entry.amount, ledger.currency)}
+                                  {formatLedgerChange(entry.amount, ledger.currency, intl?.locale)}
                                 </span>
                                 <Badge
                                   variant={entryTypeMeta.badgeVariant}
@@ -189,7 +208,9 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                               </div>
                               <div className="text-right">
                                 <p className="font-semibold">
-                                  {formatCurrency(entry.balanceAfter, ledger.currency)}
+                                  {formatCurrency(entry.balanceAfter, ledger.currency, {
+                                    locale: intl?.locale,
+                                  })}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   Running balance
@@ -216,11 +237,15 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
   )
 }
 
-function formatLedgerChange(amount: number, currency: string): string {
+function formatLedgerChange(
+  amount: number,
+  currency: string,
+  locale?: string | null,
+): string {
   if (amount === 0) {
-    return formatCurrency(0, currency)
+    return formatCurrency(0, currency, { locale })
   }
 
   const prefix = amount > 0 ? "+" : "-"
-  return `${prefix}${formatCurrency(Math.abs(amount), currency)}`
+  return `${prefix}${formatCurrency(Math.abs(amount), currency, { locale })}`
 }

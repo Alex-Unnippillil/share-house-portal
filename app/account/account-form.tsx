@@ -33,17 +33,27 @@ import {
 } from "@/components/ui/popover"
 import { toast } from "@/components/ui/use-toast"
 
-const languages = [
-  { label: "English", value: "en" },
-  { label: "French", value: "fr" },
-  { label: "German", value: "de" },
-  { label: "Spanish", value: "es" },
-  { label: "Portuguese", value: "pt" },
-  { label: "Russian", value: "ru" },
-  { label: "Japanese", value: "ja" },
-  { label: "Korean", value: "ko" },
-  { label: "Chinese", value: "zh" },
+const localeOptions = [
+  { label: "English (United States)", value: "en-US" },
+  { label: "English (United Kingdom)", value: "en-GB" },
+  { label: "Français (France)", value: "fr-FR" },
+  { label: "Deutsch (Deutschland)", value: "de-DE" },
+  { label: "Español (España)", value: "es-ES" },
+  { label: "Português (Brasil)", value: "pt-BR" },
+  { label: "Português (Portugal)", value: "pt-PT" },
+  { label: "日本語", value: "ja-JP" },
+  { label: "한국어", value: "ko-KR" },
+  { label: "中文（简体）", value: "zh-CN" },
+  { label: "中文（繁體）", value: "zh-TW" },
 ] as const
+
+const localeValues = localeOptions.map((option) => option.value)
+const supportedTimeZones = Intl.supportedValuesOf("timeZone")
+const supportedTimeZoneSet = new Set(supportedTimeZones)
+const timeZoneOptions = supportedTimeZones.map((value) => ({
+  value,
+  label: value.replace(/_/g, " "),
+}))
 
 const accountFormSchema = z.object({
   name: z
@@ -57,15 +67,28 @@ const accountFormSchema = z.object({
   dob: z.date({
     required_error: "A date of birth is required.",
   }),
-  language: z.string({
-    required_error: "Please select a language.",
-  }),
+  locale: z
+    .string({
+      required_error: "Please select a locale.",
+    })
+    .refine((value) => localeValues.includes(value), {
+      message: "Please select a supported locale.",
+    }),
+  timeZone: z
+    .string({
+      required_error: "Please select a timezone.",
+    })
+    .refine((value) => supportedTimeZoneSet.has(value), {
+      message: "Please select a supported timezone.",
+    }),
 })
 
 type AccountFormValues = z.infer<typeof accountFormSchema>
 
 // This can come from your database or API.
 const defaultValues: Partial<AccountFormValues> = {
+  locale: "en-US",
+  timeZone: "UTC",
   // name: "Your name",
   // dob: new Date("2023-01-23"),
 }
@@ -153,10 +176,10 @@ export function AccountForm() {
         />
         <FormField
           control={form.control}
-          name="language"
+          name="locale"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Language</FormLabel>
+              <FormLabel>Locale</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -164,41 +187,39 @@ export function AccountForm() {
                       variant="outline"
                       role="combobox"
                       className={cn(
-                        "w-[200px] justify-between",
+                        "w-[220px] justify-between",
                         !field.value && "text-muted-foreground"
                       )}
                     >
                       {field.value
-                        ? languages.find(
-                            (language) => language.value === field.value
-                          )?.label
-                        : "Select language"}
+                        ? localeOptions.find((locale) => locale.value === field.value)?.label
+                        : "Select locale"}
                       <CaretSortIcon className="ml-2 size-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
+                <PopoverContent className="w-[240px] p-0">
                   <Command>
-                    <CommandInput placeholder="Search language..." />
-                    <CommandEmpty>No language found.</CommandEmpty>
+                    <CommandInput placeholder="Search locale..." />
+                    <CommandEmpty>No locale found.</CommandEmpty>
                     <CommandGroup>
-                      {languages.map((language) => (
+                      {localeOptions.map((locale) => (
                         <CommandItem
-                          value={language.label}
-                          key={language.value}
-                          onSelect={() => {
-                            form.setValue("language", language.value)
+                          value={locale.value}
+                          key={locale.value}
+                          onSelect={(value) => {
+                            form.setValue("locale", value)
                           }}
                         >
                           <CheckIcon
                             className={cn(
                               "mr-2 size-4",
-                              language.value === field.value
+                              locale.value === field.value
                                 ? "opacity-100"
                                 : "opacity-0"
                             )}
                           />
-                          {language.label}
+                          {locale.label}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -206,7 +227,66 @@ export function AccountForm() {
                 </PopoverContent>
               </Popover>
               <FormDescription>
-                This is the language that will be used in the dashboard.
+                This controls currency, date, and number formatting.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="timeZone"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Timezone</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-[260px] justify-between",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value
+                        ? timeZoneOptions.find((option) => option.value === field.value)?.label
+                        : "Select timezone"}
+                      <CaretSortIcon className="ml-2 size-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search timezone..." />
+                    <CommandEmpty>No timezone found.</CommandEmpty>
+                    <CommandGroup>
+                      {timeZoneOptions.map((option) => (
+                        <CommandItem
+                          value={option.value}
+                          key={option.value}
+                          onSelect={(value) => {
+                            form.setValue("timeZone", value)
+                          }}
+                        >
+                          <CheckIcon
+                            className={cn(
+                              "mr-2 size-4",
+                              option.value === field.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          {option.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormDescription>
+                Events and reminders will be shown using this timezone.
               </FormDescription>
               <FormMessage />
             </FormItem>

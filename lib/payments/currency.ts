@@ -1,3 +1,5 @@
+import { formatNumber } from "@/lib/utils"
+
 export function roundToCurrency(value: number): number {
   return Math.round(value * 100) / 100
 }
@@ -20,12 +22,24 @@ export function parseCurrencyInput(rawValue: string): number {
   return roundToCurrency(parsed)
 }
 
-export function formatCurrency(amount: number, currency: string): string {
+export interface CurrencyFormatOptions extends Intl.NumberFormatOptions {
+  locale?: string | null
+}
+
+export function formatCurrency(
+  amount: number,
+  currency: string,
+  options?: CurrencyFormatOptions,
+): string {
+  const { locale, ...overrides } = options ?? {}
+
   try {
-    return new Intl.NumberFormat("en-US", {
+    return formatNumber(amount, {
+      locale,
       style: "currency",
       currency,
-    }).format(amount)
+      ...overrides,
+    })
   } catch (error) {
     return `${roundToCurrency(amount).toFixed(2)} ${currency.toUpperCase()}`
   }

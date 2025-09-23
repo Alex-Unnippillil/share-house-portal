@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { formatDistanceToNow, parseISO } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -24,12 +23,14 @@ import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
 import type { CatchUpBalance } from "@/types/payments"
 import type { Tables } from "@/lib/supabase"
 import { createClient } from "@/utils/supabase-browser"
+import { formatRelativeTimeFromNow, type IntlPreferences } from "@/lib/utils"
 
 type StripePaymentStatus = Tables<"rent_payments">["status"]
 type PaymentFeedStatus = StripePaymentStatus | "history"
 
 interface PaymentStatusFeedProps {
   balances: CatchUpBalance[]
+  intl?: IntlPreferences
 }
 
 interface PaymentFeedEvent {
@@ -48,23 +49,11 @@ interface PaymentFeedEvent {
 const MAX_FEED_EVENTS = 20
 
 function safeParseDate(value: string): string {
-  try {
-    const parsed = parseISO(value)
-    if (Number.isNaN(parsed.getTime())) {
-      return new Date().toISOString()
-    }
-    return parsed.toISOString()
-  } catch (error) {
+  const parsed = new Date(value)
+  if (!Number.isFinite(parsed.getTime())) {
     return new Date().toISOString()
   }
-}
-
-function formatRelativeTime(isoDate: string): string {
-  try {
-    return formatDistanceToNow(parseISO(isoDate), { addSuffix: true })
-  } catch (error) {
-    return "just now"
-  }
+  return parsed.toISOString()
 }
 
 function getFeedStatusLabel(status: StripePaymentStatus, isAutopay: boolean): string {
@@ -98,7 +87,7 @@ function getFeedBadgeVariant(status: PaymentFeedStatus): "outline" | "secondary"
   return "outline"
 }
 
-export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
+export function PaymentStatusFeed({ balances, intl }: PaymentStatusFeedProps) {
   const initialStatuses = useMemo<RoommateAutopayState[]>(
     () => createRoommateAutopayState(balances),
     [balances],
@@ -257,15 +246,10 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
       <CardContent className="space-y-6">
         <div className="space-y-3">
           {roommateStatuses.map((status) => {
-            const lastPaymentLabel = (() => {
-              try {
-                return formatDistanceToNow(parseISO(status.lastPaymentDate), {
-                  addSuffix: true,
-                })
-              } catch (error) {
-                return status.lastPaymentDate
-              }
-            })()
+            const lastPaymentLabel = formatRelativeTimeFromNow(
+              status.lastPaymentDate,
+              { locale: intl?.locale },
+            ) || status.lastPaymentDate
 
             return (
               <div
@@ -278,7 +262,10 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
                     {status.unitLabel} · {describeAutopayStatus(status.autopayStatus, status.autopayDay)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Last payment {lastPaymentLabel} · {formatCurrency(status.lastPaymentAmount, status.currency)}
+                    Last payment {lastPaymentLabel} ·{' '}
+                    {formatCurrency(status.lastPaymentAmount, status.currency, {
+                      locale: intl?.locale,
+                    })}
                   </p>
                 </div>
                 <div className="text-right">
@@ -286,7 +273,10 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
                     {AUTOPAY_STATUS_BADGES[status.autopayStatus].label}
                   </Badge>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Outstanding {formatCurrency(status.outstanding, status.currency)}
+                    Outstanding{' '}
+                    {formatCurrency(status.outstanding, status.currency, {
+                      locale: intl?.locale,
+                    })}
                   </p>
                 </div>
               </div>
@@ -325,13 +315,19 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
                             : event.stripeStatus}
                         </Badge>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {formatCurrency(event.amount, event.currency)}
+                          {formatCurrency(event.amount, event.currency, {
+                            locale: intl?.locale,
+                          })}
                         </p>
                       </div>
                     </div>
                     <Separator />
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                      <span>{formatRelativeTime(event.occurredAt)}</span>
+                      <span>
+                        {formatRelativeTimeFromNow(event.occurredAt, {
+                          locale: intl?.locale,
+                        })}
+                      </span>
                       {event.category ? <span className="capitalize">{event.category}</span> : null}
                     </div>
                   </div>

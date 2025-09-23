@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/card"
 import { summarizeContributionCategories } from "@/lib/payments/status"
 import { formatCurrency } from "@/lib/payments/currency"
+import type { IntlPreferences } from "@/lib/utils"
 import type { CatchUpBalance, CatchUpChargeCategory } from "@/types/payments"
 
 const CATEGORY_LABELS: Record<CatchUpChargeCategory, string> = {
@@ -21,9 +22,10 @@ const CATEGORY_LABELS: Record<CatchUpChargeCategory, string> = {
 
 interface ContributionSummaryCardProps {
   balances: CatchUpBalance[]
+  intl?: IntlPreferences
 }
 
-export function ContributionSummaryCard({ balances }: ContributionSummaryCardProps) {
+export function ContributionSummaryCard({ balances, intl }: ContributionSummaryCardProps) {
   const summaries = summarizeContributionCategories(balances)
   const defaultCurrency = balances[0]?.currency ?? "USD"
 
@@ -49,11 +51,16 @@ export function ContributionSummaryCard({ balances }: ContributionSummaryCardPro
           <div>
             <p className="text-sm font-medium">Outstanding total</p>
             <p className="text-lg font-semibold">
-              {formatCurrency(totalOutstanding, defaultCurrency)}
+              {formatCurrency(totalOutstanding, defaultCurrency, {
+                locale: intl?.locale,
+              })}
             </p>
           </div>
           <p className="text-xs text-muted-foreground">
-            {formatCurrency(totalIssued, defaultCurrency)} originally invoiced
+            {formatCurrency(totalIssued, defaultCurrency, {
+              locale: intl?.locale,
+            })}{" "}
+            originally invoiced
           </p>
         </div>
 
@@ -78,10 +85,14 @@ export function ContributionSummaryCard({ balances }: ContributionSummaryCardPro
                     </div>
                   </td>
                   <td className="py-2 pr-2 text-right">
-                    {formatCurrency(summary.outstandingAmount, defaultCurrency)}
+                    {formatCurrency(summary.outstandingAmount, defaultCurrency, {
+                      locale: intl?.locale,
+                    })}
                   </td>
                   <td className="py-2 pr-4 text-right text-muted-foreground">
-                    {formatCurrency(summary.originalAmount, defaultCurrency)}
+                    {formatCurrency(summary.originalAmount, defaultCurrency, {
+                      locale: intl?.locale,
+                    })}
                   </td>
                 </tr>
               ))}
