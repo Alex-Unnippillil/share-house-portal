@@ -10,6 +10,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationCenter } from "@/components/notifications/notification-center"
+import { VoiceCommandButton } from "@/components/voice-command-button"
 
 export async function SiteHeader() {
   const {
@@ -69,6 +70,7 @@ export async function SiteHeader() {
           </div>
           <nav className="flex items-center space-x-1">
             {isAuthenticated && <NotificationCenter />}
+            <VoiceCommandButton />
             <ThemeToggle />
           </nav>
         </div>
