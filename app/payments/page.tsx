@@ -1,5 +1,5 @@
 import { format, parseISO } from "date-fns"
-import { CheckCircle2 } from "lucide-react"
+import { ArrowRight, CheckCircle2 } from "lucide-react"
 
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
@@ -244,7 +245,25 @@ export default async function PaymentsPage() {
         <CatchUpPaymentCard balances={catchUpBalances} />
       </section>
       <ReceiptHistoryCard receipts={receiptHistory} />
-
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>Bill splitting workspace</CardTitle>
+          <CardDescription>
+            Coordinate roommate reimbursements with Splitwise, Venmo, and YSplit inspired tooling tailored to your unit.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Review ledgers, upcoming reminders, and flexible rent installments from the dedicated bill splitting hub.
+          </p>
+          <Button asChild className="gap-2">
+            <a href="/payments/bill-splitting">
+              Open bill splitting hub
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }
