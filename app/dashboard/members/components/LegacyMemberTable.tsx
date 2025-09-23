@@ -5,24 +5,28 @@ import ListOfMembers from "./ListOfMembers"
 
 const LEGACY_MEMBERS: DashboardMember[] = [
         {
+                id: "legacy-1",
                 name: "Admin Member",
                 role: "admin",
                 createdAt: new Date().toDateString(),
                 status: "active",
         },
         {
+                id: "legacy-2",
                 name: "Non Admin User",
                 role: "user",
                 createdAt: new Date().toDateString(),
                 status: "active",
         },
         {
+                id: "legacy-3",
                 name: "Administrator",
                 role: "admin",
                 createdAt: new Date().toDateString(),
                 status: "resigned",
         },
         {
+                id: "legacy-4",
                 name: "Satoshi",
                 role: "user",
                 createdAt: new Date().toDateString(),
