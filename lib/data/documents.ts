@@ -1,10 +1,16 @@
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import type { DocumentListFilters, DocumentStats, DocumentWithLease } from '@/types/documents';
 import type { Database } from '@/lib/supabase';
+import {
+  normalizeDocumentFilters,
+  isDocumentFilterEmpty,
+} from '@/lib/document-filter-params';
 
 type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
 
 type MemberRole = Database['public']['Tables']['profiles']['Row']['role'];
+
+type SavedViewRow = Database['public']['Tables']['saved_views']['Row'];
 
 type FetchDocumentsParams = {
   client: SupabaseClientLike;
@@ -100,4 +106,127 @@ export async function fetchDocumentStats({
     expired_documents: documents.filter(d => d.status === 'expired').length,
     draft_documents: documents.filter(d => d.status === 'draft').length,
   };
+}
+
+export interface SavedDocumentView {
+  id: string;
+  slug: string;
+  name: string;
+  resource: string;
+  created_by: string;
+  created_at: string | null;
+  filters: DocumentListFilters;
+}
+
+function mapSavedViewRow(row: SavedViewRow): SavedDocumentView {
+  const rawFilters = (row.filters ?? {}) as DocumentListFilters | Record<string, unknown>;
+  const normalizedFilters = normalizeDocumentFilters(rawFilters as DocumentListFilters);
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    resource: row.resource,
+    created_by: row.created_by,
+    created_at: row.created_at,
+    filters: normalizedFilters,
+  };
+}
+
+function slugifyName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function generateSavedViewSlug(name: string): string {
+  const base = slugifyName(name) || 'view';
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${base}-${suffix}`;
+}
+
+function serializeFilters(filters: DocumentListFilters) {
+  const normalized = normalizeDocumentFilters(filters);
+  if (isDocumentFilterEmpty(normalized)) {
+    return {};
+  }
+
+  return JSON.parse(JSON.stringify(normalized));
+}
+
+interface FetchSavedDocumentViewBySlugParams {
+  client: SupabaseClientLike;
+  slug: string;
+}
+
+export async function fetchSavedDocumentViewBySlug({
+  client,
+  slug,
+}: FetchSavedDocumentViewBySlugParams): Promise<SavedDocumentView | null> {
+  const { data, error } = await (client as any)
+    .from('saved_views')
+    .select('id, slug, name, resource, created_by, created_at, filters')
+    .eq('slug', slug)
+    .eq('resource', 'documents')
+    .maybeSingle();
+
+  handlePostgrestError(error, 'Failed to load saved view');
+
+  if (!data) {
+    return null;
+  }
+
+  return mapSavedViewRow(data as SavedViewRow);
+}
+
+interface SaveDocumentViewParams {
+  client: SupabaseClientLike;
+  userId: string;
+  name: string;
+  filters: DocumentListFilters;
+}
+
+export async function saveDocumentView({
+  client,
+  userId,
+  name,
+  filters,
+}: SaveDocumentViewParams): Promise<SavedDocumentView> {
+  const payloadFilters = serializeFilters(filters);
+
+  let attempt = 0;
+  while (attempt < 3) {
+    const slug = generateSavedViewSlug(name);
+
+    const { data, error } = await (client as any)
+      .from('saved_views')
+      .insert({
+        slug,
+        name,
+        resource: 'documents',
+        created_by: userId,
+        filters: payloadFilters,
+      })
+      .select('id, slug, name, resource, created_by, created_at, filters')
+      .single();
+
+    if (error) {
+      const isDuplicate = typeof error.message === 'string' && error.message.toLowerCase().includes('duplicate key');
+      if (isDuplicate) {
+        attempt += 1;
+        continue;
+      }
+      handlePostgrestError(error, 'Failed to save document view');
+    }
+
+    if (!data) {
+      throw new Error('Failed to save document view');
+    }
+
+    return mapSavedViewRow(data as SavedViewRow);
+  }
+
+  throw new Error('Failed to save document view: could not generate unique slug');
 }

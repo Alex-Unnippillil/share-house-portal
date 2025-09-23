@@ -5,7 +5,12 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
-import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
+import {
+  fetchDocumentStats,
+  fetchDocumentsList,
+  saveDocumentView,
+  type SavedDocumentView,
+} from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
@@ -43,6 +48,11 @@ const documentListFiltersSchema = z.object({
   unit_id: z.string().optional(),
   date_from: z.string().datetime().optional(),
   date_to: z.string().datetime().optional(),
+});
+
+const saveViewSchema = z.object({
+  name: z.string().min(1).max(80),
+  filters: documentListFiltersSchema.default({}),
 });
 
 // Action result interface
@@ -210,6 +220,43 @@ export async function uploadDocumentAction(
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
     };
+  }
+}
+
+export async function saveDocumentViewAction(
+  input: z.infer<typeof saveViewSchema>
+): Promise<ActionResult<SavedDocumentView>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  const validation = saveViewSchema.safeParse(input);
+  if (!validation.success) {
+    const message = validation.error.errors.map(error => error.message).join('. ');
+    return { success: false, error: message || 'Invalid saved view payload.' };
+  }
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to save views.' };
+    }
+
+    const savedView = await saveDocumentView({
+      client: typedSupabase,
+      userId: user.id,
+      name: validation.data.name,
+      filters: validation.data.filters,
+    });
+
+    return {
+      success: true,
+      data: savedView,
+      message: 'View saved successfully.',
+    };
+  } catch (error) {
+    console.error('Error saving document view:', error);
+    return { success: false, error: 'Failed to save view.' };
   }
 }
 

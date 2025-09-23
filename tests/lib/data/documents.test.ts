@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
+import {
+  fetchDocumentStats,
+  fetchDocumentsList,
+  fetchSavedDocumentViewBySlug,
+  saveDocumentView,
+} from '@/lib/data/documents';
 import type { DocumentListFilters } from '@/types/documents';
 
 type QueryResult<T> = { data: T; error: { message: string } | null };
@@ -47,6 +52,50 @@ function createSupabaseStub<T extends unknown[]>(query: QueryBuilder<T>) {
       return query;
     }),
   };
+}
+
+type SavedViewQueryResult<T> = { data: T; error: { message: string } | null };
+
+function createSavedViewSelectQuery<T>(result: SavedViewQueryResult<T>) {
+  const builder = {
+    select: vi.fn().mockImplementation(() => builder),
+    eq: vi.fn().mockImplementation(() => builder),
+    maybeSingle: vi.fn().mockResolvedValue(result),
+  } as const;
+
+  return builder;
+}
+
+function createSavedViewSelectClient<T>(result: SavedViewQueryResult<T>) {
+  const query = createSavedViewSelectQuery(result);
+  const supabase = {
+    from: vi.fn((table: string) => {
+      expect(table).toBe('saved_views');
+      return query;
+    }),
+  };
+
+  return { supabase, query };
+}
+
+function createSavedViewInsertClient(
+  responses: SavedViewQueryResult<unknown>[]
+) {
+  const queue = [...responses];
+  const builder = {
+    insert: vi.fn().mockImplementation(() => builder),
+    select: vi.fn().mockImplementation(() => builder),
+    single: vi.fn().mockImplementation(() => Promise.resolve(queue.shift()!)),
+  } as const;
+
+  const supabase = {
+    from: vi.fn((table: string) => {
+      expect(table).toBe('saved_views');
+      return builder;
+    }),
+  };
+
+  return { supabase, builder };
 }
 
 describe('fetchDocumentsList', () => {
@@ -147,5 +196,149 @@ describe('fetchDocumentStats', () => {
     await expect(
       fetchDocumentStats({ client: supabase, userId: 'user-1', role: 'tenant' })
     ).rejects.toThrow(/Failed to fetch document statistics: stats failed/);
+  });
+});
+
+describe('saved view helpers', () => {
+  it('fetchSavedDocumentViewBySlug returns normalized saved view data', async () => {
+    const { supabase, query } = createSavedViewSelectClient({
+      data: {
+        id: 'view-1',
+        slug: 'signed-leases',
+        name: 'Signed leases',
+        resource: 'documents',
+        created_by: 'user-1',
+        created_at: '2024-01-01',
+        filters: { status: ['signed', 'draft'], type: ['lease'] },
+      },
+      error: null,
+    });
+
+    const savedView = await fetchSavedDocumentViewBySlug({
+      client: supabase as any,
+      slug: 'signed-leases',
+    });
+
+    expect(query.eq).toHaveBeenNthCalledWith(1, 'slug', 'signed-leases');
+    expect(query.eq).toHaveBeenNthCalledWith(2, 'resource', 'documents');
+    expect(savedView).toEqual({
+      id: 'view-1',
+      slug: 'signed-leases',
+      name: 'Signed leases',
+      resource: 'documents',
+      created_by: 'user-1',
+      created_at: '2024-01-01',
+      filters: { status: ['draft', 'signed'], type: ['lease'] },
+    });
+  });
+
+  it('returns null when the saved view is not found', async () => {
+    const { supabase } = createSavedViewSelectClient({ data: null, error: null });
+
+    const result = await fetchSavedDocumentViewBySlug({
+      client: supabase as any,
+      slug: 'missing-view',
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('throws when fetching a saved view fails', async () => {
+    const { supabase } = createSavedViewSelectClient({
+      data: null,
+      error: { message: 'boom' },
+    });
+
+    await expect(
+      fetchSavedDocumentViewBySlug({ client: supabase as any, slug: 'broken' })
+    ).rejects.toThrow(/Failed to load saved view: boom/);
+  });
+
+  it('saveDocumentView persists normalized filters and returns the saved view', async () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.123456);
+    try {
+      const { supabase, builder } = createSavedViewInsertClient([
+        {
+          data: {
+            id: 'view-42',
+            slug: 'important-abc123',
+            name: 'Important docs',
+            resource: 'documents',
+            created_by: 'user-99',
+            created_at: '2024-02-01',
+            filters: { status: ['signed'], type: ['lease'], unit_id: 'unit-9' },
+          },
+          error: null,
+        },
+      ]);
+
+      const result = await saveDocumentView({
+        client: supabase as any,
+        userId: 'user-99',
+        name: 'Important docs',
+        filters: {
+          status: ['signed', 'signed'],
+          type: ['lease'],
+          unit_id: 'unit-9',
+          tenant_id: undefined,
+        } as DocumentListFilters,
+      });
+
+      expect(builder.insert).toHaveBeenCalledWith(expect.objectContaining({
+        slug: expect.stringMatching(/^important-docs-/),
+        name: 'Important docs',
+        resource: 'documents',
+        created_by: 'user-99',
+        filters: { status: ['signed'], type: ['lease'], unit_id: 'unit-9' },
+      }));
+      expect(result).toEqual({
+        id: 'view-42',
+        slug: 'important-abc123',
+        name: 'Important docs',
+        resource: 'documents',
+        created_by: 'user-99',
+        created_at: '2024-02-01',
+        filters: { status: ['signed'], type: ['lease'], unit_id: 'unit-9' },
+      });
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
+  it('retries slug generation when a duplicate is detected', async () => {
+    const randomSpy = vi
+      .spyOn(Math, 'random')
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.2);
+
+    try {
+      const { supabase, builder } = createSavedViewInsertClient([
+        { data: null, error: { message: 'duplicate key value violates unique constraint' } },
+        {
+          data: {
+            id: 'view-77',
+            slug: 'custom-slug',
+            name: 'My filters',
+            resource: 'documents',
+            created_by: 'user-77',
+            created_at: '2024-03-03',
+            filters: {},
+          },
+          error: null,
+        },
+      ]);
+
+      const result = await saveDocumentView({
+        client: supabase as any,
+        userId: 'user-77',
+        name: 'My filters',
+        filters: {},
+      });
+
+      expect(builder.insert).toHaveBeenCalledTimes(2);
+      expect(result.slug).toBe('custom-slug');
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 });
