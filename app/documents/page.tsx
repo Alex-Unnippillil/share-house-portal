@@ -8,11 +8,13 @@ import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
 import { DocumentListFilters } from '@/types/documents';
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 export default function DocumentsPage() {
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
+        <Breadcrumbs />
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>

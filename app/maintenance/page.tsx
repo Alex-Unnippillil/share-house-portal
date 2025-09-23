@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MaintenanceRequestForm } from "@/components/maintenance/maintenance-request-form";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 const maintenanceHighlights = [
   {
@@ -20,6 +21,7 @@ export default function MaintenancePage() {
   return (
     <div className="container max-w-6xl space-y-10 py-12">
       <header className="space-y-4">
+        <Breadcrumbs />
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Maintenance Requests</h1>
           <p className="text-base text-muted-foreground sm:text-lg">

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
@@ -69,6 +70,7 @@ export default function BookingsPage() {
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
+        <Breadcrumbs />
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Amenity Bookings
