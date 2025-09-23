@@ -1,4 +1,6 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { LinkPreviewCard } from "@/components/messaging/link-preview-card"
+import ThreadComposer from "@/components/messaging/thread-composer"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +16,7 @@ import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { Paperclip } from "lucide-react"
+import type { LinkPreviewData } from "@/types/link-preview"
 
 type ThreadListItem = {
   id: string
@@ -67,6 +70,7 @@ type ThreadPost = {
   attachments?: Attachment[]
   poll?: ThreadPoll
   reactions?: PostReaction[]
+  linkPreview?: LinkPreviewData
 }
 
 type AttachmentSummary = {
@@ -171,6 +175,7 @@ const threadPosts: ThreadPost[] = [
     content: [
       "Kicking off the Q2 chore rotation thread so we can stay ahead of the spring deep clean.",
       "Please vote in the poll for when we should tackle the deep clean together. I added the updated checklist and rotation calendar so everyone can review before voting.",
+      "Here's the deep clean playbook we can reference: https://spruceguide.example.com/spring-deep-clean.",
     ],
     attachments: [
       {
@@ -186,6 +191,16 @@ const threadPosts: ThreadPost[] = [
         type: "Spreadsheet",
       },
     ],
+    linkPreview: {
+      url: "https://spruceguide.example.com/spring-deep-clean",
+      title: "Spring deep clean playbook",
+      description:
+        "Room-by-room schedule we can follow for the weekend cleanup — perfect for assigning chores.",
+      image:
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
+      favicon: "https://icons.duckduckgo.com/ip3/spruceguide.example.com.ico",
+      siteName: "Spruce Guide",
+    },
     poll: {
       question: "When should we schedule the deep clean weekend?",
       closesAt: "Friday 6:00 PM",
@@ -214,6 +229,7 @@ const threadPosts: ThreadPost[] = [
     content: [
       "Looks good to me. I left a couple of notes in the sheet about trading weekends because of my travel schedule.",
       "If we go with the Saturday 10 AM block, I can take recycling duty during the week so Sunday stays open.",
+      "Our internal task tracker has the rotation at https://intranet.home-share.local/tasks if anyone needs the context.",
     ],
     attachments: [
       {
@@ -223,6 +239,14 @@ const threadPosts: ThreadPost[] = [
         type: "Spreadsheet",
       },
     ],
+    linkPreview: {
+      url: "https://intranet.home-share.local/tasks",
+      title: null,
+      description: null,
+      image: null,
+      favicon: null,
+      siteName: "intranet.home-share.local",
+    },
     reactions: [
       { emoji: "✅", count: 3 },
       { emoji: "🙌", count: 1 },
@@ -445,6 +469,8 @@ export default function MessagingPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-8">
+              <ThreadComposer />
+              <Separator />
               {threadPosts.map((post, index) => (
                 <div key={post.id} className="space-y-4">
                   <article className="space-y-4 rounded-lg border border-border/60 bg-background/90 p-4">
@@ -494,6 +520,13 @@ export default function MessagingPage() {
                           ))}
                         </div>
                       </div>
+                    ) : null}
+
+                    {post.linkPreview ? (
+                      <LinkPreviewCard
+                        preview={post.linkPreview}
+                        className="border-border bg-background"
+                      />
                     ) : null}
 
                     {post.poll ? (
