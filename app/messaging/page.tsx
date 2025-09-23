@@ -1,6 +1,4 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
