@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import SmartLink from "@/components/navigation/SmartLink"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -152,7 +153,7 @@ export default async function IndexPage() {
   const { data: userSession } = await readUserSession()
 
   if (userSession.session) {
-    return redirect("/dashboard")
+    redirect("/dashboard")
   }
 
   return (
@@ -422,6 +423,7 @@ export default async function IndexPage() {
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-primary/40 bg-white/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-white"
                   )}
+                  intent="passive"
                 >
                   Talk with us
                 </SmartLink>
