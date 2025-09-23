@@ -1,0 +1,117 @@
+import { colorTokens, contrastPairs, typeScale } from "@/config/tokens/accessibility"
+
+const describeRating = (measurement) => {
+  if (measurement.ratings.aaa) {
+    return "AAA"
+  }
+
+  if (measurement.ratings.aaNormalText) {
+    return "AA"
+  }
+
+  if (measurement.ratings.aaLargeText) {
+    return "AA (Large Text)"
+  }
+
+  return "Below AA"
+}
+
+# Color & Typography Accessibility Tokens
+
+These tokens document the core color palette and typography scale for the Share House Portal. Each color pair is measured for contrast in both light and dark modes to guarantee WCAG AA compliance. The automated Vitest check in `tests/accessibility/contrast.spec.ts` will fail the build if any required pair drops below a 4.5:1 ratio.
+
+## Palette Tokens
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Token</th>
+      <th align="left">Description</th>
+      <th align="left">Light Mode</th>
+      <th align="left">Dark Mode</th>
+    </tr>
+  </thead>
+  <tbody>
+    {colorTokens.map((token) => (
+      <tr key={token.cssVariable}>
+        <td>
+          <strong>{token.name}</strong>
+          <div><code>{token.cssVariable}</code></div>
+          <div style={{ textTransform: "capitalize" }}>{token.role}</div>
+        </td>
+        <td>{token.description}</td>
+        <td>
+          <div><code>{token.modes.light.css}</code></div>
+          <div><code>{token.modes.light.hex}</code></div>
+        </td>
+        <td>
+          <div><code>{token.modes.dark.css}</code></div>
+          <div><code>{token.modes.dark.hex}</code></div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+## Contrast Measurements
+
+Every combination below uses the appropriate foreground token for its paired surface. Ratios are listed for light and dark themes, with compliance levels derived from the measured value.
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Pair</th>
+      <th align="left">Light Mode</th>
+      <th align="left">Dark Mode</th>
+    </tr>
+  </thead>
+  <tbody>
+    {contrastPairs.map((pair) => (
+      <tr key={pair.id}>
+        <td>
+          <strong>{pair.label}</strong>
+          <div>{pair.description}</div>
+        </td>
+        <td>
+          <div>{pair.ratios.light.rounded.toFixed(2)} : 1</div>
+          <div>{describeRating(pair.ratios.light)}</div>
+        </td>
+        <td>
+          <div>{pair.ratios.dark.rounded.toFixed(2)} : 1</div>
+          <div>{describeRating(pair.ratios.dark)}</div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+## Type Scale
+
+The typography scale mirrors the Tailwind CSS defaults resolved from `tailwind.config.ts`. Large text (≥ 24px) qualifies for the relaxed 3:1 ratio, while body sizes require the standard 4.5:1 contrast.
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Class</th>
+      <th align="left">Font Size</th>
+      <th align="left">Font Size (px)</th>
+      <th align="left">Line Height</th>
+      <th align="left">Line Height (px)</th>
+      <th align="left">Min Contrast</th>
+    </tr>
+  </thead>
+  <tbody>
+    {typeScale.map((entry) => (
+      <tr key={entry.token}>
+        <td><code>{entry.token}</code></td>
+        <td>{entry.fontSize}</td>
+        <td>{entry.fontSizePx.toFixed(2)}</td>
+        <td>{entry.lineHeight}</td>
+        <td>{entry.lineHeightPx.toFixed(2)}</td>
+        <td>{entry.recommendedContrast.toFixed(1)} : 1</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+> **Note:** Focus utilities from `tailwindcss-accessibility` are now available in Tailwind builds, ensuring consistent focus-visible treatments alongside these tokenized palettes.
