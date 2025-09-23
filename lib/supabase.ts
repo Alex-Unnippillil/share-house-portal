@@ -197,6 +197,13 @@ export type Database = {
         attachments: Json | null
         metadata: Json | null
       }>
+      maintenance_request_drafts: SupabaseTable<{
+        id: string
+        user_id: string
+        form_data: Json
+        created_at: string | null
+        updated_at: string | null
+      }>
       visitor_logs: SupabaseTable<{
         id: string
         guest_name: string

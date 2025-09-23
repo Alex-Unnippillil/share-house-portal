@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useDraftPersistence, type DraftPersistencePayload } from "@/hooks/use-draft-persistence";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
@@ -47,6 +47,7 @@ const priorities = [
 
 export function MaintenanceRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
@@ -61,6 +62,94 @@ export function MaintenanceRequestForm() {
       category: "",
       location: "",
     },
+  });
+
+  useEffect(() => {
+    let isActive = true;
+
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (!isActive) return;
+        setCurrentUserId(data.user?.id ?? null);
+      })
+      .catch((error) => {
+        console.error("Failed to resolve user for maintenance draft persistence", error);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [supabase]);
+
+  const persistDraftToSupabase = useCallback(
+    async (payload: DraftPersistencePayload<MaintenanceRequestFormData>) => {
+      if (!currentUserId) return;
+
+      const { error } = await (supabase as any)
+        .from("maintenance_request_drafts")
+        .upsert({
+          user_id: currentUserId,
+          form_data: payload.values,
+          updated_at: new Date(payload.updatedAt).toISOString(),
+        });
+
+      if (error) {
+        throw error;
+      }
+    },
+    [currentUserId, supabase],
+  );
+
+  const deleteDraftFromSupabase = useCallback(async () => {
+    if (!currentUserId) return;
+
+    const { error } = await (supabase as any)
+      .from("maintenance_request_drafts")
+      .delete()
+      .eq("user_id", currentUserId);
+
+    if (error) {
+      throw error;
+    }
+  }, [currentUserId, supabase]);
+
+  const loadDraftFromSupabase = useCallback(async () => {
+    if (!currentUserId) return null;
+
+    const { data, error } = await (supabase as any)
+      .from("maintenance_request_drafts")
+      .select("form_data, updated_at")
+      .eq("user_id", currentUserId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.form_data) {
+      return null;
+    }
+
+    const values = data.form_data as Partial<MaintenanceRequestFormData>;
+
+    return {
+      values: {
+        ...form.getValues(),
+        ...values,
+      },
+      updatedAt: data.updated_at ? Date.parse(data.updated_at) : Date.now(),
+    } satisfies DraftPersistencePayload<MaintenanceRequestFormData>;
+  }, [currentUserId, form, supabase]);
+
+  const draftPersistence = useDraftPersistence<MaintenanceRequestFormData>({
+    form,
+    storageKey: "maintenance-request-draft",
+    persistDraft: persistDraftToSupabase,
+    deleteDraft: deleteDraftFromSupabase,
+    loadDraft: loadDraftFromSupabase,
+    debounceMs: 3000,
+    maxWaitMs: 10000,
   });
 
   const onSubmit = async (data: MaintenanceRequestFormData) => {
@@ -124,6 +213,7 @@ export function MaintenanceRequestForm() {
         description: "Your maintenance request has been submitted and notifications sent.",
       });
 
+      await draftPersistence.clearDraft();
       form.reset();
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
