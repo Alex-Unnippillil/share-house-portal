@@ -1,0 +1,6 @@
+ALTER TABLE public.notifications
+  ADD COLUMN IF NOT EXISTS hidden BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS hidden_at TIMESTAMP WITH TIME ZONE,
+  ADD COLUMN IF NOT EXISTS delete_after TIMESTAMP WITH TIME ZONE;
+
+CREATE INDEX IF NOT EXISTS idx_notifications_hidden ON public.notifications(hidden);

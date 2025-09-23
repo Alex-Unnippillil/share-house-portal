@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Bell, X, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
+import { SoftDeleteQueue } from "@/lib/soft-delete-queue";
 
 interface Notification {
   id: string;
@@ -19,15 +21,68 @@ interface Notification {
   action_url?: string;
   read: boolean;
   created_at: string;
+  hidden?: boolean;
+  hidden_at?: string | null;
+  delete_after?: string | null;
 }
+
+const SOFT_DELETE_WINDOW_MS = 30_000;
 
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   const supabase = useMemo(() => createClient(), []);
+  const toastIdsRef = useRef(new Map<string, string>());
+  const handlePermanentDeleteRef = useRef<
+    (id: string, notification: Notification) => void | Promise<void>
+  >();
+  const deletionQueueRef = useRef<SoftDeleteQueue<Notification>>();
+
+  const handlePermanentDelete = useCallback(
+    async (notificationId: string, _notification?: Notification) => {
+      const toastId = toastIdsRef.current.get(notificationId);
+      if (toastId) {
+        dismiss(toastId);
+        toastIdsRef.current.delete(notificationId);
+      }
+
+      try {
+        const { error } = await (supabase as any)
+          .from('notifications')
+          .delete()
+          .eq('id', notificationId)
+          .eq('hidden', true);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Failed to permanently delete notification:', error);
+      }
+    },
+    [dismiss, supabase]
+  );
+
+  handlePermanentDeleteRef.current = (id, notification) =>
+    handlePermanentDelete(id, notification);
+
+  if (!deletionQueueRef.current) {
+    deletionQueueRef.current = new SoftDeleteQueue<Notification>(
+      SOFT_DELETE_WINDOW_MS,
+      (id, notification) => {
+        handlePermanentDeleteRef.current?.(id, notification);
+      }
+    );
+  }
+
+  const deletionQueue = deletionQueueRef.current!;
+
+  useEffect(() => {
+    return () => {
+      deletionQueueRef.current?.flush();
+    };
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -35,13 +90,17 @@ export function NotificationCenter() {
       const { data, error } = await (supabase as any)
         .from('notifications')
         .select('*')
+        .or('hidden.is.null,hidden.eq.false')
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
+      const records = ((data || []) as Notification[]).filter(
+        notification => notification.hidden !== true
+      );
+      setNotifications(records);
+      setUnreadCount(records.filter(notification => !notification.read).length);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -129,23 +188,120 @@ export function NotificationCenter() {
     }
   };
 
+  const handleUndo = useCallback(
+    async (notificationId: string) => {
+      const restored = deletionQueue.undo(notificationId);
+
+      if (!restored) {
+        return;
+      }
+
+      const toastId = toastIdsRef.current.get(notificationId);
+      if (toastId) {
+        dismiss(toastId);
+        toastIdsRef.current.delete(notificationId);
+      }
+
+      try {
+        const { error } = await (supabase as any)
+          .from('notifications')
+          .update({
+            hidden: false,
+            hidden_at: null,
+            delete_after: null,
+          })
+          .eq('id', notificationId);
+
+        if (error) throw error;
+
+        setNotifications(prev => {
+          const filtered = prev.filter(n => n.id !== notificationId);
+          const next = [restored, ...filtered];
+          return next.sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        });
+
+        if (!restored.read) {
+          setUnreadCount(prev => prev + 1);
+        }
+      } catch (error) {
+        console.error('Failed to undo notification deletion:', error);
+        deletionQueue.schedule(notificationId, restored);
+        const { id: retryToastId } = toast({
+          title: 'Unable to restore notification',
+          description: 'Please try again within 30 seconds.',
+          variant: 'destructive',
+          action: (
+            <ToastAction
+              altText="Retry undo"
+              onClick={() => handleUndo(notificationId)}
+            >
+              Retry
+            </ToastAction>
+          ),
+        });
+        toastIdsRef.current.set(notificationId, retryToastId);
+      }
+    },
+    [deletionQueue, dismiss, supabase, toast]
+  );
+
   const deleteNotification = async (notificationId: string) => {
     try {
+      const targetNotification = notifications.find(
+        n => n.id === notificationId
+      );
+
+      if (!targetNotification) {
+        return;
+      }
+
+      const now = new Date();
+      const deleteAfter = new Date(now.getTime() + SOFT_DELETE_WINDOW_MS)
+        .toISOString();
+
       const { error } = await (supabase as any)
         .from('notifications')
-        .delete()
+        .update({
+          hidden: true,
+          hidden_at: now.toISOString(),
+          delete_after: deleteAfter,
+        })
         .eq('id', notificationId);
 
       if (error) throw error;
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
 
-      if (deletedNotification && !deletedNotification.read) {
+      if (!targetNotification.read) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
+
+      deletionQueue.schedule(notificationId, targetNotification);
+
+      const { id: toastId } = toast({
+        title: 'Notification deleted',
+        description: 'Undo within 30 seconds to restore it.',
+        action: (
+          <ToastAction
+            altText="Undo delete"
+            onClick={() => handleUndo(notificationId)}
+          >
+            Undo
+          </ToastAction>
+        ),
+      });
+
+      toastIdsRef.current.set(notificationId, toastId);
     } catch (error) {
       console.error('Failed to delete notification:', error);
+      toast({
+        title: 'Failed to delete notification',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
