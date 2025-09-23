@@ -11,6 +11,12 @@ type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
 
 type MemberRole = Database['public']['Tables']['profiles']['Row']['role'];
 
+type DocumentIdRow = Pick<Database['public']['Tables']['documents']['Row'], 'id'>;
+type DocumentSignatureRow = Pick<
+  Database['public']['Tables']['document_signatures']['Row'],
+  'document_id'
+>;
+
 type FetchDocumentsParams = {
   client: SupabaseClientLike;
   userId: string;
@@ -54,13 +60,50 @@ export async function fetchDocumentsList({
   role,
   filters = {},
 }: FetchDocumentsParams): Promise<DocumentWithLease[]> {
-  let query = (client as any)
+  const supabase = client as unknown as TypedSupabaseClient;
+
+  let query = supabase
     .from('documents')
     .select(DOCUMENT_SELECT)
     .order('created_at', { ascending: false });
 
   if (role !== 'property_manager' && role !== 'admin') {
-    query = query.or(`tenant_id.eq.${userId},signatures.signer_id.eq.${userId}`);
+    const accessibleDocumentIds = new Set<string>();
+
+    const { data: tenantDocuments, error: tenantDocumentsError } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('tenant_id', userId);
+
+    handlePostgrestError(tenantDocumentsError, 'Failed to fetch documents for tenant');
+
+    for (const document of (tenantDocuments ?? []) as DocumentIdRow[]) {
+      if (document?.id) {
+        accessibleDocumentIds.add(document.id);
+      }
+    }
+
+    const { data: signatureDocuments, error: signatureDocumentsError } = await supabase
+      .from('document_signatures')
+      .select('document_id')
+      .eq('signer_id', userId);
+
+    handlePostgrestError(
+      signatureDocumentsError,
+      'Failed to fetch documents available for signature'
+    );
+
+    for (const signature of (signatureDocuments ?? []) as DocumentSignatureRow[]) {
+      if (signature?.document_id) {
+        accessibleDocumentIds.add(signature.document_id);
+      }
+    }
+
+    if (!accessibleDocumentIds.size) {
+      return [];
+    }
+
+    query = query.in('id', Array.from(accessibleDocumentIds));
   }
 
   if (filters.status?.length) {
