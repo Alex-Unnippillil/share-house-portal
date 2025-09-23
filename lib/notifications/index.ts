@@ -50,6 +50,7 @@ class NotificationService {
         ),
         "payment-receipt": this.getPaymentReceiptTemplate(notification.data),
         "document-signed": this.getDocumentSignedTemplate(notification.data),
+        "activity-digest": this.getActivityDigestTemplate(notification.data),
         welcome: this.getWelcomeTemplate(notification.data),
       }
 
@@ -242,6 +243,105 @@ class NotificationService {
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
         }/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Get Started</a>
+      </div>
+    `
+  }
+
+  private getActivityDigestTemplate(data?: any) {
+    const notifications = Array.isArray(data?.notifications)
+      ? data.notifications
+      : []
+    const frequency = data?.frequency === "weekly" ? "weekly" : "daily"
+    const fullName = typeof data?.fullName === "string" ? data.fullName : null
+
+    const toDate = (value: unknown) => {
+      if (typeof value !== "string") return null
+      const parsed = new Date(value)
+      return Number.isNaN(parsed.valueOf()) ? null : parsed
+    }
+
+    const windowStart = toDate(data?.windowStart)
+    const windowEnd = toDate(data?.windowEnd)
+    const rangeLabel =
+      windowStart && windowEnd
+        ? `${windowStart.toLocaleString(undefined, {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })} – ${windowEnd.toLocaleString(undefined, {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })}`
+        : "recent activity"
+
+    const digestItems = notifications
+      .map((item: any) => {
+        const title =
+          typeof item?.title === "string" && item.title.trim().length > 0
+            ? item.title.trim()
+            : "Update"
+        const message =
+          typeof item?.message === "string" ? item.message.trim() : ""
+        const createdAt = toDate(item?.createdAt)
+        const timestamp = createdAt
+          ? createdAt.toLocaleString(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })
+          : null
+
+        return {
+          title,
+          message,
+          timestamp,
+        }
+      })
+      .filter((item) => item.title || item.message)
+
+    const activityList = digestItems.length
+      ? `<ul style="padding-left: 16px;">
+          ${digestItems
+            .map(
+              (item) => `
+                <li style="margin-bottom: 16px;">
+                  <p style="margin: 0; font-weight: 600; color: #111827;">
+                    ${item.title}${
+                item.timestamp
+                  ? ` <span style="font-weight: 400; color: #4b5563;">(${item.timestamp})</span>`
+                  : ""
+              }
+                  </p>
+                  ${
+                    item.message
+                      ? `<p style="margin: 4px 0 0 0; color: #374151;">${item.message}</p>`
+                      : ""
+                  }
+                </li>
+              `,
+            )
+            .join("")}
+        </ul>`
+      : `<p style="color: #4b5563;">No new updates in this window.</p>`
+
+    const portalUrl = process.env.NEXT_PUBLIC_APP_URL || "https://roomsily.com"
+
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>${
+          frequency === "weekly"
+            ? "Weekly household digest"
+            : "Daily household digest"
+        }</h2>
+        <p>${fullName ? `Hi ${fullName.split(" ")[0]},` : "Hi there,"}</p>
+        <p>Here's what happened in ${
+          windowStart && windowEnd
+            ? rangeLabel
+            : "your recent activity window"
+        }:</p>
+        ${activityList}
+        <p style="color: #4b5563;">Visit your portal to review the full details or respond.</p>
+        <a href="${
+          portalUrl
+        }/dashboard" style="background: #111827; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block;">Open portal</a>
       </div>
     `
   }

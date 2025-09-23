@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator"
 
 import AccountForm from "./supa-account-form"
 import { loadAccountPageData } from "./loaders"
+import NotificationPreferencesForm from "./notification-preferences-form"
 
 export default async function SettingsAccountPage() {
   const { user, profile } = await loadAccountPageData()
@@ -23,6 +24,23 @@ export default async function SettingsAccountPage() {
         </div>
         <Separator />
         <AccountForm profile={profile} user={user} />
+        <Separator />
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold tracking-tight">Notification preferences</h2>
+            <p className="text-sm text-muted-foreground">
+              Choose how often we bundle updates and optionally set quiet hours to pause overnight deliveries.
+            </p>
+          </div>
+          <NotificationPreferencesForm
+            userId={user.id}
+            preferences={{
+              digestFrequency: profile?.digestFrequency ?? "daily",
+              quietHoursStart: profile?.quietHoursStart ?? null,
+              quietHoursEnd: profile?.quietHoursEnd ?? null,
+            }}
+          />
+        </div>
       </div>
     </div>
   )
