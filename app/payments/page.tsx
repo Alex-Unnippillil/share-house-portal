@@ -11,14 +11,15 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
+import { PaymentStatusFeed } from "./_components/payment-status-feed"
+import { ContributionSummaryCard } from "./_components/contribution-summary-card"
 import { RoommateLedger } from "./_components/roommate-ledger"
 import {
   calculateOutstanding,
-  formatAutopayDay,
   getNextOutstandingCharge,
 } from "@/lib/payments/catch-up"
 import { formatCurrency } from "@/lib/payments/currency"
-import type { CatchUpBalance } from "@/types/payments"
+import { describeAutopayStatus } from "@/lib/payments/status"
 
 import { loadCatchUpBalances, loadRoommateLedgers } from "./loaders"
 
@@ -64,21 +65,6 @@ const paymentHighlights = [
     ],
   },
 ]
-
-function describeAutopayStatus(balance: CatchUpBalance) {
-  const autopayDay = formatAutopayDay(balance.autopayDay)
-
-  switch (balance.autopayStatus) {
-    case "active":
-      return `Autopay active · ${autopayDay} each month`
-    case "paused":
-      return `Autopay paused · resumes ${autopayDay}`
-    case "disabled":
-      return "Autopay off"
-  }
-
-  return ""
-}
 
 function formatFullDate(date: string) {
   return format(parseISO(date), "MMM d, yyyy")
@@ -215,7 +201,7 @@ export default async function PaymentsPage() {
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{balance.roommateName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {balance.unitLabel} · {describeAutopayStatus(balance)}
+                      {balance.unitLabel} · {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrency(
@@ -240,6 +226,8 @@ export default async function PaymentsPage() {
               ))}
             </CardContent>
           </Card>
+          <PaymentStatusFeed balances={catchUpBalances} />
+          <ContributionSummaryCard balances={catchUpBalances} />
           <Card>
             <CardHeader>
               <CardTitle>Pay with Stripe</CardTitle>
