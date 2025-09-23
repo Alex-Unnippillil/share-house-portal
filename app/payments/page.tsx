@@ -23,6 +23,7 @@ import { describeAutopayStatus } from "@/lib/payments/status"
 
 import { loadCatchUpBalances, loadReceiptHistory } from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
+import { ExportPaymentHistoryButton } from "./_components/export-payment-history-button"
 
 
 const paymentHighlights = [
@@ -113,11 +114,14 @@ export default async function PaymentsPage() {
   return (
     <div className="container max-w-5xl space-y-10 py-12">
       <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Payments</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Manage rent, deposits, and roommate contributions with Stripe-powered autopay and real-time status updates.
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Payments</h1>
+            <p className="text-base text-muted-foreground sm:text-lg">
+              Manage rent, deposits, and roommate contributions with Stripe-powered autopay and real-time status updates.
+            </p>
+          </div>
+          <ExportPaymentHistoryButton receipts={receiptHistory} />
         </div>
         <Separator />
       </header>
