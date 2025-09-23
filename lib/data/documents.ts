@@ -1,5 +1,10 @@
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
-import type { DocumentListFilters, DocumentStats, DocumentWithLease } from '@/types/documents';
+import type {
+  DocumentListFilters,
+  DocumentStats,
+  DocumentVersion,
+  DocumentWithLease,
+} from '@/types/documents';
 import type { Database } from '@/lib/supabase';
 
 type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
@@ -23,7 +28,18 @@ const DOCUMENT_SELECT = `
         *,
         lease:leases(*),
         signatures:document_signatures(*),
-        access_logs:document_access_logs(*, profiles:signer_id(username, full_name))
+        access_logs:document_access_logs(*, profiles:signer_id(username, full_name)),
+        versions:document_versions(
+          id,
+          document_id,
+          version,
+          state,
+          status,
+          snapshot,
+          created_at,
+          created_by,
+          published_at
+        )
       `;
 
 function handlePostgrestError(error: { message: string } | null, context: string) {
@@ -74,7 +90,17 @@ export async function fetchDocumentsList({
   const { data, error } = await query;
   handlePostgrestError(error, 'Failed to fetch documents');
 
-  return data ?? [];
+  const documents = (data ?? []) as (DocumentWithLease & {
+    versions?: DocumentVersion[] | null;
+  })[];
+
+  return documents.map((document) => ({
+    ...document,
+    versions: (document.versions ?? [])
+      .filter((version): version is DocumentVersion => Boolean(version))
+      .slice()
+      .sort((a, b) => b.version - a.version),
+  }));
 }
 
 export async function fetchDocumentStats({
