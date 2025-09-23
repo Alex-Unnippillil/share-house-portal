@@ -2,6 +2,8 @@ import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
 
+import SmartLink from "@/components/navigation/SmartLink"
+
 import { redirect } from "next/navigation"
 import {
   CalendarClock,
@@ -413,9 +415,8 @@ export default async function IndexPage() {
                   intent="critical"
                 >
                   Start onboarding
-                </Link>
-                <Link
-
+                </SmartLink>
+                <SmartLink
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
