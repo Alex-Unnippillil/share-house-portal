@@ -184,6 +184,34 @@ export type Database = {
         attachments: Json | null
         metadata: Json | null
       }>
+      nps_survey_windows: SupabaseTable<{
+        id: string
+        survey_year: number
+        survey_quarter: number
+        start_at: string
+        end_at: string
+        activated_at: string | null
+        created_at: string | null
+      }>
+      nps_responses: SupabaseTable<{
+        id: string
+        window_id: string
+        user_id: string
+        score: number
+        feedback: string | null
+        metadata: Json | null
+        created_at: string | null
+      }>
+      csat_responses: SupabaseTable<{
+        id: string
+        user_id: string
+        context: 'document_signed' | 'maintenance_resolved'
+        context_id: string | null
+        rating: number
+        comment: string | null
+        metadata: Json | null
+        created_at: string | null
+      }>
       visitor_logs: SupabaseTable<{
         id: string
         guest_name: string
@@ -277,6 +305,10 @@ export type Database = {
       }
       mark_notifications_read: {
         Args: { notification_ids: string[] }
+        Returns: void
+      }
+      activate_quarterly_nps: {
+        Args: Record<string, never>
         Returns: void
       }
       update_updated_at_column: {
