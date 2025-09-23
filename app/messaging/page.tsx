@@ -1,4 +1,5 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { LinkPreviewCard } from "@/components/messaging/link-preview-card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,8 +13,11 @@ import {
 import { Progress } from "@/components/ui/progress"
 
 import { Separator } from "@/components/ui/separator"
+import { createFallbackPreview, extractUrlsFromText, getLinkPreview } from "@/lib/messaging/link-previews"
+import { ensureMessagingPreviewsSeeded } from "@/lib/messaging/preview-fixtures"
 import { cn } from "@/lib/utils"
 import { Paperclip } from "lucide-react"
+import { Fragment, type ReactNode } from "react"
 
 type ThreadListItem = {
   id: string
@@ -86,6 +90,8 @@ type PollSnapshot = {
   votes: number
   progress: number
 }
+
+ensureMessagingPreviewsSeeded()
 
 const threadFilters = [
   { label: "All topics", active: true },
@@ -171,6 +177,7 @@ const threadPosts: ThreadPost[] = [
     content: [
       "Kicking off the Q2 chore rotation thread so we can stay ahead of the spring deep clean.",
       "Please vote in the poll for when we should tackle the deep clean together. I added the updated checklist and rotation calendar so everyone can review before voting.",
+      "You can review the rotation doc here: https://househandbook.example.com/checklists/spring-deep-clean before you vote.",
     ],
     attachments: [
       {
@@ -214,6 +221,7 @@ const threadPosts: ThreadPost[] = [
     content: [
       "Looks good to me. I left a couple of notes in the sheet about trading weekends because of my travel schedule.",
       "If we go with the Saturday 10 AM block, I can take recycling duty during the week so Sunday stays open.",
+      "Heads up that the installer scheduling board lives at https://communitywifi.example.com/installer-tracker if you need to request a different appointment.",
     ],
     attachments: [
       {
@@ -301,6 +309,47 @@ const pollSnapshots: PollSnapshot[] = [
     progress: 75,
   },
 ]
+
+function renderLinkifiedText(text: string) {
+  const elements: ReactNode[] = []
+  const pattern = /(https?:\/\/[^\s]+)/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      elements.push(<Fragment key={`text-${lastIndex}`}>{text.slice(lastIndex, match.index)}</Fragment>)
+    }
+
+    const rawUrl = match[0]
+    const trimmedUrl = rawUrl.replace(/[),.!?:;]+$/, "")
+    const trailing = rawUrl.slice(trimmedUrl.length)
+
+    elements.push(
+      <a
+        key={`link-${match.index}`}
+        href={trimmedUrl}
+        className="text-primary underline underline-offset-4"
+        target="_blank"
+        rel="noreferrer"
+      >
+        {trimmedUrl}
+      </a>
+    )
+
+    if (trailing) {
+      elements.push(<Fragment key={`trail-${match.index}`}>{trailing}</Fragment>)
+    }
+
+    lastIndex = match.index + rawUrl.length
+  }
+
+  if (lastIndex < text.length) {
+    elements.push(<Fragment key={`text-${lastIndex}`}>{text.slice(lastIndex)}</Fragment>)
+  }
+
+  return elements
+}
 
 export default function MessagingPage() {
   return (
@@ -463,12 +512,25 @@ export default function MessagingPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-3 text-sm leading-6 text-foreground">
-                      {post.content.map((paragraph, idx) => (
-                        <p key={`${post.id}-content-${idx}`} className="text-muted-foreground">
-                          {paragraph}
-                        </p>
-                      ))}
+                    <div className="space-y-4 text-sm leading-6 text-foreground">
+                      {post.content.map((paragraph, idx) => {
+                        const urls = extractUrlsFromText(paragraph)
+                        const previews = urls.map((url) =>
+                          getLinkPreview(url) ?? createFallbackPreview(url, "Preview will load once fetched.")
+                        )
+
+                        return (
+                          <div key={`${post.id}-content-${idx}`} className="space-y-3">
+                            <p className="text-muted-foreground">{renderLinkifiedText(paragraph)}</p>
+                            {previews.map((preview, previewIndex) => (
+                              <LinkPreviewCard
+                                key={`${post.id}-preview-${idx}-${previewIndex}`}
+                                preview={preview}
+                              />
+                            ))}
+                          </div>
+                        )
+                      })}
                     </div>
 
                     {post.attachments?.length ? (
