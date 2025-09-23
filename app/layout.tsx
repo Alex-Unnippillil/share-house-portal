@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
 
+import { NextIntlClientProvider } from "next-intl"
+import { getLocale, getMessages } from "next-intl/server"
+
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
@@ -32,14 +35,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
     languages: {
-      'en-US': '/en-US',
-      'de-DE': '/de-DE',
-      'es-ES': '/es-ES',
-      'fr-FR': '/fr-FR',
-      'jp-JP': '/jp-JP',
-      'ko-KO': '/ko-KP',
-      'zh-ZH': '/zh-ZH',
-      'pt-PT': '/pt-PT',
+      en: '/',
+      es: '/',
     },
   },
   referrer: 'origin-when-cross-origin',
@@ -114,54 +111,55 @@ interface RootLayoutProps {
 }
 
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
+      <html lang={locale} suppressHydrationWarning>
+        <head />
+        <body
+          className={cn(
             "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
+            fontSans.variable,
           )}
         >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-             <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <div className="flex-1">
-                <ErrorBoundary>
-                  <Suspense fallback={<RouteSkeleton />}>
-                    {children}
-                  </Suspense>
-                </ErrorBoundary>
-                <Toaster />
-                <Analytics />
-                <SpeedInsights />
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <div className="relative flex min-h-screen flex-col">
+                <SiteHeader />
+                <div className="flex-1">
+                  <ErrorBoundary>
+                    <Suspense fallback={<RouteSkeleton />}>
+                      {children}
+                    </Suspense>
+                  </ErrorBoundary>
+                  <Toaster />
+                  <Analytics />
+                  <SpeedInsights />
+                </div>
               </div>
+              <SiteFooter />
 
-   </div>
-<SiteFooter/>
-
-
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
- */}
-   <CookieButton />
-   <TailwindIndicator />
-          </ThemeProvider>
-
-
-
-</body>
-    </html>
+              {/*
+                enter your api info from termly.io or a provider of your choice
+                <Script
+                  type="text/javascript"
+                  src="https://app.termly.io/resource-blocker/123456789abcdefg"
+                />
+              */}
+              <CookieButton />
+              <TailwindIndicator />
+            </ThemeProvider>
+          </NextIntlClientProvider>
+        </body>
+      </html>
     </ReactQueryClientProvider>
   )
 }

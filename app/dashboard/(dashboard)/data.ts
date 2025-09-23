@@ -2,16 +2,18 @@ import "server-only"
 
 import { cache } from "react"
 
+type WelcomeActionKey = "actions.settleRent" | "actions.bookAmenity"
+
 type WelcomeMessage = {
-  title: string
-  subtitle: string
+  residentName: string
+  unit: string
   primaryAction: {
     href: string
-    label: string
+    labelKey: WelcomeActionKey
   }
   secondaryAction?: {
     href: string
-    label: string
+    labelKey: WelcomeActionKey
   }
 }
 
@@ -82,15 +84,15 @@ async function wait(ms: number) {
 async function fetchWelcomeMessage(): Promise<WelcomeMessage> {
   await wait(120)
   return {
-    title: "Welcome back, Jordan",
-    subtitle: "Here’s what’s happening with Unit 3B today.",
+    residentName: "Jordan",
+    unit: "3B",
     primaryAction: {
       href: "/payments",
-      label: "Settle rent",
+      labelKey: "actions.settleRent",
     },
     secondaryAction: {
       href: "/schedule",
-      label: "Book an amenity",
+      labelKey: "actions.bookAmenity",
     },
   }
 }

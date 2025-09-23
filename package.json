@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "i18n:extract": "tsx scripts/i18n/extract.ts",
+    "i18n:compile": "tsx scripts/i18n/compile.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -56,6 +58,7 @@
     "lucide-react": "0.302.0",
     "next": "14.2.4",
     "next-compose-plugins": "^2.2.1",
+    "next-intl": "^4.3.9",
     "next-themes": "^0.2.1",
     "prettier": "^2.8.8",
     "react": "^18.2.0",
@@ -87,6 +90,7 @@
     "eslint-plugin-tailwindcss": "^3.14.2",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
+    "tsx": "^4.20.5",
     "typescript": "^5.5.4",
     "vitest": "^3.2.4"
   }
