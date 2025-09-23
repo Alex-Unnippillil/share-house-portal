@@ -1,59 +1,75 @@
 import { Metadata } from "next"
-import SmartLink from "@/components/navigation/SmartLink"
+import { redirect } from "next/navigation"
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
-import { AuthFormLegacy } from '@/app/auth-server-action/components/AuthFormLegacy'
+import ChecklistProgress from "@/components/onboarding/ChecklistProgress"
+import OnboardingFlow from "@/components/onboarding/OnboardingFlow"
+import {
+  getChecklistStateFromProfile,
+  getNextIncompleteStepIndex,
+} from "@/lib/onboarding/steps"
+import type { Database } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/server"
+
+import {
+  submitEmergencyContact,
+  submitRentShare,
+  submitUnitAssignment,
+} from "./actions"
 
 export const metadata: Metadata = {
   title: "Onboarding",
   description: "Roomsily household onboarding",
 }
 
-export default function OnboardingPage() {
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
+
+type OnboardingProfile = Pick<
+  ProfileRow,
+  "unit_id" | "rent_share" | "metadata" | "onboarding_steps"
+>
+
+export default async function OnboardingPage() {
+  const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/auth")
+  }
+
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("unit_id, rent_share, metadata, onboarding_steps")
+    .eq("id", user.id)
+    .single()
+
+  const profile = (profileData as OnboardingProfile) ?? null
+  const initialSteps = getChecklistStateFromProfile(profile)
+  const nextStepIndex = getNextIncompleteStepIndex(initialSteps)
+
   return (
-    <>
-      <div className="container relative mx-auto grid h-[640px] grid-cols-1 flex-col items-center justify-center lg:max-w-none lg:px-0">
-        <SmartLink
-          href="/auth"
-          className={cn(
-            buttonVariants({ variant: "ghost" }),
-            "absolute right-4 top-4 md:right-8 md:top-8"
-          )}
-        >
-          Login
-        </SmartLink>
-        <div className="lg:p-8">
-          <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-            <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Create an account
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Enter your email below to create your account
-              </p>
-            </div>
-            <AuthFormLegacy />
-            <p className="px-8 text-center text-sm text-muted-foreground">
-              By clicking continue, you agree to our{" "}
-              <SmartLink
-                href="#"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Terms of Service
-              </SmartLink>{" "}
-              and{" "}
-              <SmartLink
-                href="#"
-                className="underline underline-offset-4 hover:text-primary"
-              >
-                Privacy Policy
-              </SmartLink>
-              .
+    <div className="container pb-16 pt-10">
+      <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
+        <OnboardingFlow
+          initialProfile={profile}
+          initialSteps={initialSteps}
+          initialStepIndex={nextStepIndex}
+          submitUnitAssignment={submitUnitAssignment}
+          submitRentShare={submitRentShare}
+          submitEmergencyContact={submitEmergencyContact}
+        />
+
+        <aside className="space-y-6">
+          <ChecklistProgress />
+          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">Need assistance?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              If anything looks incorrect, reach out to your property manager so we can get it fixed before move-in.
             </p>
           </div>
-        </div>
+        </aside>
       </div>
-    </>
+    </div>
   )
 }
