@@ -1,284 +1,315 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
-import { getDocumentsAction } from '../actions';
-import { DocumentActions } from './document-actions';
-import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react'
+import { format, formatDistanceToNow, parseISO } from 'date-fns'
+import { FileText } from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import type { DocumentListFilters, DocumentListSort, DocumentWithLease } from '@/types/documents'
+import type { DocumentColumnId } from '@/lib/documents/csv-columns'
+import { DOCUMENT_CSV_COLUMNS_MAP } from '@/lib/documents/csv-columns'
+import { getDocumentsAction } from '../actions'
+import { DocumentActions } from './document-actions'
 
 interface DocumentsListProps {
-  filter: DocumentListFilters;
+  filters: DocumentListFilters
+  sort?: DocumentListSort
+  visibleColumns: DocumentColumnId[]
 }
 
-export function DocumentsList({ filter }: DocumentsListProps) {
-  const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const statusVariants: Record<string, 'default' | 'outline' | 'secondary' | 'destructive'> = {
+  draft: 'secondary',
+  pending_signature: 'outline',
+  signed: 'default',
+  expired: 'destructive',
+  cancelled: 'secondary',
+}
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await getDocumentsAction(filter);
-        if (result.success && result.data) {
-          setDocuments(result.data);
-          setError(null);
-        } else {
-          setError(result.error || 'Failed to fetch documents');
-        }
-      } catch (err) {
-        console.error('Error fetching documents:', err);
-        setError('An unexpected error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDocuments();
-  }, [filter]);
-
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      draft: 'secondary',
-      pending_signature: 'outline',
-      signed: 'default',
-      expired: 'destructive',
-      cancelled: 'secondary',
-    } as const;
-
-    const labels = {
-      draft: 'Draft',
-      pending_signature: 'Pending Signature',
-      signed: 'Signed',
-      expired: 'Expired',
-      cancelled: 'Cancelled',
-    };
+const columnRenderers: Record<
+  DocumentColumnId,
+  (document: DocumentWithLease) => React.ReactNode
+> = {
+  title: (document) => {
+    const lastUpdated = document.updated_at ?? document.created_at
 
     return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    );
-  };
+      <div className="space-y-1">
+        <p className="font-medium text-foreground">{document.title}</p>
+        {document.description ? (
+          <p className="text-sm text-muted-foreground">{document.description}</p>
+        ) : null}
+        <p className="text-xs text-muted-foreground">
+          Updated {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
+        </p>
+      </div>
+    )
+  },
+  document_type: (document) => {
+    const label =
+      DOCUMENT_CSV_COLUMNS_MAP.get('document_type')?.getValue(document) ??
+      document.document_type
 
-  const getStateBadge = (state: string) => {
-    const labels = {
-      draft: 'Draft',
-      published: 'Published',
-    } as const;
+    return <Badge variant="outline">{label}</Badge>
+  },
+  status: (document) => {
+    const label =
+      DOCUMENT_CSV_COLUMNS_MAP.get('status')?.getValue(document) ??
+      document.status
+    const variant = statusVariants[document.status] ?? 'secondary'
+
+    return <Badge variant={variant}>{label}</Badge>
+  },
+  created_at: (document) => {
+    const createdAt = parseISO(document.created_at)
+
+    return (
+      <div className="space-y-1">
+        <p className="text-sm font-medium">{format(createdAt, 'MMM d, yyyy')}</p>
+        <p className="text-xs text-muted-foreground">
+          {formatDistanceToNow(createdAt, { addSuffix: true })}
+        </p>
+      </div>
+    )
+  },
+  signature_progress: (document) => {
+    const value =
+      DOCUMENT_CSV_COLUMNS_MAP.get('signature_progress')?.getValue(document) ??
+      '—'
+
+    return <span className="text-sm text-muted-foreground">{value}</span>
+  },
+  tenant_count: (document) => {
+    const value =
+      DOCUMENT_CSV_COLUMNS_MAP.get('tenant_count')?.getValue(document) ?? '—'
+    const numeric = Number.parseInt(value, 10)
+
+    if (!Number.isNaN(numeric)) {
+      return (
+        <span className="text-sm text-muted-foreground">
+          {numeric} {numeric === 1 ? 'tenant' : 'tenants'}
+        </span>
+      )
+    }
+
+    return <span className="text-sm text-muted-foreground">{value}</span>
+  },
+  rent: (document) => {
+    const value = DOCUMENT_CSV_COLUMNS_MAP.get('rent')?.getValue(document) ?? '—'
+
+    return <span className="text-sm text-muted-foreground">{value}</span>
+  },
+  requires_signature: (document) => {
+    const value =
+      DOCUMENT_CSV_COLUMNS_MAP.get('requires_signature')?.getValue(document) ??
+      (document.requires_signature ? 'Yes' : 'No')
 
     return (
       <Badge
-        variant={state === 'published' ? 'default' : 'secondary'}
+        variant={document.requires_signature ? 'default' : 'secondary'}
         className="uppercase"
       >
-        {labels[state as keyof typeof labels] || state}
+        {value}
       </Badge>
-    );
-  };
+    )
+  },
+  expires_at: (document) => {
+    const value =
+      DOCUMENT_CSV_COLUMNS_MAP.get('expires_at')?.getValue(document) ?? '—'
 
-  const versionStatusLabel = (status: string) => {
-    const labels = {
-      draft: 'Draft Saved',
-      pending_signature: 'Sent for Signature',
-      signed: 'Signed',
-      expired: 'Expired',
-      cancelled: 'Cancelled',
-    } as const;
+    return <span className="text-sm text-muted-foreground">{value}</span>
+  },
+}
 
-    return labels[status as keyof typeof labels] || status;
-  };
+export function DocumentsList({
+  filters,
+  sort,
+  visibleColumns,
+}: DocumentsListProps) {
+  const [documents, setDocuments] = useState<DocumentWithLease[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'lease':
-        return <FileText className="size-4" />;
-      case 'addendum':
-        return <FileText className="size-4" />;
-      case 'insurance':
-        return <Users className="size-4" />;
-      default:
-        return <FileText className="size-4" />;
+  const serializedFilters = useMemo(
+    () => JSON.stringify(filters ?? {}),
+    [filters],
+  )
+  const serializedSort = useMemo(
+    () => JSON.stringify(sort ?? null),
+    [sort],
+  )
+  const hasActiveFilters = useMemo(() => {
+    const parsed = serializedFilters ? JSON.parse(serializedFilters) : {}
+    return Object.keys(parsed as Record<string, unknown>).length > 0
+  }, [serializedFilters])
+
+  const orderedVisibleColumns = useMemo(
+    () =>
+      visibleColumns.filter((columnId) =>
+        DOCUMENT_CSV_COLUMNS_MAP.has(columnId),
+      ),
+    [visibleColumns],
+  )
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchDocuments = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const parsedFilters: DocumentListFilters = serializedFilters
+          ? (JSON.parse(serializedFilters) as DocumentListFilters)
+          : {}
+        const parsedSort: DocumentListSort | undefined = serializedSort
+          ? (JSON.parse(serializedSort) as DocumentListSort)
+          : undefined
+
+        const result = await getDocumentsAction({
+          filters: parsedFilters,
+          sort: parsedSort,
+        })
+
+        if (cancelled) {
+          return
+        }
+
+        if (result.success && result.data) {
+          setDocuments(result.data)
+        } else {
+          setError(result.error || 'Failed to fetch documents')
+        }
+      } catch (fetchError) {
+        console.error('Error fetching documents:', fetchError)
+        if (!cancelled) {
+          setError('An unexpected error occurred')
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
     }
-  };
+
+    fetchDocuments()
+
+    return () => {
+      cancelled = true
+    }
+  }, [serializedFilters, serializedSort, reloadKey])
+
+  const columnCount = orderedVisibleColumns.length + 1
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="h-5 w-48 rounded bg-muted"></div>
-                  <div className="h-4 w-32 rounded bg-muted"></div>
-                </div>
-                <div className="h-6 w-20 rounded bg-muted"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="h-4 w-24 rounded bg-muted"></div>
-                <div className="flex space-x-2">
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                  <div className="h-8 w-16 rounded bg-muted"></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <DocumentsTableSkeleton columnCount={columnCount} />
   }
 
   if (error) {
     return (
-      <Card className="p-6">
-        <div className="text-center">
-          <p className="mb-2 text-destructive">Error loading documents</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
-        </div>
-      </Card>
-    );
+      <div className="rounded-lg border p-6 text-center">
+        <p className="text-sm font-medium text-destructive">Error loading documents</p>
+        <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={() => setReloadKey((key) => key + 1)}
+        >
+          Try again
+        </Button>
+      </div>
+    )
+  }
+
+  if (orderedVisibleColumns.length === 0) {
+    return (
+      <div className="rounded-lg border p-6 text-sm text-muted-foreground">
+        Select at least one column to display.
+      </div>
+    )
   }
 
   if (documents.length === 0) {
     return (
-      <Card className="p-12">
-        <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(filter).length > 0
-              ? "No documents match your current filters."
-              : "Get started by uploading your first document."}
-          </p>
-        </div>
-      </Card>
-    );
+      <div className="rounded-lg border p-12 text-center">
+        <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
+        <h3 className="text-lg font-medium">No documents found</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {hasActiveFilters
+            ? 'No documents match your current filters.'
+            : 'Get started by uploading your first document.'}
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-4">
-      {documents.map((doc) => (
-        <Card key={doc.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3">
-                <div className="mt-1">
-                  {getTypeIcon(doc.document_type)}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium leading-none">{doc.title}</h3>
-                  {doc.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
-                  )}
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="size-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    {doc.lease && (
-                      <div className="flex items-center space-x-1">
-                        <Users className="size-3" />
-                        <span>Lease • {doc.lease.tenant_ids?.length || 0} tenants</span>
-                      </div>
-                    )}
-                    {doc.signatures && doc.signatures.length > 0 && (
-                      <div className="flex items-center space-x-1">
-                        <Eye className="size-3" />
-                        <span>
-                          {doc.signatures.filter(s => s.status === 'signed').length}/
-                          {doc.signatures.length} signed
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {getStateBadge(doc.state)}
-                {getStatusBadge(doc.status)}
-                <DocumentActions document={doc} />
-              </div>
-            </div>
-          </CardHeader>
-          {(doc.signatures && doc.signatures.length > 0) && (
-            <CardContent className="pt-0">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground">Signers:</span>
-                {doc.signatures.slice(0, 3).map((signature) => (
-                  <Badge
-                    key={signature.id}
-                    variant={signature.status === 'signed' ? 'default' : 'outline'}
-                    className="text-xs"
-                  >
-                    {signature.signer_name || signature.signer_email.split('@')[0]}
-                  </Badge>
-                ))}
-                {doc.signatures.length > 3 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{doc.signatures.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          )}
-
-          {doc.versions && doc.versions.length > 0 && (
-            <CardContent className="pt-3">
-              <div className="border-t pt-3">
-                <div className="text-xs font-medium uppercase text-muted-foreground">
-                  Version history
-                </div>
-                <div className="mt-2 space-y-2">
-                  {doc.versions.slice(0, 5).map((version) => (
-                    <div
-                      key={version.id}
-                      className="flex items-center justify-between text-xs text-muted-foreground"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Badge
-                          variant={version.version === doc.version ? 'default' : 'outline'}
-                          className="text-[10px] uppercase"
-                        >
-                          v{version.version}
-                        </Badge>
-                        <Badge
-                          variant={version.state === 'published' ? 'default' : 'secondary'}
-                          className="text-[10px] uppercase"
-                        >
-                          {version.state}
-                        </Badge>
-                        <span>{versionStatusLabel(version.status)}</span>
-                      </div>
-                      <span>
-                        {formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      ))}
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] divide-y rounded-lg border">
+        <thead className="bg-muted/40">
+          <tr className="text-xs uppercase tracking-wide text-muted-foreground">
+            {orderedVisibleColumns.map((columnId) => {
+              const label =
+                DOCUMENT_CSV_COLUMNS_MAP.get(columnId)?.label ?? columnId
+              return (
+                <th key={columnId} className="px-4 py-3 text-left font-medium">
+                  {label}
+                </th>
+              )
+            })}
+            <th className="px-4 py-3 text-right font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {documents.map((document) => (
+            <tr key={document.id} className="bg-background hover:bg-muted/40">
+              {orderedVisibleColumns.map((columnId) => (
+                <td key={columnId} className="px-4 py-3 align-top text-sm">
+                  {columnRenderers[columnId]?.(document)}
+                </td>
+              ))}
+              <td className="px-4 py-3 align-top text-right">
+                <DocumentActions document={document} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  );
+  )
+}
+
+function DocumentsTableSkeleton({
+  columnCount,
+}: {
+  columnCount: number
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border">
+      <table className="w-full min-w-[720px]">
+        <thead className="bg-muted/40">
+          <tr>
+            {Array.from({ length: columnCount }).map((_, index) => (
+              <th key={index} className="px-4 py-3 text-left">
+                <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, rowIndex) => (
+            <tr key={rowIndex} className="border-t">
+              {Array.from({ length: columnCount }).map((_, cellIndex) => (
+                <td key={cellIndex} className="px-4 py-4">
+                  <div className="h-4 w-full max-w-[200px] animate-pulse rounded bg-muted" />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }

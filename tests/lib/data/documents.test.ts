@@ -93,6 +93,29 @@ describe('fetchDocumentsList', () => {
     expect(query.or).not.toHaveBeenCalled();
   });
 
+  it('applies custom sorting when provided', async () => {
+    const query = createDocumentsQuery({ data: [], error: null });
+    const supabase = createSupabaseStub(query);
+
+    await fetchDocumentsList({
+      client: supabase,
+      userId: 'user-123',
+      role: 'tenant',
+      sort: { column: 'title', direction: 'asc' },
+    });
+
+    expect(query.order).toHaveBeenNthCalledWith(
+      1,
+      'title',
+      expect.objectContaining({ ascending: true }),
+    );
+    expect(query.order).toHaveBeenNthCalledWith(
+      2,
+      'created_at',
+      expect.objectContaining({ ascending: false }),
+    );
+  });
+
   it('throws when Supabase returns an error', async () => {
     const query = createDocumentsQuery({ data: null as any, error: { message: 'boom' } });
     const supabase = createSupabaseStub(query);

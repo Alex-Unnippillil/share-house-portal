@@ -1,11 +1,17 @@
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import type {
   DocumentListFilters,
+  DocumentListSort,
   DocumentStats,
   DocumentVersion,
   DocumentWithLease,
 } from '@/types/documents';
 import type { Database } from '@/lib/supabase';
+import { convertRowsToCsv } from '@/lib/csv';
+import {
+  DOCUMENT_CSV_COLUMNS,
+  type DocumentColumnId,
+} from '@/lib/documents/csv-columns';
 
 type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
 
@@ -16,6 +22,7 @@ type FetchDocumentsParams = {
   userId: string;
   role: MemberRole | null | undefined;
   filters?: DocumentListFilters;
+  sort?: DocumentListSort;
 };
 
 type FetchDocumentStatsParams = {
@@ -53,11 +60,19 @@ export async function fetchDocumentsList({
   userId,
   role,
   filters = {},
+  sort,
 }: FetchDocumentsParams): Promise<DocumentWithLease[]> {
+  const sortColumn = sort?.column ?? 'created_at';
+  const ascending = sort?.direction === 'asc';
+
   let query = (client as any)
     .from('documents')
     .select(DOCUMENT_SELECT)
-    .order('created_at', { ascending: false });
+    .order(sortColumn, { ascending });
+
+  if (sortColumn !== 'created_at') {
+    query = query.order('created_at', { ascending: false });
+  }
 
   if (role !== 'property_manager' && role !== 'admin') {
     query = query.or(`tenant_id.eq.${userId},signatures.signer_id.eq.${userId}`);
@@ -101,6 +116,34 @@ export async function fetchDocumentsList({
       .slice()
       .sort((a, b) => b.version - a.version),
   }));
+}
+
+export async function exportDocumentsToCsv({
+  client,
+  userId,
+  role,
+  filters,
+  sort,
+  visibleColumns,
+}: FetchDocumentsParams & { visibleColumns: DocumentColumnId[] }): Promise<{
+  csv: string;
+  documents: DocumentWithLease[];
+}> {
+  const documents = await fetchDocumentsList({
+    client,
+    userId,
+    role,
+    filters,
+    sort,
+  });
+
+  const csv = convertRowsToCsv({
+    rows: documents,
+    columns: DOCUMENT_CSV_COLUMNS,
+    visibleColumnIds: visibleColumns,
+  });
+
+  return { csv, documents };
 }
 
 export async function fetchDocumentStats({

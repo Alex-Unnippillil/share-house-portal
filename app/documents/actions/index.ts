@@ -1,12 +1,16 @@
 'use server';
 
-import type { PostgrestError } from '@supabase/supabase-js';
+import type { PostgrestError, User } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supa-server-actions';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
-import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
+import {
+  exportDocumentsToCsv,
+  fetchDocumentStats,
+  fetchDocumentsList,
+} from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import { getServiceRoleSupabaseClient } from '@/utils/supabase-service-role';
@@ -14,12 +18,17 @@ import {
   Document,
   DocumentWithLease,
   DocumentListFilters,
+  DocumentListSort,
   DocumentUploadRequest,
   DocumentSigningRequest,
   DocumentStats,
   DocumentVersionSnapshot,
 } from '@/types/documents';
 import type { Database } from '@/lib/supabase';
+import {
+  DOCUMENT_COLUMN_IDS,
+  type DocumentColumnId,
+} from '@/lib/documents/csv-columns';
 
 // Validation schemas
 const documentUploadSchema = z.object({
@@ -49,6 +58,13 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const documentListSortSchema = z.object({
+  column: z.enum(['created_at', 'title', 'status', 'document_type']),
+  direction: z.enum(['asc', 'desc']),
+});
+
+const documentColumnIdSchema = z.enum(DOCUMENT_COLUMN_IDS);
+
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
@@ -58,6 +74,14 @@ interface ActionResult<T = any> {
 }
 
 type DocumentRow = Database['public']['Tables']['documents']['Row'];
+type MemberRole = Database['public']['Tables']['profiles']['Row']['role'];
+
+interface DocumentsActionContext {
+  supabase: ReturnType<typeof createClient>;
+  typedSupabase: TypedSupabaseClient;
+  user: User;
+  role: MemberRole | null | undefined;
+}
 
 function buildVersionSnapshot(document: DocumentRow): DocumentVersionSnapshot {
   return {
@@ -136,60 +160,164 @@ function isRowLevelSecurityViolation(error: PostgrestError) {
   return message.includes('row-level security');
 }
 
-// Get documents with optional filters
-export async function getDocumentsAction(
-  filters?: DocumentListFilters
-): Promise<ActionResult<DocumentWithLease[]>> {
+async function resolveDocumentsContext({
+  unauthenticatedMessage,
+  failureMessage,
+}: {
+  unauthenticatedMessage: string;
+  failureMessage: string;
+}): Promise<{ success: true; context: DocumentsActionContext } | { success: false; error: string }> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
   const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: unauthenticatedMessage };
+  }
+
   try {
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return { success: false, error: 'You must be logged in to view documents.' };
-    }
-
-    // Validate filters
-    const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
-    let role: Awaited<ReturnType<typeof fetchMemberRole>>;
-    try {
-      role = await fetchMemberRole(typedSupabase, user.id);
-    } catch (roleError) {
-      console.error('Error resolving member role:', roleError);
-      return { success: false, error: 'Failed to fetch documents.' };
-    }
-
-    let documents: DocumentWithLease[];
-    try {
-      documents = await fetchDocumentsList({
-        client: typedSupabase,
-        userId: user.id,
+    const role = await fetchMemberRole(typedSupabase, user.id);
+    return {
+      success: true,
+      context: {
+        supabase,
+        typedSupabase,
+        user,
         role,
-        filters: validatedFilters,
-      });
-    } catch (documentsError) {
-      console.error('Error fetching documents:', documentsError);
-      return { success: false, error: 'Failed to fetch documents.' };
-    }
+      },
+    };
+  } catch (roleError) {
+    console.error('Error resolving member role:', roleError);
+    return { success: false, error: failureMessage };
+  }
+}
 
-    // Log access
+// Get documents with optional filters
+export async function getDocumentsAction({
+  filters,
+  sort,
+}: {
+  filters?: DocumentListFilters;
+  sort?: DocumentListSort;
+} = {}): Promise<ActionResult<DocumentWithLease[]>> {
+  const contextResult = await resolveDocumentsContext({
+    unauthenticatedMessage: 'You must be logged in to view documents.',
+    failureMessage: 'Failed to fetch documents.',
+  });
+
+  if (!contextResult.success) {
+    return { success: false, error: contextResult.error };
+  }
+
+  const { supabase, typedSupabase, user, role } = contextResult.context;
+
+  let validatedFilters: DocumentListFilters = {};
+  let validatedSort: DocumentListSort | undefined;
+
+  try {
+    validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
+    validatedSort = sort ? documentListSortSchema.parse(sort) : undefined;
+  } catch (validationError) {
+    if (validationError instanceof z.ZodError) {
+      return { success: false, error: 'Invalid filter parameters.' };
+    }
+    console.error('Unexpected validation error:', validationError);
+    return { success: false, error: 'Failed to fetch documents.' };
+  }
+
+  try {
+    const documents = await fetchDocumentsList({
+      client: typedSupabase,
+      userId: user.id,
+      role,
+      filters: validatedFilters,
+      sort: validatedSort,
+    });
+
     for (const doc of documents) {
       await (supabase as any).rpc('log_document_access', {
         p_document_id: doc.id,
         p_action: 'view',
-        p_metadata: { source: 'documents_page' }
+        p_metadata: { source: 'documents_page' },
       });
     }
 
     return { success: true, data: documents };
   } catch (error) {
-    console.error('Unexpected error in getDocumentsAction:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'An unexpected error occurred.'
-    };
+    console.error('Error fetching documents:', error);
+    return { success: false, error: 'Failed to fetch documents.' };
+  }
+}
+
+export async function exportDocumentsAction({
+  filters,
+  sort,
+  columns,
+}: {
+  filters?: DocumentListFilters;
+  sort?: DocumentListSort;
+  columns: DocumentColumnId[];
+}): Promise<ActionResult<{ csv: string; filename: string }>> {
+  const contextResult = await resolveDocumentsContext({
+    unauthenticatedMessage: 'You must be logged in to export documents.',
+    failureMessage: 'Failed to export documents.',
+  });
+
+  if (!contextResult.success) {
+    return { success: false, error: contextResult.error };
+  }
+
+  const { supabase, typedSupabase, user, role } = contextResult.context;
+
+  let validatedFilters: DocumentListFilters = {};
+  let validatedSort: DocumentListSort | undefined;
+  let validatedColumns: DocumentColumnId[] = [];
+
+  try {
+    validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
+    validatedSort = sort ? documentListSortSchema.parse(sort) : undefined;
+    validatedColumns = z
+      .array(documentColumnIdSchema)
+      .min(1, 'Select at least one column to export.')
+      .parse(columns);
+  } catch (validationError) {
+    if (validationError instanceof z.ZodError) {
+      return { success: false, error: 'Invalid export parameters.' };
+    }
+    console.error('Unexpected validation error in exportDocumentsAction:', validationError);
+    return { success: false, error: 'Failed to export documents.' };
+  }
+
+  try {
+    const { csv, documents } = await exportDocumentsToCsv({
+      client: typedSupabase,
+      userId: user.id,
+      role,
+      filters: validatedFilters,
+      sort: validatedSort,
+      visibleColumns: validatedColumns,
+    });
+
+    for (const document of documents) {
+      await (supabase as any).rpc('log_document_access', {
+        p_document_id: document.id,
+        p_action: 'export',
+        p_metadata: { source: 'documents_page' },
+      });
+    }
+
+    const dateSuffix = new Date().toISOString().slice(0, 10);
+    const filename = `documents-export-${dateSuffix}.csv`;
+
+    return { success: true, data: { csv, filename } };
+  } catch (error) {
+    console.error('Unexpected error in exportDocumentsAction:', error);
+    return { success: false, error: 'Failed to export documents.' };
   }
 }
 
