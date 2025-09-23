@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
@@ -23,31 +23,106 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { uploadDocumentAction } from '../actions';
+import { uploadDocumentAction, createDocumentDraftFromTemplateAction } from '../actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { DocumentTemplateGallery } from './document-template-gallery';
+import {
+  applyTemplateToFormState,
+  buildDraftPayloadFromTemplate,
+  createEmptyUploadDocumentFormState,
+  resolveTemplateSelection,
+  type UploadDocumentFormState,
+} from './template-helpers';
+import type { DocumentTemplate } from '@/types/documents';
 
 export function UploadDocumentDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    document_type: 'other' as const,
-    tenant_id: '',
-    unit_id: '',
-    requires_signature: false,
-    expires_at: '',
-  });
+  const [formData, setFormData] = useState<UploadDocumentFormState>(
+    () => createEmptyUploadDocumentFormState()
+  );
   const [file, setFile] = useState<File | null>(null);
+  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const router = useRouter();
   const permissions = useDocumentPermissions();
+
+  const handleDialogOpenChange = useCallback((nextOpen: boolean) => {
+    setOpen(nextOpen);
+
+    if (!nextOpen) {
+      setFormData(createEmptyUploadDocumentFormState());
+      setSelectedTemplateId(null);
+      setFile(null);
+    }
+  }, []);
+
+  const handleTemplatesLoaded = useCallback((items: DocumentTemplate[]) => {
+    setTemplates(items);
+  }, []);
+
+  const selectedTemplate = useMemo(() => {
+    if (!selectedTemplateId) {
+      return null;
+    }
+
+    return templates.find((template) => template.id === selectedTemplateId) ?? null;
+  }, [selectedTemplateId, templates]);
 
   // Don't render upload button if user doesn't have permission
   if (!permissions.canUploadDocuments) {
     return null;
   }
+
+  const handleTemplateSelect = async (templateId: string) => {
+    let shouldResetLoading = false;
+
+    try {
+      const template = resolveTemplateSelection(templates, templateId);
+
+      if (template.autoCreateDraft) {
+        shouldResetLoading = true;
+        setLoading(true);
+
+        const payload = buildDraftPayloadFromTemplate(template);
+
+        try {
+          const result = await createDocumentDraftFromTemplateAction(payload);
+
+          if (result.success) {
+            toast.success('Draft created from template');
+            handleDialogOpenChange(false);
+            router.refresh();
+          } else {
+            toast.error(result.error ?? 'Failed to create draft from template');
+          }
+        } catch (error) {
+          console.error('Failed to create draft from template', error);
+          toast.error('Unable to create draft from the selected template');
+        }
+
+        return;
+      }
+
+      const nextForm = applyTemplateToFormState({
+        template,
+        currentForm: formData,
+      });
+
+      setFormData(nextForm);
+      setSelectedTemplateId(templateId);
+      toast.success(`Applied "${template.title}" template`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to apply template';
+      toast.error(message);
+    } finally {
+      if (shouldResetLoading) {
+        setLoading(false);
+      }
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -101,22 +176,15 @@ export function UploadDocumentDialog() {
       submitData.append('unit_id', formData.unit_id);
       submitData.append('requires_signature', formData.requires_signature.toString());
       submitData.append('expires_at', formData.expires_at);
+      if (formData.documenso_template_id) {
+        submitData.append('documenso_template_id', formData.documenso_template_id);
+      }
 
       const result = await uploadDocumentAction(submitData);
 
       if (result.success) {
         toast.success('Document uploaded successfully');
-        setOpen(false);
-        setFormData({
-          title: '',
-          description: '',
-          document_type: 'other',
-          tenant_id: '',
-          unit_id: '',
-          requires_signature: false,
-          expires_at: '',
-        });
-        setFile(null);
+        handleDialogOpenChange(false);
         router.refresh();
       } else {
         toast.error(result.error || 'Failed to upload document');
@@ -130,7 +198,7 @@ export function UploadDocumentDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Upload className="mr-2 size-4" />
@@ -146,6 +214,19 @@ export function UploadDocumentDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <DocumentTemplateGallery
+            disabled={loading}
+            selectedTemplateId={selectedTemplateId}
+            onTemplateSelect={handleTemplateSelect}
+            onTemplatesLoaded={handleTemplatesLoaded}
+          />
+
+          {selectedTemplate ? (
+            <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-primary">
+              Prefilling from "{selectedTemplate.title}". You can adjust the fields before uploading.
+            </div>
+          ) : null}
+
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="file">Document File</Label>
@@ -247,7 +328,7 @@ export function UploadDocumentDialog() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => handleDialogOpenChange(false)}
               disabled={loading}
             >
               Cancel
