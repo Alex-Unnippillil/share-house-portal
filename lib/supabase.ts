@@ -284,6 +284,26 @@ export type Database = {
         }
         Returns: Json
       }
+      documents_bulk_delete: {
+        Args: { document_ids: string[] }
+        Returns: { deleted_ids: string[] }
+      }
+      documents_bulk_export: {
+        Args: { document_ids: string[] }
+        Returns: { export_url?: string | null; signed_url?: string | null }
+      }
+      documents_bulk_tag: {
+        Args: {
+          document_ids: string[]
+          tag?: string | null
+          destination_unit_id?: string | null
+        }
+        Returns: {
+          updated_ids: string[]
+          applied_tag?: string | null
+          destination_unit_id?: string | null
+        }
+      }
       get_unread_notification_count: {
         Args: { user_uuid?: string | null }
         Returns: number
