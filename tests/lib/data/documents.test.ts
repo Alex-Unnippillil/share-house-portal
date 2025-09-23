@@ -13,10 +13,13 @@ type QueryBuilder<T> = {
   gte: ReturnType<typeof vi.fn>;
   lte: ReturnType<typeof vi.fn>;
   then: (onFulfilled: (value: QueryResult<T>) => unknown) => Promise<unknown>;
+  getExecutions: () => number;
 };
 
 function createDocumentsQuery<T extends unknown[]>(result: QueryResult<T>) {
-  const builder: Partial<QueryBuilder<T>> & {
+  let executions = 0;
+
+  const builder: (Partial<Omit<QueryBuilder<T>, 'getExecutions'>> & {
     select: ReturnType<typeof vi.fn>;
     order: ReturnType<typeof vi.fn>;
     or: ReturnType<typeof vi.fn>;
@@ -24,7 +27,7 @@ function createDocumentsQuery<T extends unknown[]>(result: QueryResult<T>) {
     eq: ReturnType<typeof vi.fn>;
     gte: ReturnType<typeof vi.fn>;
     lte: ReturnType<typeof vi.fn>;
-  } = {
+  }) & { getExecutions?: () => number } = {
     select: vi.fn().mockImplementation(() => builder),
     order: vi.fn().mockImplementation(() => builder),
     or: vi.fn().mockImplementation(() => builder),
@@ -34,18 +37,26 @@ function createDocumentsQuery<T extends unknown[]>(result: QueryResult<T>) {
     lte: vi.fn().mockImplementation(() => builder),
   };
 
-  (builder as QueryBuilder<T>).then = (onFulfilled) =>
-    Promise.resolve(onFulfilled(result));
+  (builder as QueryBuilder<T>).then = (onFulfilled) => {
+    executions += 1;
+    return Promise.resolve(onFulfilled(result));
+  };
+
+  (builder as QueryBuilder<T>).getExecutions = () => executions;
 
   return builder as QueryBuilder<T>;
 }
 
 function createSupabaseStub<T extends unknown[]>(query: QueryBuilder<T>) {
+  let fromCalls = 0;
+
   return {
     from: vi.fn((table: string) => {
+      fromCalls += 1;
       expect(table).toBe('documents');
       return query;
     }),
+    getQueryCount: () => fromCalls,
   };
 }
 
@@ -78,6 +89,9 @@ describe('fetchDocumentsList', () => {
     expect(query.eq).toHaveBeenCalledWith('unit_id', filters.unit_id);
     expect(query.gte).toHaveBeenCalledWith('created_at', filters.date_from);
     expect(query.lte).toHaveBeenCalledWith('created_at', filters.date_to);
+    // Guardrail: ensure we only execute a single Supabase query for the listing fetch.
+    expect(supabase.getQueryCount()).toBe(1);
+    expect(query.getExecutions()).toBe(1);
   });
 
   it('skips scoping for property managers and admins', async () => {
@@ -91,6 +105,8 @@ describe('fetchDocumentsList', () => {
     });
 
     expect(query.or).not.toHaveBeenCalled();
+    expect(supabase.getQueryCount()).toBe(1);
+    expect(query.getExecutions()).toBe(1);
   });
 
   it('throws when Supabase returns an error', async () => {
@@ -100,6 +116,8 @@ describe('fetchDocumentsList', () => {
     await expect(
       fetchDocumentsList({ client: supabase, userId: 'user-1', role: 'tenant' })
     ).rejects.toThrow(/Failed to fetch documents: boom/);
+    expect(supabase.getQueryCount()).toBe(1);
+    expect(query.getExecutions()).toBe(1);
   });
 });
 
@@ -129,6 +147,8 @@ describe('fetchDocumentStats', () => {
       expired_documents: 0,
       draft_documents: 1,
     });
+    expect(supabase.getQueryCount()).toBe(1);
+    expect(query.getExecutions()).toBe(1);
   });
 
   it('omits tenant filter for admins', async () => {
@@ -138,6 +158,8 @@ describe('fetchDocumentStats', () => {
     await fetchDocumentStats({ client: supabase, userId: 'admin-1', role: 'admin' });
 
     expect(query.eq).not.toHaveBeenCalled();
+    expect(supabase.getQueryCount()).toBe(1);
+    expect(query.getExecutions()).toBe(1);
   });
 
   it('throws when Supabase returns an error', async () => {
@@ -147,5 +169,7 @@ describe('fetchDocumentStats', () => {
     await expect(
       fetchDocumentStats({ client: supabase, userId: 'user-1', role: 'tenant' })
     ).rejects.toThrow(/Failed to fetch document statistics: stats failed/);
+    expect(supabase.getQueryCount()).toBe(1);
+    expect(query.getExecutions()).toBe(1);
   });
 });
