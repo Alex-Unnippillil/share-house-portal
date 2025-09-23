@@ -37,7 +37,11 @@ NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
 SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
 SUPABASE_JWT_SECRET="your_jwt_secret"
+SUPABASE_COOKIE_DOMAIN=".roomsily.com" # Optional: share auth across subdomains
+SUPABASE_ALLOW_INSECURE_COOKIES="false" # Optional: set to "true" for custom HTTP dev hosts
 ```
+
+The Supabase client now forces `Secure`, `HttpOnly`, and `SameSite=Lax` defaults before forwarding cookies. Local development on `http://localhost` continues to function without additional configuration—the helper automatically downgrades cookies when it detects a loopback host. If you test against a custom development hostname that still uses plain HTTP, set `SUPABASE_ALLOW_INSECURE_COOKIES="true"` so that session cookies are accepted by the browser.
 
 ### **APPLICATION**
 ```bash

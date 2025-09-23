@@ -4,8 +4,16 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/lib/supabase';
 
+import {
+  getSupabaseCookieSecurityContext,
+  withSupabaseCookieDefaults,
+} from '@/utils/supabase/cookie-helpers';
+
 export async function createActionClient() {
   const cookieStore = cookies();
+  const securityContext = getSupabaseCookieSecurityContext();
+  const applyCookieDefaults = (options: CookieOptions) =>
+    withSupabaseCookieDefaults(options, securityContext);
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,10 +24,12 @@ export async function createActionClient() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
+          const normalized = applyCookieDefaults(options);
+          cookieStore.set({ name, value, ...normalized });
         },
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options });
+          const normalized = applyCookieDefaults(options);
+          cookieStore.set({ name, value: '', ...normalized });
         },
       },
     }
