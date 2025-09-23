@@ -51,6 +51,17 @@ const securityHeaders = [
     key: 'Strict-Transport-Security',
     value: 'max-age=31536000; includeSubDomains',
   },
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Opener-Policy
+  {
+    key: 'Cross-Origin-Opener-Policy',
+    value: 'same-origin-allow-popups',
+  },
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy
+  // Remains permissive to support third-party embeds (e.g., Supabase Storage previews, YouTube iframes).
+  {
+    key: 'Cross-Origin-Embedder-Policy',
+    value: 'unsafe-none',
+  },
   {
     key: 'X-XSS-Protection',
     value: '1; mode=block',
