@@ -4,19 +4,19 @@ import { Button } from "@/components/ui/button"
 import { TrashIcon } from "@radix-ui/react-icons"
 import { cn } from "@/lib/utils"
 
-import { DashboardMember } from "../data"
+import type { DashboardMember } from "../data"
 import EditMember from "./edit/EditMember"
 
 export default function ListOfMembers({ members }: { members: DashboardMember[] }) {
         return (
                 <div className="mx-2 rounded-sm bg-white dark:bg-inherit">
-                        {members.map((member, index) => {
+                        {members.map(member => {
                                 return (
                                         <div
                                                 className="grid grid-cols-5 rounded-sm p-3 align-middle font-normal"
-                                                key={member.name + index}
+                                                key={member.id}
                                         >
-                                                <h1>{member.name}</h1>
+                                                <h1>{member.full_name ?? 'Unnamed member'}</h1>
 
                                                 <div>
                                                         <span
@@ -55,10 +55,10 @@ export default function ListOfMembers({ members }: { members: DashboardMember[] 
                                                                 <TrashIcon />
                                                                 Delete
                                                         </Button>
-                                                        <EditMember />
-                                                </div>
-                                        </div>
-                                )
+                                                        <EditMember member={member} />
+                                               </div>
+                                       </div>
+                               )
                         })}
                 </div>
         )
