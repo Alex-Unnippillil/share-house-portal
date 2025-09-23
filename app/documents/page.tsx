@@ -7,9 +7,54 @@ import { UploadDocumentDialog } from "./components/upload-document-dialog";
 import { DocumentsStats } from "./components/documents-stats";
 import { DocumentsList } from "./components/documents-list";
 import { DocumentsFilters } from "./components/documents-filters";
-import { DocumentListFilters } from '@/types/documents';
+import { DocumentListFilters, DocumentSavedView } from '@/types/documents';
+import { parseDocumentFilters, cleanDocumentFilters, mergeDocumentFilters } from '@/lib/documents-filters';
+import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supa-server-actions';
+import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
+import { fetchDocumentSavedViews } from '@/lib/data/documents';
 
-export default function DocumentsPage() {
+type DocumentsPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+async function loadSavedViews(): Promise<DocumentSavedView[]> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    return [];
+  }
+
+  try {
+    const views = await fetchDocumentSavedViews({
+      client: typedSupabase,
+      userId: user.id,
+    });
+
+    return views;
+  } catch (err) {
+    console.error('Failed to load document saved views:', err);
+    return [];
+  }
+}
+
+export default async function DocumentsPage({ searchParams = {} }: DocumentsPageProps) {
+  const filtersFromParams = cleanDocumentFilters(parseDocumentFilters(searchParams.filters));
+  const activeViewId = typeof searchParams.view === 'string' ? searchParams.view : null;
+  const savedViews = await loadSavedViews();
+
+  let initialFilters: DocumentListFilters = filtersFromParams;
+
+  if ((!initialFilters || Object.keys(initialFilters).length === 0) && activeViewId) {
+    const matchingView = savedViews.find((view) => view.id === activeViewId);
+    if (matchingView) {
+      initialFilters = cleanDocumentFilters(matchingView.filters);
+    }
+  }
+
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
@@ -50,30 +95,34 @@ export default function DocumentsPage() {
             <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="signed">Signed</TabsTrigger>
           </TabsList>
-          <DocumentsFilters />
+          <DocumentsFilters
+            initialFilters={initialFilters}
+            savedViews={savedViews}
+            activeViewId={activeViewId}
+          />
         </div>
 
         <TabsContent value="all" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
+            <DocumentsList filter={initialFilters} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="leases" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
+            <DocumentsList filter={mergeDocumentFilters({ type: ['lease'] }, initialFilters)} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['pending_signature'] }} />
+            <DocumentsList filter={mergeDocumentFilters({ status: ['pending_signature'] }, initialFilters)} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="signed" className="space-y-6">
           <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['signed'] }} />
+            <DocumentsList filter={mergeDocumentFilters({ status: ['signed'] }, initialFilters)} />
           </Suspense>
         </TabsContent>
       </Tabs>

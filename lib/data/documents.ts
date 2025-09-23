@@ -1,11 +1,16 @@
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import type {
   DocumentListFilters,
+  DocumentSavedView,
   DocumentStats,
   DocumentVersion,
   DocumentWithLease,
 } from '@/types/documents';
 import type { Database } from '@/lib/supabase';
+import {
+  cleanDocumentFilters,
+  normalizeDocumentFilters,
+} from '@/lib/documents-filters';
 
 type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
 
@@ -54,6 +59,7 @@ export async function fetchDocumentsList({
   role,
   filters = {},
 }: FetchDocumentsParams): Promise<DocumentWithLease[]> {
+  const normalizedFilters = normalizeDocumentFilters(filters);
   let query = (client as any)
     .from('documents')
     .select(DOCUMENT_SELECT)
@@ -63,28 +69,28 @@ export async function fetchDocumentsList({
     query = query.or(`tenant_id.eq.${userId},signatures.signer_id.eq.${userId}`);
   }
 
-  if (filters.status?.length) {
-    query = query.in('status', filters.status);
+  if (normalizedFilters.status?.length) {
+    query = query.in('status', normalizedFilters.status);
   }
 
-  if (filters.type?.length) {
-    query = query.in('document_type', filters.type);
+  if (normalizedFilters.type?.length) {
+    query = query.in('document_type', normalizedFilters.type);
   }
 
-  if (filters.tenant_id) {
-    query = query.eq('tenant_id', filters.tenant_id);
+  if (normalizedFilters.tenant_id) {
+    query = query.eq('tenant_id', normalizedFilters.tenant_id);
   }
 
-  if (filters.unit_id) {
-    query = query.eq('unit_id', filters.unit_id);
+  if (normalizedFilters.unit_id) {
+    query = query.eq('unit_id', normalizedFilters.unit_id);
   }
 
-  if (filters.date_from) {
-    query = query.gte('created_at', filters.date_from);
+  if (normalizedFilters.date_from) {
+    query = query.gte('created_at', normalizedFilters.date_from);
   }
 
-  if (filters.date_to) {
-    query = query.lte('created_at', filters.date_to);
+  if (normalizedFilters.date_to) {
+    query = query.lte('created_at', normalizedFilters.date_to);
   }
 
   const { data, error } = await query;
@@ -101,6 +107,73 @@ export async function fetchDocumentsList({
       .slice()
       .sort((a, b) => b.version - a.version),
   }));
+}
+
+type FetchDocumentSavedViewsParams = {
+  client: SupabaseClientLike;
+  userId: string;
+};
+
+type UpsertDocumentSavedViewParams = {
+  client: SupabaseClientLike;
+  userId: string;
+  view: {
+    id?: string;
+    name: string;
+    filters: DocumentListFilters;
+  };
+};
+
+export async function fetchDocumentSavedViews({
+  client,
+  userId,
+}: FetchDocumentSavedViewsParams): Promise<DocumentSavedView[]> {
+  const { data, error } = await (client as any)
+    .from('document_saved_views')
+    .select('*')
+    .eq('user_id', userId)
+    .order('name', { ascending: true });
+
+  handlePostgrestError(error, 'Failed to fetch document saved views');
+
+  return ((data ?? []) as DocumentSavedView[]).map((view) => ({
+    ...view,
+    filters: cleanDocumentFilters(view.filters as DocumentListFilters),
+  }));
+}
+
+export async function upsertDocumentSavedView({
+  client,
+  userId,
+  view,
+}: UpsertDocumentSavedViewParams): Promise<DocumentSavedView> {
+  const payload: Record<string, unknown> = {
+    user_id: userId,
+    name: view.name,
+    filters: cleanDocumentFilters(view.filters),
+  };
+
+  if (view.id) {
+    payload.id = view.id;
+  }
+
+  const { data, error } = await (client as any)
+    .from('document_saved_views')
+    .upsert(payload, {
+      onConflict: 'user_id,name',
+      ignoreDuplicates: false,
+    })
+    .select('*')
+    .single();
+
+  handlePostgrestError(error, 'Failed to save document view');
+
+  const savedView = data as DocumentSavedView;
+
+  return {
+    ...savedView,
+    filters: cleanDocumentFilters(savedView.filters as DocumentListFilters),
+  };
 }
 
 export async function fetchDocumentStats({

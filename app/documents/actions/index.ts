@@ -6,7 +6,12 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
-import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
+import {
+  fetchDocumentSavedViews,
+  fetchDocumentStats,
+  fetchDocumentsList,
+  upsertDocumentSavedView,
+} from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import { getServiceRoleSupabaseClient } from '@/utils/supabase-service-role';
@@ -14,6 +19,7 @@ import {
   Document,
   DocumentWithLease,
   DocumentListFilters,
+  DocumentSavedView,
   DocumentUploadRequest,
   DocumentSigningRequest,
   DocumentStats,
@@ -40,6 +46,12 @@ const documentSigningSchema = z.object({
   expires_in_days: z.number().min(1).max(365).optional(),
 });
 
+const documentFilterConditionSchema = z.object({
+  field: z.enum(['status', 'type', 'tenant_id', 'unit_id', 'created_at']),
+  operator: z.enum(['eq', 'in', 'gte', 'lte']),
+  value: z.union([z.string(), z.array(z.string())]),
+});
+
 const documentListFiltersSchema = z.object({
   status: z.array(z.enum(['draft', 'pending_signature', 'signed', 'expired', 'cancelled'])).optional(),
   type: z.array(z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other'])).optional(),
@@ -47,6 +59,13 @@ const documentListFiltersSchema = z.object({
   unit_id: z.string().optional(),
   date_from: z.string().datetime().optional(),
   date_to: z.string().datetime().optional(),
+  conditions: z.array(documentFilterConditionSchema).optional(),
+});
+
+const saveDocumentViewSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, 'Name is required').max(120, 'View name is too long'),
+  filters: documentListFiltersSchema,
 });
 
 // Action result interface
@@ -189,6 +208,83 @@ export async function getDocumentsAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function listDocumentSavedViewsAction(): Promise<ActionResult<DocumentSavedView[]>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to load saved views.' };
+    }
+
+    try {
+      const views = await fetchDocumentSavedViews({
+        client: typedSupabase,
+        userId: user.id,
+      });
+
+      return { success: true, data: views };
+    } catch (error) {
+      console.error('Error fetching document saved views:', error);
+      return { success: false, error: 'Failed to load saved views.' };
+    }
+  } catch (error) {
+    console.error('Unexpected error loading document saved views:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
+    };
+  }
+}
+
+export async function saveDocumentSavedViewAction(
+  input: unknown,
+): Promise<ActionResult<DocumentSavedView>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to save views.' };
+    }
+
+    let payload: z.infer<typeof saveDocumentViewSchema>;
+    try {
+      payload = saveDocumentViewSchema.parse(input);
+    } catch (validationError) {
+      const message =
+        validationError instanceof z.ZodError
+          ? validationError.issues.map((issue) => issue.message).join(', ')
+          : 'Invalid view payload.';
+      return { success: false, error: message };
+    }
+
+    try {
+      const view = await upsertDocumentSavedView({
+        client: typedSupabase,
+        userId: user.id,
+        view: payload,
+      });
+
+      revalidatePath('/documents');
+      return { success: true, data: view };
+    } catch (error) {
+      console.error('Error saving document view:', error);
+      return { success: false, error: 'Failed to save view.' };
+    }
+  } catch (error) {
+    console.error('Unexpected error saving document view:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
     };
   }
 }
