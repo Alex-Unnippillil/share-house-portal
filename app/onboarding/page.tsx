@@ -4,15 +4,30 @@ import SmartLink from "@/components/navigation/SmartLink"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
-import AuthForm from "@/app/auth/components/AuthForm"
-import { AuthFormLegacy } from '@/app/auth-server-action/components/AuthFormLegacy'
+import { AuthFormLegacy } from "@/app/auth-server-action/components/AuthFormLegacy"
+
+interface OnboardingPageProps {
+  searchParams?: Record<string, string | string[] | undefined>
+}
 
 export const metadata: Metadata = {
   title: "Onboarding",
   description: "Roomsily household onboarding",
 }
 
-export default function OnboardingPage() {
+export default function OnboardingPage({ searchParams }: OnboardingPageProps) {
+  const referralToken = (() => {
+    const candidate =
+      typeof searchParams?.ref === 'string'
+        ? searchParams?.ref
+        : typeof searchParams?.referral === 'string'
+          ? searchParams?.referral
+          : typeof searchParams?.token === 'string'
+            ? searchParams?.token
+            : undefined
+
+    return typeof candidate === 'string' ? candidate : undefined
+  })()
   return (
     <>
       <div className="hidden">
@@ -87,7 +102,12 @@ export default function OnboardingPage() {
                 Enter your email below to create your account
               </p>
             </div>
-            <AuthFormLegacy />
+            {referralToken ? (
+              <div className="rounded-md border border-primary/40 bg-primary/10 p-3 text-sm text-primary">
+                Referral code applied. Complete signup to credit your roommate.
+              </div>
+            ) : null}
+            <AuthFormLegacy referralToken={referralToken} />
             <p className="px-8 text-center text-sm text-muted-foreground">
               By clicking continue, you agree to our{" "}
               <SmartLink

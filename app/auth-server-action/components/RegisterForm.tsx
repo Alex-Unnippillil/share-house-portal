@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { signUpWithEmailAndPassword } from '@/app/auth-server-action/actions'
+import { signUpWithEmailAndPassword } from "@/app/auth-server-action/actions";
 
 import {
 	Form,
@@ -22,35 +22,49 @@ import { useTransition } from "react";
 import { AuthTokenResponse } from "@supabase/supabase-js";
 
 const RegisterSchema = z
-	.object({
-		email: z.string().email(),
-		password: z.string().min(6, {
-			message: "Password is required.",
-		}),
-		confirm: z.string().min(6, {
-			message: "Password is required.",
-		}),
-	})
-	.refine((data) => data.confirm === data.password, {
-		message: "Password did not match",
-		path: ["confirm"],
-	});
-export default function RegisterForm() {
-	const [isPending, startTransition] = useTransition();
-	const form = useForm<z.infer<typeof RegisterSchema>>({
-		resolver: zodResolver(RegisterSchema),
-		defaultValues: {
-			email: "",
-			password: "",
-			confirm: "",
-		},
-	});
+        .object({
+                email: z.string().email(),
+                password: z.string().min(6, {
+                        message: "Password is required.",
+                }),
+                confirm: z.string().min(6, {
+                        message: "Password is required.",
+                }),
+                referralCode: z
+                        .string()
+                        .optional()
+                        .transform((value) => value?.trim() ?? ""),
+        })
+        .refine((data) => data.confirm === data.password, {
+                message: "Password did not match",
+                path: ["confirm"],
+        });
+interface RegisterFormProps {
+        referralToken?: string;
+}
 
-	function onSubmit(data: z.infer<typeof RegisterSchema>) {
-		startTransition(async () => {
+export default function RegisterForm({ referralToken }: RegisterFormProps) {
+        const [isPending, startTransition] = useTransition();
+        const form = useForm<z.infer<typeof RegisterSchema>>({
+                resolver: zodResolver(RegisterSchema),
+                defaultValues: {
+                        email: "",
+                        password: "",
+                        confirm: "",
+                        referralCode: referralToken ?? "",
+                },
+        });
+
+        function onSubmit(data: z.infer<typeof RegisterSchema>) {
+                startTransition(async () => {
 			const { error } = JSON.parse(
-				await signUpWithEmailAndPassword(data)
-			) as AuthTokenResponse;
+                                await signUpWithEmailAndPassword({
+                                        email: data.email,
+                                        password: data.password,
+                                        confirm: data.confirm,
+                                        referralCode: data.referralCode,
+                                })
+                        ) as AuthTokenResponse;
 		
 		if (error)	{	
 			toast({
@@ -114,34 +128,54 @@ export default function RegisterForm() {
 						</FormItem>
 					)}
 				/>
-				<FormField
-					control={form.control}
-					name="confirm"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Confirm Password</FormLabel>
-							<FormControl>
-								<Input
-									placeholder="Confirm Password"
-									{...field}
-									type="password"
-									onChange={field.onChange}
-								/>
-							</FormControl>
+                                <FormField
+                                        control={form.control}
+                                        name="confirm"
+                                        render={({ field }) => (
+                                                <FormItem>
+                                                        <FormLabel>Confirm Password</FormLabel>
+                                                        <FormControl>
+                                                                <Input
+                                                                        placeholder="Confirm Password"
+                                                                        {...field}
+                                                                        type="password"
+                                                                        onChange={field.onChange}
+                                                                />
+                                                        </FormControl>
 
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-<Button
-				className="flex w-full items-center gap-2"
-				variant="outline"
-			>
-				Register{" "}
-				<AiOutlineLoading3Quarters
-					className={cn(" animate-spin", { hidden: !isPending })}
-				/>
-			</Button>
+                                                        <FormMessage />
+                                                </FormItem>
+                                        )}
+                                />
+                                <FormField
+                                        control={form.control}
+                                        name="referralCode"
+                                        render={({ field }) => (
+                                                <FormItem>
+                                                        <FormLabel>Referral code</FormLabel>
+                                                        <FormControl>
+                                                                <Input
+                                                                        placeholder="Optional code from a roommate"
+                                                                        {...field}
+                                                                        onChange={field.onChange}
+                                                                />
+                                                        </FormControl>
+                                                        <FormDescription>
+                                                                Earn rewards when you join with a roommate invite.
+                                                        </FormDescription>
+                                                        <FormMessage />
+                                                </FormItem>
+                                        )}
+                                />
+                                <Button
+                                        className="flex w-full items-center gap-2"
+                                        variant="outline"
+                                >
+                                        Register{" "}
+                                <AiOutlineLoading3Quarters
+                                        className={cn(" animate-spin", { hidden: !isPending })}
+                                />
+                                </Button>
 			</form>
 		</Form>
 	);
