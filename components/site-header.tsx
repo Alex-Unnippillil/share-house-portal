@@ -10,6 +10,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationCenter } from "@/components/notifications/notification-center"
+import { CommandPalette } from "@/components/navigation/CommandPalette"
 
 export async function SiteHeader() {
   const {
@@ -23,6 +24,7 @@ export async function SiteHeader() {
         <MainNav items={siteConfig.mainNav} />
         <MobileNav isAuthenticated={isAuthenticated} />
         <div className="flex flex-1 items-center justify-end gap-4">
+          <CommandPalette />
           <div className="hidden items-center gap-2 md:flex">
             {isAuthenticated ? (
               <>
