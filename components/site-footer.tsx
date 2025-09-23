@@ -8,12 +8,14 @@ export function SiteFooter() {
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-         <SmartLink className="ml-0 flex items-center gap-2" href="/" intent="navigation">
-          <Icons.logo className="size-6" />
-          <div className="flex flex-col leading-tight">
-            <span className="inline-block font-semibold">{siteConfig.name}</span>
-            <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>
-          </div>
+        <SmartLink className="ml-0 inline-flex" href="/" intent="navigation">
+          <span className="flex items-center gap-2">
+            <Icons.logo className="size-6" />
+            <div className="flex flex-col leading-tight">
+              <span className="inline-block font-semibold">{siteConfig.name}</span>
+              <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>
+            </div>
+          </span>
         </SmartLink>
           <p className="text-sm text-muted-foreground">
             Manage rent, roommates, and shared amenities from a single, secure Roomsily HQ.

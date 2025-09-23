@@ -2,7 +2,7 @@ import { format, parseISO } from "date-fns"
 import { Download, FileText } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -100,12 +100,17 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline" size="sm" className="gap-2">
-            <a href={csvDownloadHref} download="roomsily-payment-history.csv">
-              <Download className="size-4" aria-hidden="true" />
-              Export CSV
-            </a>
-          </Button>
+          <a
+            href={csvDownloadHref}
+            download="roomsily-payment-history.csv"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "inline-flex items-center gap-2"
+            )}
+          >
+            <Download className="size-4" aria-hidden="true" />
+            <span>Export CSV</span>
+          </a>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -219,37 +224,31 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                       </td>
                       <td className="p-4">
                         <div className="flex flex-col items-end gap-2">
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                            className="w-full gap-1"
+                          <a
+                            href={receipt.receiptUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={cn(
+                              buttonVariants({ variant: "outline", size: "sm" }),
+                              "w-full justify-center gap-1"
+                            )}
                           >
+                            <Download className="size-4" aria-hidden="true" />
+                            <span>Receipt</span>
+                          </a>
+                          {receipt.invoiceUrl ? (
                             <a
-                              href={receipt.receiptUrl}
+                              href={receipt.invoiceUrl}
                               target="_blank"
                               rel="noreferrer"
+                              className={cn(
+                                buttonVariants({ variant: "ghost", size: "sm" }),
+                                "w-full justify-center gap-1"
+                              )}
                             >
-                              <Download className="size-4" aria-hidden="true" />
-                              Receipt
+                              <FileText className="size-4" aria-hidden="true" />
+                              <span>Invoice</span>
                             </a>
-                          </Button>
-                          {receipt.invoiceUrl ? (
-                            <Button
-                              asChild
-                              variant="ghost"
-                              size="sm"
-                              className="w-full gap-1"
-                            >
-                              <a
-                                href={receipt.invoiceUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <FileText className="size-4" aria-hidden="true" />
-                                Invoice
-                              </a>
-                            </Button>
                           ) : null}
                         </div>
                       </td>

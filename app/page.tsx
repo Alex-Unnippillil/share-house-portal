@@ -223,8 +223,10 @@ export default async function IndexPage() {
                   Modern operations for every roommate and property manager
                 </h1>
                 <p className="mx-auto max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
+
                   Roomsily brings autopay, bookings, documents, and updates into an intuitive workspace that keeps households
                   aligned without the group-chat chaos.
+
                 </p>
               </div>
               <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
@@ -235,7 +237,7 @@ export default async function IndexPage() {
                     "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                   )}
                 >
-                  Sign in
+                  <span>Sign in</span>
                 </Link>
                 <Link
                   href={siteConfig.links.signup}
@@ -243,9 +245,8 @@ export default async function IndexPage() {
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
                   )}
-
                 >
-                  Create your household
+                  <span>Create your household</span>
                 </Link>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
@@ -348,7 +349,7 @@ export default async function IndexPage() {
               </CardHeader>
               <CardContent className="mt-auto">
                 <Link href={feature.href} className="text-sm font-medium text-primary hover:underline">
-                  {feature.ctaLabel}
+                  <span>{feature.ctaLabel}</span>
                 </Link>
               </CardContent>
             </Card>
@@ -402,8 +403,7 @@ export default async function IndexPage() {
                 Visualize your household operating system
               </h2>
               <p className="text-muted-foreground">
-                The Roomsily network links Stripe, Supabase, Cal.com, and Documenso so payments, bookings, documents, and
-                updates move together without copy-paste work.
+                The Roomsily network links Stripe, Supabase, Cal.com, and Documenso so payments, bookings, documents, and updates move together without copy-paste work.
               </p>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
@@ -427,13 +427,13 @@ export default async function IndexPage() {
                     "border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
                   )}
                 >
-                  Book a walkthrough
+                  <span>Book a walkthrough</span>
                 </Link>
                 <Link
                   href={siteConfig.links.signup}
                   className={cn(buttonVariants({ size: "sm" }), "bg-primary text-primary-foreground hover:bg-primary/90")}
                 >
-                  Start onboarding
+                  <span>Start onboarding</span>
                 </Link>
               </div>
             </div>
@@ -470,7 +470,7 @@ export default async function IndexPage() {
                     )}
                     intent="passive"
                   >
-                    {highlight.cta.label} →
+                    <span>{`${highlight.cta.label} →`}</span>
                   </SmartLink>
                 </CardContent>
               </Card>
@@ -519,8 +519,10 @@ export default async function IndexPage() {
                   Ready to centre your shared household around clarity?
                 </h3>
                 <p className="text-base text-muted-foreground">
+
                   Launch Roomsily with guided onboarding and give every roommate one place to handle payments, bookings, and
                   documents.
+
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
@@ -532,7 +534,7 @@ export default async function IndexPage() {
                   )}
                   intent="critical"
                 >
-                  Start onboarding
+                  <span>Start onboarding</span>
                 </SmartLink>
                 <SmartLink
                   href={siteConfig.links.contact}
@@ -542,7 +544,7 @@ export default async function IndexPage() {
                   )}
                   intent="passive"
                 >
-                  Talk with us
+                  <span>Talk with us</span>
                 </SmartLink>
               </div>
             </CardContent>
