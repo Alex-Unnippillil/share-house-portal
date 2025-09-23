@@ -130,7 +130,9 @@ export type Database = {
         description: string | null
         receipt_url: string | null
         metadata: Json | null
+        payer_name: string | null
         tenant_id: string | null
+        unit: string | null
         unit_id: string | null
         processed_at: string | null
         billing_period_start: string | null
