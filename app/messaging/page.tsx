@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import ModerationControls from "@/components/messaging/moderation-controls"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +15,7 @@ import { Progress } from "@/components/ui/progress"
 
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import { Paperclip } from "lucide-react"
+import { ArrowUpRight, Paperclip } from "lucide-react"
 
 type ThreadListItem = {
   id: string
@@ -306,11 +308,27 @@ export default function MessagingPage() {
   return (
     <div className="container max-w-6xl space-y-10 py-12">
       <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Messaging</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Organize roommate discussions by topic, capture reactions, and close the loop on decisions with polls and shared attachments.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Messaging</h1>
+            <p className="text-base text-muted-foreground sm:text-lg">
+              Organize roommate discussions by topic, capture reactions, and close the loop on decisions with polls and shared attachments.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <Button asChild className="w-full sm:w-auto">
+              <Link
+                href="/messaging/live"
+                className="inline-flex items-center"
+              >
+                Launch Live Messenger
+                <ArrowUpRight className="ml-2 size-4" aria-hidden />
+              </Link>
+            </Button>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Spin up a realtime room for urgent coordination.
+            </p>
+          </div>
         </div>
         <Separator />
       </header>
