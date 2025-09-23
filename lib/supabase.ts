@@ -213,6 +213,14 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      drafts: SupabaseTable<{
+        id: string
+        user_id: string
+        route: string
+        data: Json
+        created_at: string | null
+        updated_at: string | null
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null

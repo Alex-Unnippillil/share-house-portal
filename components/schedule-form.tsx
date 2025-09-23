@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button'
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { scheduleMeetingAction } from '@/app/schedule/actions';
 import { useFormState, useFormStatus } from 'react-dom';
 import { DayPicker } from 'react-day-picker';
@@ -19,6 +18,13 @@ import {
     startOfDay,
     isValid // Import isValid for robustness
 } from 'date-fns';
+import { useToast } from '@/components/ui/use-toast';
+import { useDraftForm } from '@/hooks/useDraftForm';
+
+type ScheduleDraft = {
+  selectedDate: string | null;
+  selectedTimeSlot: string | null;
+};
 
 // --- Zod Schema for Client-Side Validation ---
 // This schema validates the data *after* the user has made selections
@@ -90,6 +96,45 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined);
   // Client-side validation state
   const [clientErrors, setClientErrors] = useState<ClientValidationErrors | null>(null);
+  const { toast } = useToast();
+
+  const draftValues = useMemo<ScheduleDraft>(
+    () => ({
+      selectedDate: selectedDate ? selectedDate.toISOString() : null,
+      selectedTimeSlot: selectedTimeSlot ?? null,
+    }),
+    [selectedDate, selectedTimeSlot],
+  );
+
+  const hydrateDraft = useCallback(
+    (draft: Partial<ScheduleDraft>) => {
+      if (draft.selectedDate !== undefined) {
+        if (draft.selectedDate) {
+          const parsed = new Date(draft.selectedDate);
+          if (!Number.isNaN(parsed.getTime())) {
+            setSelectedDate(parsed);
+          }
+        } else {
+          setSelectedDate(undefined);
+        }
+      }
+
+      if (draft.selectedTimeSlot !== undefined) {
+        if (draft.selectedTimeSlot) {
+          setSelectedTimeSlot(draft.selectedTimeSlot);
+        } else {
+          setSelectedTimeSlot(undefined);
+        }
+      }
+    },
+    [],
+  );
+
+  const { clearDraft } = useDraftForm<ScheduleDraft>({
+    values: draftValues,
+    toast,
+    onHydrate: hydrateDraft,
+  });
 
 
   const availableTimeSlots = useMemo(() => {
@@ -178,6 +223,15 @@ export function ScheduleForm({ userEmail, userName }: ScheduleFormProps) {
     console.log("Client validation passed. Submitting to server action...");
     formAction(formData);
   };
+
+  useEffect(() => {
+    if (serverState.success) {
+      void clearDraft();
+      setSelectedDate(undefined);
+      setSelectedTimeSlot(undefined);
+      setClientErrors(null);
+    }
+  }, [clearDraft, serverState.success]);
 
   // Determine if the submit button should be disabled
   const isSubmitDisabled = !selectedDate || !selectedTimeSlot;

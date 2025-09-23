@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useDraftForm } from "@/hooks/useDraftForm";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
@@ -55,6 +56,67 @@ export function VisitorBookingForm() {
       emergencyContact: "",
       specialNotes: "",
     },
+  });
+
+  const serializeDraft = useCallback((values: VisitorBookingFormData) => ({
+    ...values,
+    checkInDate: values.checkInDate ? values.checkInDate.toISOString() : null,
+    checkOutDate: values.checkOutDate ? values.checkOutDate.toISOString() : null,
+  }), []);
+
+  const deserializeDraft = useCallback((values: Record<string, unknown>) => {
+    const draft: Partial<VisitorBookingFormData> = {};
+
+    if (typeof values.guestName === "string") {
+      draft.guestName = values.guestName;
+    }
+
+    if (typeof values.guestEmail === "string") {
+      draft.guestEmail = values.guestEmail;
+    }
+
+    if (typeof values.guestPhone === "string") {
+      draft.guestPhone = values.guestPhone;
+    }
+
+    if (typeof values.purpose === "string") {
+      draft.purpose = values.purpose;
+    }
+
+    if (typeof values.emergencyContact === "string") {
+      draft.emergencyContact = values.emergencyContact;
+    }
+
+    if (typeof values.specialNotes === "string") {
+      draft.specialNotes = values.specialNotes;
+    }
+
+    const checkIn = values.checkInDate;
+    const checkOut = values.checkOutDate;
+
+    if (typeof checkIn === "string") {
+      const parsed = new Date(checkIn);
+      if (!Number.isNaN(parsed.getTime())) {
+        draft.checkInDate = parsed;
+      }
+    }
+
+    if (typeof checkOut === "string") {
+      const parsed = new Date(checkOut);
+      if (!Number.isNaN(parsed.getTime())) {
+        draft.checkOutDate = parsed;
+      }
+    }
+
+    return draft;
+  }, []);
+
+  const { clearDraft } = useDraftForm<VisitorBookingFormData>({
+    form,
+    values: form.watch(),
+    toast,
+    serialize: serializeDraft,
+    deserialize: deserializeDraft,
   });
 
   const onSubmit = async (data: VisitorBookingFormData) => {
@@ -131,6 +193,7 @@ export function VisitorBookingForm() {
         description: "Your visitor booking has been submitted and notifications sent.",
       });
 
+      await clearDraft();
       form.reset();
     } catch (error) {
       console.error('Error submitting visitor booking:', error);

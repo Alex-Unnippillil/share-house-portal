@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useDraftForm } from "@/hooks/useDraftForm";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
@@ -61,6 +62,12 @@ export function MaintenanceRequestForm() {
       category: "",
       location: "",
     },
+  });
+
+  const { clearDraft } = useDraftForm<MaintenanceRequestFormData>({
+    form,
+    values: form.watch(),
+    toast,
   });
 
   const onSubmit = async (data: MaintenanceRequestFormData) => {
@@ -124,6 +131,7 @@ export function MaintenanceRequestForm() {
         description: "Your maintenance request has been submitted and notifications sent.",
       });
 
+      await clearDraft();
       form.reset();
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
