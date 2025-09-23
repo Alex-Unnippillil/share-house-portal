@@ -18,6 +18,7 @@ import {
   DocumentSigningRequest,
   DocumentStats,
   DocumentVersionSnapshot,
+  DocumentTemplate,
 } from '@/types/documents';
 import type { Database } from '@/lib/supabase';
 
@@ -30,6 +31,7 @@ const documentUploadSchema = z.object({
   unit_id: z.string().optional(),
   requires_signature: z.boolean().default(false),
   expires_at: z.string().datetime().optional(),
+  documenso_template_id: z.string().optional(),
 });
 
 const documentSigningSchema = z.object({
@@ -49,6 +51,104 @@ const documentListFiltersSchema = z.object({
   date_to: z.string().datetime().optional(),
 });
 
+const documentTemplatePrefillSchema = z
+  .object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    document_type: z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other']).optional(),
+    requires_signature: z.boolean().optional(),
+    documenso_template_id: z.string().optional(),
+    expires_at: z.string().optional(),
+    metadata: z.record(z.any()).optional(),
+  })
+  .partial();
+
+const documentTemplateRowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  document_type: z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other']),
+  documenso_template_id: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
+  recommended_for: z.string().nullable().optional(),
+  preview_url: z.string().url().nullable().optional(),
+  requires_signature: z.boolean().nullable().optional(),
+  metadata: z.record(z.any()).nullable().optional(),
+  prefill_data: z.record(z.any()).nullable().optional(),
+  auto_create_draft: z.boolean().nullable().optional(),
+  source: z.enum(['supabase', 'documenso']).nullable().optional(),
+  updated_at: z.string().nullable().optional(),
+});
+
+const createDraftFromTemplateSchema = z.object({
+  template_id: z.string(),
+  title: z.string().min(1, 'Template title is required'),
+  description: z.string().optional(),
+  document_type: z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other']),
+  requires_signature: z.boolean().default(true),
+  documenso_template_id: z.string().optional(),
+  metadata: z.record(z.any()).optional(),
+  source: z.enum(['supabase', 'documenso']).optional(),
+});
+
+const curatedDocumensoTemplates: DocumentTemplate[] = [
+  {
+    id: 'documenso-standard-lease',
+    title: 'Standard Residential Lease',
+    description: 'Comprehensive lease agreement covering rent, utilities, and roommate expectations.',
+    document_type: 'lease',
+    source: 'documenso',
+    documenso_template_id: 'tmpl_standard_lease',
+    tags: ['Lease', 'Documenso'],
+    recommended_for: 'full-unit lease agreements',
+    requires_signature: true,
+    metadata: {
+      placeholders: ['tenant_name', 'unit_number', 'rent_amount'],
+    },
+    prefill: {
+      title: 'Residential Lease Agreement',
+      description: 'Documenso standard lease template with signature fields for every roommate.',
+      requires_signature: true,
+      documenso_template_id: 'tmpl_standard_lease',
+    },
+    autoCreateDraft: true,
+  },
+  {
+    id: 'documenso-pet-addendum',
+    title: 'Pet Policy Addendum',
+    description: 'Document to outline approved pets, deposits, and roommate responsibilities.',
+    document_type: 'addendum',
+    source: 'documenso',
+    documenso_template_id: 'tmpl_pet_addendum',
+    tags: ['Addendum', 'Pets'],
+    recommended_for: 'pet permission agreements',
+    requires_signature: true,
+    prefill: {
+      title: 'Pet Policy Addendum',
+      description: 'Adds specific pet terms to an existing lease.',
+      requires_signature: true,
+      documenso_template_id: 'tmpl_pet_addendum',
+    },
+    autoCreateDraft: false,
+  },
+  {
+    id: 'documenso-maintenance-authorization',
+    title: 'Maintenance Work Authorization',
+    description: 'Authorize maintenance visits and outline access windows for roommates.',
+    document_type: 'maintenance',
+    source: 'documenso',
+    tags: ['Maintenance', 'Authorization'],
+    recommended_for: 'scheduled maintenance visits',
+    requires_signature: false,
+    prefill: {
+      title: 'Maintenance Work Authorization',
+      description: 'Details scope of work, schedule, and notification requirements.',
+      requires_signature: false,
+    },
+    autoCreateDraft: false,
+  },
+];
+
 // Action result interface
 interface ActionResult<T = any> {
   success: boolean;
@@ -58,6 +158,119 @@ interface ActionResult<T = any> {
 }
 
 type DocumentRow = Database['public']['Tables']['documents']['Row'];
+type DocumentTemplateRow = z.infer<typeof documentTemplateRowSchema>;
+type CreateDraftFromTemplateInput = z.infer<typeof createDraftFromTemplateSchema>;
+
+function normalizeDocumentTemplateRow(row: DocumentTemplateRow): DocumentTemplate {
+  const tags = Array.isArray(row.tags)
+    ? row.tags.filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
+    : [];
+
+  const prefillResult = documentTemplatePrefillSchema.safeParse(row.prefill_data ?? {});
+  const metadataRecord = row.metadata && typeof row.metadata === 'object' ? (row.metadata as Record<string, any>) : undefined;
+
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? undefined,
+    document_type: row.document_type,
+    source: row.source ?? 'supabase',
+    documenso_template_id: row.documenso_template_id ?? undefined,
+    tags,
+    recommended_for: row.recommended_for ?? undefined,
+    preview_url: row.preview_url ?? undefined,
+    requires_signature: row.requires_signature ?? undefined,
+    metadata: metadataRecord ?? undefined,
+    prefill: prefillResult.success ? prefillResult.data : undefined,
+    autoCreateDraft: row.auto_create_draft ?? undefined,
+    updated_at: row.updated_at ?? undefined,
+  };
+}
+
+function mergeTemplateCollections(
+  ...collections: DocumentTemplate[][]
+): DocumentTemplate[] {
+  const merged = new Map<string, DocumentTemplate>();
+
+  for (const collection of collections) {
+    for (const template of collection) {
+      merged.set(template.id, template);
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => {
+    const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+    const bTime = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+
+    if (aTime !== bTime) {
+      return bTime - aTime;
+    }
+
+    return a.title.localeCompare(b.title);
+  });
+}
+
+async function fetchSupabaseDocumentTemplates(
+  supabase: TypedSupabaseClient,
+): Promise<DocumentTemplate[]> {
+  try {
+    const { data, error } = await (supabase as any)
+      .from('document_templates')
+      .select('*');
+
+    if (error) {
+      console.warn('Error fetching document templates from Supabase:', error);
+      return [];
+    }
+
+    return (data ?? [])
+      .map((row: unknown) => {
+        const parsed = documentTemplateRowSchema.safeParse(row);
+
+        if (!parsed.success) {
+          console.warn('Skipping invalid document template row', parsed.error);
+          return null;
+        }
+
+        return normalizeDocumentTemplateRow(parsed.data);
+      })
+      .filter((template): template is DocumentTemplate => Boolean(template));
+  } catch (error) {
+    console.warn('Document templates table unavailable', error);
+    return [];
+  }
+}
+
+export async function getDocumentTemplatesAction(): Promise<ActionResult<DocumentTemplate[]>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: 'You must be logged in to view templates.',
+      };
+    }
+
+    const supabaseTemplates = await fetchSupabaseDocumentTemplates(typedSupabase);
+    const templates = mergeTemplateCollections(supabaseTemplates, curatedDocumensoTemplates);
+
+    return {
+      success: true,
+      data: templates,
+    };
+  } catch (error) {
+    console.error('Unexpected error in getDocumentTemplatesAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to load document templates.',
+    };
+  }
+}
 
 function buildVersionSnapshot(document: DocumentRow): DocumentVersionSnapshot {
   return {
@@ -267,6 +480,7 @@ export async function uploadDocumentAction(
         unit_id: validatedData.unit_id,
         requires_signature: validatedData.requires_signature,
         expires_at: validatedData.expires_at,
+        documenso_template_id: validatedData.documenso_template_id ?? null,
         created_by: user.id,
         state: 'draft',
         published_at: null,
@@ -304,6 +518,102 @@ export async function uploadDocumentAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+export async function createDocumentDraftFromTemplateAction(
+  input: CreateDraftFromTemplateInput
+): Promise<ActionResult<Document>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: 'You must be logged in to create documents.',
+      };
+    }
+
+    const validatedData = createDraftFromTemplateSchema.parse(input);
+
+    const metadataPayload: Record<string, any> = {
+      ...(validatedData.metadata ?? {}),
+      template_id: validatedData.template_id,
+    };
+
+    if (validatedData.source) {
+      metadataPayload.template_source = validatedData.source;
+    }
+
+    const { data: document, error: dbError } = await (supabase as any)
+      .from('documents')
+      .insert({
+        title: validatedData.title,
+        description: validatedData.description ?? null,
+        document_type: validatedData.document_type,
+        status: 'draft',
+        state: 'draft',
+        requires_signature: validatedData.requires_signature,
+        documenso_template_id: validatedData.documenso_template_id ?? null,
+        metadata: metadataPayload,
+        created_by: user.id,
+        published_at: null,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Error creating document draft from template:', dbError);
+      return {
+        success: false,
+        error: 'Failed to create document draft from template.',
+      };
+    }
+
+    try {
+      await insertDocumentVersion(typedSupabase, document as DocumentRow, user.id);
+    } catch (versionError) {
+      console.error('Error creating initial document version for template draft:', versionError);
+      await (supabase as any).from('documents').delete().eq('id', document.id);
+      return {
+        success: false,
+        error: 'Failed to create document draft from template.',
+      };
+    }
+
+    await (supabase as any)
+      .rpc('log_document_access', {
+        p_document_id: document.id,
+        p_action: 'template_draft',
+        p_metadata: {
+          template_id: validatedData.template_id,
+          template_source: validatedData.source ?? 'unknown',
+        },
+      })
+      .catch((error: unknown) => {
+        console.warn('Failed to log template draft creation', error);
+      });
+
+    revalidatePath('/documents');
+
+    return {
+      success: true,
+      data: document as Document,
+      message: 'Document draft created from template.',
+    };
+  } catch (error) {
+    console.error('Unexpected error in createDocumentDraftFromTemplateAction:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to create document draft from template.',
     };
   }
 }

@@ -159,3 +159,32 @@ export interface DocumentStats {
   expired_documents: number;
   draft_documents: number;
 }
+
+export type DocumentTemplateSource = 'supabase' | 'documenso';
+
+export interface DocumentTemplatePrefill {
+  title?: string;
+  description?: string;
+  document_type?: DocumentType;
+  requires_signature?: boolean;
+  documenso_template_id?: string;
+  expires_at?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface DocumentTemplate {
+  id: string;
+  title: string;
+  description?: string | null;
+  document_type: DocumentType;
+  source: DocumentTemplateSource;
+  documenso_template_id?: string | null;
+  tags: string[];
+  updated_at?: string | null;
+  recommended_for?: string | null;
+  preview_url?: string | null;
+  requires_signature?: boolean | null;
+  metadata?: Record<string, any>;
+  prefill?: DocumentTemplatePrefill;
+  autoCreateDraft?: boolean;
+}
