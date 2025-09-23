@@ -10,6 +10,7 @@ import "./globals.css"
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { CookieButton } from "@/components/cookie-button"
+import { FavoritesPanel, FavoritesProvider } from "@/components/navigation/FavoritesPanel"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
@@ -119,18 +120,20 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
     <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-             <div className="relative flex min-h-screen flex-col">
+          <FavoritesProvider>
+            <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
               <div className="flex-1">
                 <ErrorBoundary>
@@ -142,25 +145,22 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <Analytics />
                 <SpeedInsights />
               </div>
+            </div>
+            <SiteFooter />
+            <FavoritesPanel />
+          </FavoritesProvider>
 
-   </div>
-<SiteFooter/>
+          {/*
+          enter your api info from termly.io or a provider of your choice
+          <Script
+            type="text/javascript"
+            src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
-
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
- */}
-   <CookieButton />
-   <TailwindIndicator />
-          </ThemeProvider>
-
-
-
-</body>
+           */}
+          <CookieButton />
+          <TailwindIndicator />
+        </ThemeProvider>
+      </body>
     </html>
     </ReactQueryClientProvider>
   )
