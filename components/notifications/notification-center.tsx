@@ -17,6 +17,7 @@ interface Notification {
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
   action_url?: string;
+  metadata?: Record<string, unknown> | string | null;
   read: boolean;
   created_at: string;
 }
@@ -68,9 +69,10 @@ export function NotificationCenter() {
           setUnreadCount(prev => prev + 1);
 
           // Show toast for new notification
+          const display = resolveNotificationDisplay(newNotification);
           toast({
-            title: newNotification.title,
-            description: newNotification.message,
+            title: display.title,
+            description: display.message,
             variant: newNotification.type === 'error' ? 'destructive' :
                     newNotification.type === 'warning' ? 'default' : 'default',
           });
@@ -173,6 +175,84 @@ export function NotificationCenter() {
     return date.toLocaleDateString();
   };
 
+  type MentionMetadata = {
+    kind?: string;
+    actorName?: string;
+    preview?: string;
+    threadId?: string;
+    messageId?: string;
+  };
+
+  type NotificationDisplay = {
+    title: string;
+    message: string;
+    badgeLabel: string;
+    actionUrl?: string;
+  };
+
+  const parseNotificationMetadata = (
+    metadata: Notification['metadata'],
+  ): Record<string, unknown> | null => {
+    if (!metadata) {
+      return null;
+    }
+
+    if (typeof metadata === 'string') {
+      try {
+        return JSON.parse(metadata) as Record<string, unknown>;
+      } catch (error) {
+        console.warn('Failed to parse notification metadata', error);
+        return null;
+      }
+    }
+
+    if (typeof metadata === 'object') {
+      return metadata as Record<string, unknown>;
+    }
+
+    return null;
+  };
+
+  const resolveNotificationDisplay = (
+    notification: Notification,
+  ): NotificationDisplay => {
+    const metadata = parseNotificationMetadata(notification.metadata);
+
+    if (metadata?.kind === 'mention') {
+      const mentionMeta = metadata as MentionMetadata;
+      const actorName = typeof mentionMeta.actorName === 'string'
+        ? mentionMeta.actorName
+        : undefined;
+
+      const message =
+        typeof mentionMeta.preview === 'string' && mentionMeta.preview.length > 0
+          ? mentionMeta.preview
+          : notification.message;
+
+      const actionUrl =
+        notification.action_url ??
+        (typeof mentionMeta.threadId === 'string'
+          ? `/messaging/${mentionMeta.threadId}${
+              mentionMeta.messageId ? `?focus=${mentionMeta.messageId}` : ''
+            }`
+          : undefined);
+
+      return {
+        title: actorName ? `Mentioned by ${actorName}` : 'You were mentioned',
+        message,
+        badgeLabel: 'mention',
+        actionUrl,
+      };
+    }
+
+    return {
+      title: notification.title,
+      message: notification.message,
+      badgeLabel: notification.type,
+      actionUrl: notification.action_url,
+    };
+  };
+
   return (
     <div className="relative">
       <Button
@@ -230,70 +310,75 @@ export function NotificationCenter() {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {notifications.map((notification, index) => (
-                    <div key={notification.id}>
-                      <div
-                        className={cn(
-                          "cursor-pointer p-3 transition-colors hover:bg-muted/50",
-                          !notification.read && "bg-muted/20"
-                        )}
-                        onClick={() => {
-                          if (!notification.read) {
-                            markAsRead(notification.id);
-                          }
-                          if (notification.action_url) {
-                            window.location.href = notification.action_url;
-                            setIsOpen(false);
-                          }
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant="outline"
-                                className={cn("text-xs", getTypeColor(notification.type))}
-                              >
-                                {notification.type}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {formatTime(notification.created_at)}
-                              </span>
+                  {notifications.map((notification, index) => {
+                    const display = resolveNotificationDisplay(notification);
+                    const actionUrl = display.actionUrl ?? notification.action_url;
+
+                    return (
+                      <div key={notification.id}>
+                        <div
+                          className={cn(
+                            "cursor-pointer p-3 transition-colors hover:bg-muted/50",
+                            !notification.read && "bg-muted/20"
+                          )}
+                          onClick={() => {
+                            if (!notification.read) {
+                              markAsRead(notification.id);
+                            }
+                            if (actionUrl) {
+                              window.location.href = actionUrl;
+                              setIsOpen(false);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="outline"
+                                  className={cn("text-xs", getTypeColor(notification.type))}
+                                >
+                                  {display.badgeLabel}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatTime(notification.created_at)}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium">{display.title}</p>
+                              <p className="text-xs text-muted-foreground">{display.message}</p>
                             </div>
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.message}</p>
-                          </div>
-                          <div className="flex gap-1">
-                            {!notification.read && (
+                            <div className="flex gap-1">
+                              {!notification.read && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markAsRead(notification.id);
+                                  }}
+                                  className="size-6"
+                                >
+                                  <Check className="size-3" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  markAsRead(notification.id);
+                                  deleteNotification(notification.id);
                                 }}
-                                className="size-6"
+                                className="size-6 text-muted-foreground hover:text-destructive"
                               >
-                                <Check className="size-3" />
+                                <X className="size-3" />
                               </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNotification(notification.id);
-                              }}
-                              className="size-6 text-muted-foreground hover:text-destructive"
-                            >
-                              <X className="size-3" />
-                            </Button>
+                            </div>
                           </div>
                         </div>
+                        {index < notifications.length - 1 && <Separator />}
                       </div>
-                      {index < notifications.length - 1 && <Separator />}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>

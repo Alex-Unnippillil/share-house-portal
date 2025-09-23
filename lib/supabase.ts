@@ -29,6 +29,16 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      amenities: SupabaseTable<{
+        id: string
+        name: string
+        slug: string | null
+        description: string | null
+        icon: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
@@ -196,6 +206,15 @@ export type Database = {
         notes: string | null
         attachments: Json | null
         metadata: Json | null
+      }>
+      messages: SupabaseTable<{
+        id: string
+        thread_id: string
+        sender_id: string
+        content: string
+        mentions: Json | null
+        created_at: string | null
+        updated_at: string | null
       }>
       visitor_logs: SupabaseTable<{
         id: string
