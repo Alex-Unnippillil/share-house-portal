@@ -1,4 +1,8 @@
-import type { CatchUpBalance, PaymentReceiptHistoryEntry } from "@/types/payments"
+import type {
+  CatchUpBalance,
+  PaymentReceiptHistoryEntry,
+  RoommateLedger,
+} from "@/types/payments"
 
 
 export const catchUpBalances: CatchUpBalance[] = [
@@ -289,6 +293,149 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         unitAmount: -60,
         totalAmount: -60,
 
+      },
+    ],
+  },
+]
+
+export const roommateLedgers: RoommateLedger[] = [
+  {
+    roommateId: "rm_avery",
+    roommateName: "Avery Chen",
+    unitLabel: "Unit 3B",
+    currency: "USD",
+    startingBalance: 1420,
+    entries: [
+      {
+        id: "rm_avery_autopay_may",
+        date: "2024-05-28",
+        description: "Autopay rent share",
+        note: "Posted via Stripe billing",
+        amount: -1260,
+        type: "contribution",
+        actor: {
+          id: "rm_avery",
+          name: "Avery Chen",
+          role: "roommate",
+        },
+      },
+      {
+        id: "rm_avery_wifi_trueup",
+        date: "2024-05-30",
+        description: "Wi-Fi reimbursement",
+        note: "June invoice split",
+        amount: -45,
+        type: "contribution",
+        actor: {
+          id: "rm_avery",
+          name: "Avery Chen",
+          role: "roommate",
+        },
+      },
+      {
+        id: "rm_avery_late_fee_reversal",
+        date: "2024-06-02",
+        description: "Late fee reversal",
+        note: "Autopay cleared before grace period ended",
+        amount: -35,
+        type: "adjustment",
+        actor: {
+          id: "pm_morgan",
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+      },
+    ],
+  },
+  {
+    roommateId: "rm_jordan",
+    roommateName: "Jordan Blake",
+    unitLabel: "Unit 3B",
+    currency: "USD",
+    startingBalance: 1685,
+    entries: [
+      {
+        id: "rm_jordan_partial_may",
+        date: "2024-05-18",
+        description: "Partial rent catch-up",
+        amount: -600,
+        type: "contribution",
+        actor: {
+          id: "rm_jordan",
+          name: "Jordan Blake",
+          role: "roommate",
+        },
+      },
+      {
+        id: "rm_jordan_parking_fee",
+        date: "2024-05-22",
+        description: "Parking stall 17",
+        note: "Monthly parking pass",
+        amount: 80,
+        type: "adjustment",
+        actor: {
+          id: "pm_morgan",
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+      },
+      {
+        id: "rm_jordan_manual_transfer",
+        date: "2024-06-05",
+        description: "Manual ACH payment",
+        amount: -420,
+        type: "contribution",
+        actor: {
+          id: "rm_jordan",
+          name: "Jordan Blake",
+          role: "roommate",
+        },
+      },
+    ],
+  },
+  {
+    roommateId: "rm_priya",
+    roommateName: "Priya Desai",
+    unitLabel: "Unit 3B",
+    currency: "USD",
+    startingBalance: 2110,
+    entries: [
+      {
+        id: "rm_priya_security_adjustment",
+        date: "2024-05-10",
+        description: "Security deposit adjustment",
+        note: "Damage waiver applied",
+        amount: -150,
+        type: "adjustment",
+        actor: {
+          id: "pm_morgan",
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
+      },
+      {
+        id: "rm_priya_rent_catchup",
+        date: "2024-05-31",
+        description: "Rent catch-up",
+        amount: -630,
+        type: "contribution",
+        actor: {
+          id: "rm_priya",
+          name: "Priya Desai",
+          role: "roommate",
+        },
+      },
+      {
+        id: "rm_priya_cleaning_fee",
+        date: "2024-06-03",
+        description: "Deep clean crew",
+        amount: 95,
+        type: "adjustment",
+        actor: {
+          id: "pm_morgan",
+          name: "Morgan Ellis",
+          role: "property_manager",
+        },
       },
     ],
   },

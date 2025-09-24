@@ -1,3 +1,5 @@
+import { Suspense } from "react"
+
 import { format, parseISO } from "date-fns"
 import { CheckCircle2 } from "lucide-react"
 
@@ -14,6 +16,7 @@ import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import { PaymentStatusFeed } from "./_components/payment-status-feed"
 import { ContributionSummaryCard } from "./_components/contribution-summary-card"
 import { RoommateLedger } from "./_components/roommate-ledger"
+import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
 import {
   calculateOutstanding,
   getNextOutstandingCharge,
@@ -21,7 +24,11 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import { describeAutopayStatus } from "@/lib/payments/status"
 
-import { loadCatchUpBalances, loadReceiptHistory } from "./loaders"
+import {
+  loadCatchUpBalances,
+  loadReceiptHistory,
+  loadRoommateLedgers,
+} from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 
 
@@ -243,8 +250,16 @@ export default async function PaymentsPage() {
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
       </section>
+      <Suspense fallback={<RoommateLedgerSkeleton />}>
+        <RoommateLedgerSection />
+      </Suspense>
       <ReceiptHistoryCard receipts={receiptHistory} />
 
     </div>
   )
+}
+
+async function RoommateLedgerSection() {
+  const ledgers = await loadRoommateLedgers()
+  return <RoommateLedger ledgers={ledgers} />
 }

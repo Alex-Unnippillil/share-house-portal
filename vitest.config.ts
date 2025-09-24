@@ -5,11 +5,15 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts", "tests/**/*.spec.ts"],
+
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname),
       "server-only": path.resolve(__dirname, "tests/mocks/server-only.ts"),
     },
+  },
+  esbuild: {
+    jsx: "automatic",
   },
 })
