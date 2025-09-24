@@ -11,14 +11,94 @@ import {
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
-import { Paperclip } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import {
+  ArrowUpRight,
+  BarChart3,
+  BellRing,
+  CalendarDays,
+  DoorOpen,
+  FileText,
+  Megaphone,
+  MessageSquare,
+  Paperclip,
+  Sparkles,
+  Users,
+  Wrench,
+} from "lucide-react"
 
-import { loadMessagingThreadData } from "../loaders"
+import {
+  loadMessagingThreadData,
+  type BoardActivityType,
+  type BoardMetricTrend,
+  type LinkedWorkflowSeverity,
+  type QuickTemplateIcon,
+} from "../loaders"
+
+const quickTemplateIconMap: Record<QuickTemplateIcon, LucideIcon> = {
+  announcement: Megaphone,
+  poll: BarChart3,
+  maintenance: Wrench,
+  event: CalendarDays,
+}
+
+const quickTemplateAccentMap: Record<QuickTemplateIcon, string> = {
+  announcement: "bg-primary/10 text-primary",
+  poll: "bg-sky-500/15 text-sky-700",
+  maintenance: "bg-amber-500/15 text-amber-700",
+  event: "bg-emerald-500/15 text-emerald-700",
+}
+
+const severityBadgeVariant: Record<LinkedWorkflowSeverity, "default" | "secondary" | "destructive" | "outline"> = {
+  High: "destructive",
+  Medium: "secondary",
+  Low: "outline",
+}
+
+const trendColorMap: Record<BoardMetricTrend, string> = {
+  up: "text-emerald-600",
+  down: "text-rose-600",
+  steady: "text-muted-foreground",
+}
+
+const activityIconMap: Record<BoardActivityType, LucideIcon> = {
+  poll: BarChart3,
+  maintenance: Wrench,
+  booking: CalendarDays,
+  visitor: DoorOpen,
+  document: FileText,
+  thread: MessageSquare,
+}
+
+const activityAccentMap: Record<BoardActivityType, string> = {
+  poll: "bg-sky-500/15 text-sky-700",
+  maintenance: "bg-amber-500/15 text-amber-700",
+  booking: "bg-emerald-500/15 text-emerald-700",
+  visitor: "bg-rose-500/15 text-rose-700",
+  document: "bg-purple-500/15 text-purple-700",
+  thread: "bg-muted text-muted-foreground",
+}
 
 export async function MessagingThreadsShell() {
-  const { threadFilters, threadList, activeThread, threadPosts, attachmentSummary, pollSnapshots } =
-    await loadMessagingThreadData()
+  const {
+    threadFilters,
+    threadList,
+    activeThread,
+    threadPosts,
+    attachmentSummary,
+    pollSnapshots,
+    quickTemplates,
+    boardAutomations,
+    presenceMembers,
+    digestSchedule,
+    linkedWorkflows,
+    boardMetrics,
+    boardActivity,
+  } = await loadMessagingThreadData()
+
+  const onlineCount = presenceMembers.filter((member) => member.status === "Online").length
 
   return (
     <>
@@ -130,6 +210,99 @@ export async function MessagingThreadsShell() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="space-y-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <CardTitle>Launch new update</CardTitle>
+                  <CardDescription>
+                    Kick off announcements, polls, or maintenance follow-ups with prebuilt templates and automations.
+                  </CardDescription>
+                </div>
+                <Button size="sm" variant="outline" className="self-start">
+                  Open composer
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Thread templates
+                </p>
+                <div className="space-y-3">
+                  {quickTemplates.map((template) => {
+                    const Icon = quickTemplateIconMap[template.icon]
+
+                    return (
+                      <div
+                        key={template.id}
+                        className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={cn(
+                              "flex size-9 items-center justify-center rounded-full",
+                              quickTemplateAccentMap[template.icon]
+                            )}
+                          >
+                            <Icon className="size-4" aria-hidden />
+                          </span>
+                          <div className="space-y-2">
+                            <p className="text-sm font-semibold text-foreground">{template.title}</p>
+                            <p className="text-xs text-muted-foreground">{template.description}</p>
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {template.badges.map((badge) => (
+                                <Badge key={`${template.id}-${badge}`} variant="outline">
+                                  {badge}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-foreground">Automations</p>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Sparkles className="size-3.5" aria-hidden />
+                    Always on
+                  </Badge>
+                </div>
+                <div className="space-y-3">
+                  {boardAutomations.map((automation) => (
+                    <div
+                      key={automation.id}
+                      className="space-y-3 rounded-lg border border-dashed border-border/70 bg-background/80 p-4"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-foreground">{automation.label}</p>
+                          <p className="text-xs text-muted-foreground">{automation.description}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {automation.channels.map((channel) => (
+                              <Badge key={`${automation.id}-${channel}`} variant="secondary">
+                                {channel}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <Switch defaultChecked={automation.enabled} aria-label={`Toggle ${automation.label}`} />
+                      </div>
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        {automation.metric}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -297,6 +470,200 @@ export async function MessagingThreadsShell() {
                   </Badge>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Linked workflows</CardTitle>
+              <CardDescription>
+                Connect maintenance, bookings, and visitor approvals so every roommate sees the next action inside the thread.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {linkedWorkflows.map((workflow) => (
+                <div
+                  key={workflow.id}
+                  className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-4"
+                >
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary">{workflow.type}</Badge>
+                        <Badge variant={severityBadgeVariant[workflow.severity]}>{workflow.status}</Badge>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">{workflow.title}</p>
+                      <p className="text-xs text-muted-foreground">{workflow.summary}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="self-start text-muted-foreground hover:text-foreground"
+                    >
+                      Review
+                      <ArrowUpRight className="ml-1 size-4" aria-hidden />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <span>Thread: {workflow.thread}</span>
+                    <span>Owner: {workflow.owner}</span>
+                    <span>{workflow.due}</span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Roommate presence & digests</CardTitle>
+              <CardDescription>
+                See who is online, who is monitoring each topic, and how updates are delivered automatically across the household.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-6 lg:flex-row">
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-foreground">Presence</p>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Users className="size-3.5" aria-hidden />
+                      {onlineCount} online
+                    </Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {presenceMembers.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex flex-col gap-3 rounded-lg border border-border/60 bg-background/80 p-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarFallback className={cn("text-sm font-medium", member.accent)}>
+                              {member.initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-foreground">{member.name}</p>
+                            <p className="text-xs text-muted-foreground">{member.role}</p>
+                            <p className="text-xs text-muted-foreground">{member.focus}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-start gap-2 sm:items-end">
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
+                              member.statusAccent
+                            )}
+                          >
+                            {member.status}
+                          </span>
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            {member.lastActive}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <Separator orientation="vertical" className="hidden lg:block" />
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-foreground">Digests & notifications</p>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <BellRing className="size-3.5" aria-hidden />
+                      Automated
+                    </Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {digestSchedule.map((digest) => (
+                      <div
+                        key={digest.id}
+                        className="space-y-3 rounded-lg border border-dashed border-border/70 bg-muted/30 p-4"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-foreground">{digest.title}</p>
+                            <p className="text-xs text-muted-foreground">{digest.summary}</p>
+                          </div>
+                          <Badge variant="secondary">{digest.cadence}</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-3 text-[11px] uppercase tracking-wide text-muted-foreground">
+                          <span>{digest.recipients}</span>
+                          <span>Next: {digest.nextSend}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {digest.channels.map((channel) => (
+                            <Badge key={`${digest.id}-${channel}`} variant="outline">
+                              {channel}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Board health & activity</CardTitle>
+              <CardDescription>
+                Monitor roommate engagement and cross-feature updates without leaving the messaging workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {boardMetrics.map((metric) => (
+                  <div
+                    key={metric.id}
+                    className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-4"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {metric.label}
+                    </p>
+                    <p className="text-2xl font-semibold text-foreground">{metric.value}</p>
+                    <p className={cn("text-xs font-medium", trendColorMap[metric.trend])}>{metric.trendLabel}</p>
+                    <p className="text-xs text-muted-foreground">{metric.description}</p>
+                  </div>
+                ))}
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                {boardActivity.map((activity) => {
+                  const Icon = activityIconMap[activity.type]
+
+                  return (
+                    <div
+                      key={activity.id}
+                      className="flex flex-col gap-3 rounded-lg border border-border/60 bg-background/80 p-4 sm:flex-row sm:items-start sm:gap-4"
+                    >
+                      <span
+                        className={cn(
+                          "flex size-10 items-center justify-center rounded-full",
+                          activityAccentMap[activity.type]
+                        )}
+                      >
+                        <Icon className="size-5" aria-hidden />
+                      </span>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{activity.title}</p>
+                          <Badge variant="outline">{activity.actor}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{activity.description}</p>
+                        <div className="flex flex-wrap gap-3 text-[11px] uppercase tracking-wide text-muted-foreground">
+                          <span>{activity.thread}</span>
+                          <span>{activity.meta}</span>
+                          <span>{activity.timestamp}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </CardContent>
           </Card>
         </div>
