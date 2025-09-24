@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server"
-import { getStripe, getAppBaseUrl } from "@/lib/stripe"
+import { IntegrationTimeoutError, IntegrationUnavailableError } from "@/lib/errors"
+import { executeWithStripe, getAppBaseUrl } from "@/lib/stripe"
 
 export async function POST(req: NextRequest) {
   try {
-    const stripe = getStripe()
     const { priceId, quantity = 1, mode = "payment", metadata } = await req.json()
 
     if (!priceId || typeof priceId !== "string") {
@@ -29,10 +29,34 @@ export async function POST(req: NextRequest) {
       sessionConfig.metadata = metadata
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig)
+    const session = await executeWithStripe(
+      "checkout.sessions.create",
+      stripe => stripe.checkout.sessions.create(sessionConfig),
+      {
+        metadata: {
+          priceId,
+          mode,
+        },
+      }
+    )
 
     return Response.json({ id: session.id, url: session.url })
   } catch (error) {
+    if (error instanceof IntegrationUnavailableError) {
+      return Response.json(
+        {
+          error: error.message,
+          queued: error.queued,
+          jobId: error.jobId,
+        },
+        { status: 503 }
+      )
+    }
+
+    if (error instanceof IntegrationTimeoutError) {
+      return Response.json({ error: error.message }, { status: 504 })
+    }
+
     const message = error instanceof Error ? error.message : "Unexpected error"
     const status = message.includes("Stripe is not configured") ? 500 : 500
     return Response.json({ error: message }, { status })

@@ -1,3 +1,16 @@
+import { ResilienceManager } from '@/lib/resilience';
+
+const calComResilience = new ResilienceManager({
+  serviceName: 'cal.com',
+  timeoutMs: 6000,
+  breakerThreshold: 3,
+  halfOpenAfterMs: 12000,
+  retryAttempts: 2,
+  retryBackoffMs: 400,
+  queueLimit: 40,
+  maxQueueAttempts: 4,
+});
+
 interface CalComCreateBookingRequest {
   start: string;
   end: string;
@@ -29,10 +42,12 @@ interface CalComEventType {
 class CalComService {
   private baseUrl: string;
   private apiKey: string;
+  private readonly resilience: ResilienceManager;
 
-  constructor(baseUrl: string, apiKey: string) {
+  constructor(baseUrl: string, apiKey: string, resilience: ResilienceManager = calComResilience) {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
+    this.resilience = resilience;
   }
 
   /**
@@ -43,24 +58,29 @@ class CalComService {
       ? `${this.baseUrl}/api/v1/event-types/${userSlug}`
       : `${this.baseUrl}/api/v1/event-types`;
 
-    try {
-      const response = await fetch(endpoint, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
+    return this.resilience.execute(
+      `event-types${userSlug ? `:${userSlug}` : ''}`,
+      async () => {
+        const response = await fetch(endpoint, {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch event types: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch event types: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.eventTypes || [];
+      },
+      {
+        fallback: () => [],
+        queueOnOpen: false,
+        metadata: userSlug ? { userSlug } : undefined,
       }
-
-      const data = await response.json();
-      return data.eventTypes || [];
-    } catch (error) {
-      console.error('Error fetching Cal.com event types:', error);
-      return [];
-    }
+    );
   }
 
   /**
@@ -70,97 +90,117 @@ class CalComService {
     eventTypeId: number,
     bookingData: CalComCreateBookingRequest
   ): Promise<CalComBookingResponse> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            eventTypeId,
-            start: bookingData.start,
-            end: bookingData.end,
-            title: bookingData.title,
-            description: bookingData.description,
-            attendees: bookingData.attendees,
-            location: bookingData.location,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Failed to create booking: ${response.statusText}`
+    return this.resilience.execute(
+      'create-booking',
+      async () => {
+        const response = await fetch(
+          `${this.baseUrl}/api/v1/bookings`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              eventTypeId,
+              start: bookingData.start,
+              end: bookingData.end,
+              title: bookingData.title,
+              description: bookingData.description,
+              attendees: bookingData.attendees,
+              location: bookingData.location,
+            }),
+          }
         );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || `Failed to create booking: ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+
+        return {
+          success: true,
+          bookingId: data.booking?.id?.toString(),
+          bookingUrl: data.booking?.url,
+        };
+      },
+      {
+        fallback: ({ queued, jobId }) => ({
+          success: false,
+          error: queued
+            ? `Cal.com scheduler is currently unavailable. Your booking request has been queued${jobId ? ` (reference ${jobId})` : ''}.`
+            : 'Failed to create booking. Please try again shortly.',
+        }),
+        queueOnOpen: true,
+        metadata: {
+          eventTypeId,
+          title: bookingData.title,
+        },
       }
-
-      const data = await response.json();
-
-      return {
-        success: true,
-        bookingId: data.booking?.id?.toString(),
-        bookingUrl: data.booking?.url,
-      };
-    } catch (error) {
-      console.error('Error creating Cal.com booking:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to create booking',
-      };
-    }
+    );
   }
 
   /**
    * Cancel a booking
    */
   async cancelBooking(bookingId: string): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings/${bookingId}/cancel`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+    return this.resilience.execute(
+      'cancel-booking',
+      async () => {
+        const response = await fetch(
+          `${this.baseUrl}/api/v1/bookings/${bookingId}/cancel`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return response.ok;
-    } catch (error) {
-      console.error('Error canceling Cal.com booking:', error);
-      return false;
-    }
+        return response.ok;
+      },
+      {
+        fallback: () => false,
+        queueOnOpen: true,
+        metadata: { bookingId },
+      }
+    );
   }
 
   /**
    * Get booking details
    */
   async getBooking(bookingId: string): Promise<any> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings/${bookingId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
+    return this.resilience.execute(
+      'get-booking',
+      async () => {
+        const response = await fetch(
+          `${this.baseUrl}/api/v1/bookings/${bookingId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch booking: ${response.statusText}`);
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch booking: ${response.statusText}`);
+        return await response.json();
+      },
+      {
+        fallback: () => null,
+        queueOnOpen: false,
+        metadata: { bookingId },
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching Cal.com booking:', error);
-      return null;
-    }
+    );
   }
 
   /**
@@ -171,31 +211,40 @@ class CalComService {
     startDate?: string,
     endDate?: string
   ): Promise<any[]> {
-    try {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+    return this.resilience.execute(
+      'list-bookings',
+      async () => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
 
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings?${params.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
+        const response = await fetch(
+          `${this.baseUrl}/api/v1/bookings?${params.toString()}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user bookings: ${response.statusText}`);
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user bookings: ${response.statusText}`);
+        const data = await response.json();
+        return data.bookings || [];
+      },
+      {
+        fallback: () => [],
+        queueOnOpen: false,
+        metadata: {
+          userEmail,
+          startDate,
+          endDate,
+        },
       }
-
-      const data = await response.json();
-      return data.bookings || [];
-    } catch (error) {
-      console.error('Error fetching Cal.com user bookings:', error);
-      return [];
-    }
+    );
   }
 }
 
