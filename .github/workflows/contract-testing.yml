@@ -1,0 +1,72 @@
+name: Contract Testing
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  verify:
+    name: Consumer and provider verification
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key"
+      SUPABASE_SERVICE_ROLE_KEY: "test-service-role"
+      RESEND_API_KEY: "test-resend-key"
+      RESEND_RECEIPTS_FROM: "Roomsily Receipts <receipts@example.com>"
+      PACT_PROVIDER_URL: "http://127.0.0.1:3001"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate consumer contracts
+        run: pnpm contract:test
+
+      - name: Build Next.js API
+        run: pnpm next build
+
+      - name: Start Next.js API
+        run: |
+          pnpm next start --hostname 127.0.0.1 --port 3001 > next-api.log 2>&1 &
+          echo $! > next-api.pid
+
+      - name: Wait for API readiness
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://127.0.0.1:3001/api/documents > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Next.js API did not become ready" >&2
+          test -f next-api.log && tail -n 200 next-api.log || true
+          exit 1
+
+      - name: Verify provider contracts
+        run: pnpm contract:verify
+
+      - name: Stop Next.js API
+        if: always()
+        run: |
+          if [ -f next-api.pid ]; then
+            kill $(cat next-api.pid) || true
+            rm next-api.pid
+          fi
+          test -f next-api.log && tail -n 200 next-api.log || true

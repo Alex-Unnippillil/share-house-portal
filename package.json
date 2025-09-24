@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "contract:test": "vitest run tests/contracts",
+    "contract:verify": "node tests/contracts/verify-provider.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -74,6 +76,7 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^3.7.2",
+    "@pact-foundation/pact": "^15.0.1",
     "@types/eslint": "^8.56.2",
     "@types/node": "^20.19.0",
     "@types/react": "^18.3.3",
