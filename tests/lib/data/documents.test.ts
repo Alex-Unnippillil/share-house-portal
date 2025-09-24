@@ -71,6 +71,8 @@ describe('fetchDocumentsList', () => {
     });
 
     expect(documents).toEqual([{ id: 'doc-1' }]);
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('lease:leases'));
+    expect(query.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(query.or).toHaveBeenCalledWith('tenant_id.eq.user-123,signatures.signer_id.eq.user-123');
     expect(query.in).toHaveBeenCalledWith('status', filters.status);
     expect(query.in).toHaveBeenCalledWith('document_type', filters.type);
@@ -91,6 +93,41 @@ describe('fetchDocumentsList', () => {
     });
 
     expect(query.or).not.toHaveBeenCalled();
+
+    await fetchDocumentsList({
+      client: supabase,
+      userId: 'admin-1',
+      role: 'admin',
+    });
+
+    expect(query.or).toHaveBeenCalledTimes(0);
+  });
+
+  it('does not apply optional filters when none are provided', async () => {
+    const query = createDocumentsQuery({ data: [], error: null });
+    const supabase = createSupabaseStub(query);
+
+    const documents = await fetchDocumentsList({
+      client: supabase,
+      userId: 'user-1',
+      role: 'tenant',
+    });
+
+    expect(documents).toEqual([]);
+    expect(query.order).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(query.in).not.toHaveBeenCalled();
+    expect(query.eq).not.toHaveBeenCalled();
+    expect(query.gte).not.toHaveBeenCalled();
+    expect(query.lte).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty array when Supabase resolves without data', async () => {
+    const query = createDocumentsQuery({ data: null as any, error: null });
+    const supabase = createSupabaseStub(query);
+
+    await expect(
+      fetchDocumentsList({ client: supabase, userId: 'user-1', role: 'tenant' })
+    ).resolves.toEqual([]);
   });
 
   it('throws when Supabase returns an error', async () => {
@@ -110,6 +147,7 @@ describe('fetchDocumentStats', () => {
         { status: 'draft' },
         { status: 'signed' },
         { status: 'pending_signature' },
+        { status: 'expired' },
       ] as any,
       error: null,
     });
@@ -121,12 +159,13 @@ describe('fetchDocumentStats', () => {
       role: 'tenant',
     });
 
+    expect(query.select).toHaveBeenCalledWith('status');
     expect(query.eq).toHaveBeenCalledWith('tenant_id', 'tenant-1');
     expect(stats).toEqual({
-      total_documents: 3,
+      total_documents: 4,
       pending_signatures: 1,
       signed_documents: 1,
-      expired_documents: 0,
+      expired_documents: 1,
       draft_documents: 1,
     });
   });
@@ -137,6 +176,17 @@ describe('fetchDocumentStats', () => {
 
     await fetchDocumentStats({ client: supabase, userId: 'admin-1', role: 'admin' });
 
+    expect(query.select).toHaveBeenCalledWith('status');
+    expect(query.eq).not.toHaveBeenCalled();
+  });
+
+  it('omits tenant filter for property managers', async () => {
+    const query = createDocumentsQuery({ data: [], error: null });
+    const supabase = createSupabaseStub(query);
+
+    await fetchDocumentStats({ client: supabase, userId: 'manager-1', role: 'property_manager' });
+
+    expect(query.select).toHaveBeenCalledWith('status');
     expect(query.eq).not.toHaveBeenCalled();
   });
 
