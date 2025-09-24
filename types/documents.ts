@@ -45,7 +45,6 @@ export interface Document {
   description?: string;
   document_type: DocumentType;
   status: DocumentStatus;
-  state: DocumentState;
   file_url?: string;
   documenso_envelope_id?: string;
   documenso_template_id?: string;
@@ -59,7 +58,6 @@ export interface Document {
   signed_at?: string;
   version: number;
   parent_document_id?: string;
-  published_at?: string;
 }
 
 export interface DocumentSignature {
@@ -116,7 +114,6 @@ export interface DocumentWithLease extends Document {
   lease?: Lease;
   signatures?: DocumentSignature[];
   access_logs?: DocumentAccessLog[];
-  versions?: DocumentVersion[];
 }
 
 export interface DocumentSigningRequest {

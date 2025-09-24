@@ -70,7 +70,7 @@ describe('fetchDocumentsList', () => {
       filters,
     });
 
-    expect(documents).toEqual([{ id: 'doc-1', versions: [] }]);
+    expect(documents).toEqual([{ id: 'doc-1' }]);
     expect(query.or).toHaveBeenCalledWith('tenant_id.eq.user-123,signatures.signer_id.eq.user-123');
     expect(query.in).toHaveBeenCalledWith('status', filters.status);
     expect(query.in).toHaveBeenCalledWith('document_type', filters.type);

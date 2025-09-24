@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DocumentWithLease } from '@/types/documents';
 import { Download, ExternalLink, FileText } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 interface DocumentViewerDialogProps {
   open: boolean;
@@ -55,24 +55,6 @@ export function DocumentViewerDialog({
     );
   };
 
-  const getStateBadge = (state: string) => (
-    <Badge variant={state === 'published' ? 'default' : 'secondary'} className="uppercase">
-      {state === 'published' ? 'Published' : 'Draft'}
-    </Badge>
-  );
-
-  const versionStatusLabel = (status: string) => {
-    const labels = {
-      draft: 'Draft Saved',
-      pending_signature: 'Sent for Signature',
-      signed: 'Signed',
-      expired: 'Expired',
-      cancelled: 'Cancelled',
-    } as const;
-
-    return labels[status as keyof typeof labels] || status;
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden">
@@ -85,7 +67,6 @@ export function DocumentViewerDialog({
               )}
             </div>
             <div className="flex items-center space-x-2">
-              {getStateBadge(document.state)}
               {getStatusBadge(document.status)}
               <Button variant="outline" size="sm" onClick={handleDownload}>
                 <Download className="mr-2 size-4" />
@@ -115,12 +96,6 @@ export function DocumentViewerDialog({
                 <span className="font-medium text-muted-foreground">Last Updated:</span>
                 <p>{format(new Date(document.updated_at), 'MMM d, yyyy')}</p>
               </div>
-              {document.published_at && (
-                <div>
-                  <span className="font-medium text-muted-foreground">Published:</span>
-                  <p>{format(new Date(document.published_at), 'MMM d, yyyy')}</p>
-                </div>
-              )}
               {document.expires_at && (
                 <div>
                   <span className="font-medium text-muted-foreground">Expires:</span>
@@ -177,44 +152,6 @@ export function DocumentViewerDialog({
                           : signature.status
                         }
                       </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {document.versions && document.versions.length > 0 && (
-              <div className="mt-4 border-t pt-4">
-                <h4 className="mb-2 font-medium">Version history</h4>
-                <div className="space-y-3">
-                  {document.versions.map((version) => (
-                    <div
-                      key={version.id}
-                      className="flex items-start justify-between text-sm text-muted-foreground"
-                    >
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <Badge
-                            variant={version.version === document.version ? 'default' : 'outline'}
-                            className="text-[10px] uppercase"
-                          >
-                            v{version.version}
-                          </Badge>
-                          <Badge
-                            variant={version.state === 'published' ? 'default' : 'secondary'}
-                            className="text-[10px] uppercase"
-                          >
-                            {version.state}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 text-xs">{versionStatusLabel(version.status)}</p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <div>{formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}</div>
-                        {version.published_at && (
-                          <div>Published {format(new Date(version.published_at), 'MMM d, yyyy')}</div>
-                        )}
-                      </div>
                     </div>
                   ))}
                 </div>
