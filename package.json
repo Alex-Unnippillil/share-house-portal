@@ -11,6 +11,7 @@
     "css:purge": "node scripts/check-css-size.mjs"
   },
   "dependencies": {
+    "@graphql-tools/schema": "^10.0.25",
     "@hookform/resolvers": "^3.3.4",
     "@mdx-js/loader": "^3.0.1",
     "@mdx-js/react": "^3.0.1",
@@ -48,11 +49,14 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
+    "dataloader": "^2.2.3",
     "date-fns": "^3.3.1",
     "framer-motion": "^10.18.0",
     "gaxios": "^6.7.1",
     "google-auth-library": "^9.15.1",
     "googleapis": "^148.0.0",
+    "graphql": "^16.11.0",
+    "graphql-helix": "^1.13.0",
     "lucide-react": "0.302.0",
     "next": "14.2.4",
     "next-compose-plugins": "^2.2.1",
