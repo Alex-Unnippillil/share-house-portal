@@ -201,6 +201,45 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      subprocessors: SupabaseTable<{
+        id: string
+        name: string
+        category: string
+        description: string | null
+        services: string[] | null
+        data_types: string[] | null
+        data_location: string | null
+        lawful_basis: string | null
+        dpa_url: string | null
+        status: 'active' | 'inactive'
+        review_frequency: string | null
+        last_reviewed: string | null
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
+      subprocessor_change_log: SupabaseTable<{
+        id: string
+        title: string
+        summary: string
+        effective_at: string
+        changes: Json
+        published_at: string | null
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
+      subprocessor_subscriptions: SupabaseTable<{
+        id: string
+        email: string
+        status: 'active' | 'unsubscribed'
+        confirmation_token: string | null
+        confirmed_at: string | null
+        unsubscribed_at: string | null
+        created_at: string | null
+        updated_at: string | null
+        metadata: Json | null
+      }>
       notifications: SupabaseTable<{
         id: string
         user_id: string

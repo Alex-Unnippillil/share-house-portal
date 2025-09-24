@@ -50,6 +50,9 @@ class NotificationService {
         ),
         "payment-receipt": this.getPaymentReceiptTemplate(notification.data),
         "document-signed": this.getDocumentSignedTemplate(notification.data),
+        "subprocessor-update": this.getSubprocessorUpdateTemplate(
+          notification.data
+        ),
         welcome: this.getWelcomeTemplate(notification.data),
       }
 
@@ -223,6 +226,67 @@ class NotificationService {
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
         }/documents" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Document</a>
+      </div>
+    `
+  }
+
+  private getSubprocessorUpdateTemplate(data?: any) {
+    const effectiveDate = data?.effectiveDate
+    const parsedDate =
+      effectiveDate instanceof Date
+        ? effectiveDate
+        : typeof effectiveDate === "string" && !Number.isNaN(Date.parse(effectiveDate))
+          ? new Date(effectiveDate)
+          : null
+    const formattedDate = parsedDate
+      ? parsedDate.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : new Date().toLocaleDateString()
+
+    const changes = Array.isArray(data?.changes) ? data.changes : []
+
+    const changeList = changes
+      .map((change: any) => {
+        const vendor = change?.vendor || "Vendor update"
+        const summary = change?.change || ""
+        const dataImpacts = Array.isArray(change?.dataImpacts)
+          ? `<ul style="margin: 8px 0 0 20px; padding: 0;">${change.dataImpacts
+              .map(
+                (impact: string) =>
+                  `<li style="margin-bottom: 4px;">${impact}</li>`
+              )
+              .join("")}</ul>`
+          : ""
+        const action = change?.action
+          ? `<p style="margin: 8px 0 0;"><strong>Recommended action:</strong> ${change.action}</p>`
+          : ""
+
+        return `
+          <li style="margin-bottom: 16px;">
+            <p style="margin: 0 0 4px;"><strong>${vendor}</strong>: ${summary}</p>
+            ${dataImpacts}
+            ${action}
+          </li>
+        `
+      })
+      .join("")
+
+    const changeSection = changeList
+      ? `<ul style="margin: 0; padding-left: 20px;">${changeList}</ul>`
+      : `<p style="margin: 16px 0 0;">Details will follow shortly.</p>`
+
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Subprocessor Notice: ${data?.title || "Roomsily Update"}</h2>
+        <p style="margin: 0 0 8px;">${data?.summary || "We have updated our subprocessor roster."}</p>
+        <p style="margin: 0 0 16px;"><strong>Effective:</strong> ${formattedDate}</p>
+        ${changeSection}
+        <p style="margin: 24px 0 0;">You can review the full roster and change history at <a href="${
+          process.env.NEXT_PUBLIC_APP_URL
+        }/public/subprocessors">roomsily.com/public/subprocessors</a>.</p>
       </div>
     `
   }
