@@ -1,0 +1,240 @@
+{
+  "consumer": {
+    "name": "AdminOperationsClient"
+  },
+  "interactions": [
+    {
+      "description": "a request for revision 2 document snapshot",
+      "providerStates": [
+        {
+          "name": "historical document revisions are available"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/api/documents",
+        "query": {
+          "revision": [
+            "revision2"
+          ]
+        }
+      },
+      "response": {
+        "body": {
+          "documents": [
+            {
+              "id": "doc-1",
+              "status": "signed",
+              "tenant_id": "tenant-1",
+              "title": "Lease Agreement",
+              "updated_at": "2024-06-12T09:00:00.000Z"
+            },
+            {
+              "id": "doc-1",
+              "status": "signed",
+              "tenant_id": "tenant-1",
+              "title": "Lease Agreement",
+              "updated_at": "2024-06-12T09:00:00.000Z"
+            },
+            {
+              "id": "doc-1",
+              "status": "signed",
+              "tenant_id": "tenant-1",
+              "title": "Lease Agreement",
+              "updated_at": "2024-06-12T09:00:00.000Z"
+            }
+          ],
+          "meta": {
+            "count": 3,
+            "latestUpdatedAt": "2024-07-04T08:15:00.000Z",
+            "revision": "revision2"
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json",
+          "ETag": "W/\"WFeTw7LsWlPoUr8MVZOLWidV5Os\""
+        },
+        "matchingRules": {
+          "body": {
+            "$.documents": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 3
+                }
+              ]
+            },
+            "$.documents[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.documents[*].status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^(draft|pending_signature|signed|expired|cancelled)$"
+                },
+                {
+                  "match": "regex",
+                  "regex": "^(draft|pending_signature|signed|expired|cancelled)$"
+                },
+                {
+                  "match": "regex",
+                  "regex": "^(draft|pending_signature|signed|expired|cancelled)$"
+                }
+              ]
+            },
+            "$.documents[*].tenant_id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.documents[*].title": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.documents[*].updated_at": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                  "match": "datetime"
+                },
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                  "match": "datetime"
+                },
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.meta.count": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.meta.latestUpdatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.meta.revision": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "ETag": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^W\\/\\\"[A-Za-z0-9_-]+\\\"$"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "an admin conditional request for revision 2",
+      "providerStates": [
+        {
+          "name": "historical document revisions are available"
+        }
+      ],
+      "request": {
+        "headers": {
+          "If-None-Match": "W/\"WFeTw7LsWlPoUr8MVZOLWidV5Os\""
+        },
+        "method": "GET",
+        "path": "/api/documents",
+        "query": {
+          "revision": [
+            "revision2"
+          ]
+        }
+      },
+      "response": {
+        "headers": {
+          "ETag": "W/\"WFeTw7LsWlPoUr8MVZOLWidV5Os\""
+        },
+        "matchingRules": {
+          "header": {
+            "ETag": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^W\\/\\\"[A-Za-z0-9_-]+\\\"$"
+                }
+              ]
+            }
+          }
+        },
+        "status": 304
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "15.0.1"
+    },
+    "pactRust": {
+      "ffi": "0.4.28",
+      "models": "1.3.5"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "RoomsilyApi"
+  }
+}
