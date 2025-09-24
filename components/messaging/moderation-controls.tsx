@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
 type ModerationThread = {
@@ -22,7 +23,7 @@ type ModerationThread = {
   subject: string
   unit: string
   severity: "High" | "Medium" | "Low"
-  status: "Needs review" | "Monitoring" | "Escalated"
+  status: "Needs review" | "Monitoring" | "Escalated" | "Archived"
   flags: number
   lastActivity: string
   flaggedBy: string
@@ -210,14 +211,53 @@ const statusStyles: Record<ModerationThread["status"], string> = {
   "Needs review": "bg-orange-500/10 text-orange-600 ring-1 ring-orange-500/30",
   Monitoring: "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/30",
   Escalated: "bg-purple-500/10 text-purple-700 ring-1 ring-purple-500/30",
+  Archived: "bg-muted text-muted-foreground ring-1 ring-border/50",
 }
 
 export function ModerationControls() {
-  const [selectedThread, setSelectedThread] = React.useState<ModerationThread>(moderationThreads[0])
+  const { toast } = useToast()
+  const [threads, setThreads] = React.useState<ModerationThread[]>(moderationThreads)
+  const [selectedThreadId, setSelectedThreadId] = React.useState<string>(
+    moderationThreads[0]?.id ?? ""
+  )
 
-  const onSelectThread = (thread: ModerationThread) => {
-    setSelectedThread(thread)
-  }
+  const selectedThread = React.useMemo(() => {
+    if (!threads.length) {
+      return undefined
+    }
+
+    return threads.find((thread) => thread.id === selectedThreadId) ?? threads[0]
+  }, [threads, selectedThreadId])
+
+  const openQueueCount = React.useMemo(
+    () => threads.filter((thread) => thread.status !== "Archived").length,
+    [threads]
+  )
+
+  const formatTimestamp = React.useCallback(() => {
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date())
+  }, [])
+
+  const createWorkflowEntry = React.useCallback(
+    (threadId: string, description: string): ModerationThread["workflow"][number] => ({
+      id: `${threadId}-${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: formatTimestamp(),
+      description,
+    }),
+    [formatTimestamp]
+  )
+
+  const updateThread = React.useCallback(
+    (threadId: string, updater: (thread: ModerationThread) => ModerationThread) => {
+      setThreads((prevThreads) =>
+        prevThreads.map((thread) => (thread.id === threadId ? updater(thread) : thread))
+      )
+    },
+    [setThreads]
+  )
 
   const handleKeyDown = (
     event: React.KeyboardEvent<HTMLTableRowElement>,
@@ -225,8 +265,92 @@ export function ModerationControls() {
   ) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault()
-      onSelectThread(thread)
+      setSelectedThreadId(thread.id)
     }
+  }
+
+  const handleFlagFollowUp = () => {
+    if (!selectedThread) return
+
+    updateThread(selectedThread.id, (thread) => {
+      const workflowEntry = createWorkflowEntry(
+        thread.id,
+        "Follow-up flagged by property manager. Watchers notified to monitor the conversation."
+      )
+
+      return {
+        ...thread,
+        flags: thread.flags + 1,
+        status: "Needs review",
+        lastActivity: "Just now",
+        nextStep:
+          "Waiting on roommates to acknowledge the reminder. Check back if new reports arrive.",
+        workflow: [workflowEntry, ...thread.workflow],
+      }
+    })
+
+    toast({
+      title: "Follow-up flagged",
+      description: "Roommates will receive a reminder and the thread remains in review.",
+    })
+  }
+
+  const handleArchiveThread = () => {
+    if (!selectedThread) return
+
+    updateThread(selectedThread.id, (thread) => {
+      const workflowEntry = createWorkflowEntry(
+        thread.id,
+        "Archived after moderation confirmed the discussion was resolved."
+      )
+
+      return {
+        ...thread,
+        status: "Archived",
+        lastActivity: "Just now",
+        nextStep:
+          "No immediate action required. Reopen if roommates raise the issue again.",
+        workflow: [workflowEntry, ...thread.workflow],
+      }
+    })
+
+    toast({
+      title: "Thread archived",
+      description: "The discussion is closed but kept for context.",
+    })
+  }
+
+  const handleEscalateThread = () => {
+    if (!selectedThread) return
+
+    updateThread(selectedThread.id, (thread) => {
+      const workflowEntry = createWorkflowEntry(
+        thread.id,
+        "Escalated to property management with compliance looped in for follow-up."
+      )
+      const updatedWatchers = Array.from(
+        new Set([...thread.watchers, "Property manager desk", "Community standards lead"])
+      )
+
+      return {
+        ...thread,
+        status: "Escalated",
+        lastActivity: "Just now",
+        nextStep:
+          "Management will coordinate direct outreach and post updates back in this thread.",
+        watchers: updatedWatchers,
+        workflow: [workflowEntry, ...thread.workflow],
+      }
+    })
+
+    toast({
+      title: "Thread escalated",
+      description: "Management was notified and will reach out with next steps.",
+    })
+  }
+
+  if (!selectedThread) {
+    return null
   }
 
   return (
@@ -259,7 +383,7 @@ export function ModerationControls() {
               <CardDescription>Every flagged thread with context, severity, and quick triage actions.</CardDescription>
             </div>
             <Badge className="whitespace-nowrap" variant="outline">
-              {moderationThreads.length} open items
+              {openQueueCount} open item{openQueueCount === 1 ? "" : "s"}
             </Badge>
           </CardHeader>
           <CardContent className="p-0">
@@ -275,16 +399,17 @@ export function ModerationControls() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/70">
-                  {moderationThreads.map((thread) => (
+                  {threads.map((thread) => (
                     <tr
                       key={thread.id}
                       tabIndex={0}
                       aria-selected={selectedThread.id === thread.id}
-                      onClick={() => onSelectThread(thread)}
+                      onClick={() => setSelectedThreadId(thread.id)}
                       onKeyDown={(event) => handleKeyDown(event, thread)}
                       className={cn(
                         "cursor-pointer bg-background transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-                        selectedThread.id === thread.id && "bg-muted/60"
+                        selectedThread.id === thread.id && "bg-muted/60",
+                        thread.status === "Archived" && "opacity-60"
                       )}
                     >
                       <td className="p-4 align-top">
@@ -388,15 +513,25 @@ export function ModerationControls() {
             </div>
             <Separator />
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" onClick={handleFlagFollowUp} disabled={selectedThread.status === "Archived"}>
                 <FlagIcon className="mr-2 size-4" />
                 Flag follow-up
               </Button>
-              <Button size="sm" variant="secondary">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleArchiveThread}
+                disabled={selectedThread.status === "Archived"}
+              >
                 <Archive className="mr-2 size-4" />
                 Archive thread
               </Button>
-              <Button size="sm" variant="destructive">
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleEscalateThread}
+                disabled={selectedThread.status === "Escalated" || selectedThread.status === "Archived"}
+              >
                 <AlertTriangle className="mr-2 size-4" />
                 Escalate to management
               </Button>
