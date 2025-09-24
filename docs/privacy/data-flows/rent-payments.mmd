@@ -1,0 +1,42 @@
+---
+title: Rent Payment Data Flow
+---
+flowchart TD
+    subgraph Client
+        A[Tenant Device]
+    end
+
+    subgraph Next.js App
+        B[Rent Dashboard]
+        C[Server Actions]
+        J[Webhook Handler]
+    end
+
+    subgraph Stripe
+        D[Checkout Session]
+        E[(Stripe Customer & Payment Method)]
+        F[Billing Portal]
+        G[Event Stream]
+    end
+
+    subgraph Supabase
+        H[(rent_payments table)]
+        I[(profiles table)]
+        K[(notifications queue)]
+    end
+
+    A -->|Request payment| B
+    B -->|Create checkout session| C
+    C -->|Call Stripe API| D
+    D -->|Redirect URL| B
+    B -->|Redirect tenant| D
+    D -->|Collect payment details| E
+    D -->|Payment status events| G
+    G -->|Webhook delivery| J
+    J -->|Verify signature| C
+    C -->|Update payment record| H
+    C -->|Link to tenant profile| I
+    C -->|Emit success/failed notification| K
+    A -->|Manage autopay| F
+    F -->|Update payment method| E
+    G -->|Billing portal events| J

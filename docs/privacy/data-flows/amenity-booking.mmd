@@ -1,0 +1,46 @@
+---
+title: Amenity Booking & Realtime Messaging Data Flow
+---
+flowchart TD
+    subgraph Client
+        A[Tenant Device]
+    end
+
+    subgraph Next.js App
+        B[Amenity Calendar UI]
+        C[Server Actions]
+        L[Realtime Subscription]
+    end
+
+    subgraph Calcom
+        D[Booking Widget]
+        E[(Cal.com Events)]
+        F[Webhook Dispatcher]
+    end
+
+    subgraph Supabase
+        G[(bookings table)]
+        H[(amenities table)]
+        I[Realtime Channels]
+        J[(notifications queue)]
+    end
+
+    subgraph Property Manager Tools
+        K[Dashboard]
+    end
+
+    A -->|View availability| B
+    B -->|Load embed| D
+    D -->|Availability slot data| B
+    A -->|Submit booking| D
+    D -->|Booking confirmed| E
+    D -->|Send webhook| F
+    F -->|Forward event| C
+    C -->|Upsert booking record| G
+    C -->|Validate policy with amenity metadata| H
+    C -->|Trigger roommate notification| J
+    C -->|Emit realtime update| I
+    L -->|Subscribe to booking channel| I
+    I -->|Push booking changes| L
+    L -->|Update UI for roommates| B
+    K -->|Monitor bookings| G
