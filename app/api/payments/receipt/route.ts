@@ -1,6 +1,7 @@
-import { PaymentReceiptEmail } from '@/components/emails/payment-receipt';
-import { Resend } from 'resend';
-import { z } from 'zod';
+import { PaymentReceiptEmail } from "@/components/emails/payment-receipt"
+import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
+import { Resend } from "resend"
+import { z } from "zod"
 
 const lineItemSchema = z.object({
   description: z.string().min(1, "Line item description is required."),
@@ -28,34 +29,29 @@ const paymentReceiptSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY
   if (!resendApiKey) {
-    return Response.json(
-      { error: "Resend API key is not configured." },
-      { status: 500 },
-    );
+    return jsonError("CONFIGURATION_ERROR", {
+      message: "Resend API key is not configured.",
+    })
   }
 
-  let payload: unknown;
+  let payload: unknown
   try {
-    payload = await request.json();
+    payload = await request.json()
   } catch (error) {
-    return Response.json(
-      { error: "Invalid JSON payload." },
-      { status: 400 },
-    );
+    return jsonError("REQUEST_VALIDATION_ERROR", {
+      message: "Invalid JSON payload.",
+    })
   }
 
-  const parsed = paymentReceiptSchema.safeParse(payload);
+  const parsed = paymentReceiptSchema.safeParse(payload)
 
   if (!parsed.success) {
-    return Response.json(
-      {
-        error: "Invalid payment receipt payload.",
-        details: parsed.error.flatten(),
-      },
-      { status: 400 },
-    );
+    return jsonError("REQUEST_VALIDATION_ERROR", {
+      message: "Invalid payment receipt payload.",
+      details: parsed.error.flatten(),
+    })
   }
 
   const {
@@ -76,10 +72,12 @@ export async function POST(request: Request) {
     sendCopyTo,
   } = parsed.data;
 
-  const resend = new Resend(resendApiKey);
+  const resend = new Resend(resendApiKey)
 
-  const fromAddress = process.env.RESEND_RECEIPTS_FROM ?? 'Roomsily Receipts <receipts@resend.dev>';
-  const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])];
+  const fromAddress =
+    process.env.RESEND_RECEIPTS_FROM ??
+    "Roomsily Receipts <receipts@resend.dev>"
+  const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])]
 
   try {
     const { data, error } = await resend.emails.send({
@@ -104,13 +102,15 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return Response.json({ error: message }, { status: 502 });
+      const message = error instanceof Error ? error.message : String(error)
+      return jsonError("UPSTREAM_SERVICE_ERROR", {
+        message,
+        details: { provider: "resend" },
+      })
     }
 
-    return Response.json({ id: data?.id ?? null });
+    return Response.json({ id: data?.id ?? null })
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return Response.json({ error: message }, { status: 500 });
+    return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
   }
 }
