@@ -415,9 +415,19 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                           <tr key={charge.id} className="border-t">
                             <td className="py-2 pl-4 pr-2">
                               <div className="font-medium">{charge.description}</div>
+                              {charge.invoiceNumber ? (
+                                <div className="text-xs text-muted-foreground">
+                                  Invoice {charge.invoiceNumber}
+                                </div>
+                              ) : null}
                               <div className="text-xs capitalize text-muted-foreground">
                                 {charge.category}
                               </div>
+                              {charge.isPropertyManagerAdjustment ? (
+                                <div className="text-xs font-medium text-amber-600">
+                                  Property manager adjustment
+                                </div>
+                              ) : null}
                             </td>
                             <td className="py-2 pr-2 text-sm text-muted-foreground">
                               {format(parseISO(charge.dueDate), "MMM d")}
@@ -535,6 +545,62 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                 </Badge>
               ))}
             </div>
+            {lastResult.invoiceSettlements.length > 0 ? (
+              <div className="w-full space-y-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
+                  Settlement summary
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {lastResult.invoiceSettlements.map((settlement) => (
+                    <div
+                      key={settlement.invoiceId}
+                      className="rounded-md border bg-background/80 p-3"
+                    >
+                      <p className="text-sm font-semibold">
+                        {settlement.invoiceNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Applied {formatCurrency(settlement.appliedAmount, lastResult.currency)} · Covers
+                        {" "}
+                        {settlement.coveragePercentage.toFixed(1)}% of
+                        {" "}
+                        {formatCurrency(settlement.previousOutstanding, lastResult.currency)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Remaining {formatCurrency(settlement.remainingBalance, lastResult.currency)} across
+                        {" "}
+                        {settlement.chargeCount} charge{settlement.chargeCount === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {lastResult.propertyManagerAdjustments.length > 0 ? (
+              <div className="w-full space-y-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Property manager adjustment log</p>
+                <ul className="space-y-2">
+                  {lastResult.propertyManagerAdjustments.map((adjustment) => (
+                    <li
+                      key={adjustment.chargeId}
+                      className="flex flex-col gap-1 rounded-md border bg-background/70 p-3 text-left sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <span className="font-medium text-foreground">
+                        {adjustment.description} · {formatCurrency(adjustment.amount, lastResult.currency)}
+                      </span>
+                      <span>
+                        Logged by {adjustment.manager.name} ({adjustment.manager.email}) · Remaining
+                        {" "}
+                        {formatCurrency(adjustment.remainingBalance, lastResult.currency)}
+                        {adjustment.invoiceNumber
+                          ? ` · Invoice ${adjustment.invoiceNumber}`
+                          : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {lastResult.note ? (
               <p className="w-full rounded-md bg-background/60 p-3 text-xs text-muted-foreground">
                 Note: {lastResult.note}

@@ -16,6 +16,9 @@ export interface CatchUpCharge {
   dueDate: string
   originalAmount: number
   outstandingAmount: number
+  invoiceId?: string
+  invoiceNumber?: string
+  isPropertyManagerAdjustment?: boolean
 }
 
 export interface CatchUpContact {
@@ -53,6 +56,29 @@ export interface CatchUpPaymentAllocationDetail extends CatchUpPaymentAllocation
   category: CatchUpChargeCategory
   dueDate: string
   remainingBalance: number
+  invoiceId: string
+  invoiceNumber: string
+  isPropertyManagerAdjustment: boolean
+}
+
+export interface CatchUpPaymentInvoiceSettlement {
+  invoiceId: string
+  invoiceNumber: string
+  appliedAmount: number
+  previousOutstanding: number
+  remainingBalance: number
+  chargeCount: number
+  coveragePercentage: number
+  fullyCovered: boolean
+}
+
+export interface CatchUpPropertyManagerAdjustmentLog {
+  chargeId: string
+  description: string
+  amount: number
+  remainingBalance: number
+  invoiceNumber: string
+  manager: CatchUpContact
 }
 
 export interface CatchUpPaymentSubmissionResult {
@@ -67,6 +93,8 @@ export interface CatchUpPaymentSubmissionResult {
   autopayStatus: AutopayStatus
   autopayDay: number
   note?: string
+  invoiceSettlements: CatchUpPaymentInvoiceSettlement[]
+  propertyManagerAdjustments: CatchUpPropertyManagerAdjustmentLog[]
 }
 
 export interface CatchUpPaymentFormValues {

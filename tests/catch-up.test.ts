@@ -9,6 +9,7 @@ import {
 } from "@/lib/payments/catch-up"
 import type { CatchUpCharge } from "@/types/payments"
 
+import { submitCatchUpPayment } from "@/app/payments/actions"
 import { loadCatchUpBalances } from "@/app/payments/loaders"
 
 const sampleCharges: CatchUpCharge[] = [
@@ -97,5 +98,32 @@ describe("catch-up helpers", () => {
       expect(balance.roommateId).toMatch(/^rm_/)
       expect(balance.charges.length).toBeGreaterThan(0)
     }
+  })
+
+  it("submits partial payments across multiple invoices and logs adjustments", async () => {
+    const result = await submitCatchUpPayment({
+      roommateId: "rm_avery",
+      amount: 400,
+      includePropertyManager: true,
+      note: "June catch-up",
+    })
+
+    expect(result.amount).toBe(400)
+    expect(result.projectedBalance).toBeCloseTo(85)
+    expect(result.allocations.length).toBeGreaterThan(1)
+
+    expect(result.invoiceSettlements.length).toBeGreaterThan(1)
+    const mainInvoice = result.invoiceSettlements.find(
+      (settlement) => settlement.invoiceNumber === "INV-3B-2024-06",
+    )
+    expect(mainInvoice?.fullyCovered).toBe(true)
+
+    expect(result.propertyManagerAdjustments.length).toBeGreaterThan(0)
+    const depositAdjustment = result.propertyManagerAdjustments.find((adjustment) =>
+      adjustment.description.toLowerCase().includes("deposit"),
+    )
+    expect(depositAdjustment?.manager.email).toBe(
+      "morgan.ellis@sharehouse.example",
+    )
   })
 })

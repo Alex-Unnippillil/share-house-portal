@@ -24,6 +24,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-01",
         originalAmount: 1260,
         outstandingAmount: 260,
+        invoiceId: "inv_unit3b_2024_06_main",
+        invoiceNumber: "INV-3B-2024-06",
       },
       {
         id: "rm_avery_wifi_june",
@@ -32,6 +34,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-12",
         originalAmount: 45,
         outstandingAmount: 45,
+        invoiceId: "inv_unit3b_2024_06_main",
+        invoiceNumber: "INV-3B-2024-06",
       },
       {
         id: "rm_avery_maintenance_june",
@@ -40,6 +44,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-18",
         originalAmount: 30,
         outstandingAmount: 30,
+        invoiceId: "inv_unit3b_2024_06_main",
+        invoiceNumber: "INV-3B-2024-06",
       },
       {
         id: "rm_avery_deposit_topup",
@@ -48,6 +54,9 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-20",
         originalAmount: 300,
         outstandingAmount: 150,
+        invoiceId: "adj_unit3b_deposit_2024",
+        invoiceNumber: "ADJ-3B-DEP",
+        isPropertyManagerAdjustment: true,
       },
     ],
     contacts: {
@@ -83,6 +92,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-01",
         originalAmount: 1260,
         outstandingAmount: 480,
+        invoiceId: "inv_unit3b_2024_06_main",
+        invoiceNumber: "INV-3B-2024-06",
       },
       {
         id: "rm_jordan_utilities_may",
@@ -91,6 +102,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-10",
         originalAmount: 62,
         outstandingAmount: 62,
+        invoiceId: "inv_unit3b_2024_06_main",
+        invoiceNumber: "INV-3B-2024-06",
       },
       {
         id: "rm_jordan_parking_may",
@@ -99,6 +112,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-05-29",
         originalAmount: 80,
         outstandingAmount: 40,
+        invoiceId: "inv_unit3b_parking_2024_05",
+        invoiceNumber: "INV-3B-PARK",
       },
       {
         id: "rm_jordan_deposit_adjustment",
@@ -107,6 +122,9 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-25",
         originalAmount: 200,
         outstandingAmount: 80,
+        invoiceId: "adj_unit3b_deposit_2024",
+        invoiceNumber: "ADJ-3B-DEP",
+        isPropertyManagerAdjustment: true,
       },
     ],
     contacts: {
@@ -142,6 +160,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-01",
         originalAmount: 1260,
         outstandingAmount: 1260,
+        invoiceId: "inv_unit3b_2024_06_main",
+        invoiceNumber: "INV-3B-2024-06",
       },
       {
         id: "rm_priya_supplies_may",
@@ -150,6 +170,8 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-08",
         originalAmount: 38,
         outstandingAmount: 38,
+        invoiceId: "inv_unit3b_supplies_2024_06",
+        invoiceNumber: "INV-3B-SPL",
       },
       {
         id: "rm_priya_deposit_catchup",
@@ -158,6 +180,9 @@ export const catchUpBalances: CatchUpBalance[] = [
         dueDate: "2024-06-22",
         originalAmount: 250,
         outstandingAmount: 200,
+        invoiceId: "adj_unit3b_deposit_2024",
+        invoiceNumber: "ADJ-3B-DEP",
+        isPropertyManagerAdjustment: true,
       },
     ],
     contacts: {
