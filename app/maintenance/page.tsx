@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MaintenanceRequestForm } from "@/components/maintenance/maintenance-request-form";
+import { MaintenanceStatusTracker } from "@/components/maintenance/maintenance-status-tracker";
 
 const maintenanceHighlights = [
   {
@@ -7,8 +8,8 @@ const maintenanceHighlights = [
     description: "Report maintenance issues with photos, priority levels, and detailed descriptions.",
   },
   {
-    title: "Status Tracking",
-    description: "Track the progress of your maintenance requests from submission to completion.",
+    title: "Live Status Timeline",
+    description: "Follow every maintenance ticket through triage, work in progress, and resolution milestones.",
   },
   {
     title: "Property Manager Notifications",
@@ -44,6 +45,8 @@ export default function MaintenancePage() {
         </div>
 
         <div className="space-y-6">
+          <MaintenanceStatusTracker />
+
           <div className="grid gap-6">
             {maintenanceHighlights.map((item) => (
               <Card key={item.title}>
