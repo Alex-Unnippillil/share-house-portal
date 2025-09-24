@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roomsily.com/events/maintenance-request-submitted.v1.0.0.json",
+  "title": "Maintenance Request Submitted (v1.0.0)",
+  "description": "Domain event emitted when a tenant files a maintenance request.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "const": "maintenance.request.submitted",
+      "description": "Stable identifier for the maintenance submission event."
+    },
+    "version": {
+      "const": "1.0.0",
+      "description": "Schema semantic version."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the maintenance ticket was created."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "unitId",
+        "title",
+        "description",
+        "priority",
+        "requester",
+        "propertyManager"
+      ],
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Identifier for the maintenance request record."
+        },
+        "unitId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Identifier for the unit associated with the request."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short description of the maintenance issue."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Detailed description provided by the tenant."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "urgent"],
+          "description": "Priority selected by the tenant."
+        },
+        "category": {
+          "type": ["string", "null"],
+          "description": "Optional category such as plumbing or electrical."
+        },
+        "location": {
+          "type": ["string", "null"],
+          "description": "Optional location descriptor inside the unit."
+        },
+        "requester": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identifier for the tenant submitting the request."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Display name for the requester."
+            },
+            "email": {
+              "type": ["string", "null"],
+              "format": "email",
+              "description": "Contact email for the requester."
+            }
+          }
+        },
+        "propertyManager": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identifier for the property manager receiving the ticket."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Display name for the property manager."
+            },
+            "email": {
+              "type": ["string", "null"],
+              "format": "email",
+              "description": "Email address for the property manager, when available."
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["event", "version", "occurredAt", "payload"]
+}

@@ -1,7 +1,10 @@
 "use client"
 
-import type { InAppNotification, NotificationData } from "@/lib/notifications"
+import { format } from "date-fns"
+
+import type { DomainEventEnvelope } from "@/lib/domain-events/types"
 import { useToast } from "@/components/ui/use-toast"
+import type { InAppNotification, NotificationData } from "@/lib/notifications"
 
 type NotificationResult = { success: boolean; error?: string }
 type BulkNotificationResult = {
@@ -144,60 +147,109 @@ export function useNotifications() {
 
   // Convenience methods for common notification types
   const notifyVisitorBooking = async (data: {
-    guestName: string
-    hostName: string
-    checkInDate: string
-    checkOutDate: string
+    bookingId: string
+    occurredAt: string
+    guest: { name: string; email: string | null; phone?: string | null }
+    host: { id: string; name: string; email: string | null }
+    stay: { checkInDate: string; checkOutDate: string }
     purpose: string
-    roommates: Array<{ id: string; email: string; name: string }>
-    propertyManager: { id: string; email: string; name: string }
+    roommates: Array<{ id: string; email: string | null; name: string }>
+    propertyManager: { id: string; email: string | null; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = []
+    const event: DomainEventEnvelope<"visitor.booking.submitted"> = {
+      event: "visitor.booking.submitted",
+      version: "1.0.0",
+      occurredAt: data.occurredAt,
+      payload: {
+        bookingId: data.bookingId,
+        guest: {
+          name: data.guest.name,
+          email: data.guest.email ?? null,
+          phone: data.guest.phone ?? null,
+        },
+        host: {
+          id: data.host.id,
+          name: data.host.name,
+          email: data.host.email ?? null,
+        },
+        stay: {
+          checkInDate: data.stay.checkInDate,
+          checkOutDate: data.stay.checkOutDate,
+        },
+        purpose: data.purpose,
+        propertyManager: {
+          id: data.propertyManager.id,
+          name: data.propertyManager.name,
+          email: data.propertyManager.email ?? null,
+        },
+        roommates: data.roommates.map((roommate) => ({
+          id: roommate.id,
+          name: roommate.name,
+          email: roommate.email ?? null,
+        })),
+      },
+    }
+
+    const formattedCheckIn = format(
+      new Date(data.stay.checkInDate),
+      "MMM dd, yyyy"
+    )
+    const formattedCheckOut = format(
+      new Date(data.stay.checkOutDate),
+      "MMM dd, yyyy"
+    )
+
     const templateData = {
-      guestName: data.guestName,
-      hostName: data.hostName,
-      checkInDate: data.checkInDate,
-      checkOutDate: data.checkOutDate,
+      guestName: data.guest.name,
+      hostName: data.host.name,
+      checkInDate: formattedCheckIn,
+      checkOutDate: formattedCheckOut,
       purpose: data.purpose,
     }
+
+    const notifications: (NotificationData | InAppNotification)[] = []
 
     if (data.propertyManager.email) {
       notifications.push({
         to: data.propertyManager.email,
-        subject: `New Visitor Booking: ${data.guestName}`,
+        subject: `New Visitor Booking: ${data.guest.name}`,
         template: "visitor-booking",
         data: templateData,
         userId: data.propertyManager.id,
+        event,
       })
     }
 
     notifications.push({
       userId: data.propertyManager.id,
       title: "New Visitor Booking",
-      message: `${data.guestName} is visiting from ${data.checkInDate} to ${data.checkOutDate}`,
+      message: `${data.guest.name} is visiting from ${formattedCheckIn} to ${formattedCheckOut}`,
       type: "info",
       actionUrl: "/visitors",
       metadata: templateData,
+      event,
     })
 
     for (const roommate of data.roommates) {
       if (roommate.email) {
         notifications.push({
           to: roommate.email,
-          subject: `New Visitor Booking: ${data.guestName}`,
+          subject: `New Visitor Booking: ${data.guest.name}`,
           template: "visitor-booking",
           data: templateData,
           userId: roommate.id,
+          event,
         })
       }
 
       notifications.push({
         userId: roommate.id,
         title: "New Visitor Booking",
-        message: `${data.guestName} is visiting from ${data.checkInDate} to ${data.checkOutDate}`,
+        message: `${data.guest.name} is visiting from ${formattedCheckIn} to ${formattedCheckOut}`,
         type: "info",
         actionUrl: "/visitors",
         metadata: templateData,
+        event,
       })
     }
 
@@ -205,89 +257,200 @@ export function useNotifications() {
   }
 
   const notifyMaintenanceRequest = async (data: {
-    requesterName: string
+    requestId: string
+    occurredAt: string
+    unitId: string
     title: string
     description: string
-    priority: string
-    propertyManager: { id: string; email: string; name: string }
+    priority: "low" | "normal" | "high" | "urgent"
+    category?: string | null
+    location?: string | null
+    requester: { id: string; name: string; email: string | null }
+    propertyManager: { id: string; email: string | null; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
-      // Email to property manager
-      {
+    const event: DomainEventEnvelope<"maintenance.request.submitted"> = {
+      event: "maintenance.request.submitted",
+      version: "1.0.0",
+      occurredAt: data.occurredAt,
+      payload: {
+        requestId: data.requestId,
+        unitId: data.unitId,
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        category: data.category ?? null,
+        location: data.location ?? null,
+        requester: {
+          id: data.requester.id,
+          name: data.requester.name,
+          email: data.requester.email ?? null,
+        },
+        propertyManager: {
+          id: data.propertyManager.id,
+          name: data.propertyManager.name,
+          email: data.propertyManager.email ?? null,
+        },
+      },
+    }
+
+    const templateData = {
+      requesterName: data.requester.name,
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      category: data.category ?? undefined,
+      location: data.location ?? undefined,
+    }
+
+    const notifications: (NotificationData | InAppNotification)[] = []
+
+    if (data.propertyManager.email) {
+      notifications.push({
         to: data.propertyManager.email,
         subject: `New Maintenance Request: ${data.title}`,
         template: "maintenance-request",
-        data,
+        data: templateData,
         userId: data.propertyManager.id,
-      },
-      // In-app notification to property manager
-      {
-        userId: data.propertyManager.id,
-        title: "New Maintenance Request",
-        message: `${data.requesterName} reported: ${data.title}`,
-        type: "warning" as const,
-        actionUrl: "/dashboard",
-      },
-    ]
+        event,
+      })
+    }
+
+    notifications.push({
+      userId: data.propertyManager.id,
+      title: "New Maintenance Request",
+      message: `${data.requester.name} reported: ${data.title}`,
+      type: "warning" as const,
+      actionUrl: "/dashboard",
+      metadata: templateData,
+      event,
+    })
 
     return sendBulkNotifications(notifications)
   }
 
   const notifyPaymentReceipt = async (data: {
-    tenantName: string
-    amount: string
+    paymentId?: string | null
+    occurredAt: string
+    tenant: { id: string; name: string; email: string | null }
+    amount: { currency: string; value: number }
     description: string
-    date: string
-    tenantEmail: string
-    tenantId: string
+    paymentDate: string
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
-      // Email receipt to tenant
-      {
-        to: data.tenantEmail,
-        subject: `Payment Receipt - $${data.amount}`,
+    const event: DomainEventEnvelope<"rent.payment.recorded"> = {
+      event: "rent.payment.recorded",
+      version: "1.0.0",
+      occurredAt: data.occurredAt,
+      payload: {
+        paymentId: data.paymentId ?? null,
+        tenant: {
+          id: data.tenant.id,
+          name: data.tenant.name,
+          email: data.tenant.email ?? null,
+        },
+        amount: {
+          currency: data.amount.currency,
+          value: data.amount.value,
+        },
+        description: data.description,
+        paymentDate: data.paymentDate,
+      },
+    }
+
+    const formatter = new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: data.amount.currency,
+      minimumFractionDigits: 2,
+    })
+    const formattedAmount = formatter.format(data.amount.value)
+    const formattedDate = format(new Date(data.paymentDate), "MMM dd, yyyy")
+
+    const templateData = {
+      tenantName: data.tenant.name,
+      amount: formattedAmount,
+      description: data.description,
+      date: formattedDate,
+    }
+
+    const notifications: (NotificationData | InAppNotification)[] = []
+
+    if (data.tenant.email) {
+      notifications.push({
+        to: data.tenant.email,
+        subject: `Payment Receipt - ${formattedAmount}`,
         template: "payment-receipt",
-        data,
-        userId: data.tenantId,
-      },
-      // In-app notification to tenant
-      {
-        userId: data.tenantId,
-        title: "Payment Successful",
-        message: `Your payment of $${data.amount} has been processed.`,
-        type: "success" as const,
-        actionUrl: "/payments",
-      },
-    ]
+        data: templateData,
+        userId: data.tenant.id,
+        event,
+      })
+    }
+
+    notifications.push({
+      userId: data.tenant.id,
+      title: "Payment Successful",
+      message: `Your payment of ${formattedAmount} has been processed.`,
+      type: "success" as const,
+      actionUrl: "/payments",
+      metadata: templateData,
+      event,
+    })
 
     return sendBulkNotifications(notifications)
   }
 
   const notifyDocumentSigned = async (data: {
+    documentId?: string | null
+    occurredAt: string
     documentTitle: string
-    signerName: string
+    signer: { id: string; name: string; email: string | null }
     signedAt: string
-    signerEmail: string
-    signerId: string
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
-      // Email confirmation to signer
-      {
-        to: data.signerEmail,
+    const event: DomainEventEnvelope<"document.signed"> = {
+      event: "document.signed",
+      version: "1.0.0",
+      occurredAt: data.occurredAt,
+      payload: {
+        documentId: data.documentId ?? null,
+        documentTitle: data.documentTitle,
+        signer: {
+          id: data.signer.id,
+          name: data.signer.name,
+          email: data.signer.email ?? null,
+        },
+        signedAt: data.signedAt,
+      },
+    }
+
+    const formattedSignedAt = format(new Date(data.signedAt), "MMM dd, yyyy")
+
+    const templateData = {
+      documentTitle: data.documentTitle,
+      signerName: data.signer.name,
+      signedAt: formattedSignedAt,
+      signerEmail: data.signer.email ?? undefined,
+    }
+
+    const notifications: (NotificationData | InAppNotification)[] = []
+
+    if (data.signer.email) {
+      notifications.push({
+        to: data.signer.email,
         subject: `Document Signed: ${data.documentTitle}`,
         template: "document-signed",
-        data,
-        userId: data.signerId,
-      },
-      // In-app notification to signer
-      {
-        userId: data.signerId,
-        title: "Document Signed",
-        message: `You have successfully signed "${data.documentTitle}"`,
-        type: "success" as const,
-        actionUrl: "/documents",
-      },
-    ]
+        data: templateData,
+        userId: data.signer.id,
+        event,
+      })
+    }
+
+    notifications.push({
+      userId: data.signer.id,
+      title: "Document Signed",
+      message: `You have successfully signed "${data.documentTitle}"`,
+      type: "success" as const,
+      actionUrl: "/documents",
+      metadata: templateData,
+      event,
+    })
 
     return sendBulkNotifications(notifications)
   }

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roomsily.com/events/visitor-booking-submitted.v1.0.0.json",
+  "title": "Visitor Booking Submitted (v1.0.0)",
+  "description": "Domain event emitted when a roommate submits an overnight visitor booking request.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "const": "visitor.booking.submitted",
+      "description": "Stable identifier for the visitor booking submission event."
+    },
+    "version": {
+      "const": "1.0.0",
+      "description": "Semantic version for the visitor booking submitted schema."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp indicating when the booking was recorded."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bookingId",
+        "guest",
+        "host",
+        "stay",
+        "purpose",
+        "propertyManager",
+        "roommates"
+      ],
+      "properties": {
+        "bookingId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Primary identifier for the visitor booking record."
+        },
+        "guest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "email"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Full name of the guest."
+            },
+            "email": {
+              "type": ["string", "null"],
+              "format": "email",
+              "description": "Email address for the guest, when provided."
+            },
+            "phone": {
+              "type": ["string", "null"],
+              "minLength": 1,
+              "description": "Optional phone number for the guest."
+            }
+          }
+        },
+        "host": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Supabase auth identifier for the host tenant."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Display name for the host tenant."
+            },
+            "email": {
+              "type": ["string", "null"],
+              "format": "email",
+              "description": "Contact email for the host tenant, if available."
+            }
+          }
+        },
+        "stay": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["checkInDate", "checkOutDate"],
+          "properties": {
+            "checkInDate": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp for the planned arrival."
+            },
+            "checkOutDate": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp for the planned departure."
+            }
+          }
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Free-form text describing the purpose of the visit."
+        },
+        "propertyManager": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identifier for the property manager receiving the request."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Display name for the property manager."
+            },
+            "email": {
+              "type": ["string", "null"],
+              "format": "email",
+              "description": "Property manager email destination, when available."
+            }
+          }
+        },
+        "roommates": {
+          "type": "array",
+          "description": "Roommates that should be notified of the visitor booking.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Identifier for a roommate recipient."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Display name for the roommate."
+              },
+              "email": {
+                "type": ["string", "null"],
+                "format": "email",
+                "description": "Email for the roommate recipient, when available."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["event", "version", "occurredAt", "payload"]
+}

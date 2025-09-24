@@ -108,13 +108,22 @@ export function MaintenanceRequestForm() {
 
       // Send notifications
       await notifyMaintenanceRequest({
-        requesterName: profile.full_name || user.email || 'Unknown',
+        requestId: request.id,
+        occurredAt: request.created_at ?? new Date().toISOString(),
+        unitId: request.unit_id,
         title: data.title,
         description: data.description,
         priority: data.priority,
+        category: data.category || null,
+        location: data.location || null,
+        requester: {
+          id: user.id,
+          name: profile.full_name || user.email || 'Unknown',
+          email: user.email ?? null,
+        },
         propertyManager: {
           id: propertyManager.id,
-          email: propertyManager.email || '',
+          email: propertyManager.email || null,
           name: propertyManager.full_name || propertyManager.email || 'Unknown',
         },
       });
