@@ -7,6 +7,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 
 import "./globals.css"
 
+import GlobalRUMInstrumentation from "./globals"
+
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { CookieButton } from "@/components/cookie-button"
@@ -124,7 +126,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
             fontSans.variable
           )}
         >
-<ThemeProvider
+        <GlobalRUMInstrumentation />
+        <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
