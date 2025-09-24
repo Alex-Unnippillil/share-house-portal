@@ -1,4 +1,3 @@
-import { format, parseISO } from "date-fns"
 import { Download, FileText } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -18,9 +17,11 @@ import {
   summarizeReceiptHistory,
 } from "@/lib/payments/receipts"
 import type { PaymentReceiptHistoryEntry } from "@/types/payments"
+import { formatDate, type IntlPreferences } from "@/lib/utils"
 
 interface ReceiptHistoryCardProps {
   receipts: PaymentReceiptHistoryEntry[]
+  intl?: IntlPreferences
 }
 
 const statusStyles: Record<
@@ -35,26 +36,46 @@ const statusStyles: Record<
 function formatPeriod(
   periodStart: string | undefined,
   periodEnd: string | undefined,
+  intl?: IntlPreferences,
 ) {
   if (!periodStart && !periodEnd) {
     return "—"
   }
 
   if (periodStart && periodEnd) {
-    const start = format(parseISO(periodStart), "MMM d")
-    const end = format(parseISO(periodEnd), "MMM d, yyyy")
+    const start = formatDate(periodStart, {
+      locale: intl?.locale,
+      timeZone: intl?.timeZone,
+      month: "short",
+      day: "numeric",
+    })
+    const end = formatDate(periodEnd, {
+      locale: intl?.locale,
+      timeZone: intl?.timeZone,
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
     return `${start} – ${end}`
   }
 
   const singleDate = periodStart ?? periodEnd
-  return singleDate ? format(parseISO(singleDate), "MMM d, yyyy") : "—"
+  return singleDate
+    ? formatDate(singleDate, {
+        locale: intl?.locale,
+        timeZone: intl?.timeZone,
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "—"
 }
 
 function encodeCsvForDownload(content: string) {
   return `data:text/csv;charset=utf-8,${encodeURIComponent(content)}`
 }
 
-export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
+export function ReceiptHistoryCard({ receipts, intl }: ReceiptHistoryCardProps) {
   if (!receipts.length) {
     return (
       <Card>
@@ -84,7 +105,13 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
   }).length
 
   const lastReceiptLabel = summary.lastReceiptDate
-    ? format(parseISO(summary.lastReceiptDate), "MMM d, yyyy")
+    ? formatDate(summary.lastReceiptDate, {
+        locale: intl?.locale,
+        timeZone: intl?.timeZone,
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
     : "—"
 
   const defaultCurrency = receipts[0]?.currency ?? "USD"
@@ -123,7 +150,9 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
               {paidReceiptsThisYear}
             </dd>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(summary.yearToDateAmount, defaultCurrency)}
+              {formatCurrency(summary.yearToDateAmount, defaultCurrency, {
+                locale: intl?.locale,
+              })}
               {" total processed"}
             </p>
           </div>
@@ -168,11 +197,17 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                     <tr key={receipt.id} className="align-top">
                       <td className="p-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-foreground">
+                        <p className="text-sm font-medium text-foreground">
                             {receipt.issuedTo}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {format(parseISO(receipt.paymentDate), "MMM d, yyyy")} · {receipt.paymentMethod}
+                            {formatDate(receipt.paymentDate, {
+                              locale: intl?.locale,
+                              timeZone: intl?.timeZone,
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })} · {receipt.paymentMethod}
                           </p>
                           {receipt.memo ? (
                             <p className="text-xs text-muted-foreground">
@@ -182,7 +217,7 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                         </div>
                       </td>
                       <td className="p-4 text-sm text-muted-foreground">
-                        {formatPeriod(receipt.periodStart, receipt.periodEnd)}
+                        {formatPeriod(receipt.periodStart, receipt.periodEnd, intl)}
                       </td>
                       <td className="p-4">
                         <ul className="space-y-1">
@@ -200,7 +235,9 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                                   item.totalAmount < 0 && "text-destructive",
                                 )}
                               >
-                                {formatCurrency(item.totalAmount, receipt.currency)}
+                                {formatCurrency(item.totalAmount, receipt.currency, {
+                                  locale: intl?.locale,
+                                })}
                               </span>
                             </li>
                           ))}
@@ -213,7 +250,9 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                             receipt.amount < 0 && "text-destructive",
                           )}
                         >
-                          {formatCurrency(receipt.amount, receipt.currency)}
+                          {formatCurrency(receipt.amount, receipt.currency, {
+                            locale: intl?.locale,
+                          })}
                         </div>
                         {receipt.amount < 0 ? (
                           <p className="text-xs text-muted-foreground">Credit issued</p>

@@ -11,6 +11,64 @@ export interface CollectionCacheSignature {
 
 const fetchResponseCache = new Map<string, { etag: string; data: unknown }>()
 
+export interface IntlPreferences {
+  locale?: string | null
+  timeZone?: string | null
+}
+
+const systemDefaultLocale = (() => {
+  try {
+    const { locale } = new Intl.DateTimeFormat().resolvedOptions()
+    if (locale && locale.length > 0) {
+      return locale
+    }
+  } catch (error) {
+    // ignore and fallback below
+  }
+
+  return "en-US"
+})()
+
+const systemDefaultTimeZone = (() => {
+  try {
+    const { timeZone } = new Intl.DateTimeFormat().resolvedOptions()
+    if (timeZone && timeZone.length > 0) {
+      return timeZone
+    }
+  } catch (error) {
+    // ignore and fallback below
+  }
+
+  return "UTC"
+})()
+
+const defaultDateFormat: Intl.DateTimeFormatOptions = {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+}
+
+const defaultNumberFormat: Intl.NumberFormatOptions = {
+  style: "currency",
+  currency: "USD",
+}
+
+const resolveLocale = (locale?: string | null): string => {
+  if (typeof locale === "string" && locale.trim().length > 0) {
+    return locale
+  }
+
+  return systemDefaultLocale
+}
+
+const resolveTimeZone = (timeZone?: string | null): string => {
+  if (typeof timeZone === "string" && timeZone.trim().length > 0) {
+    return timeZone
+  }
+
+  return systemDefaultTimeZone
+}
+
 const toTimestamp = (value: TimestampInput): number => {
   if (value instanceof Date) {
     return Number.isFinite(value.getTime()) ? value.getTime() : 0
@@ -186,20 +244,118 @@ export async function fetcher<JSON = any>(
   return payload as JSON
 }
 
-export function formatDate(input: string | number | Date): string {
+export interface DateFormatOptions extends Intl.DateTimeFormatOptions, IntlPreferences {}
+
+export function formatDate(
+  input: string | number | Date,
+  options?: DateFormatOptions,
+): string {
   const date = new Date(input)
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  })
+  if (!Number.isFinite(date.getTime())) {
+    return ""
+  }
+
+  const { locale, timeZone, ...formatOverrides } = options ?? {}
+  const resolvedLocale = resolveLocale(locale)
+  const resolvedTimeZone = resolveTimeZone(timeZone)
+  const formatOptions =
+    Object.keys(formatOverrides).length > 0
+      ? formatOverrides
+      : defaultDateFormat
+
+  try {
+    return new Intl.DateTimeFormat(resolvedLocale, {
+      timeZone: resolvedTimeZone,
+      ...formatOptions,
+    }).format(date)
+  } catch (error) {
+    return new Intl.DateTimeFormat(systemDefaultLocale, {
+      timeZone: systemDefaultTimeZone,
+      ...formatOptions,
+    }).format(date)
+  }
 }
 
-export const formatNumber = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(value)
+export interface NumberFormatOptions extends Intl.NumberFormatOptions {
+  locale?: string | null
+}
+
+export const formatNumber = (
+  value: number,
+  options?: NumberFormatOptions,
+) => {
+  const { locale, ...formatOverrides } = options ?? {}
+  const resolvedLocale = resolveLocale(locale)
+  const formatOptions =
+    Object.keys(formatOverrides).length > 0
+      ? formatOverrides
+      : defaultNumberFormat
+
+  try {
+    return new Intl.NumberFormat(resolvedLocale, formatOptions).format(value)
+  } catch (error) {
+    return new Intl.NumberFormat(systemDefaultLocale, formatOptions).format(value)
+  }
+}
+
+const RELATIVE_TIME_THRESHOLDS: Array<{
+  unit: Intl.RelativeTimeFormatUnit
+  milliseconds: number
+}> = [
+  { unit: "year", milliseconds: 1000 * 60 * 60 * 24 * 365 },
+  { unit: "month", milliseconds: 1000 * 60 * 60 * 24 * 30 },
+  { unit: "week", milliseconds: 1000 * 60 * 60 * 24 * 7 },
+  { unit: "day", milliseconds: 1000 * 60 * 60 * 24 },
+  { unit: "hour", milliseconds: 1000 * 60 * 60 },
+  { unit: "minute", milliseconds: 1000 * 60 },
+  { unit: "second", milliseconds: 1000 },
+]
+
+export interface RelativeTimeFormatOptions extends IntlPreferences {
+  now?: Date | number
+  numeric?: Intl.RelativeTimeFormatOptions["numeric"]
+  style?: Intl.RelativeTimeFormatOptions["style"]
+}
+
+export function formatRelativeTimeFromNow(
+  input: string | number | Date,
+  options?: RelativeTimeFormatOptions,
+): string {
+  const date = new Date(input)
+  if (!Number.isFinite(date.getTime())) {
+    return ""
+  }
+
+  const referenceTime = options?.now
+    ? options.now instanceof Date
+      ? options.now.getTime()
+      : options.now
+    : Date.now()
+
+  const difference = date.getTime() - referenceTime
+  const absoluteDifference = Math.abs(difference)
+
+  const { locale, numeric = "auto", style = "long" } = options ?? {}
+  const resolvedLocale = resolveLocale(locale)
+
+  try {
+    const formatter = new Intl.RelativeTimeFormat(resolvedLocale, {
+      numeric,
+      style,
+    })
+
+    for (const { unit, milliseconds } of RELATIVE_TIME_THRESHOLDS) {
+      if (absoluteDifference >= milliseconds || unit === "second") {
+        const value = Math.round(difference / milliseconds)
+        return formatter.format(value, unit)
+      }
+    }
+  } catch (error) {
+    // ignore and fall through to fallback below
+  }
+
+  return "just now"
+}
 
 export const runAsyncFnWithoutBlocking = (
   fn: (...args: any) => Promise<any>
