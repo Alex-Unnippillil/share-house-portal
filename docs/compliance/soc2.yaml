@@ -1,0 +1,165 @@
+metadata:
+  framework: SOC 2
+  version: 2024.3
+  last_reviewed: 2024-09-30
+  review_cycle: quarterly
+  next_review_due: 2024-12-31
+  reviewers:
+    - name: Platform Engineering Guild
+      contact: security@roomsily.com
+  automation:
+    - task: Verify control-to-evidence mappings
+      script: scripts/check-soc2-mappings.mjs
+      cadence: on every lint run
+  notes: |
+    Update this register during each quarterly compliance review and whenever
+    major product features ship so new functionality remains mapped to the
+    appropriate SOC 2 controls.
+controls:
+  - id: CC1.1
+    title: Governance & Policy Baseline
+    description: |
+      Maintain a documented governance structure covering engineering standards,
+      security expectations, and repository-wide decision making so teams ship
+      changes with consistent oversight.
+    owners:
+      - Platform Engineering Guild
+    features:
+      - repository-governance
+    evidence:
+      - type: policy
+        name: Engineering conventions
+        path: docs/engineering/conventions.md
+        description: Defines change management, documentation, and security practices enforced across the monorepo.
+      - type: adr
+        name: Repository structure strategy
+        path: docs/adr/0001-repo-structure.md
+        description: Establishes monorepo governance, code ownership requirements, and follow-up actions.
+      - type: policy
+        name: Security policy
+        path: SECURITY.md
+        description: Provides vulnerability intake guidance and platform-level security expectations.
+  - id: CC6.1
+    title: Access Control & RBAC Enforcement
+    description: |
+      Enforce least-privilege data access via documented RBAC models, middleware
+      session enforcement, and Supabase row level security policies scoped to
+      tenant membership.
+    owners:
+      - Security Engineering
+      - Data Platform Squad
+    features:
+      - authentication
+      - documents
+    evidence:
+      - type: policy
+        name: Authorization model
+        path: docs/security/authorization-model.md
+        description: Details tenant-scoped RBAC roles, enforcement patterns, and audit requirements.
+      - type: migration
+        name: Documents RLS policies
+        path: supabase/migrations/20250103_documents_schema.sql
+        description: Implements row level security policies and audit logs covering document access and signatures.
+      - type: code
+        name: Supabase auth middleware
+        path: middleware.ts
+        description: Boots authenticated Supabase sessions on every request to apply RBAC decisions before route handlers execute.
+  - id: CC6.7
+    title: Secure Configuration & Hardening
+    description: |
+      Maintain hardened application defaults, environment isolation, and secure
+      configuration management for production workloads.
+    owners:
+      - Platform Engineering Guild
+      - Site Reliability Engineering
+    features:
+      - platform-security
+      - configuration
+    evidence:
+      - type: runbook
+        name: Environment setup guide
+        path: ENVIRONMENT_SETUP.md
+        description: Documents required secrets, configuration steps, and rotation guidance for each environment.
+      - type: config
+        name: Next.js security headers
+        path: next.config.js
+        description: Enforces CSP, HSTS, and browser hardening headers for all routes.
+      - type: automation
+        name: SOC 2 mapping lint
+        path: scripts/check-soc2-mappings.mjs
+        description: Ensures compliance evidence mappings exist whenever lint runs, preventing configuration drift.
+  - id: CC7.2
+    title: Monitoring, Incident Response & Notifications
+    description: |
+      Detect and respond to incidents through documented playbooks, automated
+      notifications, and payment event processing that records actionable
+      telemetry.
+    owners:
+      - Platform Engineering Guild
+      - Payments Squad
+    features:
+      - observability
+      - payments
+    evidence:
+      - type: runbook
+        name: Performance & availability playbook
+        path: docs/perf/playbook.md
+        description: Defines SLOs, alert channels, rollback procedures, and post-incident obligations.
+      - type: code
+        name: Stripe webhook processor
+        path: app/api/stripe/webhook/route.ts
+        description: Records payment lifecycle events, emits notifications, and logs errors for investigation.
+      - type: code
+        name: Notification service
+        path: lib/notifications.ts
+        description: Centralizes email and in-app alert delivery with persistence for auditability.
+  - id: CC8.1
+    title: Data Protection & Encryption
+    description: |
+      Protect sensitive tenant data with application-layer encryption controls,
+      secure credential management, and strict access pathways for stored
+      documents and payment information.
+    owners:
+      - Security Engineering
+      - Payments Squad
+    features:
+      - data-protection
+      - documents
+    evidence:
+      - type: code
+        name: AES-256 encryption helpers
+        path: lib/encryption.ts
+        description: Provides reusable encryption and decryption helpers for sensitive fields.
+      - type: migration
+        name: Document access logging
+        path: supabase/migrations/20250103_documents_schema.sql
+        description: Captures immutable document access logs with actor metadata for compliance review.
+      - type: config
+        name: Stripe client configuration
+        path: lib/stripe.ts
+        description: Enforces API key validation and scoped API version usage for payment token protection.
+  - id: CC9.2
+    title: Third-party & Payment Integrity Management
+    description: |
+      Govern the integration surface with third-party payment processors to
+      ensure checkout flows, billing portals, and service accounts operate within
+      approved controls.
+    owners:
+      - Payments Squad
+      - Finance Operations
+    features:
+      - payments
+      - billing
+    evidence:
+      - type: code
+        name: Checkout session creation
+        path: app/api/stripe/checkout/route.ts
+        description: Validates input, scopes metadata, and routes tenants through Stripe-hosted payment pages.
+      - type: code
+        name: Billing portal handler
+        path: app/api/stripe/billing-portal/route.ts
+        description: Restricts portal access to authenticated tenants while delegating billing changes to Stripe.
+      - type: policy
+        name: Performance & availability playbook
+        path: docs/perf/playbook.md
+        description: Requires payment incidents to follow documented rollback, communication, and reconciliation procedures.
