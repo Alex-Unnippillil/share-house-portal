@@ -1,39 +1,6 @@
-import type { Json } from '@/lib/supabase';
-
 export type DocumentType = 'lease' | 'addendum' | 'insurance' | 'maintenance' | 'other';
 
 export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled';
-
-export type DocumentState = 'draft' | 'published';
-
-export interface DocumentVersionSnapshot extends Record<string, Json> {
-  title: string;
-  description: string | null;
-  document_type: DocumentType;
-  status: DocumentStatus;
-  state: DocumentState;
-  file_url: string | null;
-  metadata: Record<string, Json> | null;
-  requires_signature: boolean;
-  expires_at: string | null;
-  signed_at: string | null;
-  tenant_id: string | null;
-  unit_id: string | null;
-  documenso_envelope_id: string | null;
-  documenso_template_id: string | null;
-}
-
-export interface DocumentVersion {
-  id: string;
-  document_id: string;
-  version: number;
-  state: DocumentState;
-  status: DocumentStatus;
-  snapshot: DocumentVersionSnapshot;
-  created_at: string;
-  created_by?: string | null;
-  published_at?: string | null;
-}
 
 export type SignatureStatus = 'pending' | 'signed' | 'declined' | 'expired';
 
@@ -48,7 +15,7 @@ export interface Document {
   file_url?: string;
   documenso_envelope_id?: string;
   documenso_template_id?: string;
-  metadata: Record<string, Json> | null;
+  metadata: Record<string, any>;
   created_by?: string;
   property_id?: string;
   tenant_id?: string;
