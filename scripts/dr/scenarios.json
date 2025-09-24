@@ -1,0 +1,119 @@
+{
+  "gameDay": {
+    "label": "Q3 2024 Resilience Drill",
+    "start": "2024-07-15T16:00:00Z",
+    "owner": "SRE Rotation",
+    "timezone": "UTC",
+    "notes": "Adjust the start time to align with the next quarterly exercise. Offsets are relative to this timestamp."
+  },
+  "scenarios": [
+    {
+      "service": "supabase",
+      "title": "Supabase regional outage",
+      "owner": "Platform Engineering",
+      "offsetMinutes": 0,
+      "durationMinutes": 40,
+      "targetRTO": 30,
+      "targetRPO": 5,
+      "restorePointAgeMinutes": 4,
+      "steps": [
+        {
+          "name": "Detect outage via health checks and status webhook",
+          "simulatedDurationMinutes": 7,
+          "summary": "PagerDuty triggers on failed DB connectivity; incident commander established."
+        },
+        {
+          "name": "Promote secondary Supabase project",
+          "simulatedDurationMinutes": 12,
+          "summary": "Run Supabase CLI promotion and update Vercel secrets."
+        },
+        {
+          "name": "Run smoke tests and verify realtime channels",
+          "simulatedDurationMinutes": 7,
+          "summary": "Execute authentication, booking, and messaging checks."
+        }
+      ],
+      "successCriteria": [
+        "Read/write operations succeed against promoted region",
+        "Realtime subscriptions deliver messages within 2 minutes",
+        "On-call completes incident comms runbook"
+      ],
+      "improvementBacklog": [
+        "Automate Supabase replica promotion via CI workflow",
+        "Add credential rotation script post-failover"
+      ]
+    },
+    {
+      "service": "stripe",
+      "title": "Stripe API degraded performance",
+      "owner": "Payments Squad",
+      "offsetMinutes": 60,
+      "durationMinutes": 35,
+      "targetRTO": 15,
+      "targetRPO": 5,
+      "restorePointAgeMinutes": 2,
+      "steps": [
+        {
+          "name": "Validate outage and pause automations",
+          "simulatedDurationMinutes": 8,
+          "summary": "Confirm webhook failures, disable autopay enrollments."
+        },
+        {
+          "name": "Failover to backup API keys and enable manual capture",
+          "simulatedDurationMinutes": 9,
+          "summary": "Switch credentials, enable offline payment workflow."
+        },
+        {
+          "name": "Queue webhook replays and reconcile pending invoices",
+          "simulatedDurationMinutes": 5,
+          "summary": "Mark outstanding invoices and prepare replay job."
+        }
+      ],
+      "successCriteria": [
+        "Backup Stripe account processes test payment",
+        "Finance notified with manual collection instructions",
+        "Pending invoices tagged for automatic replay"
+      ],
+      "improvementBacklog": [
+        "Script webhook replay + verification to cut manual effort",
+        "Pre-stage backup API keys for faster credential swap"
+      ]
+    },
+    {
+      "service": "calcom",
+      "title": "Cal.com hosted outage",
+      "owner": "Tenant Experience",
+      "offsetMinutes": 120,
+      "durationMinutes": 30,
+      "targetRTO": 25,
+      "targetRPO": 10,
+      "restorePointAgeMinutes": 12,
+      "steps": [
+        {
+          "name": "Activate cached availability",
+          "simulatedDurationMinutes": 6,
+          "summary": "Switch to Supabase cached schedule for read-only availability."
+        },
+        {
+          "name": "Restore Cal.com self-hosted backup",
+          "simulatedDurationMinutes": 7,
+          "summary": "Apply latest snapshot and start services."
+        },
+        {
+          "name": "Run sync reconciliation",
+          "simulatedDurationMinutes": 5,
+          "summary": "Replay queued bookings and validate conflicts."
+        }
+      ],
+      "successCriteria": [
+        "Cached availability served within 5 minutes",
+        "Cal.com self-hosted instance online",
+        "Bookings reconciled with no double-bookings"
+      ],
+      "improvementBacklog": [
+        "Increase Cal.com backup cadence to every 5 minutes",
+        "Add incremental sync job to reduce restore lag"
+      ]
+    }
+  ]
+}
