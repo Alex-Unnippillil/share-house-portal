@@ -2,17 +2,49 @@ export type DocumentType = 'lease' | 'addendum' | 'insurance' | 'maintenance' | 
 
 export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled';
 
+export type DocumentState = 'draft' | 'published';
+
 export type SignatureStatus = 'pending' | 'signed' | 'declined' | 'expired';
+
+export interface DocumentVersionSnapshot {
+  title: string;
+  description?: string | null;
+  document_type: DocumentType;
+  status: DocumentStatus;
+  state: DocumentState;
+  file_url?: string | null;
+  metadata: Record<string, any>;
+  requires_signature: boolean;
+  expires_at?: string | null;
+  signed_at?: string | null;
+  tenant_id?: string | null;
+  unit_id?: string | null;
+  documenso_envelope_id?: string | null;
+  documenso_template_id?: string | null;
+}
+
+export interface DocumentVersion {
+  id: string;
+  document_id: string;
+  version: number;
+  state: DocumentState;
+  status: DocumentStatus;
+  snapshot: DocumentVersionSnapshot;
+  created_at: string;
+  created_by?: string | null;
+  published_at?: string | null;
+}
 
 export interface Document {
   id: string;
   created_at: string;
   updated_at: string;
   title: string;
-  description?: string;
+  description?: string | null;
   document_type: DocumentType;
   status: DocumentStatus;
-  file_url?: string;
+  state: DocumentState;
+  file_url?: string | null;
   documenso_envelope_id?: string;
   documenso_template_id?: string;
   metadata: Record<string, any>;
@@ -21,10 +53,11 @@ export interface Document {
   tenant_id?: string;
   unit_id?: string;
   requires_signature: boolean;
-  expires_at?: string;
-  signed_at?: string;
+  expires_at?: string | null;
+  signed_at?: string | null;
   version: number;
   parent_document_id?: string;
+  published_at?: string | null;
 }
 
 export interface DocumentSignature {
@@ -81,6 +114,7 @@ export interface DocumentWithLease extends Document {
   lease?: Lease;
   signatures?: DocumentSignature[];
   access_logs?: DocumentAccessLog[];
+  versions?: DocumentVersion[];
 }
 
 export interface DocumentSigningRequest {
