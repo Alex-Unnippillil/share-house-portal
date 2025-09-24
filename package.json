@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "openapi:validate": "openapi-generator-cli validate -i docs/api/openapi.yaml",
+    "openapi:generate": "pnpm openapi:validate && pnpm openapi:generate:ts && pnpm openapi:generate:py",
+    "openapi:generate:ts": "openapi-generator-cli generate -i docs/api/openapi.yaml -g typescript-fetch -o sdk/typescript --additional-properties=supportsES6=true,useSingleRequestParameter=true",
+    "openapi:generate:py": "openapi-generator-cli generate -i docs/api/openapi.yaml -g python -o sdk/python --package-name share_house_portal_sdk"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -88,6 +92,7 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.5.4",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@openapitools/openapi-generator-cli": "^2.13.4"
   }
 }
