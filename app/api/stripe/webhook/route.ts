@@ -7,6 +7,7 @@ import {
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { timeDatabase, timeExternal, withServerTiming } from "@/lib/server-timing"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -25,7 +26,7 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   })
 }
 
-export async function POST(req: Request) {
+async function processStripeWebhook(req: Request) {
   const stripe = getStripe()
   const signature = (await headers()).get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -42,10 +43,8 @@ export async function POST(req: Request) {
   const rawBody = await req.text()
 
   try {
-    const event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature ?? "",
-      webhookSecret
+    const event = await timeExternal("stripe.webhooks.constructEvent", () =>
+      stripe.webhooks.constructEvent(rawBody, signature ?? "", webhookSecret)
     )
 
     switch (event.type) {
@@ -77,6 +76,8 @@ export async function POST(req: Request) {
   }
 }
 
+export const POST = withServerTiming(processStripeWebhook, "api.stripe.webhook")
+
 async function handleCheckoutSessionCompleted(
   supabase: SupabaseClient<Database>,
   session: any
@@ -84,9 +85,13 @@ async function handleCheckoutSessionCompleted(
   try {
     // Retrieve the full session with line items
     const stripe = getStripe()
-    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ["line_items", "customer"],
-    })
+    const fullSession = await timeExternal(
+      "stripe.checkout.sessions.retrieve",
+      () =>
+        stripe.checkout.sessions.retrieve(session.id, {
+          expand: ["line_items", "customer"],
+        })
+    )
 
     // For one-time payments, create a rent payment record
     if (fullSession.mode === "payment") {
@@ -119,17 +124,23 @@ async function handleCheckoutSessionCompleted(
           },
         }
 
-        await supabase.from("rent_payments").insert(paymentData)
+        await timeDatabase("rent_payments.insert", () =>
+          supabase.from("rent_payments").insert(paymentData)
+        )
 
         // Send payment receipt notification if we have tenant info
         if (tenantId) {
           try {
             // Get tenant profile
-            const { data: tenantProfile } = await supabase
-              .from("profiles")
-              .select("full_name, email")
-              .eq("id", tenantId)
-              .single()
+            const { data: tenantProfile } = await timeDatabase(
+              "profiles.select",
+              () =>
+                supabase
+                  .from("profiles")
+                  .select("full_name, email")
+                  .eq("id", tenantId)
+                  .single()
+            )
 
             if (tenantProfile?.email) {
               await sendEmailNotification({
@@ -183,9 +194,11 @@ async function handleInvoicePaymentSucceeded(
     const stripe = getStripe()
 
     // Get the full invoice with subscription details
-    const fullInvoice = await stripe.invoices.retrieve(invoice.id, {
-      expand: ["subscription", "customer"],
-    })
+    const fullInvoice = await timeExternal("stripe.invoices.retrieve", () =>
+      stripe.invoices.retrieve(invoice.id, {
+        expand: ["subscription", "customer"],
+      })
+    )
 
     const subscription = fullInvoice.subscription as any
 
@@ -226,21 +239,25 @@ async function handleInvoicePaymentSucceeded(
           billing_reason: invoice.billing_reason,
         },
       }
-      await supabase.from("rent_payments").insert(subscriptionPayment)
+      await timeDatabase("rent_payments.insert", () =>
+        supabase.from("rent_payments").insert(subscriptionPayment)
+      )
 
       // Update subscription status if needed
-      await supabase
-        .from("subscriptions")
-        .update({
-          status: subscription.status,
-          current_period_start: new Date(
-            subscription.current_period_start * 1000
-          ).toISOString(),
-          current_period_end: new Date(
-            subscription.current_period_end * 1000
-          ).toISOString(),
-        })
-        .eq("stripe_subscription_id", subscription.id)
+      await timeDatabase("subscriptions.update", () =>
+        supabase
+          .from("subscriptions")
+          .update({
+            status: subscription.status,
+            current_period_start: new Date(
+              subscription.current_period_start * 1000
+            ).toISOString(),
+            current_period_end: new Date(
+              subscription.current_period_end * 1000
+            ).toISOString(),
+          })
+          .eq("stripe_subscription_id", subscription.id)
+      )
     }
   } catch (error) {
     console.error("Error handling invoice payment succeeded:", error)
@@ -256,27 +273,29 @@ async function handleSubscriptionCreated(
     // This handles when a subscription is first created
     const price = subscription.items.data[0]?.price
 
-    await supabase.from("subscriptions").insert({
-      user_id:
-        subscription.metadata?.tenant_id ||
-        "00000000-0000-0000-0000-000000000000",
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
-      status: subscription.status,
-      current_period_start: new Date(
-        subscription.current_period_start * 1000
-      ).toISOString(),
-      current_period_end: new Date(
-        subscription.current_period_end * 1000
-      ).toISOString(),
-      amount: price?.unit_amount || 0, // Convert from cents
-      currency: price?.currency?.toUpperCase() || "USD",
-      interval: "month", // Default, could be determined from price
-      metadata: {
-        ...subscription.metadata,
-        price_id: price?.id,
-      },
-    })
+    await timeDatabase("subscriptions.insert", () =>
+      supabase.from("subscriptions").insert({
+        user_id:
+          subscription.metadata?.tenant_id ||
+          "00000000-0000-0000-0000-000000000000",
+        stripe_subscription_id: subscription.id,
+        stripe_customer_id: subscription.customer,
+        status: subscription.status,
+        current_period_start: new Date(
+          subscription.current_period_start * 1000
+        ).toISOString(),
+        current_period_end: new Date(
+          subscription.current_period_end * 1000
+        ).toISOString(),
+        amount: price?.unit_amount || 0, // Convert from cents
+        currency: price?.currency?.toUpperCase() || "USD",
+        interval: "month", // Default, could be determined from price
+        metadata: {
+          ...subscription.metadata,
+          price_id: price?.id,
+        },
+      })
+    )
   } catch (error) {
     console.error("Error handling subscription created:", error)
     throw error
@@ -288,19 +307,21 @@ async function handleSubscriptionUpdated(
   subscription: any
 ) {
   try {
-    await supabase
-      .from("subscriptions")
-      .update({
-        status: subscription.status,
-        current_period_start: new Date(
-          subscription.current_period_start * 1000
-        ).toISOString(),
-        current_period_end: new Date(
-          subscription.current_period_end * 1000
-        ).toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("stripe_subscription_id", subscription.id)
+    await timeDatabase("subscriptions.update", () =>
+      supabase
+        .from("subscriptions")
+        .update({
+          status: subscription.status,
+          current_period_start: new Date(
+            subscription.current_period_start * 1000
+          ).toISOString(),
+          current_period_end: new Date(
+            subscription.current_period_end * 1000
+          ).toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("stripe_subscription_id", subscription.id)
+    )
   } catch (error) {
     console.error("Error handling subscription updated:", error)
     throw error
@@ -312,15 +333,17 @@ async function handleSubscriptionDeleted(
   subscription: any
 ) {
   try {
-    await supabase
-      .from("subscriptions")
-      .update({
-        status: "canceled",
-        ended_at: new Date().toISOString(),
-        canceled_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("stripe_subscription_id", subscription.id)
+    await timeDatabase("subscriptions.update", () =>
+      supabase
+        .from("subscriptions")
+        .update({
+          status: "canceled",
+          ended_at: new Date().toISOString(),
+          canceled_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("stripe_subscription_id", subscription.id)
+    )
   } catch (error) {
     console.error("Error handling subscription deleted:", error)
     throw error

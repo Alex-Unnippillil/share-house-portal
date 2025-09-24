@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 
+import { withServerTiming } from "@/lib/server-timing"
+
 import { buildCollectionCacheMetadata } from "@/lib/utils"
 
 type DocumentRecord = {
@@ -61,7 +63,7 @@ const documentRevisions: Record<RevisionKey, DocumentRecord[]> = {
 
 const DEFAULT_REVISION: RevisionKey = "current"
 
-export async function GET(request: Request) {
+async function getDocuments(request: Request) {
   const url = new URL(request.url)
   const revisionParam = url.searchParams.get("revision")
   const revision =
@@ -100,3 +102,5 @@ export async function GET(request: Request) {
 
   return response
 }
+
+export const GET = withServerTiming(getDocuments, "api.documents")

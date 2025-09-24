@@ -3,6 +3,8 @@
 import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
 
+import { timeDatabase, timeExternal } from "@/lib/server-timing"
+
 export interface NotificationData {
   to: string | string[]
   subject: string
@@ -59,12 +61,16 @@ class NotificationService {
         throw new Error(`Email template '${notification.template}' not found`)
       }
 
-      const { data, error } = await this.resend.emails.send({
-        from: "Roomsily <notifications@roomsily.com>",
-        to: recipients,
-        subject: notification.subject,
-        html: emailContent,
-      })
+      const { data, error } = await timeExternal(
+        "notifications.resend.send",
+        () =>
+          this.resend!.emails.send({
+            from: "Roomsily <notifications@roomsily.com>",
+            to: recipients,
+            subject: notification.subject,
+            html: emailContent,
+          })
+      )
 
       if (error) {
         console.error("Failed to send email:", error)
@@ -90,18 +96,20 @@ class NotificationService {
     try {
       const supabase = await createSupbaseServerClient()
 
-      const { data, error } = await (supabase as any)
-        .from("notifications")
-        .insert({
-          user_id: notification.userId,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          action_url: notification.actionUrl,
-          metadata: notification.metadata,
-          read: false,
-          created_at: new Date().toISOString(),
-        })
+      const { data, error } = await timeDatabase("notifications.insert", () =>
+        (supabase as any)
+          .from("notifications")
+          .insert({
+            user_id: notification.userId,
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            action_url: notification.actionUrl,
+            metadata: notification.metadata,
+            read: false,
+            created_at: new Date().toISOString(),
+          })
+      )
 
       if (error) {
         console.error("Failed to create in-app notification:", error)
@@ -142,16 +150,18 @@ class NotificationService {
     try {
       const supabase = await createSupbaseServerClient()
 
-      await (supabase as any).from("email_notifications").insert({
-        user_id: notification.userId,
-        recipient: Array.isArray(notification.to)
-          ? notification.to.join(", ")
-          : notification.to,
-        subject: notification.subject,
-        template: notification.template,
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      })
+      await timeDatabase("email_notifications.insert", () =>
+        (supabase as any).from("email_notifications").insert({
+          user_id: notification.userId,
+          recipient: Array.isArray(notification.to)
+            ? notification.to.join(", ")
+            : notification.to,
+          subject: notification.subject,
+          template: notification.template,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        })
+      )
     } catch (error) {
       console.error("Failed to store email notification:", error)
     }
