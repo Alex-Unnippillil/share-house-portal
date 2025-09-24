@@ -128,7 +128,10 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
   const parsedAmount = parseCurrencyInput(amountInputValue)
   const normalizedAmount =
     Number.isFinite(parsedAmount)
-      ? Math.min(roundToCurrency(parsedAmount), outstandingBalance)
+      ? Math.max(
+          0,
+          Math.min(roundToCurrency(parsedAmount), outstandingBalance),
+        )
       : 0
 
   const allocationPreview = useMemo(() => {
