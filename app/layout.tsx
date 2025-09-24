@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import { cookies } from "next/headers"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
 
@@ -15,6 +16,7 @@ import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { decodeImpersonationCookie, IMPERSONATION_COOKIE_NAME } from "@/lib/admin/impersonation"
 import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
@@ -115,6 +117,21 @@ interface RootLayoutProps {
 
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const cookieStore = cookies()
+  const impersonationSession = decodeImpersonationCookie(
+    cookieStore.get(IMPERSONATION_COOKIE_NAME)?.value
+  )
+
+  const impersonationTargetLabel = impersonationSession
+    ? impersonationSession.targetName ??
+      impersonationSession.targetEmail ??
+      impersonationSession.targetUserId
+    : null
+
+  const impersonationStartedLabel = impersonationSession
+    ? new Date(impersonationSession.startedAt).toISOString()
+    : null
+
   return (
     <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>
@@ -131,6 +148,32 @@ export default function RootLayout({ children }: RootLayoutProps) {
             disableTransitionOnChange
           >
              <div className="relative flex min-h-screen flex-col">
+              {impersonationSession ? (
+                <div className="sticky top-0 z-50 flex flex-col gap-3 bg-red-600 px-4 py-3 text-sm text-white shadow">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-base font-semibold">
+                        Impersonating {impersonationTargetLabel ?? "another user"}
+                      </p>
+                      <p className="text-xs font-medium text-red-100">
+                        Session started at {impersonationStartedLabel}. All actions are being audited.
+                      </p>
+                    </div>
+                    <form
+                      method="post"
+                      action="/api/admin/impersonation/stop"
+                      className="shrink-0"
+                    >
+                      <button
+                        type="submit"
+                        className="inline-flex items-center justify-center rounded bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      >
+                        Stop impersonating
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
               {/* <SiteHeader /> */}
               <div className="flex-1">
                 <ErrorBoundary>
