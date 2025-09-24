@@ -14,6 +14,11 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
   Relationships: never[]
 }
 
+type SupabaseView<Row extends Record<string, unknown>> = {
+  Row: Row
+  Relationships: never[]
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -156,6 +161,76 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      stripe_invoices: SupabaseTable<{
+        id: string
+        customer_id: string | null
+        customer_email: string | null
+        subscription_id: string | null
+        status: string | null
+        collection_method: string | null
+        currency: string
+        total: number | null
+        amount_due: number | null
+        amount_paid: number | null
+        amount_remaining: number | null
+        hosted_invoice_url: string | null
+        due_date: string | null
+        period_start: string | null
+        period_end: string | null
+        livemode: boolean | null
+        metadata: Json | null
+        stripe_created_at: string
+        stripe_updated_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      stripe_invoice_line_items: SupabaseTable<{
+        id: string
+        invoice_id: string
+        price_id: string | null
+        product_id: string | null
+        description: string | null
+        amount: number
+        currency: string
+        period_start: string | null
+        period_end: string | null
+        proration: boolean | null
+        quantity: number | null
+        livemode: boolean | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      stripe_payment_intents: SupabaseTable<{
+        id: string
+        customer_id: string | null
+        invoice_id: string | null
+        status: string | null
+        amount: number
+        currency: string
+        payment_method: string | null
+        description: string | null
+        receipt_email: string | null
+        latest_charge: string | null
+        livemode: boolean | null
+        metadata: Json | null
+        stripe_created_at: string
+        stripe_updated_at: string | null
+        succeeded_at: string | null
+        canceled_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      stripe_sync_runs: SupabaseTable<{
+        id: number
+        run_started_at: string | null
+        run_completed_at: string | null
+        status: 'pending' | 'succeeded' | 'failed'
+        invoice_count: number | null
+        line_item_count: number | null
+        payment_intent_count: number | null
+        error_message: string | null
+      }>
       inquiries: SupabaseTable<{
         id: string
         name: string
@@ -259,7 +334,23 @@ export type Database = {
         metadata: Json | null
       }>
     }
-    Views: Record<string, never>
+    Views: {
+      finance_revenue_summary: SupabaseView<{
+        invoice_id: string | null
+        line_item_id: string | null
+        customer_id: string | null
+        customer_email: string | null
+        subscription_id: string | null
+        invoice_status: string | null
+        total_amount_cents: number | null
+        recognized_amount_cents: number | null
+        deferred_amount_cents: number | null
+        currency: string | null
+        period_start: string | null
+        period_end: string | null
+        calculation_time: string | null
+      }>
+    }
     Functions: {
       check_amenity_conflicts: {
         Args: {

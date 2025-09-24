@@ -38,14 +38,15 @@ export default function NavLinks() {
 
 	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
 
-	const links = isLandlord
-		? [
-			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
-		: [
+        const links = isLandlord
+                ? [
+                        { href: "/dashboard/members", text: "Members", Icon: PersonIcon },
+                        { href: "/dashboard/finance", text: "Finance", Icon: CrumpledPaperIcon },
+                        { href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+                        { href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
+                        { href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+                ]
+                : [
 			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
 			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
 			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
