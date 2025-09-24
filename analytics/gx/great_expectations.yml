@@ -1,0 +1,59 @@
+data_context_version: 3.0
+
+# Great Expectations configuration for Share House Portal warehouse validations
+config_variables_file_path: uncommitted/config_variables.yml
+plugins_directory: plugins/
+
+evaluation_parameter_store_name: evaluation_parameter_store
+expectations_store_name: expectations_store
+validations_store_name: validations_store
+checkpoint_store_name: checkpoint_store
+
+stores:
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: FilesystemStoreBackend
+      base_directory: expectations/
+  validations_store:
+    class_name: ValidationsStore
+    store_backend:
+      class_name: FilesystemStoreBackend
+      base_directory: uncommitted/validations/
+  evaluation_parameter_store:
+    class_name: EvaluationParameterStore
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: FilesystemStoreBackend
+      base_directory: checkpoints/
+
+datasources:
+  warehouse_postgres:
+    class_name: Datasource
+    execution_engine:
+      class_name: SqlAlchemyExecutionEngine
+      connection_string: ${WAREHOUSE_CONNECTION_STRING}
+    data_connectors:
+      default_runtime_data_connector_name:
+        class_name: RuntimeDataConnector
+        batch_identifiers:
+          - default_identifier_name
+      warehouse_tables:
+        class_name: InferredAssetSqlDataConnector
+        include_schema_name: true
+
+data_docs_sites:
+  local_site:
+    class_name: SiteBuilder
+    store_backend:
+      class_name: FilesystemStoreBackend
+      base_directory: uncommitted/data_docs/local_site/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+
+datasource_store_name: null
+
+anonymous_usage_statistics:
+  data_context_id: 00000000-0000-0000-0000-000000000000
+  enabled: false

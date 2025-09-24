@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "great_expectations_version": "0.18.11",
+    "notes": {
+      "format": "markdown",
+      "content": [
+        "Data quality contract for rent payment facts loaded into the analytics warehouse.",
+        "Validates schema, null thresholds, and key business rules around payment completion."
+      ]
+    }
+  },
+  "expectation_suite_name": "warehouse.rent_payments",
+  "data_asset_type": null,
+  "expectations": [
+    {
+      "expectation_type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "id",
+          "tenant_id",
+          "lease_id",
+          "unit_id",
+          "amount_cents",
+          "status",
+          "due_date",
+          "paid_at",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "meta": {
+        "notes": "Guard against schema drift in the rent_payments dimension."
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "tenant_id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "lease_id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "amount_cents"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "amount_cents",
+        "min_value": 0,
+        "strict_min": true,
+        "mostly": 0.995
+      },
+      "meta": {
+        "notes": "Rent payment amounts must be positive after ETL rounding."
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "status"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "status",
+        "value_set": [
+          "pending",
+          "processing",
+          "paid",
+          "failed",
+          "canceled"
+        ]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "paid_at",
+        "row_condition": "status == 'paid'",
+        "condition_parser": "great_expectations.condition_parser.Python",
+        "mostly": 1.0
+      },
+      "meta": {
+        "notes": "Payments marked paid must have a completion timestamp."
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "due_date",
+        "mostly": 0.99
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+name: warehouse_pipeline
+config_version: 1.0
+module_name: great_expectations.checkpoint
+class_name: SimpleCheckpoint
+run_name_template: "%Y%m%d_%H%M%S_warehouse"
+validations:
+  - batch_request:
+      datasource_name: warehouse_postgres
+      data_connector_name: warehouse_tables
+      data_asset_name: public.rent_payments
+    expectation_suite_name: warehouse.rent_payments
+  - batch_request:
+      datasource_name: warehouse_postgres
+      data_connector_name: warehouse_tables
+      data_asset_name: public.amenity_bookings
+    expectation_suite_name: warehouse.amenity_bookings
+action_list:
+  - name: store_validation_result
+    action:
+      class_name: StoreValidationResultAction
+  - name: store_evaluation_params
+    action:
+      class_name: StoreEvaluationParametersAction
+  - name: update_data_docs
+    action:
+      class_name: UpdateDataDocsAction
