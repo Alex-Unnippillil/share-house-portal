@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server"
-import { getStripe, getAppBaseUrl } from "@/lib/stripe"
+
+import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
+import { getAppBaseUrl, getStripe } from "@/lib/stripe"
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +9,9 @@ export async function POST(req: NextRequest) {
     const { priceId, quantity = 1, mode = "payment", metadata } = await req.json()
 
     if (!priceId || typeof priceId !== "string") {
-      return Response.json({ error: "priceId is required" }, { status: 400 })
+      return jsonError("REQUEST_VALIDATION_ERROR", {
+        message: "priceId is required",
+      })
     }
 
     const baseUrl = getAppBaseUrl()
@@ -33,9 +37,7 @@ export async function POST(req: NextRequest) {
 
     return Response.json({ id: session.id, url: session.url })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error"
-    const status = message.includes("Stripe is not configured") ? 500 : 500
-    return Response.json({ error: message }, { status })
+    return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
   }
 }
 

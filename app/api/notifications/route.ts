@@ -10,6 +10,7 @@ import {
   type InAppNotification,
   type NotificationData,
 } from "@/lib/notifications"
+import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
 
@@ -77,13 +78,10 @@ export async function GET(request: NextRequest) {
       issues: validation.error.issues,
     })
 
-    return NextResponse.json(
-      {
-        error: "Invalid query parameters",
-        details: validation.error.flatten(),
-      },
-      { status: 400 }
-    )
+    return jsonError("REQUEST_VALIDATION_ERROR", {
+      message: "Invalid query parameters",
+      details: validation.error.flatten(),
+    })
   }
 
   const now = new Date()
@@ -106,10 +104,9 @@ export async function GET(request: NextRequest) {
       params: rawParams,
     })
 
-    return NextResponse.json(
-      { error: "startDate must be before or equal to endDate" },
-      { status: 400 }
-    )
+    return jsonError("REQUEST_VALIDATION_ERROR", {
+      message: "startDate must be before or equal to endDate",
+    })
   }
 
   let normalizedStartDate =
@@ -166,7 +163,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (userError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonError("AUTH_UNAUTHORIZED")
   }
 
   if (suspiciousSignals.length > 0) {
@@ -197,10 +194,10 @@ export async function GET(request: NextRequest) {
       error: error.message,
     })
 
-    return NextResponse.json(
-      { error: "Failed to fetch notifications" },
-      { status: 500 }
-    )
+    return jsonError("DATA_FETCH_FAILED", {
+      message: "Failed to fetch notifications",
+      details: { reason: error.message },
+    })
   }
 
   return NextResponse.json({
@@ -234,38 +231,46 @@ export async function POST(request: Request) {
     switch (payload.type) {
       case "email": {
         const result = await sendEmailNotification(payload.notification)
-        const status = result.success ? 200 : 400
-        return NextResponse.json(result, { status })
+        if (!result.success) {
+          return jsonError("UPSTREAM_SERVICE_ERROR", {
+            message: result.error ?? "Failed to send email notification",
+            details: { provider: "resend" },
+          })
+        }
+
+        return NextResponse.json(result)
       }
       case "in-app": {
         const result = await sendInAppNotification(payload.notification)
-        const status = result.success ? 200 : 400
-        return NextResponse.json(result, { status })
+        if (!result.success) {
+          return jsonError("DATA_FETCH_FAILED", {
+            message:
+              result.error ?? "Failed to persist in-app notification",
+          })
+        }
+
+        return NextResponse.json(result)
       }
       case "bulk": {
         const results = await sendBulkNotifications(payload.notifications)
         const success = results.every((entry) => entry.success)
-        return NextResponse.json(
-          { success, results },
-          { status: success ? 200 : 400 }
-        )
+        if (!success) {
+          return jsonError("UPSTREAM_SERVICE_ERROR", {
+            message: "One or more notifications failed to send",
+            details: { results },
+          })
+        }
+
+        return NextResponse.json({ success, results })
       }
       default: {
-        return NextResponse.json(
-          { success: false, error: "Invalid notification request" },
-          { status: 400 }
-        )
+        return jsonError("REQUEST_VALIDATION_ERROR", {
+          message: "Invalid notification request type",
+        })
       }
     }
   } catch (error) {
     console.error("Notification API error:", error)
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unexpected error sending notification"
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
-    )
+    return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
   }
 }

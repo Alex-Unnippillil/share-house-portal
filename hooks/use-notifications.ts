@@ -9,6 +9,38 @@ type BulkNotificationResult = {
   results: Array<{ index: number; success: boolean; error: unknown }>
 }
 
+type ParsedApiError = { message: string; details?: unknown }
+
+function parseApiError(payload: unknown): ParsedApiError {
+  if (payload === null || payload === undefined) {
+    return { message: "Failed to send notification" }
+  }
+
+  if (typeof payload === "string") {
+    return { message: payload }
+  }
+
+  if (typeof payload === "object") {
+    if ("error" in payload) {
+      const value = (payload as Record<string, unknown>).error
+      if (typeof value === "string") {
+        return { message: value }
+      }
+      if (value && typeof value === "object") {
+        const message =
+          "message" in value && typeof value.message === "string"
+            ? value.message
+            : "Failed to send notification"
+        const details =
+          "details" in value ? (value as Record<string, unknown>).details : undefined
+        return { message, details }
+      }
+    }
+  }
+
+  return { message: "Failed to send notification" }
+}
+
 async function postNotification<T>(payload: unknown): Promise<T> {
   const response = await fetch("/api/notifications", {
     method: "POST",
@@ -18,19 +50,16 @@ async function postNotification<T>(payload: unknown): Promise<T> {
 
   const data = (await response.json().catch(() => null)) as
     | T
-    | { error?: string }
+    | { error?: unknown }
     | null
 
   if (!response.ok || !data) {
-    const message =
-      data &&
-      typeof data === "object" &&
-      "error" in data &&
-      typeof data.error === "string"
-        ? data.error
-        : "Failed to send notification"
-
-    throw new Error(message)
+    const { message, details } = parseApiError(data)
+    const error = new Error(message) as Error & { details?: unknown }
+    if (details !== undefined) {
+      error.details = details
+    }
+    throw error
   }
 
   return data as T
@@ -132,6 +161,46 @@ export function useNotifications() {
 
       return response.results
     } catch (error) {
+      const details =
+        error && typeof error === "object" && "details" in error
+          ? (error as { details?: unknown }).details
+          : undefined
+
+      if (
+        details &&
+        typeof details === "object" &&
+        details !== null &&
+        "results" in details &&
+        Array.isArray((details as Record<string, unknown>).results)
+      ) {
+        const results = (details as { results: BulkNotificationResult["results"] }).results
+        const successCount = results.filter((r) => r.success).length
+        const failureCount = results.length - successCount
+
+        if (successCount > 0) {
+          toast({
+            title: "Notifications sent",
+            description: `${successCount} notification${
+              successCount > 1 ? "s" : ""
+            } sent successfully${
+              failureCount > 0 ? `, ${failureCount} failed` : ""
+            }.`,
+          })
+        }
+
+        if (failureCount > 0) {
+          toast({
+            title: "Some notifications failed",
+            description: `${failureCount} notification${
+              failureCount > 1 ? "s" : ""
+            } could not be sent.`,
+            variant: "destructive",
+          })
+        }
+
+        return results
+      }
+
       toast({
         title: "Error",
         description:

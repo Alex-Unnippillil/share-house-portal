@@ -1,40 +1,55 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supa-server-actions';
-import { cookies } from 'next/headers';
+import { cookies } from "next/headers"
+import { NextResponse } from "next/server"
 
+import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
+import { createClient } from "@/utils/supa-server-actions"
 
-export async function GET(req: Request) {
-  
- const { searchParams } = new URL(req.url);
- const accessToken = searchParams.get('access_token');
- const refreshToken = searchParams.get('refresh_token');
-  
-// Get the user from Supabase
+const DEFAULT_REDIRECT_PATH = "/"
 
-const cookieStore = cookies();
+export async function GET(request: Request) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
 
-const supabase = createClient(cookieStore);
-  
-const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
- if (userError || !user) {
-    
-  return NextResponse.json({ error: 'User not found' }, { status: 401});
+  try {
+    const url = new URL(request.url)
+    const { searchParams } = url
+    const refreshToken = searchParams.get("refresh_token")
+
+    if (!refreshToken) {
+      return jsonError("REQUEST_VALIDATION_ERROR", {
+        message: "refresh_token is required",
+      })
+    }
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      return jsonError("AUTH_UNAUTHORIZED", {
+        message: userError?.message ?? "User not found",
+      })
+    }
+
+    const { error: tokenError } = await supabase
+      .from("user_tokens")
+      .upsert({ user_id: user.id, refresh_token: refreshToken })
+
+    if (tokenError) {
+      return jsonError("DATA_FETCH_FAILED", {
+        message: "Failed to persist refresh token",
+        details: { reason: tokenError.message },
+      })
+    }
+
+    const nextPath = searchParams.get("next") ?? DEFAULT_REDIRECT_PATH
+    const redirectBase =
+      process.env.NEXT_PUBLIC_BASE_URL ?? `${url.protocol}//${url.host}`
+    const redirectUrl = new URL(nextPath, redirectBase)
+
+    return NextResponse.redirect(redirectUrl)
+  } catch (error) {
+    return jsonErrorFromUnknown(error)
   }
-  
-// Store the refresh token in the user_tokens table
-
-const { error: tokenError } = await supabase
-    .from('user_tokens')
-    .upsert({ user_id: user.id, refresh_token: refreshToken});
- 
-  if (tokenError ) {
-    
-   return NextResponse.json({ error: tokenError.message }, { status: 500});
-  }
- else {
-  
-  return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_BASE_URL)); 
-// Adjust the redirect URL as necessary
- }
 }

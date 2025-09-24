@@ -5,6 +5,7 @@ import {
   sendEmailNotification,
   sendInAppNotification,
 } from "@/lib/notifications"
+import { jsonError } from "@/lib/errors"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
 
@@ -31,12 +32,16 @@ export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
-    return new Response("Webhook not configured", { status: 500 })
+    return jsonError("CONFIGURATION_ERROR", {
+      message: "Stripe webhook secret is not configured",
+    })
   }
 
   const supabase = createSupabaseAdminClient()
   if (!supabase) {
-    return new Response("Supabase client not configured", { status: 500 })
+    return jsonError("CONFIGURATION_ERROR", {
+      message: "Supabase client not configured",
+    })
   }
 
   const rawBody = await req.text()
@@ -73,7 +78,17 @@ export async function POST(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid payload"
     console.error("Webhook error:", message)
-    return new Response(`Webhook error: ${message}`, { status: 400 })
+    const lowerMessage = message.toLowerCase()
+    if (lowerMessage.includes("signature")) {
+      return jsonError("REQUEST_VALIDATION_ERROR", {
+        message,
+        details: { reason: "stripe_signature_verification_failed" },
+      })
+    }
+
+    return jsonError("INTERNAL_SERVER_ERROR", {
+      message,
+    })
   }
 }
 
