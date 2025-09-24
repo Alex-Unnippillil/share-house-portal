@@ -1,3 +1,6 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createHash, randomBytes, randomUUID } from "crypto"
+
 export type Json =
   | string
   | number
@@ -45,6 +48,32 @@ export type Database = {
         stripe_customer_id: string | null
         rent_share: number | null
         metadata: Json | null
+      }>
+      oauth_clients: SupabaseTable<{
+        id: string
+        client_id: string
+        client_name: string
+        redirect_uri: string | null
+        description: string | null
+        created_at: string | null
+        updated_at: string | null
+        created_by: string | null
+        active_key_id: string | null
+        metadata: Json | null
+        last_rotated_at: string | null
+      }>
+      oauth_client_keys: SupabaseTable<{
+        id: string
+        client_id: string
+        hashed_secret: string
+        status: 'active' | 'rotated' | 'revoked'
+        created_at: string | null
+        rotated_at: string | null
+        revoked_at: string | null
+        expires_at: string | null
+        issued_by: string | null
+        rotated_by: string | null
+        last_four: string | null
       }>
       documents: SupabaseTable<{
         id: string
@@ -334,3 +363,296 @@ export type TablesInsert<T extends keyof PublicSchema['Tables']> =
   PublicSchema['Tables'][T]['Insert']
 export type TablesUpdate<T extends keyof PublicSchema['Tables']> =
   PublicSchema['Tables'][T]['Update']
+
+type ServiceRoleClient = SupabaseClient<Database, 'public'>
+
+const SECRET_BYTE_LENGTH = 32
+
+function toBase64Url(buffer: Buffer) {
+  return buffer
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '')
+}
+
+function generateClientId() {
+  return `shp_${toBase64Url(randomBytes(16))}`
+}
+
+function generateClientSecret() {
+  return toBase64Url(randomBytes(SECRET_BYTE_LENGTH))
+}
+
+function hashSecret(secret: string) {
+  return createHash('sha256').update(secret).digest('hex')
+}
+
+let cachedServiceRoleClient: ServiceRoleClient | null = null
+
+export class OAuthClientError extends Error {
+  constructor(message: string, public status: number = 500) {
+    super(message)
+    this.name = 'OAuthClientError'
+  }
+}
+
+export class OAuthClientNotFoundError extends OAuthClientError {
+  constructor(clientId: string) {
+    super(`OAuth client ${clientId} was not found`, 404)
+    this.name = 'OAuthClientNotFoundError'
+  }
+}
+
+function getServiceRoleClient(): ServiceRoleClient {
+  if (cachedServiceRoleClient) {
+    return cachedServiceRoleClient
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !serviceRoleKey) {
+    throw new OAuthClientError(
+      'Supabase service role credentials are not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+    )
+  }
+
+  cachedServiceRoleClient = createClient<Database>(url, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+
+  return cachedServiceRoleClient
+}
+
+type OAuthClientRow = Database['public']['Tables']['oauth_clients']['Row']
+type OAuthClientKeyRow = Database['public']['Tables']['oauth_client_keys']['Row']
+
+export interface IssueOAuthClientParams {
+  name: string
+  redirectUri?: string
+  description?: string
+  createdBy: string
+}
+
+export interface IssuedOAuthClientCredentials {
+  clientId: string
+  clientSecret: string
+  keyId: string
+  clientRowId: string
+}
+
+export async function issueClientCredentials({
+  name,
+  redirectUri,
+  description,
+  createdBy,
+}: IssueOAuthClientParams): Promise<IssuedOAuthClientCredentials> {
+  const supabase = getServiceRoleClient()
+  const now = new Date().toISOString()
+  const clientRowId = randomUUID()
+  const keyRowId = randomUUID()
+  const clientId = generateClientId()
+  const clientSecret = generateClientSecret()
+  const hashedSecret = hashSecret(clientSecret)
+
+  const clientInsert: Partial<OAuthClientRow> = {
+    id: clientRowId,
+    client_id: clientId,
+    client_name: name.trim(),
+    redirect_uri: redirectUri ?? null,
+    description: description ?? null,
+    created_by: createdBy,
+    active_key_id: null,
+    metadata: null,
+    created_at: now,
+    updated_at: now,
+    last_rotated_at: null,
+  }
+
+  const { error: clientError } = await supabase
+    .from('oauth_clients')
+    .insert(clientInsert)
+
+  if (clientError) {
+    console.error('[supabase] Failed to create OAuth client record', clientError)
+    throw new OAuthClientError(
+      `Failed to create OAuth client: ${clientError.message}`
+    )
+  }
+
+  const keyInsert: Partial<OAuthClientKeyRow> = {
+    id: keyRowId,
+    client_id: clientRowId,
+    hashed_secret: hashedSecret,
+    status: 'active',
+    created_at: now,
+    issued_by: createdBy,
+    rotated_at: null,
+    rotated_by: null,
+    revoked_at: null,
+    expires_at: null,
+    last_four: clientSecret.slice(-4),
+  }
+
+  const { error: keyError } = await supabase
+    .from('oauth_client_keys')
+    .insert(keyInsert)
+
+  if (keyError) {
+    console.error('[supabase] Failed to store OAuth client key', keyError)
+    await supabase.from('oauth_clients').delete().eq('id', clientRowId)
+    throw new OAuthClientError(
+      `Failed to persist OAuth client key: ${keyError.message}`
+    )
+  }
+
+  const { error: updateError } = await supabase
+    .from('oauth_clients')
+    .update({
+      active_key_id: keyRowId,
+      last_rotated_at: now,
+      updated_at: now,
+    })
+    .eq('id', clientRowId)
+
+  if (updateError) {
+    console.error('[supabase] Failed to finalize OAuth client creation', updateError)
+    throw new OAuthClientError(
+      `Failed to finalize OAuth client creation: ${updateError.message}`
+    )
+  }
+
+  console.info('[supabase] Stored OAuth client credentials', {
+    clientId,
+    clientRowId,
+    keyId: keyRowId,
+  })
+
+  return {
+    clientId,
+    clientSecret,
+    keyId: keyRowId,
+    clientRowId,
+  }
+}
+
+export interface RotateOAuthClientSecretParams {
+  clientId: string
+  rotatedBy: string
+}
+
+export interface RotatedOAuthClientSecret {
+  clientId: string
+  clientSecret: string
+  keyId: string
+  previousKeyId: string | null
+}
+
+export async function rotateClientSecret({
+  clientId,
+  rotatedBy,
+}: RotateOAuthClientSecretParams): Promise<RotatedOAuthClientSecret> {
+  const supabase = getServiceRoleClient()
+  const now = new Date().toISOString()
+
+  const { data: client, error: clientError } = await supabase
+    .from('oauth_clients')
+    .select('id, active_key_id')
+    .eq('client_id', clientId)
+    .maybeSingle<Pick<OAuthClientRow, 'id' | 'active_key_id'>>()
+
+  if (clientError) {
+    console.error('[supabase] Failed to load OAuth client for rotation', clientError)
+    throw new OAuthClientError(
+      `Failed to load OAuth client: ${clientError.message}`
+    )
+  }
+
+  if (!client) {
+    console.warn('[supabase] Attempted to rotate missing OAuth client', {
+      clientId,
+    })
+    throw new OAuthClientNotFoundError(clientId)
+  }
+
+  const newSecret = generateClientSecret()
+  const newKeyId = randomUUID()
+  const hashedSecret = hashSecret(newSecret)
+
+  const { error: insertKeyError } = await supabase
+    .from('oauth_client_keys')
+    .insert({
+      id: newKeyId,
+      client_id: client.id,
+      hashed_secret: hashedSecret,
+      status: 'active',
+      created_at: now,
+      issued_by: rotatedBy,
+      rotated_at: null,
+      rotated_by: null,
+      revoked_at: null,
+      expires_at: null,
+      last_four: newSecret.slice(-4),
+    })
+
+  if (insertKeyError) {
+    console.error('[supabase] Failed to insert rotated OAuth key', insertKeyError)
+    throw new OAuthClientError(
+      `Failed to store rotated key: ${insertKeyError.message}`
+    )
+  }
+
+  if (client.active_key_id) {
+    const { error: archiveError } = await supabase
+      .from('oauth_client_keys')
+      .update({
+        status: 'rotated',
+        rotated_at: now,
+        rotated_by: rotatedBy,
+      })
+      .eq('id', client.active_key_id)
+
+    if (archiveError) {
+      console.error(
+        '[supabase] Failed to mark previous OAuth key as rotated',
+        archiveError
+      )
+      throw new OAuthClientError(
+        `Failed to archive previous key: ${archiveError.message}`
+      )
+    }
+  }
+
+  const { error: updateClientError } = await supabase
+    .from('oauth_clients')
+    .update({
+      active_key_id: newKeyId,
+      updated_at: now,
+      last_rotated_at: now,
+    })
+    .eq('id', client.id)
+
+  if (updateClientError) {
+    console.error('[supabase] Failed to update OAuth client after rotation', updateClientError)
+    throw new OAuthClientError(
+      `Failed to update OAuth client: ${updateClientError.message}`
+    )
+  }
+
+  console.info('[supabase] Rotated OAuth client secret', {
+    clientId,
+    previousKeyId: client.active_key_id ?? null,
+    keyId: newKeyId,
+  })
+
+  return {
+    clientId,
+    clientSecret: newSecret,
+    keyId: newKeyId,
+    previousKeyId: client.active_key_id ?? null,
+  }
+}

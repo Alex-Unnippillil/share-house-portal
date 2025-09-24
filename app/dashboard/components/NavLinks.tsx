@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
+import { PersonIcon, CrumpledPaperIcon, LockClosedIcon } from "@radix-ui/react-icons";
 import SmartLink from "@/components/navigation/SmartLink";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -36,22 +36,33 @@ export default function NavLinks() {
 		load();
 	}, []);
 
-	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
+        const isLandlord =
+                role === "property_manager" || role === "admin" || role === "landlord";
 
-	const links = isLandlord
-		? [
-			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
-		: [
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-			{ href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
-			{ href: "/supplies", text: "Supplies", Icon: CrumpledPaperIcon },
-		];
+        const landlordLinks = [
+                { href: "/dashboard/members", text: "Members", Icon: PersonIcon },
+                { href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+                { href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
+                { href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+        ];
+
+        if (role === "admin") {
+                landlordLinks.push({
+                        href: "/dashboard/developer",
+                        text: "Developer",
+                        Icon: LockClosedIcon,
+                });
+        }
+
+        const residentLinks = [
+                { href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+                { href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },
+                { href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+                { href: "/chores", text: "Chores", Icon: CrumpledPaperIcon },
+                { href: "/supplies", text: "Supplies", Icon: CrumpledPaperIcon },
+        ];
+
+        const links = isLandlord ? landlordLinks : residentLinks;
 
 	return (
 		<div className="space-y-5">
