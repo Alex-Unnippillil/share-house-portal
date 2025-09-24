@@ -176,17 +176,27 @@ class NotificationService {
   }
 
   private getMaintenanceRequestTemplate(data?: any) {
+    const submittedDisplay =
+      data?.submittedAt && !Number.isNaN(Date.parse(data.submittedAt))
+        ? new Date(data.submittedAt).toLocaleString()
+        : null
+
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Maintenance Request</h2>
         <p><strong>Requested by:</strong> ${
           data?.requesterName || "Unknown"
         }</p>
+        ${data?.unitLabel ? `<p><strong>Unit:</strong> ${data.unitLabel}</p>` : ""}
+        ${data?.location ? `<p><strong>Location:</strong> ${data.location}</p>` : ""}
+        ${data?.category ? `<p><strong>Category:</strong> ${data.category}</p>` : ""}
         <p><strong>Issue:</strong> ${data?.title || "Unknown"}</p>
         <p><strong>Description:</strong> ${
           data?.description || "No description provided"
         }</p>
         <p><strong>Priority:</strong> ${data?.priority || "Normal"}</p>
+        ${submittedDisplay ? `<p><strong>Submitted:</strong> ${submittedDisplay}</p>` : ""}
+        ${data?.requestId ? `<p><strong>Request ID:</strong> ${data.requestId}</p>` : ""}
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
         }/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Request</a>
