@@ -4,7 +4,7 @@ import { readUserSession } from "@/utils/actions"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
-import { Icons } from "@/components/icons"
+import { HelpPanel } from "@/components/help/help-panel"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { SignOutButton } from "@/components/sign-out-button"
@@ -69,6 +69,7 @@ export async function SiteHeader() {
           </div>
           <nav className="flex items-center space-x-1">
             {isAuthenticated && <NotificationCenter />}
+            <HelpPanel />
             <ThemeToggle />
           </nav>
         </div>
