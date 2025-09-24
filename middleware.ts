@@ -56,7 +56,31 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const pathname = request.nextUrl.pathname
+
+  const requiresAuthentication = pathname.startsWith('/dashboard')
+
+  if (requiresAuthentication && !user) {
+    return NextResponse.redirect(new URL('/auth', request.url))
+  }
+
+  if (user && pathname.startsWith('/dashboard/roles')) {
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const memberRole = profileError ? null : (profile?.role as string | null)
+
+    if (memberRole !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
 
   return response
 }

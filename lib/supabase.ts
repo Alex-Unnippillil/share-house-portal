@@ -46,6 +46,36 @@ export type Database = {
         rent_share: number | null
         metadata: Json | null
       }>
+      roles: SupabaseTable<{
+        id: string
+        slug: string
+        name: string
+        description: string | null
+        is_system: boolean | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      permissions: SupabaseTable<{
+        id: string
+        category: string
+        action: string
+        description: string | null
+        created_at: string | null
+      }>
+      role_permissions: SupabaseTable<{
+        role_id: string
+        permission_id: string
+        created_at: string | null
+      }>
+      user_roles: SupabaseTable<{
+        id: string
+        user_id: string
+        role_id: string
+        building_id: string | null
+        created_at: string | null
+        expires_at: string | null
+        created_by: string | null
+      }>
       documents: SupabaseTable<{
         id: string
         created_at: string | null
