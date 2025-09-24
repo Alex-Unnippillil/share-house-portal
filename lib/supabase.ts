@@ -46,6 +46,33 @@ export type Database = {
         rent_share: number | null
         metadata: Json | null
       }>
+      custom_domains: SupabaseTable<{
+        id: string
+        domain: string
+        project_id: string | null
+        created_by: string
+        verification_status: 'pending' | 'verified' | 'failed'
+        verification_type: string | null
+        verification_token: string | null
+        dns_target: string | null
+        dns_records: Json
+        certificate_id: string | null
+        certificate_status:
+          | 'pending'
+          | 'active'
+          | 'renewing'
+          | 'failed'
+          | 'expired'
+        certificate_issued_at: string | null
+        certificate_expires_at: string | null
+        auto_renew: boolean
+        renewal_scheduled_for: string | null
+        last_checked_at: string | null
+        last_error: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       documents: SupabaseTable<{
         id: string
         created_at: string | null
@@ -183,6 +210,24 @@ export type Database = {
         notes: string | null
         attachments: Json | null
         metadata: Json | null
+      }>
+      domain_certificate_events: SupabaseTable<{
+        id: string
+        domain_id: string
+        event_type:
+          | 'provisioned'
+          | 'verification_requested'
+          | 'verification_succeeded'
+          | 'verification_failed'
+          | 'renewal_scheduled'
+          | 'renewal_success'
+          | 'renewal_failed'
+          | 'status_update'
+        status: 'info' | 'success' | 'warning' | 'error'
+        message: string
+        created_by: string | null
+        metadata: Json | null
+        created_at: string | null
       }>
       visitor_logs: SupabaseTable<{
         id: string
