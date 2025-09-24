@@ -16,6 +16,7 @@ import {
   DocumentSigningRequest,
   DocumentStats
 } from '@/types/documents';
+import type { Database, Json } from '@/lib/supabase';
 
 // Validation schemas
 const documentUploadSchema = z.object({
@@ -51,6 +52,95 @@ interface ActionResult<T = any> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+type DocumentRow = Database['public']['Tables']['documents']['Row'];
+
+function toMetadataRecord(
+  metadata: DocumentRow['metadata']
+): Record<string, Json> {
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    return metadata as Record<string, Json>;
+  }
+
+  return {};
+}
+
+function buildVersionSnapshot(document: DocumentRow): DocumentVersionSnapshot {
+  return {
+    title: document.title,
+    description: document.description,
+    document_type: document.document_type,
+    status: document.status,
+    state: document.state,
+    file_url: document.file_url ?? null,
+    metadata: toMetadataRecord(document.metadata),
+    requires_signature: document.requires_signature ?? false,
+    expires_at: document.expires_at ?? null,
+    signed_at: document.signed_at ?? null,
+    tenant_id: document.tenant_id ?? null,
+    unit_id: document.unit_id ?? null,
+    documenso_envelope_id: document.documenso_envelope_id ?? null,
+    documenso_template_id: document.documenso_template_id ?? null,
+  };
+}
+
+async function insertDocumentVersion(
+  supabase: TypedSupabaseClient,
+  document: DocumentRow,
+  actorId: string,
+  versionOverride?: number,
+) {
+  const version = versionOverride ?? (document.version ?? 1);
+  const versionPayload = {
+    document_id: document.id,
+    version,
+    state: document.state,
+    status: document.status,
+    snapshot: buildVersionSnapshot(document),
+    created_by: actorId,
+    published_at: document.published_at,
+  };
+
+  const { error } = await (supabase as any)
+    .from('document_versions')
+    .insert(versionPayload);
+
+  if (!error) {
+    return;
+  }
+
+  if (!isRowLevelSecurityViolation(error)) {
+    throw new Error(`Failed to append document version: ${error.message}`);
+  }
+
+  const serviceRoleClient = getServiceRoleSupabaseClient();
+
+  if (!serviceRoleClient) {
+    throw new Error(
+      'Failed to append document version: service role client not configured.'
+    );
+  }
+
+  const { error: serviceError } = await serviceRoleClient
+    .from('document_versions')
+    .insert(versionPayload);
+
+  if (serviceError) {
+    throw new Error(
+      `Failed to append document version with service role: ${serviceError.message}`
+    );
+  }
+}
+
+function isRowLevelSecurityViolation(error: PostgrestError) {
+  const code = error.code?.toUpperCase();
+  if (code === '42501') {
+    return true;
+  }
+
+  const message = `${error.message ?? ''} ${error.details ?? ''}`.toLowerCase();
+  return message.includes('row-level security');
 }
 
 // Get documents with optional filters
