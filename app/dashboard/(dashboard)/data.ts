@@ -50,6 +50,7 @@ type DashboardMetric = {
     label: string
   }
   icon: "rent" | "calendar" | "roommates" | "maintenance"
+  semanticMetricId?: string
 }
 
 type QuickAction = {
@@ -196,6 +197,7 @@ async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
       helperText: "Due in 5 days",
       trend: { direction: "neutral", label: "Autopay scheduled" },
       icon: "rent",
+      semanticMetricId: "rent_collected_amount",
     },
     {
       id: "calendar",
@@ -204,6 +206,7 @@ async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
       helperText: "Kitchen, TV room & parking",
       trend: { direction: "up", label: "+1 vs last week" },
       icon: "calendar",
+      semanticMetricId: "amenity_bookings_confirmed_count",
     },
     {
       id: "roommates",
@@ -220,6 +223,7 @@ async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
       helperText: "Both scheduled for this week",
       trend: { direction: "down", label: "No overdue items" },
       icon: "maintenance",
+      semanticMetricId: "maintenance_open_tickets",
     },
   ]
 }
