@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "pnpm run lint:next && pnpm run lint:compliance",
+    "lint:next": "next lint",
+    "lint:compliance": "node scripts/check-soc2-mappings.mjs",
     "test": "vitest run",
     "css:purge": "node scripts/check-css-size.mjs"
   },
@@ -88,6 +90,7 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.5.4",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "yaml": "^2.8.1"
   }
 }
