@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import {
   sendEmailNotification,
   sendInAppNotification,
+  scheduleDunningCadence,
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
@@ -54,6 +55,12 @@ export async function POST(req: Request) {
         break
       case "invoice.payment_succeeded":
         await handleInvoicePaymentSucceeded(supabase, event.data.object)
+        break
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(supabase, event.data.object)
+        break
+      case "payment_intent.payment_failed":
+        await handlePaymentIntentFailed(supabase, event.data.object)
         break
       case "customer.subscription.created":
         await handleSubscriptionCreated(supabase, event.data.object)
@@ -244,6 +251,275 @@ async function handleInvoicePaymentSucceeded(
     }
   } catch (error) {
     console.error("Error handling invoice payment succeeded:", error)
+    throw error
+  }
+}
+
+async function handleInvoicePaymentFailed(
+  supabase: SupabaseClient<Database>,
+  invoice: any
+) {
+  try {
+    const stripe = getStripe()
+    const fullInvoice = await stripe.invoices.retrieve(invoice.id, {
+      expand: ["subscription", "customer"],
+    })
+
+    const subscription = fullInvoice.subscription as any
+    const tenantId =
+      subscription?.metadata?.tenant_id || fullInvoice.metadata?.tenant_id || null
+    const unitId =
+      subscription?.metadata?.unit_id || fullInvoice.metadata?.unit_id || null
+    const amountDue =
+      (fullInvoice.amount_due ?? invoice.amount_due ?? 0) / 100
+    const currency =
+      (fullInvoice.currency ?? invoice.currency ?? "usd").toUpperCase()
+    const nextAttemptIso = fullInvoice.next_payment_attempt
+      ? new Date(fullInvoice.next_payment_attempt * 1000).toISOString()
+      : undefined
+    const failureMessage =
+      fullInvoice.last_payment_error?.message ||
+      invoice.last_payment_error?.message ||
+      "The payment could not be completed"
+    const failureCode =
+      fullInvoice.last_payment_error?.code || invoice.last_payment_error?.code
+
+    let tenantProfile: { full_name?: string | null; email?: string | null } | null =
+      null
+    if (tenantId) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", tenantId)
+        .single()
+      tenantProfile = data
+    }
+
+    const contactEmail =
+      tenantProfile?.email ||
+      (subscription?.metadata?.tenant_email as string | undefined) ||
+      (fullInvoice.customer_email as string | undefined) ||
+      null
+
+    const amountFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+    })
+    const amountFormatted = amountFormatter.format(amountDue)
+    const nextAttemptDisplay = nextAttemptIso
+      ? new Date(nextAttemptIso).toLocaleString()
+      : undefined
+
+    const dunningPlan = contactEmail
+      ? await scheduleDunningCadence({
+          supabaseClient: supabase,
+          userId: tenantId ?? undefined,
+          email: contactEmail,
+          tenantName:
+            tenantProfile?.full_name ||
+            (fullInvoice.customer_name as string | undefined) ||
+            contactEmail,
+          amount: amountDue,
+          currency,
+          paymentReference: fullInvoice.id,
+          failedAt: new Date().toISOString(),
+          nextPaymentAttempt: nextAttemptIso,
+        })
+      : { notifications: [], retrySchedule: [] }
+
+    const paymentRecord: TablesInsert<'rent_payments'> = {
+      user_id: tenantId || "00000000-0000-0000-0000-000000000000",
+      stripe_payment_intent_id: (fullInvoice.payment_intent as string | null) ?? null,
+      stripe_charge_id: (fullInvoice.charge as string | null) ?? null,
+      stripe_customer_id: (fullInvoice.customer as string | null) ?? null,
+      stripe_subscription_id: subscription?.id ?? null,
+      amount: amountDue,
+      currency,
+      description: `Subscription payment - ${
+        subscription?.metadata?.unit_label || "Rent"
+      }`,
+      status: "failed",
+      processed_at: new Date().toISOString(),
+      receipt_url: fullInvoice.hosted_invoice_url,
+      tenant_id: tenantId,
+      unit_id: unitId,
+      payment_method_type:
+        (fullInvoice.payment_settings?.payment_method_types?.[0] as string | undefined) ||
+        null,
+      metadata: {
+        invoice_id: fullInvoice.id,
+        subscription_id: subscription?.id,
+        failure: {
+          code: failureCode,
+          message: failureMessage,
+        },
+        next_payment_attempt: nextAttemptIso ?? null,
+        dunning_plan: dunningPlan,
+      },
+    }
+
+    await supabase.from("rent_payments").insert(paymentRecord)
+
+    if (subscription?.id) {
+      await supabase
+        .from("subscriptions")
+        .update({
+          status: "past_due",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("stripe_subscription_id", subscription.id)
+    }
+
+    if (contactEmail) {
+      await sendEmailNotification({
+        to: contactEmail,
+        subject: `Rent payment failed - ${amountFormatted}`,
+        template: "payment-failed",
+        data: {
+          tenantName:
+            tenantProfile?.full_name ||
+            (fullInvoice.customer_name as string | undefined) ||
+            contactEmail,
+          amount: amountFormatted,
+          failureReason: failureMessage,
+          nextAttempt: nextAttemptDisplay,
+        },
+        userId: tenantId ?? undefined,
+      })
+    }
+
+    if (tenantId) {
+      await sendInAppNotification({
+        userId: tenantId,
+        title: "Rent payment failed",
+        message: `We couldn't process your rent payment of ${amountFormatted}. Please update your payment method to avoid late fees.`,
+        type: "error",
+        actionUrl: "/payments",
+        metadata: {
+          invoiceId: fullInvoice.id,
+          subscriptionId: subscription?.id,
+          failureCode,
+        },
+      })
+    }
+  } catch (error) {
+    console.error("Error handling invoice payment failed:", error)
+    throw error
+  }
+}
+
+async function handlePaymentIntentFailed(
+  supabase: SupabaseClient<Database>,
+  paymentIntent: any
+) {
+  try {
+    const tenantId = paymentIntent.metadata?.tenant_id || null
+    const unitId = paymentIntent.metadata?.unit_id || null
+    const amount = (paymentIntent.amount ?? 0) / 100
+    const currency = (paymentIntent.currency ?? "usd").toUpperCase()
+    const failureMessage =
+      paymentIntent.last_payment_error?.message ||
+      "The payment could not be completed"
+    const failureCode = paymentIntent.last_payment_error?.code
+
+    let tenantProfile: { full_name?: string | null; email?: string | null } | null =
+      null
+    if (tenantId) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", tenantId)
+        .single()
+      tenantProfile = data
+    }
+
+    const contactEmail =
+      tenantProfile?.email ||
+      paymentIntent.receipt_email ||
+      paymentIntent.metadata?.tenant_email ||
+      null
+
+    const amountFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+    })
+    const amountFormatted = amountFormatter.format(amount)
+
+    const tenantDisplayName = tenantProfile?.full_name || contactEmail || "Tenant"
+
+    const dunningPlan = contactEmail
+      ? await scheduleDunningCadence({
+          supabaseClient: supabase,
+          userId: tenantId ?? undefined,
+          email: contactEmail,
+          tenantName: tenantDisplayName,
+          amount,
+          currency,
+          paymentReference: paymentIntent.id,
+          failedAt: new Date().toISOString(),
+        })
+      : { notifications: [], retrySchedule: [] }
+
+    await supabase.from("rent_payments").insert({
+      user_id: tenantId || "00000000-0000-0000-0000-000000000000",
+      stripe_payment_intent_id: paymentIntent.id,
+      stripe_charge_id: (paymentIntent.latest_charge as string | null) ?? null,
+      stripe_customer_id: (paymentIntent.customer as string | null) ?? null,
+      stripe_subscription_id: null,
+      amount,
+      currency,
+      description:
+        paymentIntent.metadata?.description ||
+        paymentIntent.description ||
+        "Rent payment",
+      status: "failed",
+      processed_at: new Date().toISOString(),
+      receipt_url:
+        paymentIntent.charges?.data?.[0]?.receipt_url ||
+        paymentIntent.next_action?.receipt_url ||
+        null,
+      tenant_id: tenantId,
+      unit_id: unitId,
+      payment_method_type: paymentIntent.payment_method_types?.[0] || null,
+      metadata: {
+        payment_intent: paymentIntent.id,
+        failure: {
+          code: failureCode,
+          message: failureMessage,
+        },
+        dunning_plan: dunningPlan,
+      },
+    })
+
+    if (contactEmail) {
+      await sendEmailNotification({
+        to: contactEmail,
+        subject: `Payment attempt failed - ${amountFormatted}`,
+        template: "payment-failed",
+        data: {
+          tenantName: tenantDisplayName,
+          amount: amountFormatted,
+          failureReason: failureMessage,
+        },
+        userId: tenantId ?? undefined,
+      })
+    }
+
+    if (tenantId) {
+      await sendInAppNotification({
+        userId: tenantId,
+        title: "Payment attempt failed",
+        message: `We couldn't process your payment of ${amountFormatted}. Please review your payment method before we retry.`,
+        type: "error",
+        actionUrl: "/payments",
+        metadata: {
+          paymentIntentId: paymentIntent.id,
+          failureCode,
+        },
+      })
+    }
+  } catch (error) {
+    console.error("Error handling payment intent failed:", error)
     throw error
   }
 }

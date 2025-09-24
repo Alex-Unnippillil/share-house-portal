@@ -1,7 +1,9 @@
 "use server"
 
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
+import type { Database } from "@/lib/supabase"
 
 export interface NotificationData {
   to: string | string[]
@@ -9,6 +11,11 @@ export interface NotificationData {
   template: string
   data?: Record<string, any>
   userId?: string
+}
+
+export interface ScheduledNotification extends NotificationData {
+  sendAt: string
+  metadata?: Record<string, any>
 }
 
 export interface InAppNotification {
@@ -19,6 +26,65 @@ export interface InAppNotification {
   actionUrl?: string
   metadata?: Record<string, any>
 }
+
+export interface DunningStage {
+  id: string
+  offsetHours: number
+  subject: string
+  template: string
+  retry?: boolean
+  attempt?: number
+}
+
+export interface ScheduleDunningCadenceInput {
+  userId?: string
+  email?: string
+  tenantName?: string
+  amount: number
+  currency: string
+  paymentReference: string
+  failedAt: string
+  nextPaymentAttempt?: string
+  supabaseClient?: SupabaseClient<Database>
+  cadence?: DunningStage[]
+  totalAttempts?: number
+}
+
+export interface ScheduledDunningPlan {
+  notifications: Array<{
+    stageId: string
+    sendAt: string
+    subject: string
+    template: string
+    scheduled: boolean
+  }>
+  retrySchedule: string[]
+}
+
+const DEFAULT_DUNNING_CADENCE: DunningStage[] = [
+  {
+    id: "retry_1",
+    offsetHours: 24,
+    subject: "We'll retry your rent payment",
+    template: "payment-retry",
+    retry: true,
+    attempt: 1,
+  },
+  {
+    id: "retry_2",
+    offsetHours: 72,
+    subject: "Second rent payment retry scheduled",
+    template: "payment-retry",
+    retry: true,
+    attempt: 2,
+  },
+  {
+    id: "final_notice",
+    offsetHours: 168,
+    subject: "Final notice: rent payment overdue",
+    template: "payment-final-notice",
+  },
+]
 
 class NotificationService {
   private resend: Resend | null = null
@@ -49,6 +115,11 @@ class NotificationService {
           notification.data
         ),
         "payment-receipt": this.getPaymentReceiptTemplate(notification.data),
+        "payment-failed": this.getPaymentFailedTemplate(notification.data),
+        "payment-retry": this.getPaymentRetryTemplate(notification.data),
+        "payment-final-notice": this.getPaymentFinalNoticeTemplate(
+          notification.data
+        ),
         "document-signed": this.getDocumentSignedTemplate(notification.data),
         welcome: this.getWelcomeTemplate(notification.data),
       }
@@ -157,6 +228,48 @@ class NotificationService {
     }
   }
 
+  async scheduleEmail(
+    notification: ScheduledNotification,
+    supabaseOverride?: SupabaseClient<Database>
+  ) {
+    try {
+      const supabase =
+        supabaseOverride ?? ((await createSupbaseServerClient()) as any)
+
+      const recipient = Array.isArray(notification.to)
+        ? notification.to.join(", ")
+        : notification.to
+
+      const { error } = await (supabase as SupabaseClient<Database>)
+        .from("email_notifications")
+        .insert({
+          user_id: notification.userId ?? null,
+          recipient,
+          subject: notification.subject,
+          template: notification.template,
+          status: "pending",
+          sent_at: notification.sendAt,
+          metadata: {
+            ...(notification.metadata ?? {}),
+            data: notification.data,
+          },
+        })
+
+      if (error) {
+        console.error("Failed to schedule email notification:", error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error("Failed to schedule email notification:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  }
+
   private getVisitorBookingTemplate(data?: any) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -211,6 +324,56 @@ class NotificationService {
     `
   }
 
+  private getPaymentFailedTemplate(data?: any) {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Action needed: rent payment failed</h2>
+        <p>Hello ${data?.tenantName || "there"},</p>
+        <p>We attempted to charge your rent payment for <strong>${
+          data?.amount || "your unit"
+        }</strong> but the payment was declined.</p>
+        <p><strong>Reason:</strong> ${
+          data?.failureReason || "The payment could not be completed"
+        }</p>
+        ${
+          data?.nextAttempt
+            ? `<p>We'll automatically retry this payment on <strong>${data.nextAttempt}</strong>.</p>`
+            : ""
+        }
+        <p>Please update your payment method or reach out to your bank to ensure the retry succeeds.</p>
+        <p>If you've already resolved the issue you can ignore this message.</p>
+      </div>
+    `
+  }
+
+  private getPaymentRetryTemplate(data?: any) {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Upcoming rent payment retry</h2>
+        <p>Hello ${data?.tenantName || "there"},</p>
+        <p>This is a reminder that we'll retry your rent payment for <strong>${
+          data?.amount || "your unit"
+        }</strong> on <strong>${data?.retryDate || "the scheduled date"}</strong>.</p>
+        <p>Attempt ${data?.attempt || 1} of ${data?.totalAttempts || 3}.</p>
+        <p>If your payment details have changed, please update them before the retry to avoid further issues.</p>
+      </div>
+    `
+  }
+
+  private getPaymentFinalNoticeTemplate(data?: any) {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Final notice: rent payment still outstanding</h2>
+        <p>Hello ${data?.tenantName || "there"},</p>
+        <p>Your rent payment for <strong>${
+          data?.amount || "your unit"
+        }</strong> remains unpaid after multiple attempts.</p>
+        <p>Please update your payment method or contact the property team immediately to prevent escalation.</p>
+        <p>If you believe this is a mistake, reply to this email and we'll help resolve it.</p>
+      </div>
+    `
+  }
+
   private getDocumentSignedTemplate(data?: any) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -257,8 +420,108 @@ export async function sendInAppNotification(notification: InAppNotification) {
   return notificationService.sendInAppNotification(notification)
 }
 
+export async function scheduleEmailNotification(
+  notification: ScheduledNotification,
+  supabaseClient?: SupabaseClient<Database>
+) {
+  return notificationService.scheduleEmail(notification, supabaseClient)
+}
+
 export async function sendBulkNotifications(
   notifications: (NotificationData | InAppNotification)[]
 ) {
   return notificationService.sendBulkNotification(notifications)
+}
+
+export async function scheduleDunningCadence(
+  input: ScheduleDunningCadenceInput
+): Promise<ScheduledDunningPlan> {
+  const plan: ScheduledDunningPlan = {
+    notifications: [],
+    retrySchedule: [],
+  }
+
+  if (!input.email) {
+    return plan
+  }
+
+  let supabase = input.supabaseClient
+  if (!supabase) {
+    try {
+      supabase = (await createSupbaseServerClient()) as unknown as SupabaseClient<Database>
+    } catch (error) {
+      console.error("Unable to create Supabase client for dunning cadence:", error)
+      return plan
+    }
+  }
+
+  const cadence = input.cadence ?? DEFAULT_DUNNING_CADENCE
+  const failedAtDate = new Date(input.failedAt)
+  const failureTimestamp = Number.isNaN(failedAtDate.getTime())
+    ? new Date()
+    : failedAtDate
+
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: input.currency,
+  })
+  const formattedAmount = formatter.format(input.amount)
+  const defaultRetryCount = cadence.filter((stage) => stage.retry).length
+  const totalAttempts =
+    input.totalAttempts ?? (defaultRetryCount > 0 ? defaultRetryCount : 3)
+
+  for (const stage of cadence) {
+    let sendAtDate = new Date(
+      failureTimestamp.getTime() + stage.offsetHours * 60 * 60 * 1000
+    )
+
+    if (stage.retry && stage.attempt === 1 && input.nextPaymentAttempt) {
+      const nextAttemptDate = new Date(input.nextPaymentAttempt)
+      if (!Number.isNaN(nextAttemptDate.getTime())) {
+        sendAtDate = nextAttemptDate
+      }
+    }
+
+    const sendAtIso = sendAtDate.toISOString()
+
+    const scheduleResult = await notificationService.scheduleEmail(
+      {
+        to: input.email,
+        userId: input.userId,
+        subject: stage.subject,
+        template: stage.template,
+        data: {
+          tenantName: input.tenantName,
+          amount: formattedAmount,
+          retryDate: sendAtDate.toLocaleString(),
+          attempt: stage.attempt,
+          totalAttempts,
+        },
+        metadata: {
+          stageId: stage.id,
+          attempt: stage.attempt,
+          retry: stage.retry ?? false,
+          paymentReference: input.paymentReference,
+        },
+        sendAt: sendAtIso,
+      },
+      supabase as SupabaseClient<Database>
+    )
+
+    const scheduled = scheduleResult.success
+
+    plan.notifications.push({
+      stageId: stage.id,
+      sendAt: sendAtIso,
+      subject: stage.subject,
+      template: stage.template,
+      scheduled,
+    })
+
+    if (stage.retry) {
+      plan.retrySchedule.push(sendAtIso)
+    }
+  }
+
+  return plan
 }
