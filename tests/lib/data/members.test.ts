@@ -1,138 +1,171 @@
-import { describe, expect, it, vi } from 'vitest';
-import { fetchMemberProfile, fetchMemberRole, fetchMembersByUnit } from '@/lib/data/members';
+import { beforeEach, describe, expect, it } from "vitest"
+import { randomUUID } from "node:crypto"
 
-type SingleResult<T> = { data: T; error: { message: string } | null };
+import { fetchMemberProfile, fetchMemberRole, fetchMembersByUnit } from "@/lib/data/members"
 
-type SingleBuilder<T> = {
-  select: ReturnType<typeof vi.fn>;
-  eq: ReturnType<typeof vi.fn>;
-  maybeSingle: () => Promise<SingleResult<T>>;
-};
+import { getDatabasePool, getSupabaseClient, resetDatabase } from "../../setup/supabase-test-env"
 
-function createSingleBuilder<T>(result: SingleResult<T>): SingleBuilder<T> {
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockResolvedValue(result),
-  } as unknown as SingleBuilder<T>;
+async function insertAuthUser(id: string, email: string) {
+  const pool = getDatabasePool()
+  await pool.query("INSERT INTO auth.users (id, email) VALUES ($1, $2)", [id, email])
 }
 
-type MultiResult<T> = { data: T; error: { message: string } | null };
-
-type MultiBuilder<T> = {
-  select: ReturnType<typeof vi.fn>;
-  eq: ReturnType<typeof vi.fn>;
-  neq: ReturnType<typeof vi.fn>;
-  in: ReturnType<typeof vi.fn>;
-  then: (onFulfilled: (value: MultiResult<T>) => unknown) => Promise<unknown>;
-};
-
-function createMultiBuilder<T>(result: MultiResult<T>): MultiBuilder<T> {
-  const builder: Partial<MultiBuilder<T>> & {
-    select: ReturnType<typeof vi.fn>;
-    eq: ReturnType<typeof vi.fn>;
-    neq: ReturnType<typeof vi.fn>;
-    in: ReturnType<typeof vi.fn>;
-  } = {
-    select: vi.fn().mockImplementation(() => builder),
-    eq: vi.fn().mockImplementation(() => builder),
-    neq: vi.fn().mockImplementation(() => builder),
-    in: vi.fn().mockImplementation(() => builder),
-  };
-
-  (builder as MultiBuilder<T>).then = (onFulfilled) =>
-    Promise.resolve(onFulfilled(result));
-
-  return builder as MultiBuilder<T>;
+async function insertProfile({
+  id,
+  email,
+  fullName,
+  role,
+  unitId,
+}: {
+  id: string
+  email: string
+  fullName: string
+  role: string
+  unitId?: string | null
+}) {
+  const pool = getDatabasePool()
+  await pool.query(
+    "INSERT INTO public.profiles (id, email, full_name, role, unit_id) VALUES ($1, $2, $3, $4, $5)",
+    [id, email, fullName, role, unitId ?? null]
+  )
 }
 
-function createProfilesStub<T>(builder: unknown) {
-  return {
-    from: vi.fn((table: string) => {
-      expect(table).toBe('profiles');
-      return builder;
-    }),
-  };
-}
+describe("member data queries", () => {
+  const supabase = () => getSupabaseClient() as unknown as any
 
-describe('fetchMemberRole', () => {
-  it('returns the member role when available', async () => {
-    const builder = createSingleBuilder({ data: { role: 'tenant' }, error: null });
-    const supabase = createProfilesStub(builder);
+  beforeEach(async () => {
+    await resetDatabase()
+  })
 
-    const role = await fetchMemberRole(supabase as any, 'user-1');
+  describe("fetchMemberRole", () => {
+    it("returns the member role when available", async () => {
+      const memberId = randomUUID()
+      await insertAuthUser(memberId, "tenant@example.com")
+      await insertProfile({
+        id: memberId,
+        email: "tenant@example.com",
+        fullName: "Tenant Example",
+        role: "tenant",
+        unitId: "unit-1",
+      })
 
-    expect(builder.select).toHaveBeenCalledWith('role');
-    expect(builder.eq).toHaveBeenCalledWith('id', 'user-1');
-    expect(role).toBe('tenant');
-  });
+      const role = await fetchMemberRole(supabase(), memberId)
 
-  it('throws when supabase returns an error', async () => {
-    const builder = createSingleBuilder({ data: null, error: { message: 'role failed' } });
-    const supabase = createProfilesStub(builder);
+      expect(role).toBe("tenant")
+    })
 
-    await expect(fetchMemberRole(supabase as any, 'user-1')).rejects.toThrow(
-      /Failed to load member role: role failed/
-    );
-  });
-});
+    it("throws when the query fails", async () => {
+      const pool = getDatabasePool()
+      const memberId = randomUUID()
+      await insertAuthUser(memberId, "tenant@example.com")
 
-describe('fetchMemberProfile', () => {
-  it('returns profile data when present', async () => {
-    const profile = {
-      id: 'user-1',
-      email: 'user@example.com',
-      full_name: 'User Example',
-      role: 'tenant',
-      unit_id: 'unit-1',
-    };
-    const builder = createSingleBuilder({ data: profile, error: null });
-    const supabase = createProfilesStub(builder);
+      await pool.query("ALTER TABLE public.profiles RENAME TO profiles_backup;")
 
-    const result = await fetchMemberProfile(supabase as any, 'user-1');
+      try {
+        await expect(fetchMemberRole(supabase(), memberId)).rejects.toThrow(/Failed to load member role/)
+      } finally {
+        await pool.query("ALTER TABLE public.profiles_backup RENAME TO profiles;")
+      }
+    })
+  })
 
-    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id');
-    expect(builder.eq).toHaveBeenCalledWith('id', 'user-1');
-    expect(result).toEqual(profile);
-  });
+  describe("fetchMemberProfile", () => {
+    it("returns profile data when present", async () => {
+      const memberId = randomUUID()
+      await insertAuthUser(memberId, "tenant@example.com")
+      await insertProfile({
+        id: memberId,
+        email: "tenant@example.com",
+        fullName: "Tenant Example",
+        role: "tenant",
+        unitId: "unit-1",
+      })
 
-  it('throws when supabase reports an error', async () => {
-    const builder = createSingleBuilder({ data: null, error: { message: 'profile boom' } });
-    const supabase = createProfilesStub(builder);
+      const profile = await fetchMemberProfile(supabase(), memberId)
 
-    await expect(fetchMemberProfile(supabase as any, 'user-1')).rejects.toThrow(
-      /Failed to load member profile: profile boom/
-    );
-  });
-});
+      expect(profile).toEqual({
+        id: memberId,
+        email: "tenant@example.com",
+        full_name: "Tenant Example",
+        role: "tenant",
+        unit_id: "unit-1",
+      })
+    })
 
-describe('fetchMembersByUnit', () => {
-  it('applies filters and returns members', async () => {
-    const members = [
-      { id: 'user-1', email: '1@example.com', full_name: 'One', role: 'tenant', unit_id: 'unit-1' },
-      { id: 'user-2', email: '2@example.com', full_name: 'Two', role: 'roommate', unit_id: 'unit-1' },
-    ];
-    const builder = createMultiBuilder({ data: members, error: null });
-    const supabase = createProfilesStub(builder);
+    it("throws when the query fails", async () => {
+      const pool = getDatabasePool()
+      const memberId = randomUUID()
+      await insertAuthUser(memberId, "tenant@example.com")
 
-    const result = await fetchMembersByUnit(supabase as any, 'unit-1', {
-      excludeUserId: 'user-2',
-      roles: ['tenant'],
-    });
+      await pool.query("ALTER TABLE public.profiles RENAME TO profiles_backup;")
 
-    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id');
-    expect(builder.eq).toHaveBeenCalledWith('unit_id', 'unit-1');
-    expect(builder.neq).toHaveBeenCalledWith('id', 'user-2');
-    expect(builder.in).toHaveBeenCalledWith('role', ['tenant']);
-    expect(result).toEqual(members);
-  });
+      try {
+        await expect(fetchMemberProfile(supabase(), memberId)).rejects.toThrow(/Failed to load member profile/)
+      } finally {
+        await pool.query("ALTER TABLE public.profiles_backup RENAME TO profiles;")
+      }
+    })
+  })
 
-  it('throws when supabase returns an error', async () => {
-    const builder = createMultiBuilder({ data: null as any, error: { message: 'unit failed' } });
-    const supabase = createProfilesStub(builder);
+  describe("fetchMembersByUnit", () => {
+    it("applies filters and returns members", async () => {
+      const unitId = "unit-1"
+      const tenantId = randomUUID()
+      const roommateId = randomUUID()
+      const otherUnitMember = randomUUID()
 
-    await expect(
-      fetchMembersByUnit(supabase as any, 'unit-1')
-    ).rejects.toThrow(/Failed to load members for unit: unit failed/);
-  });
-});
+      await insertAuthUser(tenantId, "tenant@example.com")
+      await insertAuthUser(roommateId, "roommate@example.com")
+      await insertAuthUser(otherUnitMember, "other@example.com")
+
+      await insertProfile({
+        id: tenantId,
+        email: "tenant@example.com",
+        fullName: "Tenant Example",
+        role: "tenant",
+        unitId,
+      })
+      await insertProfile({
+        id: roommateId,
+        email: "roommate@example.com",
+        fullName: "Roommate Example",
+        role: "roommate",
+        unitId,
+      })
+      await insertProfile({
+        id: otherUnitMember,
+        email: "other@example.com",
+        fullName: "Other Unit",
+        role: "tenant",
+        unitId: "unit-2",
+      })
+
+      const members = await fetchMembersByUnit(supabase(), unitId, {
+        excludeUserId: roommateId,
+        roles: ["tenant"],
+      })
+
+      expect(members).toEqual([
+        {
+          id: tenantId,
+          email: "tenant@example.com",
+          full_name: "Tenant Example",
+          role: "tenant",
+          unit_id: unitId,
+        },
+      ])
+    })
+
+    it("throws when the query fails", async () => {
+      const pool = getDatabasePool()
+
+      await pool.query("ALTER TABLE public.profiles RENAME TO profiles_backup;")
+
+      try {
+        await expect(fetchMembersByUnit(supabase(), "unit-1")).rejects.toThrow(/Failed to load members for unit/)
+      } finally {
+        await pool.query("ALTER TABLE public.profiles_backup RENAME TO profiles;")
+      }
+    })
+  })
+})
