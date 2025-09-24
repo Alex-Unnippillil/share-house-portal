@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server"
 
-import { buildCollectionCacheMetadata } from "@/lib/utils"
+import { registerCacheRevalidator } from "@/lib/cache/invalidation"
+import { withApiCacheControl } from "@/lib/http/cache-control"
+import { buildCollectionCacheMetadata, invalidateFetcherCache } from "@/lib/utils"
+
+const DOCUMENTS_CACHE_KEY_FRAGMENT = "/api/documents"
+
+registerCacheRevalidator("documents", async () => {
+  invalidateFetcherCache((cacheKey) =>
+    cacheKey.includes(DOCUMENTS_CACHE_KEY_FRAGMENT)
+  )
+})
 
 type DocumentRecord = {
   id: string
@@ -74,26 +84,30 @@ export async function GET(request: Request) {
   const ifNoneMatch = request.headers.get("if-none-match")
 
   if (ifNoneMatch && ifNoneMatch === cacheMetadata.etag) {
-    return new NextResponse(null, {
-      status: 304,
-      headers: {
-        ETag: cacheMetadata.etag,
-      },
-    })
+    return withApiCacheControl(
+      new NextResponse(null, {
+        status: 304,
+        headers: {
+          ETag: cacheMetadata.etag,
+        },
+      })
+    )
   }
 
-  const response = NextResponse.json(
-    {
-      documents: records,
-      meta: {
-        count: cacheMetadata.count,
-        latestUpdatedAt: cacheMetadata.latestUpdatedAt,
-        revision,
+  const response = withApiCacheControl(
+    NextResponse.json(
+      {
+        documents: records,
+        meta: {
+          count: cacheMetadata.count,
+          latestUpdatedAt: cacheMetadata.latestUpdatedAt,
+          revision,
+        },
       },
-    },
-    {
-      status: 200,
-    }
+      {
+        status: 200,
+      }
+    )
   )
 
   response.headers.set("ETag", cacheMetadata.etag)

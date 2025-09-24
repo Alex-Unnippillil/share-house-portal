@@ -121,6 +121,16 @@ export const clearFetcherCache = () => {
   fetchResponseCache.clear()
 }
 
+export const invalidateFetcherCache = (
+  predicate: (cacheKey: string) => boolean
+) => {
+  for (const key of fetchResponseCache.keys()) {
+    if (predicate(key)) {
+      fetchResponseCache.delete(key)
+    }
+  }
+}
+
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

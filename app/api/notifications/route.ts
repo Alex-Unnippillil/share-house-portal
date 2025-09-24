@@ -12,6 +12,17 @@ import {
 } from "@/lib/notifications"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
+import { registerCacheRevalidator } from "@/lib/cache/invalidation"
+import { withApiCacheControl } from "@/lib/http/cache-control"
+import { invalidateFetcherCache } from "@/lib/utils"
+
+const NOTIFICATIONS_CACHE_KEY_FRAGMENT = "/api/notifications"
+
+registerCacheRevalidator("notifications", async () => {
+  invalidateFetcherCache((cacheKey) =>
+    cacheKey.includes(NOTIFICATIONS_CACHE_KEY_FRAGMENT)
+  )
+})
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -203,20 +214,22 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({
-    data: data ?? [],
-    pagination: {
-      page,
-      limit,
-      total: count,
-      hasMore:
-        typeof count === "number" ? from + (data?.length ?? 0) < count : null,
-    },
-    filters: {
-      startDate: normalizedStartDate.toISOString(),
-      endDate: normalizedEndDate.toISOString(),
-    },
-  })
+  return withApiCacheControl(
+    NextResponse.json({
+      data: data ?? [],
+      pagination: {
+        page,
+        limit,
+        total: count,
+        hasMore:
+          typeof count === "number" ? from + (data?.length ?? 0) < count : null,
+      },
+      filters: {
+        startDate: normalizedStartDate.toISOString(),
+        endDate: normalizedEndDate.toISOString(),
+      },
+    })
+  )
 }
 
 type NotificationRequest =
