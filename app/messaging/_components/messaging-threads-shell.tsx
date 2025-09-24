@@ -1,4 +1,5 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { ThreadReplyComposer } from "@/components/messaging/thread-reply-composer"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -269,6 +270,10 @@ export async function MessagingThreadsShell() {
                   {index < threadPosts.length - 1 ? <Separator /> : null}
                 </div>
               ))}
+              <div className="space-y-4">
+                <Separator />
+                <ThreadReplyComposer />
+              </div>
             </CardContent>
           </Card>
 
