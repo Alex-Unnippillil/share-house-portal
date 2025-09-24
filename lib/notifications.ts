@@ -176,6 +176,32 @@ class NotificationService {
   }
 
   private getMaintenanceRequestTemplate(data?: any) {
+    const attachments: Array<{ name?: string; url?: string }> = Array.isArray(
+      data?.attachments
+    )
+      ? data.attachments
+      : []
+
+    const attachmentsSection =
+      attachments.length > 0
+        ? `
+        <div style="margin-top: 16px;">
+          <p><strong>Photos:</strong></p>
+          <ul style="padding-left: 20px; margin: 8px 0;">
+            ${attachments
+              .map((attachment: any, index: number) => {
+                const label = attachment?.name || `Photo ${index + 1}`
+                const url = attachment?.url
+                return url
+                  ? `<li><a href="${url}" style="color: #007bff;">${label}</a></li>`
+                  : `<li>${label}</li>`
+              })
+              .join("")}
+          </ul>
+        </div>
+      `
+        : ""
+
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Maintenance Request</h2>
@@ -187,6 +213,7 @@ class NotificationService {
           data?.description || "No description provided"
         }</p>
         <p><strong>Priority:</strong> ${data?.priority || "Normal"}</p>
+        ${attachmentsSection}
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
         }/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Request</a>
