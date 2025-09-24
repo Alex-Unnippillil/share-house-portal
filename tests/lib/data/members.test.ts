@@ -96,6 +96,16 @@ describe('fetchMemberProfile', () => {
     expect(result).toEqual(profile);
   });
 
+  it('returns null when the profile is not found', async () => {
+    const builder = createSingleBuilder({ data: undefined as any, error: null });
+    const supabase = createProfilesStub(builder);
+
+    const result = await fetchMemberProfile(supabase as any, 'user-1');
+
+    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id');
+    expect(result).toBeNull();
+  });
+
   it('throws when supabase reports an error', async () => {
     const builder = createSingleBuilder({ data: null, error: { message: 'profile boom' } });
     const supabase = createProfilesStub(builder);
@@ -125,6 +135,18 @@ describe('fetchMembersByUnit', () => {
     expect(builder.neq).toHaveBeenCalledWith('id', 'user-2');
     expect(builder.in).toHaveBeenCalledWith('role', ['tenant']);
     expect(result).toEqual(members);
+  });
+
+  it('omits optional filters when exclude parameters are absent', async () => {
+    const builder = createMultiBuilder({ data: null as any, error: null });
+    const supabase = createProfilesStub(builder);
+
+    const result = await fetchMembersByUnit(supabase as any, 'unit-1');
+
+    expect(builder.select).toHaveBeenCalledWith('id, email, full_name, role, unit_id');
+    expect(builder.neq).not.toHaveBeenCalled();
+    expect(builder.in).not.toHaveBeenCalled();
+    expect(result).toEqual([]);
   });
 
   it('throws when supabase returns an error', async () => {
