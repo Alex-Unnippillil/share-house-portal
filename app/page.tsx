@@ -289,6 +289,7 @@ export default async function IndexPage() {
                   width={960}
                   height={720}
                   priority
+                  fetchPriority="high"
                   sizes="(min-width: 1024px) 480px, 100vw"
                   className="w-full object-contain"
                 />

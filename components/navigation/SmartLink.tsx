@@ -208,6 +208,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
         ref={combinedRef}
         href={href}
         prefetch={shouldPrefetch}
+        data-prefetch-intent={intent}
         onPointerEnter={handlePointerEnter}
         onFocus={handleFocus}
         {...rest}
