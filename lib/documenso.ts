@@ -182,6 +182,43 @@ class DocumensoService {
   }
 
   /**
+   * Redact recipient data from a document envelope
+   */
+  async redactDocumentRecipients(
+    documentId: string,
+    payload: { recipientTokens?: string[] } = {}
+  ): Promise<void> {
+    const response = await fetch(
+      `${this.baseUrl}/api/v1/documents/${documentId}/redact`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Documenso redact document failed: ${error}`);
+    }
+  }
+
+  /**
+   * Permanently delete a document from Documenso
+   */
+  async deleteDocument(documentId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/v1/documents/${documentId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Documenso delete document failed: ${error}`);
+    }
+  }
+
+  /**
    * Create document from template
    */
   async createFromTemplate(

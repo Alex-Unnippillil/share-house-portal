@@ -138,6 +138,27 @@ class CalComService {
   }
 
   /**
+   * Permanently delete a booking
+   */
+  async deleteBooking(bookingId: string): Promise<void> {
+    const response = await fetch(
+      `${this.baseUrl}/api/v1/bookings/${bookingId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to delete Cal.com booking: ${error}`);
+    }
+  }
+
+  /**
    * Get booking details
    */
   async getBooking(bookingId: string): Promise<any> {
