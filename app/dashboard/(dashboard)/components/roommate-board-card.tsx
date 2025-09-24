@@ -24,6 +24,9 @@ const topicCopy: Record<"maintenance" | "announcement" | "logistics", { label: s
 function formatRelativeTime(timestamp: string) {
   const now = new Date()
   const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) {
+    return "Just now"
+  }
   const diff = now.getTime() - date.getTime()
 
   const minutes = Math.round(diff / (1000 * 60))
@@ -41,8 +44,22 @@ function formatRelativeTime(timestamp: string) {
   return `${days} day${days > 1 ? "s" : ""} ago`
 }
 
+function sortUpdatesByRecency(updates: Awaited<ReturnType<typeof getRoommateUpdates>>) {
+  return [...updates].sort((a, b) => {
+    const first = new Date(b.timestamp).getTime()
+    const second = new Date(a.timestamp).getTime()
+
+    if (Number.isNaN(first) || Number.isNaN(second)) {
+      return 0
+    }
+
+    return first - second
+  })
+}
+
 export async function RoommateBoardCard() {
   const updates = await getRoommateUpdates()
+  const sortedUpdates = sortUpdatesByRecency(updates)
 
   return (
     <Card>
@@ -59,12 +76,17 @@ export async function RoommateBoardCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <ul className="space-y-3">
-          {updates.map((update) => {
-            const { label, variant } = topicCopy[update.topic]
-            return (
-              <li
-                key={update.id}
-                className="rounded-lg border border-transparent bg-muted/40 p-3 transition-colors hover:border-border/70 hover:bg-muted/60"
+          {sortedUpdates.length === 0 ? (
+            <li className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+              No updates yet. Post a quick note to loop everyone in.
+            </li>
+          ) : (
+            sortedUpdates.map((update) => {
+              const { label, variant } = topicCopy[update.topic]
+              return (
+                <li
+                  key={update.id}
+                  className="rounded-lg border border-transparent bg-muted/40 p-3 transition-colors hover:border-border/70 hover:bg-muted/60"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -76,7 +98,8 @@ export async function RoommateBoardCard() {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{update.message}</p>
               </li>
             )
-          })}
+            })
+          )}
         </ul>
 
         <SmartLink href="/messaging" className="inline-flex" intent="navigation">
