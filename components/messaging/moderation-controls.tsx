@@ -49,13 +49,14 @@ const moderationThreads: ModerationThread[] = [
     subject: "Quiet hours disruption",
     unit: "Unit 3B",
     severity: "High",
-    status: "Needs review",
+    status: "Escalated",
     flags: 3,
     lastActivity: "2 hours ago",
     flaggedBy: "Aisha • Roommate",
     flaggedReason: "Three roommates reported repeated noise after 11pm quiet hours.",
-    nextStep: "Escalate to onsite staff if the thread is still active after today's follow-up.",
-    watchers: ["Night concierge", "Property care team"],
+    nextStep:
+      "Night concierge dispatched for a door knock; log their report and schedule a quiet-hours reminder with the roommates tomorrow.",
+    watchers: ["Night concierge", "Property care team", "Resident support lead"],
     messages: [
       {
         id: "msg-quiet-1",
@@ -93,6 +94,12 @@ const moderationThreads: ModerationThread[] = [
         id: "quiet-wf-3",
         timestamp: "8:30 PM",
         description: "Awaiting property manager decision: escalate or archive once resolved.",
+      },
+      {
+        id: "quiet-wf-4",
+        timestamp: "10:30 PM",
+        description:
+          "Escalated to onsite night staff after no response within two hours of the quiet-hours reports.",
       },
     ],
   },
