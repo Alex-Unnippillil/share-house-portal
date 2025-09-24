@@ -111,6 +111,8 @@ export default async function PaymentsPage() {
       ? Math.round((activeAutopays / catchUpBalances.length) * 100)
       : 0
 
+  const autopayCoverageFraction = `${activeAutopays}/${catchUpBalances.length}`
+
   const defaultCurrency = catchUpBalances[0]?.currency ?? "USD"
 
   const roommateSummaries = [...outstandingSummaries].sort(
@@ -175,7 +177,7 @@ export default async function PaymentsPage() {
                     Autopay coverage
                   </dt>
                   <dd className="text-lg font-semibold">
-                    {activeAutopays}/{catchUpBalances.length}
+                    {autopayCoverageFraction}
                   </dd>
                   <p className="text-xs text-muted-foreground">
                     {autopCoveragePercentage}% of roommates on autopay
