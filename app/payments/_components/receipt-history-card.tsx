@@ -1,5 +1,11 @@
 import { format, parseISO } from "date-fns"
-import { Download, FileText } from "lucide-react"
+import {
+  Download,
+  FileText,
+  Image as ImageIcon,
+  Paperclip,
+  StickyNote,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
@@ -17,7 +23,10 @@ import {
   createPaymentHistoryCsv,
   summarizeReceiptHistory,
 } from "@/lib/payments/receipts"
-import type { PaymentReceiptHistoryEntry } from "@/types/payments"
+import type {
+  PaymentReceiptAttachment,
+  PaymentReceiptHistoryEntry,
+} from "@/types/payments"
 
 interface ReceiptHistoryCardProps {
   receipts: PaymentReceiptHistoryEntry[]
@@ -54,6 +63,28 @@ function encodeCsvForDownload(content: string) {
   return `data:text/csv;charset=utf-8,${encodeURIComponent(content)}`
 }
 
+function getAttachmentIcon(type: PaymentReceiptAttachment["type"]) {
+  switch (type) {
+    case "note":
+      return StickyNote
+    case "photo":
+      return ImageIcon
+    default:
+      return Paperclip
+  }
+}
+
+function formatAttachmentTypeLabel(type: PaymentReceiptAttachment["type"]) {
+  switch (type) {
+    case "note":
+      return "Note"
+    case "photo":
+      return "Photo"
+    default:
+      return "Document"
+  }
+}
+
 export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
   if (!receipts.length) {
     return (
@@ -88,6 +119,7 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
     : "—"
 
   const defaultCurrency = receipts[0]?.currency ?? "USD"
+  const attachmentsOnFile = summary.documentationCount + summary.noteCount
 
   return (
     <Card>
@@ -114,7 +146,7 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <dl className="grid gap-4 sm:grid-cols-3">
+        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1 rounded-lg border bg-muted/30 p-4">
             <dt className="text-xs font-medium uppercase text-muted-foreground">
               Receipts YTD
@@ -140,6 +172,15 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
           </div>
           <div className="space-y-1 rounded-lg border bg-muted/30 p-4">
             <dt className="text-xs font-medium uppercase text-muted-foreground">
+              Documentation on file
+            </dt>
+            <dd className="text-lg font-semibold">{attachmentsOnFile}</dd>
+            <p className="text-xs text-muted-foreground">
+              Notes: {summary.noteCount} · Files: {summary.documentationCount}
+            </p>
+          </div>
+          <div className="space-y-1 rounded-lg border bg-muted/30 p-4">
+            <dt className="text-xs font-medium uppercase text-muted-foreground">
               Last receipt issued
             </dt>
             <dd className="text-lg font-semibold">{lastReceiptLabel}</dd>
@@ -149,13 +190,14 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
           </div>
         </dl>
         <ScrollArea className="max-h-[540px]">
-          <div className="min-w-[760px] overflow-hidden rounded-lg border">
+          <div className="min-w-[960px] overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
               <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Payment</th>
                   <th className="px-4 py-3 text-left font-medium">Period</th>
                   <th className="px-4 py-3 text-left font-medium">Line items</th>
+                  <th className="px-4 py-3 text-left font-medium">Notes &amp; docs</th>
                   <th className="px-4 py-3 text-right font-medium">Amount</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
                   <th className="px-4 py-3 text-right font-medium">Actions</th>
@@ -205,6 +247,68 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                             </li>
                           ))}
                         </ul>
+                      </td>
+                      <td className="p-4">
+                        {receipt.attachments?.length ? (
+                          <ul className="space-y-2">
+                            {receipt.attachments.map((attachment) => {
+                              const Icon = getAttachmentIcon(attachment.type)
+                              const parsedUploadedAt = parseISO(attachment.uploadedAt)
+                              const uploadedAtLabel = Number.isNaN(
+                                parsedUploadedAt.getTime(),
+                              )
+                                ? attachment.uploadedAt
+                                : format(parsedUploadedAt, "MMM d, yyyy")
+
+                              return (
+                                <li
+                                  key={attachment.id}
+                                  className="rounded-md border bg-muted/30 p-3"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <Icon
+                                      className="mt-0.5 size-4 text-muted-foreground"
+                                      aria-hidden="true"
+                                    />
+                                    <div className="space-y-1">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <p className="text-sm font-medium text-foreground">
+                                          {attachment.label}
+                                        </p>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] uppercase tracking-wide"
+                                        >
+                                          {formatAttachmentTypeLabel(attachment.type)}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground">
+                                        {attachment.uploadedBy} · {uploadedAtLabel}
+                                      </p>
+                                      {attachment.description ? (
+                                        <p className="text-xs text-muted-foreground">
+                                          {attachment.description}
+                                        </p>
+                                      ) : null}
+                                      {attachment.url ? (
+                                        <a
+                                          href={attachment.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-xs font-medium text-primary hover:underline"
+                                        >
+                                          View document
+                                        </a>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">—</p>
+                        )}
                       </td>
                       <td className="p-4 text-right">
                         <div
