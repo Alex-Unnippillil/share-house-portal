@@ -1,6 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
+import {
+        PersonIcon,
+        CrumpledPaperIcon,
+        EnvelopeClosedIcon,
+} from "@radix-ui/react-icons";
 import SmartLink from "@/components/navigation/SmartLink";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -39,12 +43,17 @@ export default function NavLinks() {
 	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
 
 	const links = isLandlord
-		? [
-			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
+                ? [
+                        { href: "/dashboard/members", text: "Members", Icon: PersonIcon },
+                        { href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+                        { href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
+                        { href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+                        {
+                                href: "/dashboard/email-domains",
+                                text: "Email Domains",
+                                Icon: EnvelopeClosedIcon,
+                        },
+                ]
 		: [
 			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
 			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },

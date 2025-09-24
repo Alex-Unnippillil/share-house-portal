@@ -132,6 +132,21 @@ async function handleCheckoutSessionCompleted(
               .single()
 
             if (tenantProfile?.email) {
+              const profileMetadata =
+                tenantProfile.metadata &&
+                typeof tenantProfile.metadata === "object" &&
+                !Array.isArray(tenantProfile.metadata)
+                  ? (tenantProfile.metadata as Record<string, any>)
+                  : null
+              const sessionHouseholdId =
+                (fullSession.metadata?.household_id as string | undefined) ??
+                (session.metadata?.household_id as string | undefined) ??
+                undefined
+              const tenantHouseholdId =
+                (sessionHouseholdId && sessionHouseholdId.trim()) ||
+                (profileMetadata?.household_id as string | undefined) ||
+                null
+
               await sendEmailNotification({
                 to: tenantProfile.email,
                 subject: `Payment Receipt - $${paymentData.amount}`,
@@ -144,6 +159,14 @@ async function handleCheckoutSessionCompleted(
                     paymentData.processed_at ?? new Date().toISOString()
                   ).toLocaleDateString(),
                 },
+                tenantContext: tenantHouseholdId
+                  ? {
+                      tenantId: tenantHouseholdId,
+                      tenantName:
+                        tenantProfile.full_name || tenantProfile.email,
+                      fromLocalPart: "billing",
+                    }
+                  : undefined,
                 userId: tenantId,
               })
 
