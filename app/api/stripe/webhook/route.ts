@@ -5,7 +5,7 @@ import {
   sendEmailNotification,
   sendInAppNotification,
 } from "@/lib/notifications"
-import { getStripe } from "@/lib/stripe"
+import { executeWithStripe, getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
@@ -83,10 +83,17 @@ async function handleCheckoutSessionCompleted(
 ) {
   try {
     // Retrieve the full session with line items
-    const stripe = getStripe()
-    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ["line_items", "customer"],
-    })
+    const fullSession = await executeWithStripe(
+      "checkout.sessions.retrieve",
+      stripe =>
+        stripe.checkout.sessions.retrieve(session.id, {
+          expand: ["line_items", "customer"],
+        }),
+      {
+        queueOnOpen: false,
+        metadata: { sessionId: session.id },
+      }
+    )
 
     // For one-time payments, create a rent payment record
     if (fullSession.mode === "payment") {
@@ -180,12 +187,18 @@ async function handleInvoicePaymentSucceeded(
   invoice: any
 ) {
   try {
-    const stripe = getStripe()
-
     // Get the full invoice with subscription details
-    const fullInvoice = await stripe.invoices.retrieve(invoice.id, {
-      expand: ["subscription", "customer"],
-    })
+    const fullInvoice = await executeWithStripe(
+      "invoices.retrieve",
+      stripe =>
+        stripe.invoices.retrieve(invoice.id, {
+          expand: ["subscription", "customer"],
+        }),
+      {
+        queueOnOpen: false,
+        metadata: { invoiceId: invoice.id },
+      }
+    )
 
     const subscription = fullInvoice.subscription as any
 

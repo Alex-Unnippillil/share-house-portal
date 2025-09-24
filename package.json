@@ -48,6 +48,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
+    "cockatiel": "^3.2.1",
     "date-fns": "^3.3.1",
     "framer-motion": "^10.18.0",
     "gaxios": "^6.7.1",
