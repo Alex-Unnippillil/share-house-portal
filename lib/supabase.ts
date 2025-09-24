@@ -258,6 +258,80 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      webhook_subscriptions: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        name: string
+        description: string | null
+        target_url: string
+        signing_secret: string
+        event_types: string[]
+        active: boolean
+        created_by: string | null
+        last_delivered_at: string | null
+        failure_count: number
+        metadata: Json | null
+      }>
+      webhook_events: SupabaseTable<{
+        id: string
+        created_at: string | null
+        event_type: string
+        payload: Json
+        context: Json | null
+        created_by: string | null
+        source_reference: string | null
+      }>
+      webhook_deliveries: SupabaseTable<{
+        id: string
+        event_id: string
+        subscription_id: string
+        status: 'pending' | 'processing' | 'retrying' | 'succeeded' | 'failed'
+        attempt_count: number
+        next_attempt_at: string | null
+        locked_at: string | null
+        last_error: string | null
+        response_status: number | null
+        response_headers: Json | null
+        duration_ms: number | null
+        completed_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      webhook_delivery_attempts: SupabaseTable<{
+        id: string
+        delivery_id: string
+        attempt_number: number
+        status: 'succeeded' | 'failed'
+        attempted_at: string | null
+        response_status: number | null
+        error_message: string | null
+        duration_ms: number | null
+        signature: string | null
+        request_headers: Json | null
+        created_at: string | null
+      }>
+      webhook_dead_letters: SupabaseTable<{
+        id: string
+        event_id: string | null
+        subscription_id: string | null
+        delivery_id: string | null
+        failed_at: string | null
+        event_type: string
+        payload: Json
+        context: Json | null
+        subscription_name: string | null
+        target_url: string
+        last_error: string | null
+        response_status: number | null
+        attempt_count: number
+        last_attempt_at: string | null
+        metadata: Json | null
+        replayed_at: string | null
+        replayed_by: string | null
+        replay_delivery_id: string | null
+      }>
     }
     Views: Record<string, never>
     Functions: {
