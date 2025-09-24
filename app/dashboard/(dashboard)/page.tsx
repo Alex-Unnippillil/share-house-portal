@@ -1,5 +1,8 @@
 import { Suspense } from "react"
 
+import FirstRunTour from "@/components/dashboard/FirstRunTour"
+import DashboardHelpMenu from "@/components/dashboard/HelpMenu"
+
 import { DashboardWelcome } from "./components/dashboard-welcome"
 import { NextRentCard } from "./components/next-rent-card"
 import { RecentDocumentsCard } from "./components/recent-documents-card"
@@ -20,13 +23,30 @@ import InsightsPanel from "./components/insights-panel"
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
-      <Suspense fallback={<DashboardHeaderSkeleton />}>
-        <DashboardWelcome />
-      </Suspense>
+      <FirstRunTour />
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <Suspense
+          fallback={
+            <div className="flex-1">
+              <DashboardHeaderSkeleton />
+            </div>
+          }
+        >
+          <div data-tour-id="dashboard-welcome" className="flex-1">
+            <DashboardWelcome />
+          </div>
+        </Suspense>
+        <div className="sm:self-start">
+          <DashboardHelpMenu />
+        </div>
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
         <Suspense fallback={<DashboardStatsSkeleton />}>
-          <DashboardMetrics />
+          <div data-tour-id="dashboard-metrics">
+            <DashboardMetrics />
+          </div>
         </Suspense>
         <Suspense
           fallback={
@@ -35,7 +55,9 @@ export default function DashboardPage() {
             </div>
           }
         >
-          <DashboardQuickActions />
+          <div className="h-full" data-tour-id="dashboard-quick-actions">
+            <DashboardQuickActions />
+          </div>
         </Suspense>
       </div>
 
@@ -43,7 +65,9 @@ export default function DashboardPage() {
         <div className="space-y-4 xl:col-span-2">
           <div className="grid gap-4 md:grid-cols-2">
             <Suspense fallback={<DashboardCardSkeleton />}>
-              <NextRentCard />
+              <div data-tour-id="dashboard-next-rent">
+                <NextRentCard />
+              </div>
             </Suspense>
             <Suspense fallback={<DashboardCardSkeleton />}>
               <RecentDocumentsCard />
@@ -51,7 +75,9 @@ export default function DashboardPage() {
           </div>
 
           <Suspense fallback={<DashboardBoardSkeleton />}>
-            <RoommateBoardCard />
+            <div data-tour-id="dashboard-roommate-board">
+              <RoommateBoardCard />
+            </div>
           </Suspense>
         </div>
 
