@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { formatDistanceToNow, parseISO } from "date-fns"
+import { format, formatDistanceToNow, parseISO } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,6 +20,7 @@ import {
   deriveAutopayStatusFromStripeStatus,
   type RoommateAutopayState,
 } from "@/lib/payments/status"
+import { formatAutopayDay } from "@/lib/payments/catch-up"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
 import type { CatchUpBalance } from "@/types/payments"
 import type { Tables } from "@/lib/supabase"
@@ -56,6 +57,18 @@ function safeParseDate(value: string): string {
     return parsed.toISOString()
   } catch (error) {
     return new Date().toISOString()
+  }
+}
+
+function safeFormatDate(value: string | undefined, pattern: string): string | null {
+  if (!value) {
+    return null
+  }
+
+  try {
+    return format(parseISO(value), pattern)
+  } catch (error) {
+    return value
   }
 }
 
@@ -266,6 +279,34 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
                 return status.lastPaymentDate
               }
             })()
+            const leaseDueDay = status.leaseDueDay
+            const roommateDueDay = status.roommateDueDay ?? status.autopayDay
+            const nextDueLabel = safeFormatDate(status.nextDueDate, "MMM d")
+            const graceLabel = safeFormatDate(status.gracePeriodEndsOn, "MMM d")
+            const lateFeeLabel = (() => {
+              if (!status.lateFee) {
+                return null
+              }
+              const appliesLabel = safeFormatDate(status.lateFee.appliesOn, "MMM d")
+              const amountLabel = formatCurrency(status.lateFee.amount, status.lateFee.currency)
+              switch (status.lateFee.status) {
+                case "applied":
+                  return `${amountLabel} late fee applied ${appliesLabel ?? status.lateFee.appliesOn}`
+                case "scheduled":
+                  return `${amountLabel} late fee scheduled ${appliesLabel ?? status.lateFee.appliesOn}`
+                default:
+                  return `${amountLabel} late fee projected ${appliesLabel ?? status.lateFee.appliesOn}`
+              }
+            })()
+            const reminderBadges = status.reminders.slice(0, 3).map((reminder) => {
+              const dateLabel = safeFormatDate(reminder.sendAt, "MMM d") ?? reminder.sendAt
+              const channelLabel = reminder.channel.toUpperCase()
+              const statusLabel = reminder.status === "sent" ? "sent" : "scheduled"
+              return {
+                id: reminder.id,
+                label: `${channelLabel} ${dateLabel} ${statusLabel}`,
+              }
+            })
 
             return (
               <div
@@ -277,9 +318,35 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
                   <p className="text-xs text-muted-foreground">
                     {status.unitLabel} · {describeAutopayStatus(status.autopayStatus, status.autopayDay)}
                   </p>
+                  {leaseDueDay && roommateDueDay && leaseDueDay !== roommateDueDay ? (
+                    <p className="text-xs text-muted-foreground">
+                      Lease due {formatAutopayDay(leaseDueDay)} · Roommate share {formatAutopayDay(roommateDueDay)}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-muted-foreground">
                     Last payment {lastPaymentLabel} · {formatCurrency(status.lastPaymentAmount, status.currency)}
                   </p>
+                  {nextDueLabel && graceLabel ? (
+                    <p className="text-xs text-muted-foreground">
+                      Next autopay {nextDueLabel} · Grace through {graceLabel}
+                    </p>
+                  ) : null}
+                  {lateFeeLabel ? (
+                    <p className="text-xs text-muted-foreground">{lateFeeLabel}</p>
+                  ) : null}
+                  {reminderBadges.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {reminderBadges.map((reminder) => (
+                        <Badge
+                          key={reminder.id}
+                          className="text-[10px] uppercase tracking-wide"
+                          variant="outline"
+                        >
+                          {reminder.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="text-right">
                   <Badge variant={AUTOPAY_STATUS_BADGES[status.autopayStatus].variant}>

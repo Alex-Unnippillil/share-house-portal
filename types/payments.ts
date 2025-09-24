@@ -1,5 +1,37 @@
 export type AutopayStatus = "active" | "paused" | "disabled"
 
+export type AutopayReminderChannel = "email" | "sms" | "push"
+
+export type AutopayReminderStatus = "scheduled" | "sent"
+
+export interface AutopayReminder {
+  id: string
+  channel: AutopayReminderChannel
+  sendAt: string
+  status: AutopayReminderStatus
+  message: string
+}
+
+export type AutopayLateFeeStatus = "projected" | "scheduled" | "applied"
+
+export interface AutopayLateFee {
+  amount: number
+  currency: string
+  status: AutopayLateFeeStatus
+  appliesOn: string
+  lastAppliedAt?: string
+}
+
+export interface AutopaySchedule {
+  leaseDueDay: number
+  roommateDueDay?: number
+  nextDueDate: string
+  gracePeriodDays: number
+  gracePeriodEndsOn: string
+  lateFee?: AutopayLateFee
+  reminders: AutopayReminder[]
+}
+
 export type CatchUpChargeCategory =
   | "rent"
   | "utilities"
@@ -41,6 +73,7 @@ export interface CatchUpBalance {
   lastPaymentAmount: number
   charges: CatchUpCharge[]
   contacts: CatchUpContacts
+  autopaySchedule: AutopaySchedule
 }
 
 export interface CatchUpPaymentAllocation {
