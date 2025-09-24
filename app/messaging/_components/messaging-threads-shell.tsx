@@ -1,4 +1,5 @@
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { ThreadPostReactions } from "@/components/messaging/thread-post-reactions"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -238,33 +239,7 @@ export async function MessagingThreadsShell() {
                       </div>
                     ) : null}
 
-                    {post.reactions?.length ? (
-                      <div className="flex flex-wrap gap-2">
-                        {post.reactions.map((reaction) => (
-                          <Button
-                            key={`${post.id}-${reaction.emoji}`}
-                            variant="outline"
-                            size="sm"
-                            className={cn(
-                              "h-8 rounded-full border-dashed bg-background/60 px-3 text-xs",
-                              reaction.active && "border-primary text-primary",
-                            )}
-                          >
-                            <span className="mr-1 text-base" aria-hidden>
-                              {reaction.emoji}
-                            </span>
-                            {reaction.count}
-                          </Button>
-                        ))}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 rounded-full px-3 text-xs text-muted-foreground"
-                        >
-                          + Add reaction
-                        </Button>
-                      </div>
-                    ) : null}
+                    <ThreadPostReactions postId={post.id} initialReactions={post.reactions} />
                   </article>
                   {index < threadPosts.length - 1 ? <Separator /> : null}
                 </div>
