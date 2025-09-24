@@ -10,6 +10,7 @@ export interface CollectionCacheSignature {
 }
 
 const fetchResponseCache = new Map<string, { etag: string; data: unknown }>()
+const inflightSingleFlightOperations = new Map<string, Promise<unknown>>()
 
 const toTimestamp = (value: TimestampInput): number => {
   if (value instanceof Date) {
@@ -117,8 +118,32 @@ export interface FetcherInit extends RequestInit {
   skipCache?: boolean
 }
 
+export const clearSingleFlightCache = () => {
+  inflightSingleFlightOperations.clear()
+}
+
 export const clearFetcherCache = () => {
   fetchResponseCache.clear()
+  clearSingleFlightCache()
+}
+
+export function singleFlight<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = inflightSingleFlightOperations.get(key)
+  if (existing) {
+    return existing as Promise<T>
+  }
+
+  const promise = (async () => {
+    try {
+      return await fn()
+    } finally {
+      inflightSingleFlightOperations.delete(key)
+    }
+  })()
+
+  inflightSingleFlightOperations.set(key, promise)
+
+  return promise
 }
 
 
@@ -133,57 +158,67 @@ export async function fetcher<JSON = any>(
   init?: FetcherInit
 ): Promise<JSON> {
   const cacheKey = init?.skipCache ? undefined : resolveCacheKey(input, init)
-  const cachedEntry = cacheKey ? fetchResponseCache.get(cacheKey) : undefined
 
-  const headers = new Headers(init?.headers ?? {})
-  if (cachedEntry?.etag) {
-    headers.set("If-None-Match", cachedEntry.etag)
-  }
-  if (!headers.has("Accept")) {
-    headers.set("Accept", "application/json")
-  }
+  const executeRequest = async (): Promise<JSON> => {
+    const cachedEntry = cacheKey ? fetchResponseCache.get(cacheKey) : undefined
+    const headers = new Headers(init?.headers ?? {})
 
-  const response = await fetch(input, { ...init, headers })
-
-  if (response.status === 304) {
-    if (cachedEntry) {
-      return cachedEntry.data as JSON
+    if (cachedEntry?.etag) {
+      headers.set("If-None-Match", cachedEntry.etag)
     }
 
-    throw new Error("Received 304 response without cached data")
-  }
+    if (!headers.has("Accept")) {
+      headers.set("Accept", "application/json")
+    }
 
-  let payload: any = null
-  const contentType = response.headers.get("Content-Type") ?? ""
-  if (contentType.includes("application/json")) {
-    payload = await response.json().catch(() => null)
-  }
+    const response = await fetch(input, { ...init, headers })
 
-  if (!response.ok) {
-    if (payload && typeof payload === "object" && "error" in payload) {
-      const error = new Error((payload as { error: string }).error) as Error & {
+    if (response.status === 304) {
+      if (cachedEntry) {
+        return cachedEntry.data as JSON
+      }
+
+      throw new Error("Received 304 response without cached data")
+    }
+
+    let payload: any = null
+    const contentType = response.headers.get("Content-Type") ?? ""
+    if (contentType.includes("application/json")) {
+      payload = await response.json().catch(() => null)
+    }
+
+    if (!response.ok) {
+      if (payload && typeof payload === "object" && "error" in payload) {
+        const error = new Error((payload as { error: string }).error) as Error & {
+          status: number
+        }
+        error.status = response.status
+        throw error
+      }
+
+      const error = new Error("An unexpected error occurred") as Error & {
         status: number
       }
       error.status = response.status
       throw error
     }
 
-    const error = new Error("An unexpected error occurred") as Error & {
-      status: number
+    const etag = response.headers.get("ETag")
+    if (cacheKey && etag) {
+      fetchResponseCache.set(cacheKey, {
+        etag,
+        data: payload as JSON,
+      })
     }
-    error.status = response.status
-    throw error
+
+    return payload as JSON
   }
 
-  const etag = response.headers.get("ETag")
-  if (cacheKey && etag) {
-    fetchResponseCache.set(cacheKey, {
-      etag,
-      data: payload as JSON,
-    })
+  if (!cacheKey) {
+    return executeRequest()
   }
 
-  return payload as JSON
+  return singleFlight<JSON>(`fetch:${cacheKey}`, executeRequest)
 }
 
 export function formatDate(input: string | number | Date): string {

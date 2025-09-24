@@ -6,6 +6,7 @@ import {
   sendInAppNotification,
 } from "@/lib/notifications"
 import { getStripe } from "@/lib/stripe"
+import { singleFlight } from "@/lib/utils"
 import type { Database, TablesInsert } from "@/lib/supabase"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
@@ -24,6 +25,20 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
     },
   })
 }
+
+const loadTenantProfile = (
+  supabase: SupabaseClient<Database>,
+  tenantId: string
+) =>
+  singleFlight(
+    `tenant-profile:${tenantId}`,
+    () =>
+      supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", tenantId)
+        .single()
+  )
 
 export async function POST(req: Request) {
   const stripe = getStripe()
@@ -125,11 +140,10 @@ async function handleCheckoutSessionCompleted(
         if (tenantId) {
           try {
             // Get tenant profile
-            const { data: tenantProfile } = await supabase
-              .from("profiles")
-              .select("full_name, email")
-              .eq("id", tenantId)
-              .single()
+            const { data: tenantProfile } = await loadTenantProfile(
+              supabase,
+              tenantId
+            )
 
             if (tenantProfile?.email) {
               await sendEmailNotification({

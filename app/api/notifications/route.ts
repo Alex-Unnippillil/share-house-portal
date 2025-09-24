@@ -10,6 +10,7 @@ import {
   type InAppNotification,
   type NotificationData,
 } from "@/lib/notifications"
+import { singleFlight } from "@/lib/utils"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
 
@@ -19,6 +20,36 @@ const MAX_PAGE = 50
 const DEFAULT_RANGE_DAYS = 30
 const MAX_RANGE_DAYS = 90
 const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+interface NotificationsQueryContext {
+  supabase: SupabaseClient<Database>
+  userId: string
+  startIso: string
+  endIso: string
+  from: number
+  to: number
+}
+
+const loadNotificationsPage = (context: NotificationsQueryContext) =>
+  singleFlight(
+    [
+      "notifications",
+      context.userId,
+      context.startIso,
+      context.endIso,
+      context.from,
+      context.to,
+    ].join(":"),
+    () =>
+      context.supabase
+        .from("notifications")
+        .select("*", { count: "exact" })
+        .eq("user_id", context.userId)
+        .gte("created_at", context.startIso)
+        .lte("created_at", context.endIso)
+        .order("created_at", { ascending: false })
+        .range(context.from, context.to)
+  )
 
 const isoDateSchema = z
   .string()
@@ -181,14 +212,14 @@ export async function GET(request: NextRequest) {
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  const { data, error, count } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact" })
-    .eq("user_id", user.id)
-    .gte("created_at", normalizedStartDate.toISOString())
-    .lte("created_at", normalizedEndDate.toISOString())
-    .order("created_at", { ascending: false })
-    .range(from, to)
+  const { data, error, count } = await loadNotificationsPage({
+    supabase,
+    userId: user.id,
+    startIso: normalizedStartDate.toISOString(),
+    endIso: normalizedEndDate.toISOString(),
+    from,
+    to,
+  })
 
   if (error) {
     console.error("Failed to fetch notifications", {
