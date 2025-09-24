@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=7", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "share-house-portal-sdk"
+dynamic = ["version"]
+description = "Python SDK for the Share House Portal API."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "Share House Portal" }]
+keywords = ["share-house-portal", "sdk", "api"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent"
+]
+
+[project.urls]
+Homepage = "https://github.com/share-house-portal/share-house-portal"
+Repository = "https://github.com/share-house-portal/share-house-portal"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "no-local-version"
+tag_regex = "^api/v(?P<version>\\d+\\.\\d+\\.\\d+)$"
+fallback_version = "0.0.0"
