@@ -21,7 +21,11 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import { describeAutopayStatus } from "@/lib/payments/status"
 
-import { loadCatchUpBalances, loadReceiptHistory } from "./loaders"
+import {
+  loadCatchUpBalances,
+  loadReceiptHistory,
+  loadTenantBillingContext,
+} from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 
 
@@ -73,10 +77,10 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
-  const [catchUpBalances, receiptHistory] = await Promise.all([
+  const [catchUpBalances, receiptHistory, billingContext] = await Promise.all([
     loadCatchUpBalances(),
     loadReceiptHistory(),
-
+    loadTenantBillingContext(),
   ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
@@ -234,10 +238,13 @@ export default async function PaymentsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Pay with Stripe</CardTitle>
-              <CardDescription>Create a quick checkout or open Billing Portal</CardDescription>
+              <CardDescription>
+                Prefill checkout with your Roomsily plan or open the Billing Portal to manage
+                payment methods.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <StripeActions />
+              <StripeActions billingContext={billingContext} />
             </CardContent>
           </Card>
         </div>
