@@ -171,18 +171,81 @@ export type Database = {
         title: string
         description: string
         priority: 'low' | 'normal' | 'high' | 'urgent'
-        status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+        status:
+          | 'pending'
+          | 'triaged'
+          | 'scheduled'
+          | 'awaiting_vendor'
+          | 'in_progress'
+          | 'completed'
+          | 'cancelled'
+        triage_state: 'untriaged' | 'in_review' | 'escalated' | 'resolved'
+        triaged_by: string | null
+        triaged_at: string | null
+        triage_notes: string | null
         category: string | null
         location: string | null
         requested_by: string
         assigned_to: string | null
+        vendor_id: string | null
+        vendor_assigned_by: string | null
+        vendor_assigned_at: string | null
+        vendor_acknowledged_at: string | null
+        vendor_assignment_metadata: Json | null
         unit_id: string | null
         created_at: string | null
         updated_at: string | null
         completed_at: string | null
+        first_response_at: string | null
+        work_started_at: string | null
+        work_completed_at: string | null
+        sla_acknowledged_at: string | null
+        sla_response_due_at: string | null
+        sla_resolution_due_at: string | null
         notes: string | null
         attachments: Json | null
+        photo_attachments: Json | null
         metadata: Json | null
+      }>
+      maintenance_request_audit_log: SupabaseTable<{
+        id: string
+        request_id: string
+        previous_status:
+          | 'pending'
+          | 'triaged'
+          | 'scheduled'
+          | 'awaiting_vendor'
+          | 'in_progress'
+          | 'completed'
+          | 'cancelled'
+          | null
+        new_status:
+          | 'pending'
+          | 'triaged'
+          | 'scheduled'
+          | 'awaiting_vendor'
+          | 'in_progress'
+          | 'completed'
+          | 'cancelled'
+        event_type: string
+        changed_by: string | null
+        notes: string | null
+        proof: Json
+        metadata: Json | null
+        created_at: string | null
+      }>
+      maintenance_vendors: SupabaseTable<{
+        id: string
+        name: string
+        contact_name: string | null
+        contact_email: string | null
+        contact_phone: string | null
+        service_categories: string[] | null
+        active: boolean
+        preferred: boolean
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
       }>
       visitor_logs: SupabaseTable<{
         id: string

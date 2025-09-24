@@ -2,19 +2,25 @@ import SmartLink from "@/components/navigation/SmartLink"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { MaintenancePriority, MaintenanceStatus } from "@/lib/maintenance/types"
 import { getMaintenanceTickets } from "../data"
 import { Wrench } from "lucide-react"
 
-const statusLabels: Record<"scheduled" | "in_progress" | "awaiting_vendor", string> = {
+const statusLabels: Record<MaintenanceStatus, string> = {
+  pending: "Pending triage",
+  triaged: "Triaged",
+  awaiting_vendor: "Awaiting vendor",
   scheduled: "Scheduled",
   in_progress: "In progress",
-  awaiting_vendor: "Awaiting vendor",
+  completed: "Completed",
+  cancelled: "Cancelled",
 }
 
-const priorityVariants: Record<"low" | "medium" | "high", "outline" | "secondary" | "destructive" | "complete"> = {
+const priorityVariants: Record<MaintenancePriority, "outline" | "secondary" | "destructive" | "default"> = {
   low: "outline",
-  medium: "secondary",
-  high: "destructive",
+  normal: "secondary",
+  high: "default",
+  urgent: "destructive",
 }
 
 export async function MaintenanceOverviewCard() {
