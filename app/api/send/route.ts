@@ -1,7 +1,9 @@
 import { EmailTemplate } from "@/components/email-template";
 import { Resend } from 'resend';
 
-export async function POST() {
+import { timeExternal, withServerTiming } from '@/lib/server-timing';
+
+async function sendEmail() {
   const resendApiKey = process.env.RESEND_API_KEY;
 
   if (!resendApiKey) {
@@ -11,12 +13,14 @@ export async function POST() {
   const resend = new Resend(resendApiKey);
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'Acme <onboarding@resend.dev>',
-      to: ['delivered@resend.dev'],
-      subject: 'Hello world',
-      react: EmailTemplate({ firstName: 'John' }),
-    });
+    const { data, error } = await timeExternal('resend.emails.send', () =>
+      resend.emails.send({
+        from: 'Acme <onboarding@resend.dev>',
+        to: ['delivered@resend.dev'],
+        subject: 'Hello world',
+        react: EmailTemplate({ firstName: 'John' }),
+      }),
+    )
 
     if (error) {
       // Type guard to ensure 'error' is an Error object
@@ -38,3 +42,5 @@ export async function POST() {
     }
   }
 }
+
+export const POST = withServerTiming(sendEmail, 'api.send')

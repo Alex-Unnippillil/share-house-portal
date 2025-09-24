@@ -2,6 +2,8 @@ import { PaymentReceiptEmail } from '@/components/emails/payment-receipt';
 import { Resend } from 'resend';
 import { z } from 'zod';
 
+import { timeExternal, withServerTiming } from '@/lib/server-timing';
+
 const lineItemSchema = z.object({
   description: z.string().min(1, "Line item description is required."),
   quantity: z.number().positive().optional(),
@@ -27,7 +29,7 @@ const paymentReceiptSchema = z.object({
   sendCopyTo: z.array(z.string().email()).optional(),
 });
 
-export async function POST(request: Request) {
+async function postPaymentReceipt(request: Request) {
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
     return Response.json(
@@ -82,26 +84,30 @@ export async function POST(request: Request) {
   const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])];
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: fromAddress,
-      to: emailRecipients,
-      subject: `Receipt for payment ${paymentId}`,
-      react: PaymentReceiptEmail({
-        customerName,
-        paymentId,
-        amountPaid,
-        currency,
-        paymentDate: paymentDate ?? new Date(),
-        items,
-        businessName,
-        supportEmail,
-        billingAddress,
-        notes,
-        subtotalAmount,
-        taxAmount,
-        discountAmount,
-      }),
-    });
+    const { data, error } = await timeExternal(
+      'resend.emails.send',
+      () =>
+        resend.emails.send({
+          from: fromAddress,
+          to: emailRecipients,
+          subject: `Receipt for payment ${paymentId}`,
+          react: PaymentReceiptEmail({
+            customerName,
+            paymentId,
+            amountPaid,
+            currency,
+            paymentDate: paymentDate ?? new Date(),
+            items,
+            businessName,
+            supportEmail,
+            billingAddress,
+            notes,
+            subtotalAmount,
+            taxAmount,
+            discountAmount,
+          }),
+        })
+    )
 
     if (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -114,3 +120,5 @@ export async function POST(request: Request) {
     return Response.json({ error: message }, { status: 500 });
   }
 }
+
+export const POST = withServerTiming(postPaymentReceipt, 'api.payments.receipt')

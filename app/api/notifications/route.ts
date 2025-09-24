@@ -12,6 +12,7 @@ import {
 } from "@/lib/notifications"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
+import { timeDatabase, withServerTiming } from "@/lib/server-timing"
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -64,7 +65,7 @@ function getClientIp(request: NextRequest) {
   return request.headers.get("x-real-ip") ?? "unknown"
 }
 
-export async function GET(request: NextRequest) {
+async function listNotifications(request: NextRequest) {
   const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries())
   const validation = notificationsQuerySchema.safeParse(rawParams)
   const ipAddress = getClientIp(request)
@@ -163,7 +164,7 @@ export async function GET(request: NextRequest) {
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser()
+  } = await timeDatabase("supabase.auth.getUser", () => supabase.auth.getUser())
 
   if (userError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -181,14 +182,18 @@ export async function GET(request: NextRequest) {
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  const { data, error, count } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact" })
-    .eq("user_id", user.id)
-    .gte("created_at", normalizedStartDate.toISOString())
-    .lte("created_at", normalizedEndDate.toISOString())
-    .order("created_at", { ascending: false })
-    .range(from, to)
+  const { data, error, count } = await timeDatabase(
+    "notifications.select",
+    () =>
+      supabase
+        .from("notifications")
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id)
+        .gte("created_at", normalizedStartDate.toISOString())
+        .lte("created_at", normalizedEndDate.toISOString())
+        .order("created_at", { ascending: false })
+        .range(from, to)
+  )
 
   if (error) {
     console.error("Failed to fetch notifications", {
@@ -227,7 +232,7 @@ type NotificationRequest =
       notifications: (NotificationData | InAppNotification)[]
     }
 
-export async function POST(request: Request) {
+async function createNotification(request: Request) {
   try {
     const payload = (await request.json()) as NotificationRequest
 
@@ -269,3 +274,6 @@ export async function POST(request: Request) {
     )
   }
 }
+
+export const GET = withServerTiming(listNotifications, "api.notifications.list")
+export const POST = withServerTiming(createNotification, "api.notifications.write")

@@ -25,6 +25,13 @@ This playbook documents how Roomsily measures and protects critical experience-l
 | Stripe Payments Overview | Checkout conversion, webhook failures | <https://dashboard.stripe.com/live/payments>
 | Statuspage (Public) | External communication for incidents | <https://status.roomsily.com>
 
+## API Performance Instrumentation
+
+- All handlers under `app/api/**` are wrapped with a `withServerTiming` middleware that records request lifetimes and emits a `Server-Timing` header for downstream observability tools.
+- Use `timeDatabase(label, fn)` around Supabase queries and `timeExternal(label, fn)` around third-party SDK calls (Stripe, Resend, etc.) to capture per-operation metrics. Labels surface in the response header and map directly to Datadog spans.
+- Integration tests in `tests/server-timing.test.ts` ensure headers remain present for representative endpoints and that external call instrumentation stays connected.
+- Export new handlers as `withServerTiming(handler, 'api.your-scope')` to keep instrumentation consistent without extra boilerplate.
+
 ## Alert Channels
 | Trigger | Channel | Notes |
 | --- | --- | --- |

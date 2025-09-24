@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server"
 import { getStripe, getAppBaseUrl } from "@/lib/stripe"
 
-export async function POST(req: NextRequest) {
+import { timeExternal, withServerTiming } from "@/lib/server-timing"
+
+async function createBillingPortalSession(req: NextRequest) {
   try {
     const stripe = getStripe()
     const { customerId } = await req.json()
@@ -9,15 +11,24 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "customerId is required" }, { status: 400 })
     }
     const returnUrl = getAppBaseUrl() + "/payments"
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl,
-    })
+    const session = await timeExternal(
+      "stripe.billingPortal.sessions.create",
+      () =>
+        stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: returnUrl,
+        })
+    )
     return Response.json({ url: session.url })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error"
     return Response.json({ error: message }, { status: 500 })
   }
 }
+
+export const POST = withServerTiming(
+  createBillingPortalSession,
+  "api.stripe.billingPortal"
+)
 
 
