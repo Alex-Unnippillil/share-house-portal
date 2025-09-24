@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roomsily.com/events/rent-payment-recorded.v1.0.0.json",
+  "title": "Rent Payment Recorded (v1.0.0)",
+  "description": "Domain event emitted when a tenant payment is posted and receipt notifications are triggered.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "const": "rent.payment.recorded",
+      "description": "Stable identifier for the rent payment recorded event."
+    },
+    "version": {
+      "const": "1.0.0",
+      "description": "Schema semantic version."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the payment was recorded in the ledger."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant",
+        "amount",
+        "description",
+        "paymentDate"
+      ],
+      "properties": {
+        "paymentId": {
+          "type": ["string", "null"],
+          "description": "Identifier for the payment transaction when available."
+        },
+        "tenant": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identifier for the tenant charged for the payment."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Display name for the tenant."
+            },
+            "email": {
+              "type": ["string", "null"],
+              "format": "email",
+              "description": "Tenant email address for receipts."
+            }
+          }
+        },
+        "amount": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["currency", "value"],
+          "properties": {
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$",
+              "description": "ISO 4217 currency code for the payment."
+            },
+            "value": {
+              "type": "number",
+              "description": "Payment amount stored as a decimal number."
+            }
+          }
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Description displayed on the receipt (e.g., rent period)."
+        },
+        "paymentDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp representing when the payment cleared."
+        }
+      }
+    }
+  },
+  "required": ["event", "version", "occurredAt", "payload"]
+}

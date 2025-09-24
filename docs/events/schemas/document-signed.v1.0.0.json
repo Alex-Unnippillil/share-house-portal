@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roomsily.com/events/document-signed.v1.0.0.json",
+  "title": "Document Signed (v1.0.0)",
+  "description": "Domain event emitted when a tenant completes a Documenso signing workflow.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "const": "document.signed",
+      "description": "Stable identifier for the document signed event."
+    },
+    "version": {
+      "const": "1.0.0",
+      "description": "Schema semantic version."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the document was signed."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentTitle", "signer", "signedAt"],
+      "properties": {
+        "documentId": {
+          "type": ["string", "null"],
+          "description": "Identifier for the document envelope when supplied by Documenso."
+        },
+        "documentTitle": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human readable document title."
+        },
+        "signer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identifier for the signer (tenant or property manager)."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Display name of the signer."
+            },
+            "email": {
+              "type": ["string", "null"],
+              "format": "email",
+              "description": "Signer email address used for notifications."
+            }
+          }
+        },
+        "signedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp provided by Documenso when signing completed."
+        }
+      }
+    }
+  },
+  "required": ["event", "version", "occurredAt", "payload"]
+}

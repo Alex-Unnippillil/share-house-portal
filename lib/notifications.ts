@@ -1,5 +1,7 @@
 "use server"
 
+import { assertValidDomainEvent } from "@/lib/domain-events/registry"
+import type { DomainEventEnvelope } from "@/lib/domain-events/types"
 import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
 
@@ -9,6 +11,7 @@ export interface NotificationData {
   template: string
   data?: Record<string, any>
   userId?: string
+  event?: DomainEventEnvelope
 }
 
 export interface InAppNotification {
@@ -18,6 +21,7 @@ export interface InAppNotification {
   type: "info" | "success" | "warning" | "error"
   actionUrl?: string
   metadata?: Record<string, any>
+  event?: DomainEventEnvelope
 }
 
 class NotificationService {
@@ -39,6 +43,10 @@ class NotificationService {
     }
 
     try {
+      if (notification.event) {
+        assertValidDomainEvent(notification.event)
+      }
+
       const recipients = Array.isArray(notification.to)
         ? notification.to
         : [notification.to]
@@ -88,6 +96,10 @@ class NotificationService {
 
   async sendInAppNotification(notification: InAppNotification) {
     try {
+      if (notification.event) {
+        assertValidDomainEvent(notification.event)
+      }
+
       const supabase = await createSupbaseServerClient()
 
       const { data, error } = await (supabase as any)

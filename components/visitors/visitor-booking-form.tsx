@@ -109,19 +109,31 @@ export function VisitorBookingForm() {
 
       // Send notifications
       await notifyVisitorBooking({
-        guestName: data.guestName,
-        hostName: profile.full_name || user.email || 'Unknown',
-        checkInDate: format(data.checkInDate, 'MMM dd, yyyy'),
-        checkOutDate: format(data.checkOutDate, 'MMM dd, yyyy'),
+        bookingId: booking.id,
+        occurredAt: booking.created_at ?? new Date().toISOString(),
+        guest: {
+          name: data.guestName,
+          email: data.guestEmail,
+          phone: data.guestPhone || null,
+        },
+        host: {
+          id: user.id,
+          name: profile.full_name || user.email || 'Unknown',
+          email: user.email ?? null,
+        },
+        stay: {
+          checkInDate: data.checkInDate.toISOString(),
+          checkOutDate: data.checkOutDate.toISOString(),
+        },
         purpose: data.purpose,
         roommates: roommates.map(r => ({
           id: r.id,
-          email: r.email || '',
+          email: r.email || null,
           name: r.full_name || r.email || 'Unknown',
         })),
         propertyManager: {
           id: propertyManager.id,
-          email: propertyManager.email || '',
+          email: propertyManager.email || null,
           name: propertyManager.full_name || propertyManager.email || 'Unknown',
         },
       });
