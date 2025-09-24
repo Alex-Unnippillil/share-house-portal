@@ -49,6 +49,7 @@
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
     "date-fns": "^3.3.1",
+    "fast-xml-parser": "^5.2.5",
     "framer-motion": "^10.18.0",
     "gaxios": "^6.7.1",
     "google-auth-library": "^9.15.1",

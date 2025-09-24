@@ -156,6 +156,26 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      saml_identity_providers: SupabaseTable<{
+        id: string
+        tenant_id: string
+        entity_id: string
+        sso_url: string
+        slo_url: string | null
+        certificate: string | null
+        metadata_xml: string
+        metadata_url: string | null
+        default_role:
+          | 'tenant'
+          | 'roommate'
+          | 'property_manager'
+          | 'admin'
+          | 'user'
+        attribute_mapping: Json
+        last_fetched_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       inquiries: SupabaseTable<{
         id: string
         name: string
