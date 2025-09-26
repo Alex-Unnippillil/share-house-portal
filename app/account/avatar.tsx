@@ -70,6 +70,9 @@ export default function Avatar({
           height={size}
           src={avatarUrl}
           alt="Avatar"
+          sizes={`${size}px`}
+          placeholder="empty"
+          unoptimized={avatarUrl.startsWith("blob:")}
           className="relative flex size-10 shrink-0 overflow-hidden rounded-full"
           style={{ height: size, width: size }}
         />
