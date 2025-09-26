@@ -30,5 +30,30 @@ module.exports = {
         files: ["*.ts", "*.tsx"],
         parser: "@typescript-eslint/parser",
       },
+      {
+        files: [
+          "app/**/*/actions/**/*.{ts,tsx}",
+          "app/**/*/actions.{ts,tsx}",
+          "app/**/*/loaders.{ts,tsx}",
+          "lib/google-auth.ts",
+          "lib/encryption.ts",
+          "lib/notifications.ts",
+          "utils/actions/**/*.{ts,tsx}",
+        ],
+        rules: {
+          "no-restricted-globals": [
+            "error",
+            {
+              name: "window",
+              message:
+                "`window` is not available in server environments. Use cookies or headers with Supabase server clients instead.",
+            },
+            {
+              name: "document",
+              message: "`document` is not available in server environments.",
+            },
+          ],
+        },
+      },
     ],
   }
