@@ -258,6 +258,37 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      messages: SupabaseTable<{
+        id: string
+        thread_id: string
+        author_id: string | null
+        author_name: string | null
+        author_role: string | null
+        author_initials: string | null
+        author_accent: string | null
+        content: Json | null
+        attachments: Json | null
+        poll: Json | null
+        reactions: Json | null
+        created_at: string
+        updated_at: string | null
+      }>
+      threads: SupabaseTable<{
+        id: string
+        title: string
+        summary: string | null
+        category: string
+        activity: string | null
+        last_message_at: string | null
+        unread_count: number | null
+        participants_count: number | null
+        attachments_count: number | null
+        reactions: Json | null
+        pinned: boolean | null
+        owner_name: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
     }
     Views: Record<string, never>
     Functions: {
