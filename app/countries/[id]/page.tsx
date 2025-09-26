@@ -1,28 +1,21 @@
-'use client'
+import { notFound } from 'next/navigation'
 
-import useSupabaseBrowser from '@/utils/supabase-browser'
-import { getCountryById } from '@/queries/country-by-id'
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
+import CountryPageClient from './client-page'
 
-export default function CountryPage({ params }: { params: { id: number } }) {
-  const supabase = useSupabaseBrowser()
-  const {
-    data: country,
-    isLoading,
-    isError,
-  } = useQuery(getCountryById(supabase, params.id))
+export const revalidate = 0
 
-  if (isLoading) {
-    return <div>Loading...</div>
+type CountryPageProps = {
+  params: {
+    id: string
+  }
+}
+
+export default function CountryPage({ params }: CountryPageProps) {
+  const id = Number(params.id)
+
+  if (Number.isNaN(id)) {
+    notFound()
   }
 
-  if (isError || !country) {
-    return <div>Error</div>
-  }
-
-  return (
-    <div>
-      <h1>{country.name}</h1>
-    </div>
-  )
+  return <CountryPageClient id={id} />
 }

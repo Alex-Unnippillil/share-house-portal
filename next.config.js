@@ -62,6 +62,20 @@ const securityHeaders = [
   },
 ]
 
+const assetCacheHeaders = [
+  {
+    key: 'Cache-Control',
+    value: 'public, max-age=31536000, immutable',
+  },
+]
+
+const apiGetCacheHeaders = [
+  {
+    key: 'Cache-Control',
+    value: 'private, max-age=0, must-revalidate',
+  },
+]
+
 const nextConfig = {
   webpack: config => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
@@ -119,14 +133,29 @@ const nextConfig = {
       },
     ],
   },
-   async headers() {
-      return [
-        {
-          source: '/(.*)',
-          headers: securityHeaders,
-        },
-      ]
-    },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+      {
+        source: '/assets/:path*',
+        headers: assetCacheHeaders,
+      },
+      {
+        source: '/api/:path*',
+        headers: apiGetCacheHeaders,
+        has: [
+          {
+            type: 'header',
+            key: 'accept',
+            value: 'application/json',
+          },
+        ],
+      },
+    ]
+  },
 
 
    pageExtensions: ['ts', 'tsx', 'mdx', 'js', 'jsx', 'rs'],
