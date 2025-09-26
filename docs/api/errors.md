@@ -22,8 +22,15 @@ links back to this reference so clients can easily look up remediation steps.
 
 - **HTTP status**: 401
 - **Default message**: You must be signed in to access this resource.
-- **When it occurs**: Returned when an authenticated session cannot be established or when the current user does not have permission to perform the requested action.
+- **When it occurs**: Returned when an authenticated session cannot be established for the current request.
 - **Typical fixes**: Re-authenticate the user and ensure the Supabase session cookies are present before retrying.
+
+## AUTH_FORBIDDEN
+
+- **HTTP status**: 403
+- **Default message**: You do not have permission to access this resource.
+- **When it occurs**: Triggered when the user is signed in but attempts to act on data they do not own or that belongs to another tenant.
+- **Typical fixes**: Verify that the authenticated user is authorised for the requested tenant scope and adjust the request or permissions accordingly.
 
 ## REQUEST_VALIDATION_ERROR
 

@@ -5,6 +5,10 @@ export const ERROR_CATALOG = {
     httpStatus: 401,
     message: "You must be signed in to access this resource.",
   },
+  AUTH_FORBIDDEN: {
+    httpStatus: 403,
+    message: "You do not have permission to access this resource.",
+  },
   REQUEST_VALIDATION_ERROR: {
     httpStatus: 400,
     message: "The request parameters were invalid.",
