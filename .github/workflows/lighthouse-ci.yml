@@ -19,14 +19,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Read pnpm version
+        id: pnpm-version
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const fs = require('fs');
+          const line = fs
+            .readFileSync('.npmrc', 'utf8')
+            .split(/\r?\n/)
+            .find((entry) => entry.startsWith('packageManager='));
+          if (!line) {
+            throw new Error('packageManager entry is missing from .npmrc');
+          }
+          const version = line.split('=')[1];
+          process.stdout.write(`version=${version}`);
+          NODE
+
       - uses: pnpm/action-setup@v4
         with:
-          version: 8
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: pnpm
+          version: ${{ steps.pnpm-version.outputs.version }}
+          run_install: false
 
       - name: Validate preview URL
         run: |
