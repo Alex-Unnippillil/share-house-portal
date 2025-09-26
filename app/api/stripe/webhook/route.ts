@@ -8,13 +8,14 @@ import {
 import { jsonError } from "@/lib/errors"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { getLogger, setLogContext, withRequestLogging } from "@/lib/logger"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Supabase admin credentials are not configured")
+    getLogger().error("Supabase admin credentials are not configured")
     return null
   }
 
@@ -26,12 +27,14 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   })
 }
 
-export async function POST(req: Request) {
+export const POST = withRequestLogging(async (req: Request) => {
+  let logger = getLogger()
   const stripe = getStripe()
   const signature = (await headers()).get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
+    logger.error("Stripe webhook secret is not configured")
     return jsonError("CONFIGURATION_ERROR", {
       message: "Stripe webhook secret is not configured",
     })
@@ -70,14 +73,17 @@ export async function POST(req: Request) {
         await handleSubscriptionDeleted(supabase, event.data.object)
         break
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        logger.info(
+          { eventType: event.type },
+          "Unhandled Stripe webhook event"
+        )
         break
     }
 
     return new Response("ok", { status: 200 })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid payload"
-    console.error("Webhook error:", message)
+    logger.error({ error: err, message }, "Stripe webhook processing error")
     const lowerMessage = message.toLowerCase()
     if (lowerMessage.includes("signature")) {
       return jsonError("REQUEST_VALIDATION_ERROR", {
@@ -90,12 +96,14 @@ export async function POST(req: Request) {
       message,
     })
   }
-}
+})
 
 async function handleCheckoutSessionCompleted(
   supabase: SupabaseClient<Database>,
   session: any
 ) {
+  let logger = getLogger()
+
   try {
     // Retrieve the full session with line items
     const stripe = getStripe()
@@ -110,6 +118,11 @@ async function handleCheckoutSessionCompleted(
         // Extract tenant and unit info from metadata if available
         const tenantId = fullSession.metadata?.tenant_id
         const unitId = fullSession.metadata?.unit_id
+
+        if (tenantId) {
+          setLogContext({ userId: tenantId })
+          logger = getLogger()
+        }
 
         const paymentData: TablesInsert<'rent_payments'> = {
           user_id: tenantId || "00000000-0000-0000-0000-000000000000", // Use tenant_id as user_id, or a default UUID
@@ -172,9 +185,9 @@ async function handleCheckoutSessionCompleted(
               })
             }
           } catch (notificationError) {
-            console.error(
-              "Failed to send payment notification:",
-              notificationError
+            logger.error(
+              { error: notificationError, tenantId },
+              "Failed to send payment notification"
             )
             // Don't fail the webhook for notification errors
           }
@@ -185,7 +198,10 @@ async function handleCheckoutSessionCompleted(
     // For subscriptions, the subscription will be created separately
     // We might want to link the checkout session to the subscription here
   } catch (error) {
-    console.error("Error handling checkout session completed:", error)
+    logger.error(
+      { error, sessionId: session?.id },
+      "Error handling checkout session completed"
+    )
     throw error
   }
 }
@@ -194,6 +210,8 @@ async function handleInvoicePaymentSucceeded(
   supabase: SupabaseClient<Database>,
   invoice: any
 ) {
+  let logger = getLogger()
+
   try {
     const stripe = getStripe()
 
@@ -205,6 +223,11 @@ async function handleInvoicePaymentSucceeded(
     const subscription = fullInvoice.subscription as any
 
     if (subscription) {
+      const tenantId = subscription.metadata?.tenant_id as string | undefined
+      if (tenantId) {
+        setLogContext({ userId: tenantId })
+        logger = getLogger()
+      }
       // This is a subscription payment
       const amount = invoice.amount_paid / 100 // Convert from cents
 
@@ -258,7 +281,10 @@ async function handleInvoicePaymentSucceeded(
         .eq("stripe_subscription_id", subscription.id)
     }
   } catch (error) {
-    console.error("Error handling invoice payment succeeded:", error)
+    logger.error(
+      { error, invoiceId: invoice?.id },
+      "Error handling invoice payment succeeded"
+    )
     throw error
   }
 }
@@ -267,9 +293,17 @@ async function handleSubscriptionCreated(
   supabase: SupabaseClient<Database>,
   subscription: any
 ) {
+  let logger = getLogger()
+
   try {
     // This handles when a subscription is first created
     const price = subscription.items.data[0]?.price
+
+    const tenantId = subscription.metadata?.tenant_id as string | undefined
+    if (tenantId) {
+      setLogContext({ userId: tenantId })
+      logger = getLogger()
+    }
 
     await supabase.from("subscriptions").insert({
       user_id:
@@ -293,7 +327,10 @@ async function handleSubscriptionCreated(
       },
     })
   } catch (error) {
-    console.error("Error handling subscription created:", error)
+    logger.error(
+      { error, subscriptionId: subscription?.id },
+      "Error handling subscription created"
+    )
     throw error
   }
 }
@@ -302,7 +339,14 @@ async function handleSubscriptionUpdated(
   supabase: SupabaseClient<Database>,
   subscription: any
 ) {
+  let logger = getLogger()
+
   try {
+    const tenantId = subscription.metadata?.tenant_id as string | undefined
+    if (tenantId) {
+      setLogContext({ userId: tenantId })
+      logger = getLogger()
+    }
     await supabase
       .from("subscriptions")
       .update({
@@ -317,7 +361,10 @@ async function handleSubscriptionUpdated(
       })
       .eq("stripe_subscription_id", subscription.id)
   } catch (error) {
-    console.error("Error handling subscription updated:", error)
+    logger.error(
+      { error, subscriptionId: subscription?.id },
+      "Error handling subscription updated"
+    )
     throw error
   }
 }
@@ -326,7 +373,14 @@ async function handleSubscriptionDeleted(
   supabase: SupabaseClient<Database>,
   subscription: any
 ) {
+  let logger = getLogger()
+
   try {
+    const tenantId = subscription.metadata?.tenant_id as string | undefined
+    if (tenantId) {
+      setLogContext({ userId: tenantId })
+      logger = getLogger()
+    }
     await supabase
       .from("subscriptions")
       .update({
@@ -337,10 +391,11 @@ async function handleSubscriptionDeleted(
       })
       .eq("stripe_subscription_id", subscription.id)
   } catch (error) {
-    console.error("Error handling subscription deleted:", error)
+    logger.error(
+      { error, subscriptionId: subscription?.id },
+      "Error handling subscription deleted"
+    )
     throw error
   }
 }
 
-// Export runtime config for edge runtime
-export const runtime = "edge"

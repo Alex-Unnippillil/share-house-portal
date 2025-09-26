@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
+import { getLogger, setLogContext, withRequestLogging } from "@/lib/logger"
 import {
   sendBulkNotifications,
   sendEmailNotification,
@@ -65,18 +66,22 @@ function getClientIp(request: NextRequest) {
   return request.headers.get("x-real-ip") ?? "unknown"
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withRequestLogging(async (request: NextRequest) => {
+  let logger = getLogger()
   const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries())
   const validation = notificationsQuerySchema.safeParse(rawParams)
   const ipAddress = getClientIp(request)
 
   if (!validation.success) {
-    console.warn("Notifications query validation failed", {
-      ipAddress,
-      userAgent: request.headers.get("user-agent") ?? "unknown",
-      params: rawParams,
-      issues: validation.error.issues,
-    })
+    logger.warn(
+      {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") ?? "unknown",
+        params: rawParams,
+        issues: validation.error.issues,
+      },
+      "Notifications query validation failed"
+    )
 
     return jsonError("REQUEST_VALIDATION_ERROR", {
       message: "Invalid query parameters",
@@ -98,11 +103,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (startDate && startDate > normalizedEndDate) {
-    console.warn("Notifications query startDate after endDate", {
-      ipAddress,
-      userAgent: request.headers.get("user-agent") ?? "unknown",
-      params: rawParams,
-    })
+    logger.warn(
+      {
+        ipAddress,
+        userAgent: request.headers.get("user-agent") ?? "unknown",
+        params: rawParams,
+      },
+      "Notifications query startDate after endDate"
+    )
 
     return jsonError("REQUEST_VALIDATION_ERROR", {
       message: "startDate must be before or equal to endDate",
@@ -166,13 +174,19 @@ export async function GET(request: NextRequest) {
     return jsonError("AUTH_UNAUTHORIZED")
   }
 
+  setLogContext({ userId: user.id })
+  logger = getLogger()
+
   if (suspiciousSignals.length > 0) {
-    console.warn("Notifications query parameters adjusted", {
-      userId: user.id,
-      ipAddress,
-      userAgent: request.headers.get("user-agent") ?? "unknown",
-      adjustments: suspiciousSignals,
-    })
+    logger.warn(
+      {
+        userId: user.id,
+        ipAddress,
+        userAgent: request.headers.get("user-agent") ?? "unknown",
+        adjustments: suspiciousSignals,
+      },
+      "Notifications query parameters adjusted"
+    )
   }
 
   const from = (page - 1) * limit
@@ -188,11 +202,14 @@ export async function GET(request: NextRequest) {
     .range(from, to)
 
   if (error) {
-    console.error("Failed to fetch notifications", {
-      userId: user.id,
-      ipAddress,
-      error: error.message,
-    })
+    logger.error(
+      {
+        userId: user.id,
+        ipAddress,
+        error: error.message,
+      },
+      "Failed to fetch notifications"
+    )
 
     return jsonError("DATA_FETCH_FAILED", {
       message: "Failed to fetch notifications",
@@ -214,7 +231,7 @@ export async function GET(request: NextRequest) {
       endDate: normalizedEndDate.toISOString(),
     },
   })
-}
+})
 
 type NotificationRequest =
   | { type: "email"; notification: NotificationData }
@@ -224,7 +241,9 @@ type NotificationRequest =
       notifications: (NotificationData | InAppNotification)[]
     }
 
-export async function POST(request: Request) {
+export const POST = withRequestLogging(async (request: Request) => {
+  const logger = getLogger()
+
   try {
     const payload = (await request.json()) as NotificationRequest
 
@@ -270,7 +289,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (error) {
-    console.error("Notification API error:", error)
+    logger.error({ error }, "Notification API error")
     return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
   }
-}
+})
