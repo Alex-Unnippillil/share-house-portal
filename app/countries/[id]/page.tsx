@@ -1,28 +1,31 @@
-'use client'
+import { HydrationBoundary, QueryClient, dehydrate } from '@tanstack/react-query'
+import { cookies } from 'next/headers'
+import { notFound } from 'next/navigation'
 
-import useSupabaseBrowser from '@/utils/supabase-browser'
+import CountryClient from './country-client'
 import { getCountryById } from '@/queries/country-by-id'
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
+import { createClient } from '@/utils/supa-server-actions'
 
-export default function CountryPage({ params }: { params: { id: number } }) {
-  const supabase = useSupabaseBrowser()
-  const {
-    data: country,
-    isLoading,
-    isError,
-  } = useQuery(getCountryById(supabase, params.id))
+export default async function CountryPage({
+  params,
+}: {
+  params: { id: string }
+}) {
+  const countryId = Number(params.id)
+  const queryClient = new QueryClient()
 
-  if (isLoading) {
-    return <div>Loading...</div>
+  if (!Number.isFinite(countryId)) {
+    notFound()
   }
 
-  if (isError || !country) {
-    return <div>Error</div>
-  }
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
+
+  await queryClient.prefetchQuery(getCountryById(supabase, countryId))
 
   return (
-    <div>
-      <h1>{country.name}</h1>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <CountryClient id={countryId} />
+    </HydrationBoundary>
   )
 }
