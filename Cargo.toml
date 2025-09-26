@@ -16,7 +16,11 @@ vercel_runtime = { version = "1" }
 # Each handler has to be specified as [[bin]]
 [[bin]]
 name = "handler"
-path = "api/handler.rs"
+path = "app/api/handler.rs"
+
+[[bin]]
+name = "ping"
+path = "app/api/ping/route.rs"
 
 # Note that you need to provide unique names for each binary:
 # [[bin]]

@@ -101,6 +101,17 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
+### Rust serverless routes
+
+Rust-backed API handlers (such as `/api/ping`) live under `app/api/**/route.rs` and are built with the Vercel Rust runtime. To work on them locally:
+
+1. Install the [Rust toolchain](https://rustup.rs/) (version 1.76 or newer).
+2. From the repository root, build the binaries with `cargo build --bin <name>` (for example, `cargo build --bin ping`).
+3. Run unit tests with `cargo test` to exercise the handlers without deploying to Vercel.
+4. When iterating on responses, you can invoke the compiled binary locally using `cargo run --bin ping` and piping an HTTP request payload via `stdin`.
+
+Vercel will automatically compile these binaries during deployment using the configuration in `vercel.json`.
+
 ### Stripe Configuration
 
 1. Create products and prices in your Stripe dashboard
