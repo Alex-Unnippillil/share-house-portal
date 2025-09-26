@@ -4,11 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
 import {
-  sendBulkNotifications,
-  sendEmailNotification,
-  sendInAppNotification,
+  notificationService,
+  type EmailNotification,
   type InAppNotification,
-  type NotificationData,
 } from "@/lib/notifications"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import type { Database } from "@/lib/supabase"
@@ -217,11 +215,11 @@ export async function GET(request: NextRequest) {
 }
 
 type NotificationRequest =
-  | { type: "email"; notification: NotificationData }
+  | { type: "email"; notification: EmailNotification }
   | { type: "in-app"; notification: InAppNotification }
   | {
       type: "bulk"
-      notifications: (NotificationData | InAppNotification)[]
+      notifications: (EmailNotification | InAppNotification)[]
     }
 
 export async function POST(request: Request) {
@@ -230,7 +228,9 @@ export async function POST(request: Request) {
 
     switch (payload.type) {
       case "email": {
-        const result = await sendEmailNotification(payload.notification)
+        const result = await notificationService.sendEmail(
+          payload.notification
+        )
         if (!result.success) {
           return jsonError("UPSTREAM_SERVICE_ERROR", {
             message: result.error ?? "Failed to send email notification",
@@ -241,7 +241,9 @@ export async function POST(request: Request) {
         return NextResponse.json(result)
       }
       case "in-app": {
-        const result = await sendInAppNotification(payload.notification)
+        const result = await notificationService.sendInApp(
+          payload.notification
+        )
         if (!result.success) {
           return jsonError("DATA_FETCH_FAILED", {
             message:
@@ -252,16 +254,17 @@ export async function POST(request: Request) {
         return NextResponse.json(result)
       }
       case "bulk": {
-        const results = await sendBulkNotifications(payload.notifications)
-        const success = results.every((entry) => entry.success)
-        if (!success) {
+        const batchResult = await notificationService.sendBulk(
+          payload.notifications
+        )
+        if (!batchResult.success) {
           return jsonError("UPSTREAM_SERVICE_ERROR", {
             message: "One or more notifications failed to send",
-            details: { results },
+            details: batchResult,
           })
         }
 
-        return NextResponse.json({ success, results })
+        return NextResponse.json(batchResult)
       }
       default: {
         return jsonError("REQUEST_VALIDATION_ERROR", {
