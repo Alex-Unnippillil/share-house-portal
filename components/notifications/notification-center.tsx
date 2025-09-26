@@ -21,36 +21,62 @@ interface Notification {
   created_at: string;
 }
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 50;
+
+interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number | null;
+}
+
 export function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [, setPagination] = useState<PaginationState>({
+    page: DEFAULT_PAGE,
+    pageSize: DEFAULT_PAGE_SIZE,
+    total: null,
+  });
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await (supabase as any)
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+  const fetchNotifications = useCallback(
+    async (pageToLoad: number, pageSize: number = DEFAULT_PAGE_SIZE) => {
+      setLoading(true);
+      try {
+        const from = (pageToLoad - 1) * pageSize;
+        const to = from + pageSize - 1;
+        const { data, error, count } = await (supabase as any)
+          .from('notifications')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+        const items = (data as Notification[] | null) ?? [];
+
+        setNotifications(items);
+        setUnreadCount(items.filter(n => !n.read).length);
+        setPagination({
+          page: pageToLoad,
+          pageSize,
+          total: typeof count === 'number' ? count : null,
+        });
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase]
+  );
 
   useEffect(() => {
-    fetchNotifications();
+    fetchNotifications(DEFAULT_PAGE);
 
     // Subscribe to real-time notifications
     const channel = supabase
@@ -64,8 +90,15 @@ export function NotificationCenter() {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
+          setNotifications(prev => {
+            const next = [newNotification, ...prev];
+            return next.slice(0, DEFAULT_PAGE_SIZE);
+          });
           setUnreadCount(prev => prev + 1);
+          setPagination(prev => ({
+            ...prev,
+            total: prev.total === null ? null : prev.total + 1,
+          }));
 
           // Show toast for new notification
           toast({
