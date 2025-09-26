@@ -3,7 +3,53 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { apiRateLimiter } from '@/lib/rate-limit'
+
+function getClientAddress(request: NextRequest): string {
+  const forwardedFor = request.headers.get('x-forwarded-for')
+
+  if (forwardedFor) {
+    const [client] = forwardedFor.split(',')
+    if (client) {
+      return client.trim()
+    }
+  }
+
+  if (request.ip) {
+    return request.ip
+  }
+
+  return '127.0.0.1'
+}
+
+function handleApiRateLimiting(request: NextRequest) {
+  const client = getClientAddress(request)
+  const key = `${client}:${request.nextUrl.pathname}`
+  const result = apiRateLimiter.consume(key)
+
+  if (result.success) {
+    return NextResponse.next()
+  }
+
+  const response = NextResponse.json(
+    {
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many requests, please try again later.',
+      },
+    },
+    { status: 429 }
+  )
+
+  response.headers.set('Retry-After', result.retryAfter.toString())
+  return response
+}
+
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith('/api')) {
+    return handleApiRateLimiting(request)
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -63,6 +109,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/api/:path*',
     /*
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
