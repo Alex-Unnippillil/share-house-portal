@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
+import { saveRefreshToken } from "@/lib/refresh-tokens"
 import { createClient } from "@/utils/supa-server-actions"
 
 const DEFAULT_REDIRECT_PATH = "/"
@@ -32,14 +33,12 @@ export async function GET(request: Request) {
       })
     }
 
-    const { error: tokenError } = await supabase
-      .from("user_tokens")
-      .upsert({ user_id: user.id, refresh_token: refreshToken })
-
-    if (tokenError) {
+    try {
+      await saveRefreshToken(supabase, user.id, refreshToken)
+    } catch (error) {
       return jsonError("DATA_FETCH_FAILED", {
         message: "Failed to persist refresh token",
-        details: { reason: tokenError.message },
+        details: { reason: error instanceof Error ? error.message : String(error) },
       })
     }
 
