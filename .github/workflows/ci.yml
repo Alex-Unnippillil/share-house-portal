@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  supabase-migrations:
+    name: Validate Supabase migrations
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_CLI_VERSION: 2.45.5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Cache Supabase CLI
+        id: cache-supabase-cli
+        uses: actions/cache@v4
+        with:
+          path: "~/.cache/supabase-cli/${{ env.SUPABASE_CLI_VERSION }}"
+          key: supabase-cli-${{ runner.os }}-${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Install Supabase CLI
+        if: steps.cache-supabase-cli.outputs.cache-hit != 'true'
+        env:
+          SUPABASE_CLI_VERSION: ${{ env.SUPABASE_CLI_VERSION }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.cache/supabase-cli/${SUPABASE_CLI_VERSION}"
+          curl -sSfL "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C "$HOME/.cache/supabase-cli/${SUPABASE_CLI_VERSION}"
+          chmod +x "$HOME/.cache/supabase-cli/${SUPABASE_CLI_VERSION}/supabase"
+
+      - name: Add Supabase CLI to PATH
+        env:
+          SUPABASE_CLI_VERSION: ${{ env.SUPABASE_CLI_VERSION }}
+        run: echo "$HOME/.cache/supabase-cli/${SUPABASE_CLI_VERSION}" >> "$GITHUB_PATH"
+
+      - name: Verify Supabase CLI installation
+        run: supabase --version
+
+      - name: Run Supabase migrations
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/supabase
+          supabase --non-interactive db reset --local 2>&1 | tee artifacts/supabase/db-reset.log
+          supabase --non-interactive db push 2>&1 | tee artifacts/supabase/db-push.log
+          supabase --non-interactive db diff --local 2>&1 | tee artifacts/supabase/db-diff.log
+
+      - name: Upload Supabase migration logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-migration-logs
+          path: artifacts/supabase
+          if-no-files-found: warn
