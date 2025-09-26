@@ -45,6 +45,7 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 - **Documents**: Documenso for digital signatures
 - **UI**: Tailwind CSS + shadcn/ui components
 - **Deployment**: Vercel
+- **Rust**: Not currently part of the deployed stack; API routes should be implemented with Next.js/TypeScript.
 
 ## Getting Started
 
