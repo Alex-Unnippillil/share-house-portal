@@ -1,5 +1,5 @@
 -- Create inquiries table for contact form submissions
-CREATE TABLE public.inquiries (
+CREATE TABLE IF NOT EXISTS public.inquiries (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -11,9 +11,9 @@ CREATE TABLE public.inquiries (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_inquiries_email ON public.inquiries(email);
-CREATE INDEX idx_inquiries_status ON public.inquiries(status);
-CREATE INDEX idx_inquiries_created_at ON public.inquiries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_inquiries_email ON public.inquiries(email);
+CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries(status);
+CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON public.inquiries(created_at DESC);
 
 -- Enable RLS
 ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;

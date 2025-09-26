@@ -1,5 +1,5 @@
 -- Create rent_payments table for tracking rent payments
-CREATE TABLE public.rent_payments (
+CREATE TABLE IF NOT EXISTS public.rent_payments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   stripe_payment_intent_id TEXT UNIQUE,
@@ -16,7 +16,7 @@ CREATE TABLE public.rent_payments (
 );
 
 -- Create subscriptions table for recurring rent payments
-CREATE TABLE public.subscriptions (
+CREATE TABLE IF NOT EXISTS public.subscriptions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   stripe_subscription_id TEXT UNIQUE,
@@ -34,15 +34,15 @@ CREATE TABLE public.subscriptions (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_rent_payments_user_id ON public.rent_payments(user_id);
-CREATE INDEX idx_rent_payments_stripe_payment_intent_id ON public.rent_payments(stripe_payment_intent_id);
-CREATE INDEX idx_rent_payments_status ON public.rent_payments(status);
-CREATE INDEX idx_rent_payments_created_at ON public.rent_payments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rent_payments_user_id ON public.rent_payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_rent_payments_stripe_payment_intent_id ON public.rent_payments(stripe_payment_intent_id);
+CREATE INDEX IF NOT EXISTS idx_rent_payments_status ON public.rent_payments(status);
+CREATE INDEX IF NOT EXISTS idx_rent_payments_created_at ON public.rent_payments(created_at DESC);
 
-CREATE INDEX idx_subscriptions_user_id ON public.subscriptions(user_id);
-CREATE INDEX idx_subscriptions_stripe_subscription_id ON public.subscriptions(stripe_subscription_id);
-CREATE INDEX idx_subscriptions_status ON public.subscriptions(status);
-CREATE INDEX idx_subscriptions_current_period_end ON public.subscriptions(current_period_end);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_subscription_id ON public.subscriptions(stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_current_period_end ON public.subscriptions(current_period_end);
 
 -- Enable RLS
 ALTER TABLE public.rent_payments ENABLE ROW LEVEL SECURITY;

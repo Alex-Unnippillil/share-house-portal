@@ -1,5 +1,5 @@
 -- Create documents table for managing lease agreements and other documents
-CREATE TABLE public.documents (
+CREATE TABLE IF NOT EXISTS public.documents (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -22,7 +22,7 @@ CREATE TABLE public.documents (
 );
 
 -- Create document_signatures table for tracking signatures
-CREATE TABLE public.document_signatures (
+CREATE TABLE IF NOT EXISTS public.document_signatures (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -42,7 +42,7 @@ CREATE TABLE public.document_signatures (
 );
 
 -- Create document_access_logs table for audit trail
-CREATE TABLE public.document_access_logs (
+CREATE TABLE IF NOT EXISTS public.document_access_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   document_id UUID NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
@@ -54,7 +54,7 @@ CREATE TABLE public.document_access_logs (
 );
 
 -- Create leases table for lease-specific data
-CREATE TABLE public.leases (
+CREATE TABLE IF NOT EXISTS public.leases (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   document_id UUID NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -76,25 +76,25 @@ CREATE TABLE public.leases (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_documents_created_by ON public.documents(created_by);
-CREATE INDEX idx_documents_tenant_id ON public.documents(tenant_id);
-CREATE INDEX idx_documents_unit_id ON public.documents(unit_id);
-CREATE INDEX idx_documents_status ON public.documents(status);
-CREATE INDEX idx_documents_document_type ON public.documents(document_type);
-CREATE INDEX idx_documents_created_at ON public.documents(created_at DESC);
-CREATE INDEX idx_documents_expires_at ON public.documents(expires_at);
+CREATE INDEX IF NOT EXISTS idx_documents_created_by ON public.documents(created_by);
+CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON public.documents(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_documents_unit_id ON public.documents(unit_id);
+CREATE INDEX IF NOT EXISTS idx_documents_status ON public.documents(status);
+CREATE INDEX IF NOT EXISTS idx_documents_document_type ON public.documents(document_type);
+CREATE INDEX IF NOT EXISTS idx_documents_created_at ON public.documents(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_documents_expires_at ON public.documents(expires_at);
 
-CREATE INDEX idx_document_signatures_document_id ON public.document_signatures(document_id);
-CREATE INDEX idx_document_signatures_signer_id ON public.document_signatures(signer_id);
-CREATE INDEX idx_document_signatures_status ON public.document_signatures(status);
+CREATE INDEX IF NOT EXISTS idx_document_signatures_document_id ON public.document_signatures(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_signatures_signer_id ON public.document_signatures(signer_id);
+CREATE INDEX IF NOT EXISTS idx_document_signatures_status ON public.document_signatures(status);
 
-CREATE INDEX idx_document_access_logs_document_id ON public.document_access_logs(document_id);
-CREATE INDEX idx_document_access_logs_user_id ON public.document_access_logs(user_id);
-CREATE INDEX idx_document_access_logs_created_at ON public.document_access_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_document_access_logs_document_id ON public.document_access_logs(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_access_logs_user_id ON public.document_access_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_document_access_logs_created_at ON public.document_access_logs(created_at DESC);
 
-CREATE INDEX idx_leases_document_id ON public.leases(document_id);
-CREATE INDEX idx_leases_tenant_ids ON public.leases USING GIN(tenant_ids);
-CREATE INDEX idx_leases_status ON public.leases(status);
+CREATE INDEX IF NOT EXISTS idx_leases_document_id ON public.leases(document_id);
+CREATE INDEX IF NOT EXISTS idx_leases_tenant_ids ON public.leases USING GIN(tenant_ids);
+CREATE INDEX IF NOT EXISTS idx_leases_status ON public.leases(status);
 
 -- Enable RLS
 ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
