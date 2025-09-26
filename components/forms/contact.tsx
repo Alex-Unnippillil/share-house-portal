@@ -21,16 +21,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { submitInquiry } from '@/app/contact/actions'
 
 const ContactSchema = z.object({
         name: z.string().min(1, { message: "Name can not be empty" }),
         email: z.string().email(),
         message: z.string().min(1, { message: "Message can not be empty" }),
+        csrfToken: z.string().min(1),
 });
 type ContactValues = z.infer<typeof ContactSchema>
-export function Contact() {
+type ContactProps = {
+  csrfToken: string
+}
+export function Contact({ csrfToken }: ContactProps) {
         const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState<boolean>(false)
 const router = useRouter();
@@ -40,8 +44,13 @@ const router = useRouter();
                         name: "",
                         email: "",
                         message: "",
+                        csrfToken,
                 },
         });
+
+        useEffect(() => {
+          form.setValue("csrfToken", csrfToken)
+        }, [csrfToken, form])
 
         async function onSubmit(data: ContactValues) {
     setIsLoading(true)
@@ -54,7 +63,12 @@ const router = useRouter();
           title: "Message sent!",
           description: "Thank you for contacting us. We will respond within 24 hours.",
         });
-        form.reset();
+        form.reset({
+          name: "",
+          email: "",
+          message: "",
+          csrfToken,
+        });
       } else {
         toast({
           title: "Error",
@@ -82,6 +96,7 @@ const router = useRouter();
                                         onSubmit={form.handleSubmit(onSubmit)}
                                         className="w-full space-y-6 px-2"
                                 >
+        <input type="hidden" {...form.register("csrfToken")} />
 <FormField
                                                 control={form.control}
                                                 name="name"
