@@ -7,7 +7,7 @@ import {
 } from "@/lib/notifications"
 import { jsonError } from "@/lib/errors"
 import { getStripe } from "@/lib/stripe"
-import type { Database, TablesInsert } from "@/lib/supabase"
+import type { Database, RentPaymentInsert } from "@/lib/supabase"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -111,7 +111,7 @@ async function handleCheckoutSessionCompleted(
         const tenantId = fullSession.metadata?.tenant_id
         const unitId = fullSession.metadata?.unit_id
 
-        const paymentData: TablesInsert<'rent_payments'> = {
+        const paymentData: RentPaymentInsert = {
           user_id: tenantId || "00000000-0000-0000-0000-000000000000", // Use tenant_id as user_id, or a default UUID
           stripe_payment_intent_id: session.payment_intent as string,
           stripe_charge_id: session.payment_intent as string, // Will be updated when charge is available
@@ -208,7 +208,7 @@ async function handleInvoicePaymentSucceeded(
       // This is a subscription payment
       const amount = invoice.amount_paid / 100 // Convert from cents
 
-      const subscriptionPayment: TablesInsert<'rent_payments'> = {
+      const subscriptionPayment: RentPaymentInsert = {
         user_id:
           subscription.metadata?.tenant_id ||
           "00000000-0000-0000-0000-000000000000", // Use tenant_id as user_id, or a default UUID
