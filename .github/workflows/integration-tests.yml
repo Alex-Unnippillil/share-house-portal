@@ -1,0 +1,42 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  integration:
+    name: Run integration tests
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_TELEMETRY_DISABLED: 1
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase@latest
+
+      - name: Start Supabase services
+        run: supabase start
+
+      - name: Seed database
+        run: npm run db:seed
+
+      - name: Run integration tests
+        run: npm run test
+
+      - name: Stop Supabase services
+        if: always()
+        run: supabase stop || true
