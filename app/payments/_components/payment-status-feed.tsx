@@ -24,6 +24,7 @@ import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
 import type { CatchUpBalance } from "@/types/payments"
 import type { Tables } from "@/lib/supabase"
 import { createClient } from "@/utils/supabase-browser"
+import { hasSupabaseCredentials } from "@/utils/supabase/env"
 
 type StripePaymentStatus = Tables<"rent_payments">["status"]
 type PaymentFeedStatus = StripePaymentStatus | "history"
@@ -141,11 +142,7 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
   }, [initialStatuses])
 
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
+    if (typeof window === "undefined" || !hasSupabaseCredentials()) {
       return
     }
 

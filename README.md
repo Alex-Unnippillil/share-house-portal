@@ -61,8 +61,8 @@ Create a `.env.local` file in the project root:
 
 ```bash
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL="your_supabase_project_url"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
+DATABASE_URL="postgresql://postgres:[password]@db.your-project.supabase.co:5432/postgres"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key" # or SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
 SUPABASE_JWT_SECRET="your_jwt_secret"
 
@@ -79,6 +79,18 @@ DOCUMENSO_BASE_URL="your_documenso_instance_url"
 CALCOM_API_KEY="your_calcom_api_key"
 CALCOM_BASE_URL="your_calcom_instance_url"
 ```
+
+The app derives the Supabase REST URL from `DATABASE_URL` when available. If you prefer to override it explicitly, set `NEXT_PUBLIC_SUPABASE_URL` (or `SUPABASE_URL` on the server).
+
+### Supabase configuration precedence
+
+When resolving Supabase credentials, the app reads environment variables in the following order:
+
+1. **REST URL**: `DATABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` → `SUPABASE_URL`
+2. **Anon key**: `NEXT_PUBLIC_SUPABASE_ANON_KEY` → `SUPABASE_ANON_KEY`
+3. **Service role**: `SUPABASE_SERVICE_ROLE_KEY`
+
+For local development with the Supabase CLI, you can simply `supabase start` and copy the generated `DATABASE_URL`, anon, and service keys into `.env.local`.
 
 ### Database Setup
 
