@@ -122,6 +122,7 @@ export type Database = {
         stripe_charge_id: string | null
         stripe_customer_id: string | null
         stripe_subscription_id: string | null
+        stripe_invoice_id: string | null
         amount: number
         currency: string
         status: 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'completed'
@@ -139,6 +140,12 @@ export type Database = {
         billing_period_end: string | null
         created_at: string | null
         updated_at: string | null
+      }>
+      stripe_processed_events: SupabaseTable<{
+        event_id: string
+        event_type: string
+        received_at: string | null
+        processed_at: string | null
       }>
       subscriptions: SupabaseTable<{
         id: string
