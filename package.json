@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "db:seed": "supabase db reset --seed supabase/demo/seed.sql",
+    "stripe:seed": "stripe fixtures stripe/fixtures/roomsily.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
