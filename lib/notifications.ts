@@ -1,5 +1,9 @@
 "use server"
 
+import {
+  paymentReceiptEmailDataSchema,
+  renderPaymentReceiptEmail,
+} from "@/emails/payment-receipt"
 import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
 
@@ -43,21 +47,10 @@ class NotificationService {
         ? notification.to
         : [notification.to]
 
-      const emailTemplates = {
-        "visitor-booking": this.getVisitorBookingTemplate(notification.data),
-        "maintenance-request": this.getMaintenanceRequestTemplate(
-          notification.data
-        ),
-        "payment-receipt": this.getPaymentReceiptTemplate(notification.data),
-        "document-signed": this.getDocumentSignedTemplate(notification.data),
-        welcome: this.getWelcomeTemplate(notification.data),
-      }
-
-      const emailContent =
-        emailTemplates[notification.template as keyof typeof emailTemplates]
-      if (!emailContent) {
-        throw new Error(`Email template '${notification.template}' not found`)
-      }
+      const emailContent = await this.renderEmailTemplate(
+        notification.template,
+        notification.data
+      )
 
       const { data, error } = await this.resend.emails.send({
         from: "Roomsily <notifications@roomsily.com>",
@@ -194,21 +187,97 @@ class NotificationService {
     `
   }
 
-  private getPaymentReceiptTemplate(data?: any) {
-    return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Payment Receipt</h2>
-        <p><strong>Tenant:</strong> ${data?.tenantName || "Unknown"}</p>
-        <p><strong>Amount:</strong> $${data?.amount || "0.00"}</p>
-        <p><strong>Description:</strong> ${
-          data?.description || "Rent payment"
-        }</p>
-        <p><strong>Date:</strong> ${
-          data?.date || new Date().toLocaleDateString()
-        }</p>
-        <p>Thank you for your payment!</p>
-      </div>
-    `
+  private async renderEmailTemplate(
+    template: string,
+    data?: Record<string, any>
+  ) {
+    switch (template) {
+      case "visitor-booking":
+        return this.getVisitorBookingTemplate(data)
+      case "maintenance-request":
+        return this.getMaintenanceRequestTemplate(data)
+      case "payment-receipt":
+        return this.getPaymentReceiptTemplate(data)
+      case "document-signed":
+        return this.getDocumentSignedTemplate(data)
+      case "welcome":
+        return this.getWelcomeTemplate(data)
+      default:
+        throw new Error(`Email template '${template}' not found`)
+    }
+  }
+
+  private async getPaymentReceiptTemplate(data?: any) {
+    try {
+      const normalizedCurrency = String(
+        data?.currency || data?.currencyCode || "USD"
+      )
+        .trim()
+        .toUpperCase()
+
+      const amountSource =
+        data?.amountPaid ?? data?.amount ?? data?.total ?? data?.value
+
+      const amount =
+        typeof amountSource === "number"
+          ? amountSource
+          : typeof amountSource === "string"
+            ? Number(amountSource.replace(/[^0-9.-]+/g, ""))
+            : undefined
+
+      if (!amount || !Number.isFinite(amount)) {
+        throw new Error("Invalid payment amount")
+      }
+
+      const parsed = paymentReceiptEmailDataSchema.parse({
+        customerName:
+          data?.customerName || data?.tenantName || data?.recipientName || "Resident",
+        paymentId:
+          data?.paymentId || data?.transactionId || data?.id || "payment",
+        amountPaid: Math.abs(amount),
+        currency: normalizedCurrency || "USD",
+        paymentDate:
+          data?.paymentDate || data?.date || data?.createdAt || new Date(),
+        items: data?.items,
+        businessName: data?.businessName,
+        supportEmail: data?.supportEmail,
+        billingAddress: data?.billingAddress,
+        notes: data?.notes,
+        subtotalAmount: data?.subtotalAmount,
+        taxAmount: data?.taxAmount,
+        discountAmount: data?.discountAmount,
+      })
+
+      return await renderPaymentReceiptEmail(parsed, {
+        version: data?.version,
+      })
+    } catch (error) {
+      console.warn(
+        "Falling back to legacy payment receipt template due to render error",
+        error
+      )
+
+      return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Payment Receipt</h2>
+          <p><strong>Tenant:</strong> ${data?.tenantName || data?.customerName || "Unknown"}</p>
+          <p><strong>Amount:</strong> ${
+            typeof data?.amount === "string"
+              ? data.amount
+              : data?.amountPaid
+                ? `$${data.amountPaid}`
+                : "$0.00"
+          }</p>
+          <p><strong>Description:</strong> ${
+            data?.description || "Rent payment"
+          }</p>
+          <p><strong>Date:</strong> ${
+            data?.date || new Date().toLocaleDateString()
+          }</p>
+          <p>Thank you for your payment!</p>
+        </div>
+      `
+    }
   }
 
   private getDocumentSignedTemplate(data?: any) {

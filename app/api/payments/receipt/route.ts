@@ -1,32 +1,16 @@
-import { PaymentReceiptEmail } from "@/components/emails/payment-receipt"
+import {
+  paymentReceiptEmailDataSchema,
+  renderPaymentReceiptEmail,
+} from "@/emails/payment-receipt"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import { Resend } from "resend"
 import { z } from "zod"
 
-const lineItemSchema = z.object({
-  description: z.string().min(1, "Line item description is required."),
-  quantity: z.number().positive().optional(),
-  unitAmount: z.number().nonnegative().optional(),
-  totalAmount: z.number().nonnegative().optional(),
-});
-
-const paymentReceiptSchema = z.object({
+const paymentReceiptSchema = paymentReceiptEmailDataSchema.extend({
   customerEmail: z.string().email(),
-  customerName: z.string().min(1),
-  paymentId: z.string().min(1),
-  amountPaid: z.number().positive(),
-  currency: z.string().min(3).max(10),
-  paymentDate: z.coerce.date().optional(),
-  items: z.array(lineItemSchema).optional(),
-  businessName: z.string().optional(),
-  supportEmail: z.string().email().optional(),
-  billingAddress: z.string().optional(),
-  notes: z.string().optional(),
-  subtotalAmount: z.number().nonnegative().optional(),
-  taxAmount: z.number().nonnegative().optional(),
-  discountAmount: z.number().nonnegative().optional(),
+  paymentDate: paymentReceiptEmailDataSchema.shape.paymentDate.optional(),
   sendCopyTo: z.array(z.string().email()).optional(),
-});
+})
 
 export async function POST(request: Request) {
   const resendApiKey = process.env.RESEND_API_KEY
@@ -54,23 +38,7 @@ export async function POST(request: Request) {
     })
   }
 
-  const {
-    customerEmail,
-    customerName,
-    paymentId,
-    amountPaid,
-    currency,
-    paymentDate,
-    items,
-    businessName,
-    supportEmail,
-    billingAddress,
-    notes,
-    subtotalAmount,
-    taxAmount,
-    discountAmount,
-    sendCopyTo,
-  } = parsed.data;
+  const { customerEmail, sendCopyTo, paymentDate, ...emailData } = parsed.data;
 
   const resend = new Resend(resendApiKey)
 
@@ -80,25 +48,16 @@ export async function POST(request: Request) {
   const emailRecipients = [customerEmail, ...(sendCopyTo ?? [])]
 
   try {
+    const html = await renderPaymentReceiptEmail({
+      ...emailData,
+      paymentDate: paymentDate ?? new Date(),
+    });
+
     const { data, error } = await resend.emails.send({
       from: fromAddress,
       to: emailRecipients,
-      subject: `Receipt for payment ${paymentId}`,
-      react: PaymentReceiptEmail({
-        customerName,
-        paymentId,
-        amountPaid,
-        currency,
-        paymentDate: paymentDate ?? new Date(),
-        items,
-        businessName,
-        supportEmail,
-        billingAddress,
-        notes,
-        subtotalAmount,
-        taxAmount,
-        discountAmount,
-      }),
+      subject: `Receipt for payment ${emailData.paymentId}`,
+      html,
     });
 
     if (error) {
