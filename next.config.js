@@ -6,26 +6,7 @@ const withMDX = require('@next/mdx')()
 // const withPWA = require("@ducanh2912/next-pwa").default({
 //   dest: "public",
 // });
-const ContentSecurityPolicy = `
-  default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' *.supabase.co googleapis.com;
-  style-src 'self' 'unsafe-inline';
-  img-src * blob: data:;
-  media-src *.supabase.co quantumone.b-cdn.net *.unsplash.com youtube.com;
-  connect-src *;
-  font-src 'self' googleapis.com;
-  frame-src *.supabase.co youtube.com quantumone.b-cdn.net;
-  object-src 'none';
-  base-uri 'self';
-  form-action 'self';
-`
-
 const securityHeaders = [
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
-  {
-    key: 'Content-Security-Policy',
-    value: ContentSecurityPolicy.replace(/\n/g, ''),
-  },
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
   {
     key: 'Referrer-Policy',

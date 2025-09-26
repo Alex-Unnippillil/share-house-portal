@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
+import { headers } from "next/headers"
 
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -19,6 +20,7 @@ import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
+import { CspNonceProvider } from "@/components/security/csp-nonce-context"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -115,53 +117,53 @@ interface RootLayoutProps {
 
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const nonce = headers().get('x-nonce') ?? undefined
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
-        >
-<ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
+      <CspNonceProvider nonce={nonce}>
+        <html lang="en" suppressHydrationWarning>
+          <head />
+          <body
+            className={cn(
+              "min-h-screen bg-background font-sans antialiased",
+              fontSans.variable,
+            )}
           >
-             <div className="relative flex min-h-screen flex-col">
-              {/* <SiteHeader /> */}
-              <div className="flex-1">
-                <ErrorBoundary>
-                  <Suspense fallback={<RouteSkeleton />}>
-                    {children}
-                  </Suspense>
-                </ErrorBoundary>
-                <Toaster />
-                <Analytics />
-                <SpeedInsights />
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <div className="relative flex min-h-screen flex-col">
+                {/* <SiteHeader /> */}
+                <div className="flex-1">
+                  <ErrorBoundary>
+                    <Suspense fallback={<RouteSkeleton />}>
+                      {children}
+                    </Suspense>
+                  </ErrorBoundary>
+                  <Toaster />
+                  <Analytics />
+                  <SpeedInsights />
+                </div>
               </div>
 
-   </div>
-{/* <SiteFooter/> */}
+              {/* <SiteFooter/> */}
 
-
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
- */}
-   <CookieButton />
-   <TailwindIndicator />
-          </ThemeProvider>
-
-
-
-</body>
-    </html>
+              {/**
+               * enter your api info from termly.io or a provider of your choice
+               * <Script
+               *   nonce={nonce}
+               *   type="text/javascript"
+               *   src="https://app.termly.io/resource-blocker/123456789abcdefg" />
+               */}
+              <CookieButton />
+              <TailwindIndicator />
+            </ThemeProvider>
+          </body>
+        </html>
+      </CspNonceProvider>
     </ReactQueryClientProvider>
   )
 }
