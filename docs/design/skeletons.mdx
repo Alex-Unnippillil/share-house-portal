@@ -43,3 +43,17 @@ export default function Loading() {
 ```
 
 Skeletons should hint at the final layout without mirroring every pixel. Keep shapes simple, rely on the neutral `muted` palette, and reserve motion for the `animate-pulse` utility to avoid distracting shimmer effects.
+
+## Country Detail Skeleton
+
+Use the `CountryDetailSkeleton` for country-specific pages and Suspense boundaries:
+
+```tsx
+import { CountryDetailSkeleton } from "@/app/countries/_components/country-detail-skeleton"
+
+export default function LoadingCountry() {
+  return <CountryDetailSkeleton />
+}
+```
+
+The skeleton advertises loading state through `aria-busy` and `role="status"`, and mirrors the primary page hierarchy with a hero heading placeholder, metadata pills, and grid cards.
