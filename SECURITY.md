@@ -1,5 +1,10 @@
 # Security Policy
-See nextconfig.js for CSP and header config. 
+
+See `nextconfig.js` for CSP and header config.
+
+## Playbooks and Runbooks
+
+Refer to the [Security Operations Playbook](docs/security/playbook.md) for incident response, credential rotation, and on-call expectations.
 
 ## Reporting a Vulnerability
 
