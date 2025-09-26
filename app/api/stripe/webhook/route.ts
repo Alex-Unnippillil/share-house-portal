@@ -111,25 +111,74 @@ async function handleCheckoutSessionCompleted(
         const tenantId = fullSession.metadata?.tenant_id
         const unitId = fullSession.metadata?.unit_id
 
+        let currency = lineItem.currency?.toUpperCase() ?? "USD"
+        let paymentMethodBrand: string | undefined
+        let paymentMethodLast4: string | undefined
+        let receiptUrl: string | undefined
+
+        const paymentIntentId = session.payment_intent as string | null
+
+        if (paymentIntentId) {
+          const paymentIntent = (await stripe.paymentIntents.retrieve(
+            paymentIntentId,
+            {
+              expand: ["payment_method", "latest_charge"],
+            },
+          )) as any
+
+          if (paymentIntent?.currency) {
+            currency = String(paymentIntent.currency).toUpperCase()
+          }
+
+          const latestCharge =
+            typeof paymentIntent?.latest_charge === "string"
+              ? paymentIntent.charges?.data?.[0]
+              : paymentIntent?.latest_charge
+
+          const charge =
+            latestCharge && typeof latestCharge !== "string"
+              ? latestCharge
+              : paymentIntent?.charges?.data?.[0]
+
+          if (charge && typeof charge !== "string") {
+            const card = charge.payment_method_details?.card
+            paymentMethodBrand = card?.brand ?? undefined
+            paymentMethodLast4 = card?.last4 ?? undefined
+            receiptUrl = charge.receipt_url ?? undefined
+          }
+
+          if (!receiptUrl) {
+            receiptUrl = paymentIntent?.charges?.data?.[0]?.receipt_url ?? undefined
+          }
+        }
+
+        if (!receiptUrl) {
+          receiptUrl = session.receipt_url ?? undefined
+        }
+
         const paymentData: TablesInsert<'rent_payments'> = {
           user_id: tenantId || "00000000-0000-0000-0000-000000000000", // Use tenant_id as user_id, or a default UUID
           stripe_payment_intent_id: session.payment_intent as string,
           stripe_charge_id: session.payment_intent as string, // Will be updated when charge is available
           stripe_customer_id: session.customer as string,
           amount: lineItem.amount_total / 100, // Convert from cents
-          currency: lineItem.currency.toUpperCase(),
+          currency,
           description:
             lineItem.description ||
             `Payment for ${lineItem.price?.nickname || "rent"}`,
           status: "completed",
           processed_at: new Date().toISOString(),
-          receipt_url: session.receipt_url,
+          receipt_url: receiptUrl ?? session.receipt_url,
           tenant_id: tenantId,
           unit_id: unitId,
           payment_method_type: "card", // Default assumption
           metadata: {
             session_id: session.id,
             payment_status: session.payment_status,
+            currency,
+            payment_method_brand: paymentMethodBrand ?? null,
+            payment_method_last4: paymentMethodLast4 ?? null,
+            download_url: receiptUrl ?? session.receipt_url ?? null,
             ...fullSession.metadata,
           },
         }
@@ -149,15 +198,18 @@ async function handleCheckoutSessionCompleted(
             if (tenantProfile?.email) {
               await sendEmailNotification({
                 to: tenantProfile.email,
-                subject: `Payment Receipt - $${paymentData.amount}`,
+                subject: `Payment Receipt - ${currency} ${paymentData.amount.toFixed(2)}`,
                 template: "payment-receipt",
                 data: {
                   tenantName: tenantProfile.full_name || tenantProfile.email,
-                  amount: `$${paymentData.amount}`,
+                  amount: `${currency} ${paymentData.amount.toFixed(2)}`,
                   description: paymentData.description,
                   date: new Date(
                     paymentData.processed_at ?? new Date().toISOString()
                   ).toLocaleDateString(),
+                  currency,
+                  paymentMethodLast4: paymentMethodLast4 ?? "",
+                  downloadUrl: receiptUrl ?? session.receipt_url ?? "",
                 },
                 userId: tenantId,
               })
@@ -166,7 +218,7 @@ async function handleCheckoutSessionCompleted(
               await sendInAppNotification({
                 userId: tenantId,
                 title: "Payment Successful",
-                message: `Your payment of $${paymentData.amount} has been processed successfully.`,
+                message: `Your payment of ${currency} ${paymentData.amount.toFixed(2)} has been processed successfully.`,
                 type: "success",
                 actionUrl: "/payments",
               })
@@ -199,7 +251,7 @@ async function handleInvoicePaymentSucceeded(
 
     // Get the full invoice with subscription details
     const fullInvoice = await stripe.invoices.retrieve(invoice.id, {
-      expand: ["subscription", "customer"],
+      expand: ["subscription", "customer", "payment_intent"],
     })
 
     const subscription = fullInvoice.subscription as any
@@ -208,6 +260,54 @@ async function handleInvoicePaymentSucceeded(
       // This is a subscription payment
       const amount = invoice.amount_paid / 100 // Convert from cents
 
+      let currency = invoice.currency?.toUpperCase() ?? "USD"
+      let paymentMethodBrand: string | undefined
+      let paymentMethodLast4: string | undefined
+      let receiptUrl =
+        invoice.invoice_pdf ?? invoice.hosted_invoice_url ?? undefined
+
+      const paymentIntentId =
+        (typeof fullInvoice.payment_intent === "string"
+          ? fullInvoice.payment_intent
+          : fullInvoice.payment_intent?.id) ??
+        (typeof invoice.payment_intent === "string"
+          ? invoice.payment_intent
+          : undefined)
+
+      if (paymentIntentId) {
+        const paymentIntent = (await stripe.paymentIntents.retrieve(
+          paymentIntentId,
+          {
+            expand: ["payment_method", "latest_charge"],
+          },
+        )) as any
+
+        if (paymentIntent?.currency) {
+          currency = String(paymentIntent.currency).toUpperCase()
+        }
+
+        const latestCharge =
+          typeof paymentIntent?.latest_charge === "string"
+            ? paymentIntent.charges?.data?.[0]
+            : paymentIntent?.latest_charge
+
+        const charge =
+          latestCharge && typeof latestCharge !== "string"
+            ? latestCharge
+            : paymentIntent?.charges?.data?.[0]
+
+        if (charge && typeof charge !== "string") {
+          const card = charge.payment_method_details?.card
+          paymentMethodBrand = card?.brand ?? undefined
+          paymentMethodLast4 = card?.last4 ?? undefined
+          receiptUrl = charge.receipt_url ?? receiptUrl
+        }
+
+        if (!receiptUrl) {
+          receiptUrl = paymentIntent?.charges?.data?.[0]?.receipt_url ?? receiptUrl
+        }
+      }
+
       const subscriptionPayment: TablesInsert<'rent_payments'> = {
         user_id:
           subscription.metadata?.tenant_id ||
@@ -215,13 +315,13 @@ async function handleInvoicePaymentSucceeded(
         stripe_customer_id: invoice.customer as string,
         stripe_subscription_id: subscription.id,
         amount,
-        currency: invoice.currency.toUpperCase(),
+        currency,
         description: `Subscription payment - ${
           subscription.metadata?.unit_label || "Rent"
         }`,
         status: "completed",
         processed_at: new Date().toISOString(),
-        receipt_url: invoice.hosted_invoice_url,
+        receipt_url: receiptUrl ?? invoice.hosted_invoice_url,
         tenant_id: subscription.metadata?.tenant_id,
         unit_id: subscription.metadata?.unit_id,
         payment_method_type: "card", // Default assumption
@@ -239,6 +339,10 @@ async function handleInvoicePaymentSucceeded(
           invoice_id: invoice.id,
           subscription_id: subscription.id,
           billing_reason: invoice.billing_reason,
+          currency,
+          payment_method_brand: paymentMethodBrand ?? null,
+          payment_method_last4: paymentMethodLast4 ?? null,
+          download_url: receiptUrl ?? invoice.hosted_invoice_url ?? null,
         },
       }
       await supabase.from("rent_payments").insert(subscriptionPayment)

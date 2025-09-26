@@ -309,12 +309,19 @@ export function useNotifications() {
     date: string
     tenantEmail: string
     tenantId: string
+    currency?: string
+    paymentMethodLast4?: string
+    downloadUrl?: string
   }) => {
+    const currencyLabel = data.currency
+      ? `${data.currency.toUpperCase()} `
+      : "$"
+
     const notifications: (NotificationData | InAppNotification)[] = [
       // Email receipt to tenant
       {
         to: data.tenantEmail,
-        subject: `Payment Receipt - $${data.amount}`,
+        subject: `Payment Receipt - ${currencyLabel}${data.amount}`,
         template: "payment-receipt",
         data,
         userId: data.tenantId,
@@ -323,7 +330,7 @@ export function useNotifications() {
       {
         userId: data.tenantId,
         title: "Payment Successful",
-        message: `Your payment of $${data.amount} has been processed.`,
+        message: `Your payment of ${currencyLabel}${data.amount} has been processed.`,
         type: "success" as const,
         actionUrl: "/payments",
       },

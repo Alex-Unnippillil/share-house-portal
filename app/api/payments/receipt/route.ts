@@ -26,6 +26,9 @@ const paymentReceiptSchema = z.object({
   taxAmount: z.number().nonnegative().optional(),
   discountAmount: z.number().nonnegative().optional(),
   sendCopyTo: z.array(z.string().email()).optional(),
+  paymentMethodBrand: z.string().optional(),
+  paymentMethodLast4: z.string().optional(),
+  downloadUrl: z.string().url().optional(),
 });
 
 export async function POST(request: Request) {
@@ -70,6 +73,9 @@ export async function POST(request: Request) {
     taxAmount,
     discountAmount,
     sendCopyTo,
+    paymentMethodBrand,
+    paymentMethodLast4,
+    downloadUrl,
   } = parsed.data;
 
   const resend = new Resend(resendApiKey)
@@ -98,6 +104,9 @@ export async function POST(request: Request) {
         subtotalAmount,
         taxAmount,
         discountAmount,
+        paymentMethodBrand,
+        paymentMethodLast4,
+        downloadUrl,
       }),
     });
 
