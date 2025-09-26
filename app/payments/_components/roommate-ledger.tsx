@@ -146,7 +146,7 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
                           const formattedYear = format(entryDate, "yyyy")
                           const amountClass =
                             entry.amount < 0
-                              ? "text-emerald-600"
+                              ? "text-emerald-800"
                               : entry.amount > 0
                                 ? "text-rose-600"
                                 : "text-muted-foreground"

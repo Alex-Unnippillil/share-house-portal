@@ -122,10 +122,10 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
             <dd className="text-lg font-semibold">
               {paidReceiptsThisYear}
             </dd>
-            <p className="text-xs text-muted-foreground">
+            <dd className="text-xs text-muted-foreground">
               {formatCurrency(summary.yearToDateAmount, defaultCurrency)}
               {" total processed"}
-            </p>
+            </dd>
           </div>
           <div className="space-y-1 rounded-lg border bg-muted/30 p-4">
             <dt className="text-xs font-medium uppercase text-muted-foreground">
@@ -134,18 +134,18 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
             <dd className="text-lg font-semibold">
               {summary.reimbursableLineItems}
             </dd>
-            <p className="text-xs text-muted-foreground">
+            <dd className="text-xs text-muted-foreground">
               Utilities, fees, and maintenance tracked for audits
-            </p>
+            </dd>
           </div>
           <div className="space-y-1 rounded-lg border bg-muted/30 p-4">
             <dt className="text-xs font-medium uppercase text-muted-foreground">
               Last receipt issued
             </dt>
             <dd className="text-lg font-semibold">{lastReceiptLabel}</dd>
-            <p className="text-xs text-muted-foreground">
+            <dd className="text-xs text-muted-foreground">
               Stay audit-ready with consolidated records
-            </p>
+            </dd>
           </div>
         </dl>
         <ScrollArea className="max-h-[540px]">

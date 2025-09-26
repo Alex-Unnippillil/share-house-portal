@@ -109,27 +109,40 @@ export async function MessagingThreadsShell() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                {pollSnapshots.map((poll) => (
-                  <div
-                    key={poll.id}
-                    className="space-y-3 rounded-lg border border-border/60 bg-background/80 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{poll.title}</p>
-                        <p className="text-xs text-muted-foreground">{poll.thread}</p>
+                {pollSnapshots.map((poll) => {
+                  const pollTitleId = `poll-${poll.id}-title`
+
+                  return (
+                    <div
+                      key={poll.id}
+                      className="space-y-3 rounded-lg border border-border/60 bg-background/80 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p
+                            id={pollTitleId}
+                            className="text-sm font-semibold text-foreground"
+                          >
+                            {poll.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{poll.thread}</p>
+                        </div>
+                        <Badge variant="secondary">{poll.closesAt}</Badge>
                       </div>
-                      <Badge variant="secondary">{poll.closesAt}</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                        <span>{poll.leadingOption}</span>
-                        <span>{poll.votes} votes</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                          <span>{poll.leadingOption}</span>
+                          <span>{poll.votes} votes</span>
+                        </div>
+                        <Progress
+                          value={poll.progress}
+                          aria-labelledby={pollTitleId}
+                          aria-valuetext={`${poll.progress}% of votes captured`}
+                        />
                       </div>
-                      <Progress value={poll.progress} />
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
@@ -213,21 +226,27 @@ export async function MessagingThreadsShell() {
                           <Badge variant="secondary">Closes {post.poll.closesAt}</Badge>
                         </div>
                         <div className="space-y-3">
-                          {post.poll.options.map((option) => {
+                          {post.poll.options.map((option, optionIndex) => {
                             const percent =
                               post.poll && post.poll.totalVotes > 0
                                 ? Math.round((option.votes / post.poll.totalVotes) * 100)
                                 : 0
 
+                            const optionLabelId = `post-${post.id}-option-${optionIndex}`
+
                             return (
                               <div key={`${post.id}-${option.label}`} className="space-y-1">
                                 <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                                  <span>{option.label}</span>
+                                  <span id={optionLabelId}>{option.label}</span>
                                   <span>
                                     {option.votes} vote{option.votes === 1 ? "" : "s"} · {percent}%
                                   </span>
                                 </div>
-                                <Progress value={percent} />
+                                <Progress
+                                  value={percent}
+                                  aria-labelledby={optionLabelId}
+                                  aria-valuetext={`${percent}% of votes`}
+                                />
                               </div>
                             )
                           })}

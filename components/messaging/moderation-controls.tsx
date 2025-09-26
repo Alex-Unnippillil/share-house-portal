@@ -207,9 +207,9 @@ const severityBadgeVariant: Record<ModerationThread["severity"], React.Component
 }
 
 const statusStyles: Record<ModerationThread["status"], string> = {
-  "Needs review": "bg-orange-500/10 text-orange-600 ring-1 ring-orange-500/30",
-  Monitoring: "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/30",
-  Escalated: "bg-purple-500/10 text-purple-700 ring-1 ring-purple-500/30",
+  "Needs review": "bg-orange-100 text-orange-900 ring-1 ring-orange-400/40",
+  Monitoring: "bg-sky-100 text-sky-900 ring-1 ring-sky-400/40",
+  Escalated: "bg-purple-100 text-purple-900 ring-1 ring-purple-400/40",
 }
 
 export function ModerationControls() {

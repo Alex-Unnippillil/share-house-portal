@@ -166,9 +166,9 @@ export default async function PaymentsPage() {
                   <dd className="text-lg font-semibold">
                     {formatCurrency(totalOutstanding, defaultCurrency)}
                   </dd>
-                  <p className="text-xs text-muted-foreground">
+                  <dd className="text-xs text-muted-foreground">
                     {catchUpBalances.length} roommates tracked
-                  </p>
+                  </dd>
                 </div>
                 <div className="space-y-1 rounded-lg border bg-muted/40 p-4">
                   <dt className="text-xs uppercase text-muted-foreground">
@@ -177,9 +177,9 @@ export default async function PaymentsPage() {
                   <dd className="text-lg font-semibold">
                     {activeAutopays}/{catchUpBalances.length}
                   </dd>
-                  <p className="text-xs text-muted-foreground">
+                  <dd className="text-xs text-muted-foreground">
                     {autopCoveragePercentage}% of roommates on autopay
-                  </p>
+                  </dd>
                 </div>
                 <div className="space-y-1 rounded-lg border bg-muted/40 p-4">
                   <dt className="text-xs uppercase text-muted-foreground">
@@ -188,9 +188,9 @@ export default async function PaymentsPage() {
                   <dd className="text-lg font-semibold">
                     {pausedAutopays + disabledAutopays}
                   </dd>
-                  <p className="text-xs text-muted-foreground">
+                  <dd className="text-xs text-muted-foreground">
                     {pausedAutopays} paused · {disabledAutopays} off
-                  </p>
+                  </dd>
                 </div>
               </dl>
             </CardContent>

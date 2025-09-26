@@ -157,7 +157,7 @@ const threadPosts: ThreadPost[] = [
       name: "Maya Patel",
       role: "Host roommate",
       initials: "MP",
-      accent: "bg-sky-500/20 text-sky-700",
+      accent: "bg-sky-100 text-sky-900",
     },
     timestamp: "Today • 8:45 AM",
     content: [
@@ -200,7 +200,7 @@ const threadPosts: ThreadPost[] = [
       name: "Jordan Lee",
       role: "Roommate",
       initials: "JL",
-      accent: "bg-amber-500/20 text-amber-700",
+      accent: "bg-amber-100 text-amber-900",
     },
     timestamp: "Today • 9:05 AM",
     content: [
@@ -226,7 +226,7 @@ const threadPosts: ThreadPost[] = [
       name: "Avery Chen",
       role: "Property manager",
       initials: "AC",
-      accent: "bg-purple-500/20 text-purple-700",
+      accent: "bg-purple-100 text-purple-900",
     },
     timestamp: "Today • 9:42 AM",
     content: [
