@@ -2,32 +2,63 @@
 
 import crypto from "crypto"
 
-// In a real application, use a secure environment variable for this
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "your-secure-encryption-key-min-32-chars"
-const IV_LENGTH = 16 // For AES, this is always 16
+const KEY_LENGTH = 32
+const IV_LENGTH = 12
+const ALGORITHM = "aes-256-gcm"
 
-export async function encrypt(text: string): Promise<string> {
-  const iv = crypto.randomBytes(IV_LENGTH)
-  // Use type assertion to fix the TypeScript error
-  const key = Buffer.from(ENCRYPTION_KEY)
-  // Specify the algorithm type explicitly
-  const cipher = crypto.createCipheriv("aes-256-cbc" as crypto.CipherCCMTypes, key, iv)
-  let encrypted = cipher.update(text)
-  encrypted = Buffer.concat([encrypted, cipher.final()])
-  return `${iv.toString("hex")}:${encrypted.toString("hex")}`
+let cachedKey: Buffer | null = null
+
+function getEncryptionKey(): Buffer {
+  if (cachedKey) {
+    return cachedKey
+  }
+
+  const keySource = process.env.ENCRYPTION_KEY
+
+  if (typeof keySource !== "string") {
+    throw new Error("ENCRYPTION_KEY must be set and contain exactly 32 bytes.")
+  }
+
+  const keyBuffer = Buffer.from(keySource, "utf-8")
+
+  if (keyBuffer.length !== KEY_LENGTH) {
+    throw new Error(`ENCRYPTION_KEY must be exactly ${KEY_LENGTH} bytes.`)
+  }
+
+  cachedKey = keyBuffer
+  return cachedKey
 }
 
-export async function decrypt(text: string): Promise<string> {
-  const [ivHex, encryptedHex] = text.split(":")
-  const iv = Buffer.from(ivHex, "hex")
-  const encryptedText = Buffer.from(encryptedHex, "hex")
-  // Use type assertion to fix the TypeScript error
-  const key = Buffer.from(ENCRYPTION_KEY)
-  // Specify the algorithm type explicitly
-  const decipher = crypto.createDecipheriv("aes-256-cbc" as crypto.CipherCCMTypes, key, iv)
-  let decrypted = decipher.update(encryptedText)
-  decrypted = Buffer.concat([decrypted, decipher.final()])
-  return decrypted.toString()
+export async function encrypt(plaintext: string): Promise<string> {
+  const iv = crypto.randomBytes(IV_LENGTH)
+  const cipher = crypto.createCipheriv(ALGORITHM, getEncryptionKey(), iv)
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()])
+  const authTag = cipher.getAuthTag()
+
+  return [iv.toString("base64"), encrypted.toString("base64"), authTag.toString("base64")].join(":")
+}
+
+export async function decrypt(payload: string): Promise<string> {
+  const segments = payload.split(":")
+
+  if (segments.length !== 3) {
+    throw new Error("Invalid encrypted payload format.")
+  }
+
+  const [ivSegment, encryptedSegment, authTagSegment] = segments
+  const iv = Buffer.from(ivSegment, "base64")
+
+  if (iv.length !== IV_LENGTH) {
+    throw new Error("Invalid initialization vector length.")
+  }
+
+  const encryptedText = Buffer.from(encryptedSegment, "base64")
+  const authTag = Buffer.from(authTagSegment, "base64")
+  const decipher = crypto.createDecipheriv(ALGORITHM, getEncryptionKey(), iv)
+  decipher.setAuthTag(authTag)
+
+  const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()])
+  return decrypted.toString("utf8")
 }
 
 
