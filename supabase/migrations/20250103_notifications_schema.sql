@@ -1,5 +1,5 @@
 -- Create maintenance_requests table for maintenance issues
-CREATE TABLE public.maintenance_requests (
+CREATE TABLE IF NOT EXISTS public.maintenance_requests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE public.maintenance_requests (
 );
 
 -- Create visitor_logs table for overnight visitor bookings
-CREATE TABLE public.visitor_logs (
+CREATE TABLE IF NOT EXISTS public.visitor_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   guest_name TEXT NOT NULL,
   guest_email TEXT NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE public.visitor_logs (
 );
 
 -- Create chores table for household chore tracking
-CREATE TABLE public.chores (
+CREATE TABLE IF NOT EXISTS public.chores (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   household_id UUID NOT NULL REFERENCES public.households(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE public.chores (
 );
 
 -- Create notifications table for in-app notifications
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE public.notifications (
 );
 
 -- Create email_notifications table for tracking sent emails
-CREATE TABLE public.email_notifications (
+CREATE TABLE IF NOT EXISTS public.email_notifications (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   recipient TEXT NOT NULL,
@@ -75,27 +75,27 @@ CREATE TABLE public.email_notifications (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_maintenance_requests_requested_by ON public.maintenance_requests(requested_by);
-CREATE INDEX idx_maintenance_requests_assigned_to ON public.maintenance_requests(assigned_to);
-CREATE INDEX idx_maintenance_requests_unit_id ON public.maintenance_requests(unit_id);
-CREATE INDEX idx_maintenance_requests_status ON public.maintenance_requests(status);
-CREATE INDEX idx_maintenance_requests_priority ON public.maintenance_requests(priority);
-CREATE INDEX idx_maintenance_requests_created_at ON public.maintenance_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_maintenance_requests_requested_by ON public.maintenance_requests(requested_by);
+CREATE INDEX IF NOT EXISTS idx_maintenance_requests_assigned_to ON public.maintenance_requests(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_maintenance_requests_unit_id ON public.maintenance_requests(unit_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_requests_status ON public.maintenance_requests(status);
+CREATE INDEX IF NOT EXISTS idx_maintenance_requests_priority ON public.maintenance_requests(priority);
+CREATE INDEX IF NOT EXISTS idx_maintenance_requests_created_at ON public.maintenance_requests(created_at DESC);
 
-CREATE INDEX idx_visitor_logs_host_id ON public.visitor_logs(host_id);
-CREATE INDEX idx_visitor_logs_status ON public.visitor_logs(status);
-CREATE INDEX idx_visitor_logs_check_in_date ON public.visitor_logs(check_in_date);
-CREATE INDEX idx_visitor_logs_created_at ON public.visitor_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_visitor_logs_host_id ON public.visitor_logs(host_id);
+CREATE INDEX IF NOT EXISTS idx_visitor_logs_status ON public.visitor_logs(status);
+CREATE INDEX IF NOT EXISTS idx_visitor_logs_check_in_date ON public.visitor_logs(check_in_date);
+CREATE INDEX IF NOT EXISTS idx_visitor_logs_created_at ON public.visitor_logs(created_at DESC);
 
-CREATE INDEX idx_chores_household_id ON public.chores(household_id);
-CREATE INDEX idx_chores_active ON public.chores(active);
-CREATE INDEX idx_chores_cadence ON public.chores(cadence);
+CREATE INDEX IF NOT EXISTS idx_chores_household_id ON public.chores(household_id);
+CREATE INDEX IF NOT EXISTS idx_chores_active ON public.chores(active);
+CREATE INDEX IF NOT EXISTS idx_chores_cadence ON public.chores(cadence);
 
-CREATE INDEX idx_notifications_user_id ON public.notifications(user_id);
-CREATE INDEX idx_notifications_read ON public.notifications(read);
-CREATE INDEX idx_notifications_created_at ON public.notifications(created_at DESC);
-CREATE INDEX idx_email_notifications_user_id ON public.email_notifications(user_id);
-CREATE INDEX idx_email_notifications_sent_at ON public.email_notifications(sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON public.notifications(read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_email_notifications_user_id ON public.email_notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_email_notifications_sent_at ON public.email_notifications(sent_at DESC);
 
 -- Enable RLS
 ALTER TABLE public.maintenance_requests ENABLE ROW LEVEL SECURITY;
