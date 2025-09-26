@@ -12,7 +12,7 @@ export default async function page() {
         const { data: userSession } = await readUserSession();
 
         if (userSession.session) {
-                return redirect("/account");
+                return redirect("/");
         }
         return (
         <div className="mt-10 px-2 lg:p-8">
