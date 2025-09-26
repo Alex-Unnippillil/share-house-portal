@@ -1,0 +1,33 @@
+name: stripe-subscription-sync
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  reconcile:
+    name: Reconcile Stripe subscriptions with Supabase
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.STRIPE_SYNC_SLACK_WEBHOOK }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      NODE_ENV: production
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Stripe ↔ Supabase reconciliation
+        run: npx tsx scripts/stripe-sync.ts --apply
