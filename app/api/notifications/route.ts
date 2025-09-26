@@ -13,6 +13,11 @@ import {
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
+import { parseRequestJson } from "@/lib/validation"
+import {
+  notificationRequestSchema,
+  type NotificationRequest,
+} from "@/lib/validation/notifications"
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -216,18 +221,20 @@ export async function GET(request: NextRequest) {
   })
 }
 
-type NotificationRequest =
-  | { type: "email"; notification: NotificationData }
-  | { type: "in-app"; notification: InAppNotification }
-  | {
-      type: "bulk"
-      notifications: (NotificationData | InAppNotification)[]
-    }
-
 export async function POST(request: Request) {
-  try {
-    const payload = (await request.json()) as NotificationRequest
+  const validationResult = await parseRequestJson(
+    request,
+    notificationRequestSchema,
+    { validationErrorMessage: "Invalid notification payload." }
+  )
 
+  if (!validationResult.success) {
+    return validationResult.error
+  }
+
+  const payload: NotificationRequest = validationResult.data
+
+  try {
     switch (payload.type) {
       case "email": {
         const result = await sendEmailNotification(payload.notification)
