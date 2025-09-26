@@ -134,6 +134,9 @@ export type Database = {
         tenant_id: string | null
         unit: string | null
         unit_id: string | null
+        tax_amount: number | null
+        tax_rate: number | null
+        tax_details: Json | null
         processed_at: string | null
         billing_period_start: string | null
         billing_period_end: string | null

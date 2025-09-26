@@ -17,7 +17,10 @@ import {
   createPaymentHistoryCsv,
   summarizeReceiptHistory,
 } from "@/lib/payments/receipts"
-import type { PaymentReceiptHistoryEntry } from "@/types/payments"
+import type {
+  PaymentReceiptHistoryEntry,
+  PaymentReceiptTaxBreakdown,
+} from "@/types/payments"
 
 interface ReceiptHistoryCardProps {
   receipts: PaymentReceiptHistoryEntry[]
@@ -52,6 +55,82 @@ function formatPeriod(
 
 function encodeCsvForDownload(content: string) {
   return `data:text/csv;charset=utf-8,${encodeURIComponent(content)}`
+}
+
+function formatTaxRate(rate: number | null | undefined) {
+  if (rate == null) {
+    return null
+  }
+
+  const formatted = (rate * 100).toFixed(2)
+  return formatted.endsWith(".00") ? `${formatted.slice(0, -3)}%` : `${formatted}%`
+}
+
+function renderReceiptTaxDetails(
+  details: PaymentReceiptHistoryEntry["taxDetails"],
+  currency: string,
+) {
+  if (!details) {
+    return null
+  }
+
+  if (Array.isArray(details) && details.length > 0) {
+    const entries = details as PaymentReceiptTaxBreakdown[]
+    return (
+      <div className="mt-3 space-y-1 rounded-md bg-muted/40 p-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Tax breakdown
+        </p>
+        <ul className="space-y-1">
+          {entries.map((entry, index) => {
+            const taxRateLabel = formatTaxRate(entry.rate)
+            return (
+              <li
+                key={`${entry.label}-${index}`}
+                className="flex items-start justify-between gap-2 text-xs"
+              >
+                <div className="max-w-[220px] space-y-0.5 text-muted-foreground">
+                  <span className="block text-sm font-medium text-foreground">
+                    {entry.label}
+                  </span>
+                  {entry.jurisdiction ? (
+                    <span className="block text-[11px] uppercase tracking-wide text-muted-foreground/80">
+                      {entry.jurisdiction}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="text-right text-xs text-muted-foreground">
+                  {taxRateLabel ? (
+                    <span className="mr-2 font-medium text-foreground">
+                      {taxRateLabel}
+                    </span>
+                  ) : null}
+                  <span className="text-sm font-semibold text-foreground">
+                    {formatCurrency(entry.amount, currency)}
+                  </span>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    )
+  }
+
+  if (!Array.isArray(details)) {
+    return (
+      <div className="mt-3 rounded-md bg-muted/40 p-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Tax details
+        </p>
+        <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-muted-foreground">
+          {JSON.stringify(details, null, 2)}
+        </pre>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
@@ -164,6 +243,7 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
               <tbody className="divide-y">
                 {receipts.map((receipt) => {
                   const status = statusStyles[receipt.status]
+                  const taxRateLabel = formatTaxRate(receipt.taxRate)
                   return (
                     <tr key={receipt.id} className="align-top">
                       <td className="p-4">
@@ -205,6 +285,7 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                             </li>
                           ))}
                         </ul>
+                        {renderReceiptTaxDetails(receipt.taxDetails, receipt.currency)}
                       </td>
                       <td className="p-4 text-right">
                         <div
@@ -217,6 +298,14 @@ export function ReceiptHistoryCard({ receipts }: ReceiptHistoryCardProps) {
                         </div>
                         {receipt.amount < 0 ? (
                           <p className="text-xs text-muted-foreground">Credit issued</p>
+                        ) : null}
+                        {receipt.taxAmount != null ? (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Tax{taxRateLabel ? ` (${taxRateLabel})` : ""}:{" "}
+                            <span className="font-medium text-foreground">
+                              {formatCurrency(receipt.taxAmount, receipt.currency)}
+                            </span>
+                          </p>
                         ) : null}
                       </td>
                       <td className="p-4">

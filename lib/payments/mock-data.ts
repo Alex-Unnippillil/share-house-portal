@@ -185,7 +185,7 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
     periodStart: "2024-06-01",
     periodEnd: "2024-06-30",
     currency: "USD",
-    amount: 1335,
+    amount: 1430,
     status: "paid",
     paymentMethod: "Visa •••• 4242 (Autopay)",
     receiptUrl: "https://receipts.roomsily.dev/rcpt_avery_2024_06.pdf",
@@ -215,6 +215,22 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         quantity: 1,
         unitAmount: 30,
         totalAmount: 30,
+      },
+    ],
+    taxAmount: 95,
+    taxRate: 0.0712,
+    taxDetails: [
+      {
+        label: "City occupancy tax",
+        amount: 60,
+        rate: 0.045,
+        jurisdiction: "Seattle, WA",
+      },
+      {
+        label: "State housing levy",
+        amount: 35,
+        rate: 0.0262,
+        jurisdiction: "Washington State",
       },
     ],
   },
@@ -249,6 +265,11 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         totalAmount: 80,
       },
     ],
+    taxAmount: 0,
+    taxDetails: {
+      exemptionCode: "HOUSING-PRIMARY-RESIDENCE",
+      notes: "Primary residence rent exempt from local tax",
+    },
   },
   {
     id: "rcpt_priya_2024_04",
@@ -295,6 +316,8 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
 
       },
     ],
+    taxAmount: null,
+    taxRate: null,
   },
 ]
 

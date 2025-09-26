@@ -1,4 +1,8 @@
 import * as React from 'react';
+import type {
+  PaymentReceiptTaxBreakdown,
+  PaymentReceiptTaxDetails,
+} from '@/types/payments';
 
 export interface PaymentReceiptLineItem {
   description: string;
@@ -20,6 +24,8 @@ export interface PaymentReceiptEmailProps {
   notes?: string;
   subtotalAmount?: number;
   taxAmount?: number;
+  taxRate?: number;
+  taxDetails?: PaymentReceiptTaxDetails;
   discountAmount?: number;
 }
 
@@ -40,6 +46,10 @@ const formatDate = (date: Date) => {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
+};
+
+const formatPercent = (value: number) => {
+  return `${(value * 100).toFixed(2).replace(/\.00$/, '')}%`;
 };
 
 const renderLineItems = (
@@ -85,10 +95,16 @@ const renderLineItems = (
 const renderTotals = (
   props: Pick<
     PaymentReceiptEmailProps,
-    'subtotalAmount' | 'taxAmount' | 'discountAmount' | 'amountPaid' | 'currency'
+    |
+      'subtotalAmount'
+      | 'taxAmount'
+      | 'taxRate'
+      | 'discountAmount'
+      | 'amountPaid'
+      | 'currency'
   >,
 ) => {
-  const { subtotalAmount, taxAmount, discountAmount, amountPaid, currency } = props;
+  const { subtotalAmount, taxAmount, taxRate, discountAmount, amountPaid, currency } = props;
 
   const hasAdjustments =
     subtotalAmount != null || taxAmount != null || discountAmount != null;
@@ -117,6 +133,11 @@ const renderTotals = (
             <tr>
               <td style={{ padding: '4px 0', textAlign: 'right', color: '#475569' }}>Tax</td>
               <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
+                {taxRate != null && (
+                  <span style={{ color: '#64748b', marginRight: '8px', fontWeight: 400 }}>
+                    {formatPercent(taxRate)}
+                  </span>
+                )}
                 {formatCurrency(taxAmount, currency)}
               </td>
             </tr>
@@ -141,6 +162,71 @@ const renderTotals = (
   );
 };
 
+const renderTaxDetails = (
+  details: PaymentReceiptTaxDetails | undefined,
+  currency: string,
+) => {
+  if (!details) return null;
+
+  if (Array.isArray(details)) {
+    const entries = details as PaymentReceiptTaxBreakdown[];
+
+    if (!entries.length) {
+      return null;
+    }
+
+    return (
+      <div style={{ marginTop: '16px' }}>
+        <h3 style={{ margin: '0 0 8px', fontSize: '14px', color: '#0f172a' }}>
+          Tax breakdown
+        </h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            {entries.map((entry, index) => (
+              <tr key={`${entry.label}-${index}`}>
+                <td style={{ padding: '4px 0', textAlign: 'left', color: '#475569' }}>
+                  <div style={{ fontWeight: 500, color: '#0f172a' }}>{entry.label}</div>
+                  {entry.jurisdiction ? (
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>{entry.jurisdiction}</div>
+                  ) : null}
+                </td>
+                <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500 }}>
+                  {entry.rate != null && (
+                    <span style={{ color: '#64748b', marginRight: '8px', fontWeight: 400 }}>
+                      {formatPercent(entry.rate)}
+                    </span>
+                  )}
+                  {formatCurrency(entry.amount, currency)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: '16px' }}>
+      <h3 style={{ margin: '0 0 8px', fontSize: '14px', color: '#0f172a' }}>Tax details</h3>
+      <pre
+        style={{
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          padding: '12px',
+          fontSize: '12px',
+          lineHeight: 1.5,
+          color: '#1e293b',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
+        {JSON.stringify(details, null, 2)}
+      </pre>
+    </div>
+  );
+};
+
 export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> = ({
   customerName,
   paymentId,
@@ -154,6 +240,8 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
   notes,
   subtotalAmount,
   taxAmount,
+  taxRate,
+  taxDetails,
   discountAmount,
 }) => {
   return (
@@ -228,10 +316,13 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
           {renderTotals({
             subtotalAmount,
             taxAmount,
+            taxRate,
             discountAmount,
             amountPaid,
             currency,
           })}
+
+          {renderTaxDetails(taxDetails, currency)}
 
           {billingAddress && (
             <div style={{ marginTop: '24px' }}>

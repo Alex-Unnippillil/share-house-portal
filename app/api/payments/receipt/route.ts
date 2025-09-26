@@ -24,6 +24,18 @@ const paymentReceiptSchema = z.object({
   notes: z.string().optional(),
   subtotalAmount: z.number().nonnegative().optional(),
   taxAmount: z.number().nonnegative().optional(),
+  taxRate: z.number().nonnegative().optional(),
+  taxDetails: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+        amount: z.number(),
+        rate: z.number().optional(),
+        jurisdiction: z.string().optional(),
+      }),
+    )
+    .or(z.record(z.any()))
+    .optional(),
   discountAmount: z.number().nonnegative().optional(),
   sendCopyTo: z.array(z.string().email()).optional(),
 });
@@ -68,6 +80,8 @@ export async function POST(request: Request) {
     notes,
     subtotalAmount,
     taxAmount,
+    taxRate,
+    taxDetails,
     discountAmount,
     sendCopyTo,
   } = parsed.data;
@@ -97,6 +111,8 @@ export async function POST(request: Request) {
         notes,
         subtotalAmount,
         taxAmount,
+        taxRate,
+        taxDetails,
         discountAmount,
       }),
     });
