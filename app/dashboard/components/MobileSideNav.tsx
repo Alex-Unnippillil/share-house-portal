@@ -18,10 +18,14 @@ export default function MobileSideNav() {
 	}, []);
 
 	return (
-		<Sheet>
-			<SheetTrigger asChild id="toggle-sidebar">
-				<span></span>
-			</SheetTrigger>
+                <Sheet>
+                        <SheetTrigger asChild id="toggle-sidebar">
+                                <button
+                                        type="button"
+                                        className="sr-only"
+                                        aria-label="Toggle sidebar navigation"
+                                />
+                        </SheetTrigger>
 			<SheetContent side={"left"} className="dark:bg-gradient-dark flex">
 				<SideBar />
 			</SheetContent>

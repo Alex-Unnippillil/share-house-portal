@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import SmartLink, { SmartLinkProps } from "@/components/navigation/SmartLink"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 import { docsConfig } from "@/config/docs"
 import { siteConfig } from "@/config/site"
@@ -19,6 +19,22 @@ interface MobileNavProps {
 
 export function MobileNav({ isAuthenticated }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
+  const pathname = usePathname()
+
+  const isActivePath = React.useCallback(
+    (href: string) => {
+      if (!pathname) {
+        return false
+      }
+
+      if (href === "/") {
+        return pathname === "/"
+      }
+
+      return pathname === href || pathname.startsWith(`${href}/`)
+    },
+    [pathname]
+  )
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -32,7 +48,12 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
         </Button>
       </SheetTrigger>
       <div className="xs:items-center ml-1 gap-4 md:hidden">
-        <SmartLink href="/" className="inline-flex" intent="navigation">
+        <SmartLink
+          href="/"
+          className="inline-flex"
+          intent="navigation"
+          aria-current={isActivePath("/") ? "page" : undefined}
+        >
           <span className="flex items-center space-x-2">
             <Icons.logo className="size-6" />
             <span className="font-bold">{siteConfig.name}</span>
@@ -45,6 +66,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           href="/"
           className="inline-flex"
           onOpenChange={setOpen}
+          aria-current={isActivePath("/") ? "page" : undefined}
         >
           <span className="flex items-center">
             <Icons.logo className="mr-1 size-6" />
@@ -61,6 +83,9 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                   buttonVariants({ variant: "ghost", size: "sm" }),
                   "justify-center"
                 )}
+                aria-current={
+                  isActivePath("/dashboard") ? "page" : undefined
+                }
               >
                 Dashboard
               </MobileLink>
@@ -80,6 +105,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                   buttonVariants({ variant: "ghost", size: "sm" }),
                   "justify-center"
                 )}
+                aria-current={isActivePath("/auth") ? "page" : undefined}
               >
                 Log in
               </MobileLink>
@@ -87,6 +113,9 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                 href="/onboarding"
                 onOpenChange={setOpen}
                 className={cn(buttonVariants({ size: "sm" }), "justify-center")}
+                aria-current={
+                  isActivePath("/onboarding") ? "page" : undefined
+                }
               >
                 Sign up
               </MobileLink>
@@ -102,6 +131,9 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                     key={item.href}
                     href={item.href}
                     onOpenChange={setOpen}
+                    aria-current={
+                      item.href && isActivePath(item.href) ? "page" : undefined
+                    }
                   >
                     {item.title}
                   </MobileLink>
@@ -121,6 +153,11 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                             href={item.href}
                             onOpenChange={setOpen}
                             className="text-muted-foreground"
+                            aria-current={
+                              item.href && isActivePath(item.href)
+                                ? "page"
+                                : undefined
+                            }
                           >
                             <span className="flex items-center">
                               <span>{item.title}</span>
