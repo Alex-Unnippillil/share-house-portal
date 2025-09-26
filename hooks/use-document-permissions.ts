@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase-browser';
+import { useEffect, useMemo, useState } from 'react';
+import { createBrowserClient } from '@/lib/supabase-client';
 import { DocumentWithLease } from '@/types/documents';
 import { fetchMemberRole } from '@/lib/data/members';
-import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 
 export interface UserPermissions {
   isTenant: boolean;
@@ -19,6 +18,7 @@ export interface UserPermissions {
 }
 
 export function useDocumentPermissions(): UserPermissions {
+  const supabase = useMemo(() => createBrowserClient(), []);
   const [permissions, setPermissions] = useState<UserPermissions>({
     isTenant: false,
     isRoommate: false,
@@ -35,8 +35,6 @@ export function useDocumentPermissions(): UserPermissions {
   useEffect(() => {
     const checkPermissions = async () => {
       try {
-        const supabase = createClient();
-        const typedSupabase = supabase as unknown as TypedSupabaseClient;
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -56,7 +54,7 @@ export function useDocumentPermissions(): UserPermissions {
 
         let role: Awaited<ReturnType<typeof fetchMemberRole>> = null;
         try {
-          role = await fetchMemberRole(typedSupabase, user.id);
+          role = await fetchMemberRole(supabase, user.id);
         } catch (roleError) {
           console.error('Error loading member role:', roleError);
         }
@@ -112,7 +110,7 @@ export function useDocumentPermissions(): UserPermissions {
     };
 
     checkPermissions();
-  }, []);
+  }, [supabase]);
 
   return permissions;
 }

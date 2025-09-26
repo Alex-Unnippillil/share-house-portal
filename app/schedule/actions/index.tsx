@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/utils/supa-server-actions';
+import { createServerClient } from '@/lib/supabase-client';
 import { createGoogleCalendarEvent } from '@/lib/calendar-service';
 import { revalidatePath } from 'next/cache';
 import type { Database } from '@/lib/supabase';
@@ -49,7 +49,7 @@ export async function scheduleMeetingAction(
 ): Promise<ActionResult> {
 
  const cookieStore = cookies();
- const supabase = createClient(cookieStore);
+ const supabase = createServerClient(cookieStore);
 
   // 1. Check Authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser();

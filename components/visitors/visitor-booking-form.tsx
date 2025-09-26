@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,10 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { createBrowserClient } from "@/lib/supabase-client";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -42,8 +41,7 @@ export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyVisitorBooking } = useNotifications();
   const { toast } = useToast();
-  const supabase = createClient();
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
@@ -66,7 +64,7 @@ export function VisitorBookingForm() {
       if (!user) throw new Error("Not authenticated");
 
       // Get user profile
-      const profile = await fetchMemberProfile(typedSupabase, user.id);
+      const profile = await fetchMemberProfile(supabase, user.id);
 
       if (!profile) throw new Error("Profile not found");
 
@@ -74,7 +72,7 @@ export function VisitorBookingForm() {
         throw new Error("User is not assigned to a unit");
       }
 
-      const unitMembers = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
+      const unitMembers = await fetchMembersByUnit(supabase, profile.unit_id, {
         excludeUserId: user.id,
       });
 

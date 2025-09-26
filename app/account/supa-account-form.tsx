@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 
 import type { User } from "@supabase/supabase-js"
@@ -8,7 +8,7 @@ import type { User } from "@supabase/supabase-js"
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
-import useSupabaseBrowser from "@/utils/supabase-browser"
+import { createBrowserClient } from "@/lib/supabase-client"
 
 import Avatar from "./avatar"
 import type { AccountProfile } from "./types"
@@ -37,7 +37,7 @@ function createProfileState(user: User, profile: AccountProfile | null): Profile
 }
 
 export default function AccountForm({ user, profile }: AccountFormProps) {
-  const supabase = useSupabaseBrowser()
+  const supabase = useMemo(() => createBrowserClient(), [])
   const [profileState, setProfileState] = useState(() => createProfileState(user, profile))
   const [isSaving, setIsSaving] = useState(false)
 

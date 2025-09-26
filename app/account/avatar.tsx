@@ -1,6 +1,6 @@
 'use client'
-import React, { useEffect, useState } from 'react'
-import useSupabaseBrowser from '@/utils/supabase-browser'
+import React, { useEffect, useMemo, useState } from 'react'
+import { createBrowserClient } from '@/lib/supabase-client'
 import Image from 'next/image'
 
 export default function Avatar({
@@ -14,7 +14,7 @@ export default function Avatar({
   size: number
   onUpload: (url: string) => void
 }) {
-  const supabase = useSupabaseBrowser()
+  const supabase = useMemo(() => createBrowserClient(), [])
   const [avatarUrl, setAvatarUrl] = useState<string | null>(url)
   const [uploading, setUploading] = useState(false)
 

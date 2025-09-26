@@ -1,13 +1,12 @@
 'use server';
 
-import { createClient } from '@/utils/supa-server-actions';
+import { createServerClient } from '@/lib/supabase-client';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
-import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
   DocumentWithLease,
@@ -58,8 +57,7 @@ export async function getDocumentsAction(
   filters?: DocumentListFilters
 ): Promise<ActionResult<DocumentWithLease[]>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -72,7 +70,7 @@ export async function getDocumentsAction(
     const validatedFilters = filters ? documentListFiltersSchema.parse(filters) : {};
     let role: Awaited<ReturnType<typeof fetchMemberRole>>;
     try {
-      role = await fetchMemberRole(typedSupabase, user.id);
+      role = await fetchMemberRole(supabase, user.id);
     } catch (roleError) {
       console.error('Error resolving member role:', roleError);
       return { success: false, error: 'Failed to fetch documents.' };
@@ -81,7 +79,7 @@ export async function getDocumentsAction(
     let documents: DocumentWithLease[];
     try {
       documents = await fetchDocumentsList({
-        client: typedSupabase,
+        client: supabase,
         userId: user.id,
         role,
         filters: validatedFilters,
@@ -115,7 +113,7 @@ export async function uploadDocumentAction(
   formData: FormData
 ): Promise<ActionResult<Document>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -218,8 +216,7 @@ export async function createSigningRequestAction(
   formData: FormData
 ): Promise<ActionResult<{ signing_url?: string; envelope_id?: string }>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -262,7 +259,7 @@ export async function createSigningRequestAction(
     // Check permissions (user must be property manager or admin, or document owner)
     let role: Awaited<ReturnType<typeof fetchMemberRole>>;
     try {
-      role = await fetchMemberRole(typedSupabase, user.id);
+      role = await fetchMemberRole(supabase, user.id);
     } catch (roleError) {
       console.error('Error resolving member role for signing request:', roleError);
       return { success: false, error: 'You do not have permission to create signing requests for this document.' };
@@ -400,7 +397,7 @@ export async function signDocumentAction(
   signatureData?: Record<string, any>
 ): Promise<ActionResult> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -473,7 +470,7 @@ export async function getSigningUrlAction(
   documentId: string
 ): Promise<ActionResult<{ signing_url: string }>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = createServerClient(cookieStore);
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -523,8 +520,7 @@ export async function getSigningUrlAction(
 // Get document statistics
 export async function getDocumentStatsAction(): Promise<ActionResult<DocumentStats>> {
   const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const supabase = createServerClient(cookieStore);
 
   try {
     // Check authentication
@@ -535,7 +531,7 @@ export async function getDocumentStatsAction(): Promise<ActionResult<DocumentSta
 
     let role: Awaited<ReturnType<typeof fetchMemberRole>>;
     try {
-      role = await fetchMemberRole(typedSupabase, user.id);
+      role = await fetchMemberRole(supabase, user.id);
     } catch (roleError) {
       console.error('Error resolving member role for stats:', roleError);
       return { success: false, error: 'Failed to fetch document statistics.' };
@@ -544,7 +540,7 @@ export async function getDocumentStatsAction(): Promise<ActionResult<DocumentSta
     let stats: DocumentStats;
     try {
       stats = await fetchDocumentStats({
-        client: typedSupabase,
+        client: supabase,
         userId: user.id,
         role,
       });

@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createClient } from "@/utils/supabase-browser"
 import { cn } from "@/lib/utils"
+import { createBrowserClient } from "@/lib/supabase-client"
 
 interface Amenity {
   id: string
@@ -112,7 +112,7 @@ function normaliseConflicts(payload: RpcPayload): ConflictEntry[] {
 }
 
 export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
-  const supabase = useMemo(() => createClient(), [])
+  const supabase = useMemo(() => createBrowserClient(), [])
   const [startValue, setStartValue] = useState(() => {
     const now = new Date()
     const defaultStart = new Date(now.getTime() + 60 * 60 * 1000)

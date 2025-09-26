@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,10 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { createBrowserClient } from "@/lib/supabase-client";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -49,8 +48,7 @@ export function MaintenanceRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
-  const supabase = createClient();
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const form = useForm<MaintenanceRequestFormData>({
     resolver: zodResolver(maintenanceRequestSchema),
@@ -72,7 +70,7 @@ export function MaintenanceRequestForm() {
       if (!user) throw new Error("Not authenticated");
 
       // Get user profile
-      const profile = await fetchMemberProfile(typedSupabase, user.id);
+      const profile = await fetchMemberProfile(supabase, user.id);
 
       if (!profile) throw new Error("Profile not found");
 
@@ -80,7 +78,7 @@ export function MaintenanceRequestForm() {
         throw new Error("User is not assigned to a unit");
       }
 
-      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
+      const [propertyManager] = await fetchMembersByUnit(supabase, profile.unit_id, {
         roles: ['property_manager'],
       });
 

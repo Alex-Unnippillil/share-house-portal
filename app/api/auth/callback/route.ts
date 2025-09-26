@@ -2,13 +2,13 @@ import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
-import { createClient } from "@/utils/supa-server-actions"
+import { createServerClient } from "@/lib/supabase-client"
 
 const DEFAULT_REDIRECT_PATH = "/"
 
 export async function GET(request: Request) {
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createServerClient(cookieStore)
 
   try {
     const url = new URL(request.url)

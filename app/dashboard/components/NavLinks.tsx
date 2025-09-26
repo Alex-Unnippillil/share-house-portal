@@ -1,29 +1,28 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
 import SmartLink from "@/components/navigation/SmartLink";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-import { createClient } from "@/utils/supabase-browser";
 import { fetchMemberRole } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { createBrowserClient } from "@/lib/supabase-client";
 
 export default function NavLinks() {
 	const pathname = usePathname();
 	const [role, setRole] = useState<string | null>(null);
 
-	useEffect(() => {
-		const load = async () => {
-			try {
-				const supabase = createClient();
+        const supabase = useMemo(() => createBrowserClient(), []);
+
+        useEffect(() => {
+                const load = async () => {
+                        try {
                                 const { data: { user } } = await supabase.auth.getUser();
                                 if (!user) {
                                         setRole(null);
                                         return;
                                 }
-                                const typedSupabase = supabase as unknown as TypedSupabaseClient;
                                 try {
-                                        const resolvedRole = await fetchMemberRole(typedSupabase, user.id);
+                                        const resolvedRole = await fetchMemberRole(supabase, user.id);
                                         setRole(resolvedRole || null);
                                 } catch (memberError) {
                                         console.error("Error loading member role", memberError);
@@ -32,9 +31,9 @@ export default function NavLinks() {
                         } catch (e) {
                                 setRole(null);
                         }
-		};
-		load();
-	}, []);
+                };
+                load();
+        }, [supabase]);
 
 	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
 

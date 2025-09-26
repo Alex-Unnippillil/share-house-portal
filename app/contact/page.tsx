@@ -4,14 +4,14 @@ import { siteConfig } from '@/config/site'
 import { Icons } from '@/components/icons'
 import { cookies } from 'next/headers'
 import { Contact } from "@/components/forms/contact";
-import { createClient } from "@/utils/supa-server-actions";
+import { createServerClient } from "@/lib/supabase-client";
 import { redirect } from "next/navigation";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { type User } from '@supabase/supabase-js'
 
 export default async function ContactPage() {
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)  
+  const supabase = createServerClient(cookieStore)
 
 
   const { data, error } = await supabase.auth.getUser()

@@ -1,16 +1,15 @@
 "use server";
 
 import type { SignInWithSSO } from "@supabase/supabase-js";
-import { createSupbaseServerClient } from "@/utils/supaone";
+import { createServerClient } from "@/lib/supabase-client";
 import { redirect } from "next/navigation";
-import { revalidatePath } from 'next/cache'
 
 export async function signUpWithEmailAndPassword(data: {
         email: string;
         password: string;
         confirm: string;
 }) {
-        const supabase = await createSupbaseServerClient();
+        const supabase = createServerClient();
 
         const result = await supabase.auth.signUp(data);
         return JSON.stringify(result);
@@ -22,7 +21,7 @@ export async function loginWithEmailAndPassword(data: {
         email: string;
         password: string;
 }) {
-        const supabase = await createSupbaseServerClient();
+        const supabase = createServerClient();
 
 // Register this immediately after calling createClient!
 // Because signInWithOAuth causes a redirect, you need to fetch the
@@ -48,7 +47,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 
 export async function signInWithWorkOS(domain?: string) {
-        const supabase = await createSupbaseServerClient();
+        const supabase = createServerClient();
 
         const trimmedDomain = domain?.trim();
         const workosProviderId = process.env.SUPABASE_WORKOS_CONNECTION_ID;
@@ -96,7 +95,7 @@ export async function signInWithWorkOS(domain?: string) {
 
 export async function signInWithGoogle() {
 
-     const supabase = await createSupbaseServerClient();
+     const supabase = createServerClient();
 
 supabase.auth.onAuthStateChange((event, session) => {
   if (session && session.provider_token) {
@@ -172,7 +171,7 @@ export async function signInWithGoogle(): Promise<{ error?: string; url?: string
 
 export async function signInWithGithub() {
 
-     const supabase = await createSupbaseServerClient();  
+     const supabase = createServerClient();
 
 supabase.auth.onAuthStateChange((event, session) => {
   if (session && session.provider_token) {

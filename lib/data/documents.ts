@@ -1,4 +1,4 @@
-import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
+import type { TypedSupabaseClient } from '@/lib/supabase-client';
 import type { DocumentListFilters, DocumentStats, DocumentWithLease } from '@/types/documents';
 import type { Database } from '@/lib/supabase';
 

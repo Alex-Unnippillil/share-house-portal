@@ -12,7 +12,7 @@ import {
 } from "@/lib/notifications"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import type { Database } from "@/lib/supabase"
-import { createClient } from "@/utils/supa-server-actions"
+import { createServerClient } from "@/lib/supabase-client"
 
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
   }
 
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore) as SupabaseClient<Database>
+  const supabase = createServerClient(cookieStore) as SupabaseClient<Database>
 
   const {
     data: { user },

@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupbaseServerClient } from "@/utils/supaone";
+import { createServerClient } from "@/lib/supabase-client";
 import { redirect } from "next/navigation";
 
 export async function signUpWithEmailAndPassword(data: {
@@ -8,14 +8,14 @@ export async function signUpWithEmailAndPassword(data: {
 	password: string;
 	confirm: string;
 }) {
-	const supabase = await createSupbaseServerClient();
+        const supabase = createServerClient();
 
 	const result = await supabase.auth.signUp(data);
 	return JSON.stringify(result);
 }
 
 export async function logout() {
-	const supabase = await createSupbaseServerClient();
+        const supabase = createServerClient();
 	await supabase.auth.signOut();
 	redirect("/auth");
 }
