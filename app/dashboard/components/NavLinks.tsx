@@ -72,6 +72,9 @@ export default function NavLinks() {
                                                         }
                                                 )}
                                                 intent="navigation"
+                                                aria-current={
+                                                        pathname === link.href ? "page" : undefined
+                                                }
                                         >
                                                 <span className="flex items-center gap-2">
                                                         <Icon />

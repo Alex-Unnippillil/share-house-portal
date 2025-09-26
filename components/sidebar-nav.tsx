@@ -34,6 +34,18 @@ interface DocsSidebarNavItemsProps {
   pathname: string | null
 }
 
+function isActivePath(pathname: string | null, href: string) {
+  if (!pathname) {
+    return false
+  }
+
+  if (href === "/") {
+    return pathname === "/"
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
 export function DocsSidebarNavItems({
   items,
   pathname,
@@ -48,13 +60,16 @@ export function DocsSidebarNavItems({
             className={cn(
               "group flex w-full items-center rounded-md border border-transparent px-2 py-1 hover:underline",
               item.disabled && "cursor-not-allowed opacity-60",
-              pathname === item.href
+              isActivePath(pathname, item.href)
                 ? "font-medium text-foreground"
                 : "text-muted-foreground"
             )}
             target={item.external ? "_blank" : ""}
             rel={item.external ? "noreferrer" : ""}
             intent="navigation"
+            aria-current={
+              isActivePath(pathname, item.href) ? "page" : undefined
+            }
           >
             <span className="flex items-center">
               <span>{item.title}</span>
