@@ -1,12 +1,19 @@
 // content security policy requirements vary from app to app head to https://nextjs.org/docs/pages/building-your-application/configuring/content-security-policy to learn how to configure nonces within middleware and or how to set policies within your next.config file
 
+import { randomUUID } from 'node:crypto'
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers)
+  if (!requestHeaders.has('x-request-id')) {
+    requestHeaders.set('x-request-id', randomUUID())
+  }
+
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   })
 
@@ -26,7 +33,7 @@ export async function middleware(request: NextRequest) {
           })
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers: requestHeaders,
             },
           })
           response.cookies.set({
@@ -43,7 +50,7 @@ export async function middleware(request: NextRequest) {
           })
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers: requestHeaders,
             },
           })
           response.cookies.set({
@@ -57,6 +64,11 @@ export async function middleware(request: NextRequest) {
   )
 
   await supabase.auth.getUser()
+
+  const requestId = requestHeaders.get('x-request-id')
+  if (requestId) {
+    response.headers.set('x-request-id', requestId)
+  }
 
   return response
 }
