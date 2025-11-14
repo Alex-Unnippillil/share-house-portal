@@ -7,6 +7,7 @@ import { cookies } from "next/headers"
 import type { User } from "@supabase/supabase-js"
 
 import type { Database } from "@/lib/supabase"
+import { sanitizeBioHtml } from "@/lib/bio"
 
 import { createClient } from "@/utils/supa-server-actions"
 
@@ -14,7 +15,13 @@ import type { AccountProfile } from "./types"
 
 type ProfileRow = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
-  "full_name" | "username" | "website" | "avatar_url" | "email"
+  | "full_name"
+  | "username"
+  | "website"
+  | "avatar_url"
+  | "email"
+  | "bio_html"
+  | "bio_markdown"
 >
 
 export interface AccountPageData {
@@ -36,7 +43,7 @@ export async function loadAccountPageData(): Promise<AccountPageData> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("full_name, username, website, avatar_url, email")
+    .select("full_name, username, website, avatar_url, email, bio_html, bio_markdown")
     .eq("id", user.id)
     .maybeSingle<ProfileRow>()
 
@@ -51,6 +58,8 @@ export async function loadAccountPageData(): Promise<AccountPageData> {
         website: data.website,
         avatarUrl: data.avatar_url,
         email: data.email,
+        bioHtml: data.bio_html ? sanitizeBioHtml(data.bio_html) : null,
+        bioMarkdown: data.bio_markdown ?? null,
       }
     : null
 
