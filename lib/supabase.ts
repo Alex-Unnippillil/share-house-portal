@@ -213,6 +213,28 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      privacy_requests: SupabaseTable<{
+        id: string
+        tenant_id: string
+        requester_email: string | null
+        request_type: 'export' | 'erasure'
+        status: 'received' | 'in_progress' | 'completed' | 'failed'
+        requested_at: string
+        completed_at: string | null
+        failure_reason: string | null
+        export_location: string | null
+        processed_by: string | null
+        metadata: Json | null
+        updated_at: string
+      }>
+      privacy_request_events: SupabaseTable<{
+        id: string
+        request_id: string
+        status: string
+        detail: string | null
+        actor: string | null
+        created_at: string
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null
