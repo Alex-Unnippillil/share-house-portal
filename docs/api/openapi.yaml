@@ -1,0 +1,865 @@
+openapi: 3.1.0
+info:
+  title: Share House Portal API
+  version: 0.1.0
+  summary: Contract for internal REST handlers exposed by the Share House Portal Next.js app.
+  description: |
+    This OpenAPI document captures the request and response models implemented under `app/api/**`.
+    All routes are primarily intended for first-party clients and assume Supabase session cookies when
+    authentication is required.
+servers:
+  - url: https://{host}
+    description: Primary deployment
+    variables:
+      host:
+        default: app.roomsily.example
+  - url: http://localhost:3000
+    description: Local development
+paths:
+  /api/auth/google:
+    get:
+      operationId: getAuthGoogle
+      summary: Initiate Google OAuth via Supabase
+      description: |
+        Starts the Google OAuth sign-in flow handled by Supabase. Successful calls redirect the
+        requester to the Supabase hosted OAuth consent screen and eventually back to the provided
+        `next` path.
+      parameters:
+        - name: code
+          in: query
+          description: OAuth authorization code returned from Google during the redirect flow.
+          required: false
+          schema:
+            type: string
+        - name: next
+          in: query
+          description: Relative path to redirect to once Supabase completes the OAuth handshake.
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirects to either the Supabase OAuth consent screen or the requested `next` URL.
+          headers:
+            Location:
+              description: Target redirect destination.
+              schema:
+                type: string
+        '401':
+          description: Supabase rejected the OAuth attempt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected error completing the OAuth hand-off.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/callback:
+    get:
+      operationId: getAuthCallback
+      summary: Complete Supabase OAuth callback
+      description: |
+        Finalizes the OAuth flow by persisting the refresh token associated with the signed-in Supabase user.
+        Redirects to the application shell when successful.
+      parameters:
+        - name: access_token
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Access token returned by Supabase.
+        - name: refresh_token
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Refresh token returned by Supabase.
+      responses:
+        '302':
+          description: Redirects to the base application URL after storing the refresh token.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Base application URL.
+        '401':
+          description: Supabase user session was not available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to persist the refresh token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/documents:
+    get:
+      operationId: listDocuments
+      summary: List published tenant documents
+      description: Returns cached document metadata with support for revision snapshots and conditional requests.
+      parameters:
+        - name: revision
+          in: query
+          required: false
+          description: Revision identifier for testing alternative payloads.
+          schema:
+            type: string
+            enum:
+              - current
+              - revision2
+      responses:
+        '200':
+          description: Document collection payload.
+          headers:
+            ETag:
+              description: Weak ETag derived from the collection signature.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+        '304':
+          description: Cached representation still valid.
+        '500':
+          description: Unexpected failure computing collection metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/notifications:
+    get:
+      operationId: listNotifications
+      summary: Retrieve notifications for the authenticated user
+      description: Filters notifications by optional date range, page, and limit parameters.
+      security:
+        - supabaseSession: []
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          description: ISO-8601 timestamp inclusive lower bound.
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: false
+          description: ISO-8601 timestamp inclusive upper bound. Future dates are clamped to "now".
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          required: false
+          description: Page size. Defaults to 20 and clamps at 100.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: page
+          in: query
+          required: false
+          description: Page index starting at 1. Requests greater than 50 are clamped.
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Notification results for the current user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '400':
+          description: Invalid pagination or date parameters supplied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Supabase session missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Supabase query failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      operationId: sendNotification
+      summary: Dispatch notifications through email and in-app channels
+      description: Routes a validated notification payload to the configured provider or Supabase storage.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationDispatchRequest'
+      responses:
+        '200':
+          description: Notification send attempt succeeded for every requested channel.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationDispatchResponse'
+        '400':
+          description: Validation failed for the requested notification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationDispatchResponse'
+        '500':
+          description: Downstream provider rejected the request or threw an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationDispatchResponse'
+  /api/payments/receipt:
+    post:
+      operationId: sendPaymentReceipt
+      summary: Email a structured payment receipt via Resend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentReceiptRequest'
+      responses:
+        '200':
+          description: Receipt email queued with Resend.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentReceiptResponse'
+        '400':
+          description: Payload failed schema validation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Resend API was not configured or rejected the email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/send:
+    post:
+      operationId: sendSampleEmail
+      summary: Send a static sample email
+      description: Development-only helper that exercises the Resend integration with a canned payload.
+      responses:
+        '200':
+          description: Sample email accepted by Resend.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResendEmailResponse'
+        '500':
+          description: Resend rejected the message or was not configured.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/sid/callback:
+    get:
+      operationId: getSupabaseSidCallback
+      summary: Exchange a Supabase auth code for a session cookie
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Authorization code issued by Supabase.
+      responses:
+        '302':
+          description: Redirects to the request origin after exchanging the session.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Original request origin.
+        '500':
+          description: Supabase client credentials missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/stripe/billing-portal:
+    post:
+      operationId: createBillingPortalSession
+      summary: Create a Stripe Billing Portal session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingPortalRequest'
+      responses:
+        '200':
+          description: Billing portal session successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingPortalResponse'
+        '400':
+          description: Missing or invalid Stripe customer ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Stripe API not configured or returned an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/stripe/checkout:
+    post:
+      operationId: createCheckoutSession
+      summary: Create a Stripe Checkout session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutSessionRequest'
+      responses:
+        '200':
+          description: Checkout session ready for redirection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutSessionResponse'
+        '400':
+          description: Missing price identifier or invalid quantity.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Stripe API threw an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/stripe/webhook:
+    post:
+      operationId: handleStripeWebhook
+      summary: Process incoming Stripe webhook events
+      description: Validates the Stripe signature header and stores payment artefacts in Supabase.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StripeEvent'
+      responses:
+        '200':
+          description: Event processed successfully.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Signature validation failed.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Supabase or Stripe configuration missing.
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  securitySchemes:
+    supabaseSession:
+      type: apiKey
+      in: cookie
+      name: sb-access-token
+      description: Supabase session cookie issued during authentication.
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          description: Optional additional context for the error.
+          nullable: true
+          additionalProperties: true
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            details:
+              type: object
+              nullable: true
+              properties:
+                fieldErrors:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
+                  nullable: true
+                formErrors:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+              additionalProperties: true
+    DocumentRecord:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - updated_at
+        - tenant_id
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum:
+            - draft
+            - pending_signature
+            - signed
+            - expired
+            - cancelled
+        updated_at:
+          type: string
+          format: date-time
+        tenant_id:
+          type: string
+    DocumentListMeta:
+      type: object
+      required:
+        - count
+        - latestUpdatedAt
+        - revision
+      properties:
+        count:
+          type: integer
+        latestUpdatedAt:
+          type: string
+          nullable: true
+          format: date-time
+        revision:
+          type: string
+          enum:
+            - current
+            - revision2
+    DocumentListResponse:
+      type: object
+      required:
+        - documents
+        - meta
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentRecord'
+        meta:
+          $ref: '#/components/schemas/DocumentListMeta'
+    Notification:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - message
+        - type
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum:
+            - info
+            - success
+            - warning
+            - error
+        action_url:
+          type: string
+          nullable: true
+        metadata:
+          nullable: true
+          additionalProperties: true
+        read:
+          type: boolean
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+    NotificationPagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - hasMore
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+          nullable: true
+        hasMore:
+          type: boolean
+          nullable: true
+    NotificationFilters:
+      type: object
+      required:
+        - startDate
+        - endDate
+      properties:
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    NotificationListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+        - filters
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        pagination:
+          $ref: '#/components/schemas/NotificationPagination'
+        filters:
+          $ref: '#/components/schemas/NotificationFilters'
+    EmailRecipient:
+      oneOf:
+        - type: string
+          format: email
+        - type: array
+          minItems: 1
+          items:
+            type: string
+            format: email
+    EmailNotificationData:
+      type: object
+      required:
+        - to
+        - subject
+        - template
+      properties:
+        to:
+          $ref: '#/components/schemas/EmailRecipient'
+        subject:
+          type: string
+        template:
+          type: string
+        data:
+          type: object
+          nullable: true
+          additionalProperties: true
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+    InAppNotificationData:
+      type: object
+      required:
+        - userId
+        - title
+        - message
+        - type
+      properties:
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum:
+            - info
+            - success
+            - warning
+            - error
+        actionUrl:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+    NotificationDispatchRequest:
+      oneOf:
+        - $ref: '#/components/schemas/NotificationEmailRequest'
+        - $ref: '#/components/schemas/NotificationInAppRequest'
+        - $ref: '#/components/schemas/NotificationBulkRequest'
+      discriminator:
+        propertyName: type
+        mapping:
+          email: '#/components/schemas/NotificationEmailRequest'
+          in-app: '#/components/schemas/NotificationInAppRequest'
+          bulk: '#/components/schemas/NotificationBulkRequest'
+    NotificationEmailRequest:
+      type: object
+      required:
+        - type
+        - notification
+      properties:
+        type:
+          type: string
+          enum:
+            - email
+        notification:
+          $ref: '#/components/schemas/EmailNotificationData'
+    NotificationInAppRequest:
+      type: object
+      required:
+        - type
+        - notification
+      properties:
+        type:
+          type: string
+          enum:
+            - in-app
+        notification:
+          $ref: '#/components/schemas/InAppNotificationData'
+    NotificationBulkRequest:
+      type: object
+      required:
+        - type
+        - notifications
+      properties:
+        type:
+          type: string
+          enum:
+            - bulk
+        notifications:
+          type: array
+          minItems: 1
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/EmailNotificationData'
+              - $ref: '#/components/schemas/InAppNotificationData'
+    NotificationDispatchResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string
+          nullable: true
+        data:
+          nullable: true
+          additionalProperties: true
+        results:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/NotificationBulkResult'
+    NotificationBulkResult:
+      type: object
+      properties:
+        index:
+          type: integer
+        success:
+          type: boolean
+        error:
+          nullable: true
+          description: Error message or provider payload when a bulk request entry failed.
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true
+    PaymentLineItem:
+      type: object
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+          nullable: true
+        unitAmount:
+          type: number
+          nullable: true
+        totalAmount:
+          type: number
+          nullable: true
+    PaymentReceiptRequest:
+      type: object
+      required:
+        - customerEmail
+        - customerName
+        - paymentId
+        - amountPaid
+        - currency
+      properties:
+        customerEmail:
+          type: string
+          format: email
+        customerName:
+          type: string
+        paymentId:
+          type: string
+        amountPaid:
+          type: number
+        currency:
+          type: string
+        paymentDate:
+          type: string
+          format: date-time
+          nullable: true
+        items:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/PaymentLineItem'
+        businessName:
+          type: string
+          nullable: true
+        supportEmail:
+          type: string
+          format: email
+          nullable: true
+        billingAddress:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        subtotalAmount:
+          type: number
+          nullable: true
+        taxAmount:
+          type: number
+          nullable: true
+        discountAmount:
+          type: number
+          nullable: true
+        sendCopyTo:
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: email
+    PaymentReceiptResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+    ResendEmailResponse:
+      type: object
+      description: Raw response returned by the Resend SDK.
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+          nullable: true
+    BillingPortalRequest:
+      type: object
+      required:
+        - customerId
+      properties:
+        customerId:
+          type: string
+    BillingPortalResponse:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+    CheckoutSessionRequest:
+      type: object
+      required:
+        - priceId
+      properties:
+        priceId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+        mode:
+          type: string
+          enum:
+            - payment
+            - subscription
+          default: payment
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+    CheckoutSessionResponse:
+      type: object
+      required:
+        - id
+        - url
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+    StripeEvent:
+      type: object
+      required:
+        - id
+        - type
+        - object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        object:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        created:
+          type: integer
+          description: Unix timestamp for when the event was created.
