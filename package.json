@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:monitor": "PLAYWRIGHT_DISABLE_NETWORK_STUBS=true playwright test --reporter=list"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -79,6 +82,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/parser": "^7.16.0",
+    "@playwright/test": "^1.45.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.2.4",
