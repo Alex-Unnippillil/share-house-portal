@@ -264,14 +264,15 @@ export function ModerationControls() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm">
+              <table className="w-full min-w-[760px] text-sm">
                 <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3 font-medium">Thread</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Context</th>
                     <th className="px-4 py-3 font-medium">Severity</th>
                     <th className="px-4 py-3 font-medium">Flags</th>
                     <th className="px-4 py-3 font-medium">Last activity</th>
+                    <th className="px-4 py-3 font-medium">Quick actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/70">
@@ -288,26 +289,57 @@ export function ModerationControls() {
                       )}
                     >
                       <td className="p-4 align-top">
-                        <div className="space-y-1">
-                          <p className="font-medium text-foreground">{thread.subject}</p>
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-medium text-foreground">{thread.subject}</p>
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
+                                statusStyles[thread.status]
+                              )}
+                            >
+                              {thread.status}
+                            </span>
+                          </div>
                           <p className="text-xs text-muted-foreground">{thread.unit} · Flagged by {thread.flaggedBy}</p>
                         </div>
                       </td>
                       <td className="p-4 align-top">
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
-                            statusStyles[thread.status]
-                          )}
-                        >
-                          {thread.status}
-                        </span>
+                        <p className="text-xs leading-relaxed text-muted-foreground">{thread.flaggedReason}</p>
                       </td>
                       <td className="p-4 align-top">
                         <Badge variant={severityBadgeVariant[thread.severity]}>{thread.severity}</Badge>
                       </td>
                       <td className="p-4 align-top text-sm font-semibold text-foreground">{thread.flags}</td>
                       <td className="p-4 align-top text-xs text-muted-foreground">{thread.lastActivity}</td>
+                      <td className="p-4 align-top">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="size-8 rounded-full"
+                            aria-label={`Flag ${thread.subject} for follow-up`}
+                          >
+                            <FlagIcon className="size-4" aria-hidden />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            className="size-8 rounded-full"
+                            aria-label={`Archive ${thread.subject}`}
+                          >
+                            <Archive className="size-4" aria-hidden />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="size-8 rounded-full"
+                            aria-label={`Escalate ${thread.subject} to management`}
+                          >
+                            <AlertTriangle className="size-4" aria-hidden />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
