@@ -12,7 +12,6 @@ import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { CookieButton } from "@/components/cookie-button"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
-import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { fontSans } from "@/lib/font"
@@ -155,7 +154,6 @@ enter your api info from termly.io or a provider of your choice
 
  */}
    <CookieButton />
-   <TailwindIndicator />
           </ThemeProvider>
 
 
