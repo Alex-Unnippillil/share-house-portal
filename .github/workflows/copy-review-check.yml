@@ -1,0 +1,42 @@
+name: Copy Review Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+jobs:
+  require-copy-review-label:
+    name: Ensure copy review label on relevant PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate copy review requirements
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100
+            });
+
+            const copyRelevant = files.some(file => {
+              const filename = file.filename;
+              const directoryMatch = /^(app\/|components\/|docs\/|public\/)/.test(filename);
+              const extensionMatch = /(\.mdx?$|\.tsx?$|\.jsx?$|\.json$|\.yml$|\.yaml$|\.txt$)/.test(filename);
+              return directoryMatch && extensionMatch;
+            });
+
+            if (!copyRelevant) {
+              core.info('No copy-relevant files changed; skipping label requirement.');
+              return;
+            }
+
+            const hasLabel = pr.labels.some(label => label.name === 'copy-review');
+
+            if (!hasLabel) {
+              core.setFailed('Copy changes detected. Add the `copy-review` label after obtaining approvals.');
+            } else {
+              core.info('`copy-review` label present.');
+            }
