@@ -1,5 +1,11 @@
 # Security Policy
-See nextconfig.js for CSP and header config. 
+See `next.config.js` for CSP and header config. The phased rollout plan and remediation workflow live in [`docs/security/csp-rollout.md`](docs/security/csp-rollout.md).
+
+## Content Security Policy
+
+- Production responses include both `Content-Security-Policy` and `Content-Security-Policy-Report-Only` headers while the team iterates on tighter directives.
+- CSP violation reports are streamed to the endpoint defined by the `CSP_REPORT_URI` environment variable (defaults to the Report URI shared project).
+- Review violation trends weekly and follow the change management checklist in the rollout document before promoting stricter directives to enforcement.
 
 ## Reporting a Vulnerability
 
