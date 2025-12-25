@@ -224,6 +224,25 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      tenant_email_domains: SupabaseTable<{
+        id: string
+        household_id: string
+        domain: string
+        status: 'pending' | 'verified' | 'failed' | 'not_started'
+        identity_id: string | null
+        spf_name: string
+        spf_type: string
+        spf_value: string
+        dkim_name: string
+        dkim_type: string
+        dkim_value: string
+        verification_requested_at: string | null
+        verified_at: string | null
+        last_checked_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string
