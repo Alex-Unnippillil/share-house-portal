@@ -136,12 +136,19 @@ CREATE TABLE public.documents (
 -- Add more tables as needed for your application
 ```
 
+After the schema exists, reset your local database and populate demo data so integration flows have a consistent baseline:
+
+```bash
+npm run db:seed
+```
+
 ## 🚀 **QUICK START**
 
 1. Copy this template to `.env.local`
 2. Fill in your actual API keys
 3. Run database migrations or create tables manually in Supabase
-4. Restart your development server: `npm run dev`
+4. Seed the local database with demo data: `npm run db:seed`
+5. Restart your development server: `npm run dev`
 
 ## ⚠️ **SECURITY NOTES**
 

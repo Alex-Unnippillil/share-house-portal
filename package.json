@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "db:seed": "supabase db reset --local && supabase db seed --local supabase/demo/seed.sql",
     "css:purge": "node scripts/check-css-size.mjs"
   },
   "dependencies": {

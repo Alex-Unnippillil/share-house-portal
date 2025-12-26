@@ -89,6 +89,12 @@ Run the Supabase migrations to set up the required database tables:
 supabase db push
 ```
 
+Then reset your local database and load the demo fixtures so integration flows have predictable data:
+
+```bash
+npm run db:seed
+```
+
 ### Development
 
 ```bash
