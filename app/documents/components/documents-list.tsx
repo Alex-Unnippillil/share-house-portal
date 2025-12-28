@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,11 @@ import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { DocumentsListSkeleton } from './documents-list-skeleton';
 import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { FilePlus, FileText, Users, Calendar, Eye } from 'lucide-react';
+import {
+  buildEmptyStateSuggestions,
+  hasActiveFilters,
+} from './empty-state-suggestions';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -19,6 +23,11 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   const [documents, setDocuments] = useState<DocumentWithLease[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const activeFilters = useMemo(() => hasActiveFilters(filter), [filter]);
+  const emptyStateSuggestions = useMemo(
+    () => buildEmptyStateSuggestions(filter),
+    [filter],
+  );
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -103,16 +112,78 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   }
 
   if (documents.length === 0) {
+    const handleCreateFromTemplate = () => {
+      const templateUrl = 'https://documenso.com/templates?ref=roomsily';
+      window.open(templateUrl, '_blank', 'noopener,noreferrer');
+    };
+
     return (
       <Card className="p-12">
-        <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(filter).length > 0
-              ? "No documents match your current filters."
-              : "Get started by uploading your first document."}
-          </p>
+        <div className="mx-auto max-w-2xl space-y-6 text-center">
+          <FileText className="mx-auto size-12 text-muted-foreground" />
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">No documents found</h3>
+            <p className="text-sm text-muted-foreground">
+              {activeFilters
+                ? 'No documents match your current filters. Try relaxing them or start fresh below.'
+                : 'Get started by creating your first document from a template or exploring sample data.'}
+            </p>
+          </div>
+
+          <div className="space-y-4 text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Recommended next steps
+            </p>
+            <ul className="space-y-3">
+              {emptyStateSuggestions.map((suggestion, index) => (
+                <li
+                  key={`${suggestion.title}-${index}`}
+                  className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-4"
+                >
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">{suggestion.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {suggestion.description}
+                      {suggestion.link && (
+                        <>
+                          {' '}
+                          <a
+                            href={suggestion.link.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            {suggestion.link.label}
+                          </a>
+                          .
+                        </>
+                      )}
+                    </p>
+                    {suggestion.chips && suggestion.chips.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {suggestion.chips.map((chip) => (
+                          <Badge
+                            key={chip}
+                            variant="outline"
+                            className="border-primary/40 bg-primary/5 text-xs font-medium text-primary"
+                          >
+                            {chip}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button onClick={handleCreateFromTemplate} className="min-w-[200px]">
+              <FilePlus className="mr-2 size-4" />
+              Create from template
+            </Button>
+          </div>
         </div>
       </Card>
     );
