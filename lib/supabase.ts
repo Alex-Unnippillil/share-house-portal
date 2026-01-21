@@ -213,6 +213,15 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      form_drafts: SupabaseTable<{
+        id: string
+        user_id: string
+        form_key: string
+        payload: Json
+        created_at: string | null
+        updated_at: string | null
+        expires_at: string | null
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null

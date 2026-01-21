@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useAutosaveDraft } from "@/hooks/use-autosave-draft";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
@@ -62,6 +63,75 @@ export function MaintenanceRequestForm() {
       location: "",
     },
   });
+
+  const watchedValues = form.watch();
+
+  const {
+    status: autosaveStatus,
+    lastSavedAt,
+    lastError,
+    hasDraft,
+    isLoadingDraft,
+    resolvedStorage,
+    clearDraft,
+    resumeDraft,
+  } = useAutosaveDraft<MaintenanceRequestFormData>("maintenance-request", watchedValues, {
+    storage: "supabase",
+    throttleMs: 2000,
+    isDirty: form.formState.isDirty,
+  });
+
+  const autosaveMessage = useMemo(() => {
+    if (autosaveStatus === "saving") {
+      return "Saving draft...";
+    }
+
+    if (autosaveStatus === "saved" && lastSavedAt) {
+      return `Draft saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}`;
+    }
+
+    if (autosaveStatus === "error") {
+      return lastError ? `Autosave failed: ${lastError}` : "Autosave failed";
+    }
+
+    if (!form.formState.isDirty) {
+      return "Autosave ready. Start typing to save your draft.";
+    }
+
+    return "Autosave idle";
+  }, [autosaveStatus, lastError, lastSavedAt, form.formState.isDirty]);
+
+  const storageMessage = resolvedStorage === "supabase" ? "Synced to Supabase" : "Stored on this device";
+
+  const handleResumeDraft = useCallback(async () => {
+    const draft = await resumeDraft();
+
+    if (!draft) {
+      toast({
+        title: "No draft found",
+        description: "There is no saved draft to restore.",
+      });
+      return;
+    }
+
+    form.reset({
+      ...form.getValues(),
+      ...draft,
+    });
+
+    toast({
+      title: "Draft restored",
+      description: "Your in-progress maintenance request has been loaded.",
+    });
+  }, [form, resumeDraft, toast]);
+
+  const handleDiscardDraft = useCallback(async () => {
+    await clearDraft();
+    toast({
+      title: "Draft discarded",
+      description: "Autosaved progress has been cleared.",
+    });
+  }, [clearDraft, toast]);
 
   const onSubmit = async (data: MaintenanceRequestFormData) => {
     setIsSubmitting(true);
@@ -125,6 +195,7 @@ export function MaintenanceRequestForm() {
       });
 
       form.reset();
+      await clearDraft().catch(() => undefined);
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
       toast({
@@ -140,6 +211,30 @@ export function MaintenanceRequestForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {!isLoadingDraft && hasDraft && (
+          <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-4">
+            <div className="flex flex-col gap-2 text-sm">
+              <div>
+                <p className="font-medium text-primary">Saved draft available</p>
+                <p className="text-muted-foreground">
+                  {lastSavedAt
+                    ? `Last saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}.`
+                    : "Resume your in-progress request."}{" "}
+                  {storageMessage}.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" size="sm" onClick={handleResumeDraft}>
+                  Resume draft
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={handleDiscardDraft}>
+                  Discard draft
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="title"
@@ -237,6 +332,15 @@ export function MaintenanceRequestForm() {
             </FormItem>
           )}
         />
+
+        <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className={autosaveStatus === "error" ? "text-destructive" : "text-muted-foreground"}>
+              {autosaveMessage}
+            </span>
+            <span className="font-medium text-muted-foreground">{storageMessage}</span>
+          </div>
+        </div>
 
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Submitting..." : "Submit Maintenance Request"}
