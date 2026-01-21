@@ -16,18 +16,9 @@ import {
   DocumentSigningRequest,
   DocumentStats
 } from '@/types/documents';
+import { documentUploadSchema } from './schemas';
 
 // Validation schemas
-const documentUploadSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  document_type: z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other']),
-  tenant_id: z.string().uuid().optional(),
-  unit_id: z.string().optional(),
-  requires_signature: z.boolean().default(false),
-  expires_at: z.string().datetime().optional(),
-});
-
 const documentSigningSchema = z.object({
   document_id: z.string().uuid(),
   signer_email: z.string().email(),
@@ -51,6 +42,7 @@ interface ActionResult<T = any> {
   data?: T;
   error?: string;
   message?: string;
+  fieldErrors?: Record<string, string[]>;
 }
 
 // Get documents with optional filters
@@ -125,32 +117,28 @@ export async function uploadDocumentAction(
     }
 
     // Get file from form data
-    const file = formData.get('file') as File;
-    if (!file) {
-      return { success: false, error: 'No file provided.' };
-    }
-
-    // Validate other form data
-    const rawData = {
+    const validationResult = documentUploadSchema.safeParse({
+      file: formData.get('file'),
       title: formData.get('title'),
       description: formData.get('description'),
       document_type: formData.get('document_type'),
       tenant_id: formData.get('tenant_id'),
       unit_id: formData.get('unit_id'),
-      requires_signature: formData.get('requires_signature') === 'true',
+      requires_signature: formData.get('requires_signature'),
       expires_at: formData.get('expires_at'),
-    };
-
-    const validationResult = documentUploadSchema.safeParse(rawData);
+    });
     if (!validationResult.success) {
-      const errorMessages = Object.values(validationResult.error.flatten().fieldErrors)
-        .map(errors => errors?.join('. '))
-        .filter(Boolean)
-        .join(' ');
-      return { success: false, error: errorMessages || 'Invalid form data provided.' };
+      const { fieldErrors, formErrors } = validationResult.error.flatten();
+      const combinedErrors = [...formErrors, ...Object.values(fieldErrors).flat()].filter(Boolean);
+      return {
+        success: false,
+        error: combinedErrors[0] || 'Please correct the highlighted fields and try again.',
+        fieldErrors,
+      };
     }
 
     const validatedData = validationResult.data;
+    const { file, ...metadata } = validatedData;
 
     // Upload file to Supabase Storage
     const fileExt = file.name.split('.').pop();
@@ -175,14 +163,14 @@ export async function uploadDocumentAction(
     const { data: document, error: dbError } = await (supabase as any)
       .from('documents')
       .insert({
-        title: validatedData.title,
-        description: validatedData.description,
-        document_type: validatedData.document_type,
+        title: metadata.title,
+        description: metadata.description,
+        document_type: metadata.document_type,
         file_url: publicUrl,
-        tenant_id: validatedData.tenant_id,
-        unit_id: validatedData.unit_id,
-        requires_signature: validatedData.requires_signature,
-        expires_at: validatedData.expires_at,
+        tenant_id: metadata.tenant_id,
+        unit_id: metadata.unit_id,
+        requires_signature: metadata.requires_signature,
+        expires_at: metadata.expires_at,
         created_by: user.id,
       })
       .select()
@@ -239,11 +227,13 @@ export async function createSigningRequestAction(
 
     const validationResult = documentSigningSchema.safeParse(rawData);
     if (!validationResult.success) {
-      const errorMessages = Object.values(validationResult.error.flatten().fieldErrors)
-        .map(errors => errors?.join('. '))
-        .filter(Boolean)
-        .join(' ');
-      return { success: false, error: errorMessages || 'Invalid form data provided.' };
+      const { fieldErrors, formErrors } = validationResult.error.flatten();
+      const combinedErrors = [...formErrors, ...Object.values(fieldErrors).flat()].filter(Boolean);
+      return {
+        success: false,
+        error: combinedErrors[0] || 'Please correct the highlighted fields and try again.',
+        fieldErrors,
+      };
     }
 
     const validatedData = validationResult.data;

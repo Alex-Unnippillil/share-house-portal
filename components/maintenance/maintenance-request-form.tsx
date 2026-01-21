@@ -16,10 +16,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
-const maintenanceRequestSchema = z.object({
+export const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
-  priority: z.enum(["low", "normal", "high", "urgent"]),
+  priority: z.enum(["low", "normal", "high", "urgent"], {
+    errorMap: () => ({ message: "Please choose a priority level." }),
+  }),
   category: z.string().optional(),
   location: z.string().optional(),
 });
