@@ -16,6 +16,7 @@ import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { MoreHorizontal, Eye, PenTool, Download, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { shareLink } from '@/utils/share';
 
 interface DocumentActionsProps {
   document: DocumentWithLease;
@@ -68,16 +69,30 @@ export function DocumentActions({ document }: DocumentActionsProps) {
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share && document.file_url) {
-      navigator.share({
-        title: document.title,
-        url: document.file_url,
+  const handleShare = async () => {
+    if (!document.file_url) {
+      toast.error('Document link is unavailable');
+      return;
+    }
+
+    try {
+      const outcome = await shareLink({
+        shareData: {
+          title: document.title,
+          text: document.description ?? undefined,
+          url: document.file_url,
+        },
+        fallbackValue: document.file_url,
       });
-    } else {
-      // Fallback: copy URL to clipboard
-      navigator.clipboard.writeText(document.file_url || '');
-      toast.success('Document URL copied to clipboard');
+
+      if (outcome === 'shared') {
+        toast.success('Share sheet opened');
+      } else {
+        toast.success('Document URL copied to clipboard');
+      }
+    } catch (error) {
+      console.error('Unable to share document', error);
+      toast.error('Sharing is not supported on this device');
     }
   };
 

@@ -19,8 +19,14 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
+import type { BookingShareDefaults } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
 import { BookingStats } from "./components/booking-stats"
+
+function toSearchString(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value ?? undefined
+}
 
 const amenities = [
   {
@@ -65,7 +71,24 @@ const amenities = [
   },
 ]
 
-export default function BookingsPage() {
+export default function BookingsPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>
+}) {
+  const shareIntent = toSearchString(searchParams?.shareIntent)
+  const shareDefaults: BookingShareDefaults | undefined =
+    shareIntent === "booking"
+      ? {
+          amenityId: toSearchString(searchParams?.shareAmenity),
+          start: toSearchString(searchParams?.shareStart),
+          end: toSearchString(searchParams?.shareEnd),
+          summary: toSearchString(searchParams?.shareTitle),
+          notes: toSearchString(searchParams?.shareNotes),
+          sourceUrl: toSearchString(searchParams?.shareUrl),
+        }
+      : undefined
+
   return (
     <div className="container max-w-7xl space-y-8 py-8">
       <header className="space-y-4">
@@ -129,7 +152,7 @@ export default function BookingsPage() {
                     <span>Duration: {amenity.duration}</span>
                     <span>Max advance: {amenity.maxAdvance}</span>
                   </div>
-                  <AmenityBookingForm amenity={amenity} />
+                  <AmenityBookingForm amenity={amenity} shareDefaults={shareDefaults} />
                 </CardContent>
               </Card>
             ))}

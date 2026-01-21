@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import type { FormEvent } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -18,6 +18,15 @@ interface Amenity {
   description: string
   duration: string
   maxAdvance: string
+}
+
+export interface BookingShareDefaults {
+  amenityId?: string
+  start?: string
+  end?: string
+  summary?: string
+  notes?: string
+  sourceUrl?: string
 }
 
 type ConflictCode =
@@ -57,6 +66,13 @@ function formatDateTimeLocal(date: Date) {
   const minutes = pad(date.getMinutes())
 
   return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+function toLocalInputValue(iso?: string) {
+  if (!iso) return undefined
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return undefined
+  return formatDateTimeLocal(date)
 }
 
 const displayFormatter = new Intl.DateTimeFormat(undefined, {
@@ -111,14 +127,27 @@ function normaliseConflicts(payload: RpcPayload): ConflictEntry[] {
     .filter((entry): entry is ConflictEntry => Boolean(entry))
 }
 
-export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
+export function AmenityBookingForm({
+  amenity,
+  shareDefaults,
+}: {
+  amenity: Amenity
+  shareDefaults?: BookingShareDefaults
+}) {
   const supabase = useMemo(() => createClient(), [])
+  const applyShare =
+    shareDefaults && (!shareDefaults.amenityId || shareDefaults.amenityId === amenity.id)
+  const shareStartValue = applyShare ? toLocalInputValue(shareDefaults?.start) : undefined
+  const shareEndValue = applyShare ? toLocalInputValue(shareDefaults?.end) : undefined
+
   const [startValue, setStartValue] = useState(() => {
+    if (shareStartValue) return shareStartValue
     const now = new Date()
     const defaultStart = new Date(now.getTime() + 60 * 60 * 1000)
     return formatDateTimeLocal(defaultStart)
   })
   const [endValue, setEndValue] = useState(() => {
+    if (shareEndValue) return shareEndValue
     const now = new Date()
     const defaultStart = new Date(now.getTime() + 60 * 60 * 1000)
     const defaultEnd = new Date(defaultStart.getTime() + 60 * 60 * 1000)
@@ -142,6 +171,16 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
         return <Badge variant="outline">Awaiting check</Badge>
     }
   })()
+
+  useEffect(() => {
+    if (!applyShare) return
+    if (shareStartValue) setStartValue(shareStartValue)
+    if (shareEndValue) setEndValue(shareEndValue)
+  }, [applyShare, shareStartValue, shareEndValue])
+
+  const shareSummary = applyShare ? shareDefaults?.summary ?? shareDefaults?.notes : undefined
+  const shareSource = applyShare ? shareDefaults?.sourceUrl : undefined
+  const showShareNotice = applyShare && (shareSummary || shareSource || shareStartValue || shareEndValue)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -200,6 +239,16 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      {showShareNotice && (
+        <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 text-xs text-primary">
+          <p className="font-medium text-sm">Imported from share</p>
+          <p className="mt-1 text-primary/80">
+            {shareSummary ?? 'Booking details'}
+            {shareSource ? ` • ${shareSource}` : ''}
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor={`${amenity.id}-start`}>Start time</Label>
         <Input
