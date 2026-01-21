@@ -240,6 +240,12 @@ async function fetchQuickActions(): Promise<QuickAction[]> {
       href: "/payments",
     },
     {
+      id: "billing",
+      label: "Apply a coupon",
+      description: "Validate discounts on your rent plan",
+      href: "/dashboard/billing",
+    },
+    {
       id: "amenity",
       label: "Reserve an amenity",
       description: "Kitchen, TV room, parking & more",
