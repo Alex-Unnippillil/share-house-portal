@@ -279,6 +279,7 @@ export function useNotifications() {
     description: string
     priority: string
     propertyManager: { id: string; email: string; name: string }
+    attachments?: Array<{ name: string; url: string }>
   }) => {
     const notifications: (NotificationData | InAppNotification)[] = [
       // Email to property manager
@@ -296,6 +297,11 @@ export function useNotifications() {
         message: `${data.requesterName} reported: ${data.title}`,
         type: "warning" as const,
         actionUrl: "/dashboard",
+        metadata: {
+          priority: data.priority,
+          attachments: data.attachments ?? [],
+          title: data.title,
+        },
       },
     ]
 
