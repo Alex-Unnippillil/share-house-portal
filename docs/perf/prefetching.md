@@ -52,3 +52,16 @@ function FooterNav() {
 5. **Leave external URLs as `<a>` elements.** `SmartLink` automatically skips prefetching for external, hash, mailto, and tel targets.
 
 Following these rules keeps the dashboard fast for roommates on slower networks while still providing instant transitions for the actions that matter most.
+
+## Speculation prerender & asset preload audit
+
+| Checkpoint | Before | After |
+| --- | --- | --- |
+| `<link rel="preload">` entries on `/` | 2 | 5 |
+| `speculationrules` blocks on `/` | 0 | 2 |
+| Hero illustration `fetchpriority` | _not set_ | `high` |
+| `/` first-load JS budget | 542 kB | 542 kB |
+
+- The head now inlines explicit preloads for the hero illustration and social share art so the Largest Contentful Paint image is prioritized without increasing the JavaScript budget.
+- `SmartLink` exposes its navigation intent via `data-prefetch-intent`, allowing speculation rules to prerender high-likelihood dashboard, payments, and onboarding transitions.
+- Verified that Next.js keeps the global JS payload stable while emitting the new speculation rules block, avoiding any bundle regressions.
