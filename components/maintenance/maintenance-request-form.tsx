@@ -14,6 +14,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
+import { recordActivityEvent } from "@/lib/data/activity";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
 const maintenanceRequestSchema = z.object({
@@ -123,6 +124,24 @@ export function MaintenanceRequestForm() {
         title: "Maintenance request submitted",
         description: "Your maintenance request has been submitted and notifications sent.",
       });
+
+      try {
+        await recordActivityEvent({
+          client: typedSupabase,
+          entityType: 'maintenance',
+          entityId: request.id,
+          actorId: user.id,
+          eventType: 'comment',
+          metadata: {
+            actor_label: profile.full_name || user.email || user.id,
+            comment: data.description,
+            priority: data.priority,
+            title: data.title,
+          },
+        });
+      } catch (activityError) {
+        console.error('Failed to record maintenance activity', activityError);
+      }
 
       form.reset();
     } catch (error) {

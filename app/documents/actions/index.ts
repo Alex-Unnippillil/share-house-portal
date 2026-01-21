@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
+import { recordActivityEvent } from '@/lib/data/activity';
 import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
@@ -116,6 +117,7 @@ export async function uploadDocumentAction(
 ): Promise<ActionResult<Document>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -201,6 +203,24 @@ export async function uploadDocumentAction(
       p_action: 'upload',
       p_metadata: { file_name: file.name, file_size: file.size }
     });
+
+    try {
+      await recordActivityEvent({
+        client: typedSupabase,
+        entityType: 'document',
+        entityId: document.id,
+        actorId: user.id,
+        eventType: 'attachment',
+        metadata: {
+          actor_label: user.email ?? user.id,
+          file_name: file.name,
+          file_size: file.size,
+          action: 'upload',
+        },
+      });
+    } catch (activityError) {
+      console.error('Failed to record document upload activity', activityError);
+    }
 
     revalidatePath('/documents');
     return { success: true, data: document, message: 'Document uploaded successfully.' };
@@ -379,6 +399,24 @@ export async function createSigningRequestAction(
       p_metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
     });
 
+    try {
+      await recordActivityEvent({
+        client: typedSupabase,
+        entityType: 'document',
+        entityId: document.id,
+        actorId: user.id,
+        eventType: 'status_change',
+        metadata: {
+          actor_label: user.email ?? user.id,
+          to: 'pending_signature',
+          recipients: tenantEmails,
+          envelope_id: signingResult.id,
+        },
+      });
+    } catch (activityError) {
+      console.error('Failed to record signing request activity', activityError);
+    }
+
     revalidatePath('/documents');
     return {
       success: true,
@@ -401,6 +439,7 @@ export async function signDocumentAction(
 ): Promise<ActionResult> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -456,6 +495,23 @@ export async function signDocumentAction(
       p_action: 'signed',
       p_metadata: signatureData
     });
+
+    try {
+      await recordActivityEvent({
+        client: typedSupabase,
+        entityType: 'document',
+        entityId: documentId,
+        actorId: user.id,
+        eventType: 'status_change',
+        metadata: {
+          actor_label: user.email ?? user.id,
+          status: allSigned ? 'signed' : 'partially_signed',
+          signature_id: signature.id,
+        },
+      });
+    } catch (activityError) {
+      console.error('Failed to record signing activity', activityError);
+    }
 
     revalidatePath('/documents');
     return { success: true, message: 'Document signed successfully.' };
