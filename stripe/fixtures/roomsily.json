@@ -1,0 +1,61 @@
+{
+  "name": "roomsily-fixtures",
+  "fixtures": {
+    "customers": {
+      "roommate": {
+        "name": "Demo Roommate",
+        "email": "tenant@example.com"
+      },
+      "property_manager": {
+        "name": "Demo Property Manager",
+        "email": "manager@example.com"
+      }
+    },
+    "products": {
+      "rent": {
+        "name": "Monthly Rent",
+        "description": "Roomsily shared rent subscription"
+      }
+    },
+    "prices": {
+      "rent_price": {
+        "product": "{{products.rent.id}}",
+        "currency": "usd",
+        "unit_amount": 180000,
+        "recurring": {
+          "interval": "month"
+        }
+      }
+    },
+    "subscriptions": {
+      "roommate_subscription": {
+        "customer": "{{customers.roommate.id}}",
+        "items": [
+          {
+            "price": "{{prices.rent_price.id}}",
+            "metadata": {
+              "unit_label": "Unit 4A",
+              "tenant_name": "Demo Roommate",
+              "share": "50"
+            }
+          }
+        ],
+        "metadata": {
+          "roomsily_unit": "4A",
+          "roomsily_roommate": "tenant@example.com"
+        }
+      }
+    },
+    "payment_intents": {
+      "first_rent_invoice": {
+        "amount": 180000,
+        "currency": "usd",
+        "customer": "{{customers.roommate.id}}",
+        "metadata": {
+          "roomsily_unit": "4A",
+          "roomsily_roommate": "tenant@example.com"
+        }
+      }
+    }
+  }
+}

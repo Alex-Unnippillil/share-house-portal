@@ -49,8 +49,10 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm/yarn/pnpm
+- Node.js 18+ (we recommend installing via [`nvm`](https://github.com/nvm-sh/nvm) so you can quickly match the project's runtime)
+- [`pnpm`](https://pnpm.io/) (install with `corepack enable pnpm`)
+- [Supabase CLI](https://supabase.com/docs/guides/cli) authenticated against your Roomsily project
+- Stripe CLI (for seeding data and forwarding webhooks)
 - Supabase account
 - Stripe account
 - Vercel account (for deployment)
@@ -82,21 +84,27 @@ CALCOM_BASE_URL="your_calcom_instance_url"
 
 ### Database Setup
 
-Run the Supabase migrations to set up the required database tables:
+Run the Supabase migrations to set up the required database tables and optional demo data:
 
 ```bash
+# Install dependencies with pnpm
+pnpm install
+
 # Apply database migrations (requires Supabase CLI)
 supabase db push
+
+# Seed local tables with demo data (drops and recreates your local database)
+pnpm db:seed
 ```
 
 ### Development
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
@@ -106,6 +114,23 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 1. Create products and prices in your Stripe dashboard
 2. Set up webhooks for payment events
 3. Configure webhook endpoints to point to `/api/stripe/webhook`
+
+#### Stripe Seeding
+
+To bootstrap your Stripe sandbox with demo products, prices, and subscriptions, run:
+
+```bash
+# Creates products, prices, and a demo subscription using the Stripe CLI fixture
+pnpm stripe:seed
+```
+
+This command requires the Stripe CLI to be authenticated against your test account.
+
+### Troubleshooting
+
+- **Migrations fail or tables appear missing**: Ensure the Supabase CLI is logged in (`supabase login`) and pointed at the correct project. Rerun `supabase db push`, or use `pnpm db:seed` to reset and reseed your local database.
+- **Stripe webhooks return signature errors**: Confirm `STRIPE_WEBHOOK_SECRET` matches the secret from your active Stripe CLI listener or dashboard webhook. Restart the listener with `stripe listen --forward-to localhost:3000/api/stripe/webhook` after any configuration change.
+- **Webhook events not reaching the app**: Verify your dev server is running on the same port configured in the listener and that tunnels/firewalls allow the incoming traffic. Use `stripe trigger checkout.session.completed` to send a manual test event.
 
 ### Deployment
 
