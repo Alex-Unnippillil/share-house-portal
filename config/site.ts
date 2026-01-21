@@ -26,6 +26,10 @@ export const siteConfig = {
       href: "/messaging",
     },
     {
+      title: "Live Messenger",
+      href: "/messaging/live",
+    },
+    {
       title: "Visitors",
       href: "/visitors",
     },
