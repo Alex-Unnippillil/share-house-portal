@@ -240,6 +240,7 @@ export type Database = {
         id: string
         user_id: string
         refresh_token: string | null
+        key_id: string | null
         created_at: string | null
         updated_at: string | null
       }>

@@ -72,6 +72,12 @@ GOOGLE_CLIENT_SECRET="your_google_client_secret"
 GOOGLE_OWNER_REFRESH_TOKEN="your_google_refresh_token"
 ```
 
+### **REFRESH TOKEN ENCRYPTION**
+```bash
+REFRESH_TOKEN_ACTIVE_KEY_ID="v1"
+REFRESH_TOKEN_KEYRING='{"v1":"$(openssl rand -base64 32)"}'
+```
+
 ### **EMAIL SERVICE (OPTIONAL)**
 ```bash
 RESEND_API_KEY="re_your_resend_api_key"
