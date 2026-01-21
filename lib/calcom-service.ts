@@ -1,3 +1,5 @@
+import { withCoalescing } from '@/lib/fetcher/with-coalescing';
+
 interface CalComCreateBookingRequest {
   start: string;
   end: string;
@@ -44,19 +46,25 @@ class CalComService {
       : `${this.baseUrl}/api/v1/event-types`;
 
     try {
-      const response = await fetch(endpoint, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      return await withCoalescing(
+        'calcom:getEventTypes',
+        { endpoint },
+        async () => {
+          const response = await fetch(endpoint, {
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch event types: ${response.statusText}`);
-      }
+          if (!response.ok) {
+            throw new Error(`Failed to fetch event types: ${response.statusText}`);
+          }
 
-      const data = await response.json();
-      return data.eventTypes || [];
+          const data = await response.json();
+          return data.eventTypes || [];
+        }
+      );
     } catch (error) {
       console.error('Error fetching Cal.com event types:', error);
       return [];
@@ -142,21 +150,27 @@ class CalComService {
    */
   async getBooking(bookingId: string): Promise<any> {
     try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings/${bookingId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
+      return await withCoalescing(
+        'calcom:getBooking',
+        { bookingId },
+        async () => {
+          const response = await fetch(
+            `${this.baseUrl}/api/v1/bookings/${bookingId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch booking: ${response.statusText}`);
+          }
+
+          return response.json();
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch booking: ${response.statusText}`);
-      }
-
-      return await response.json();
     } catch (error) {
       console.error('Error fetching Cal.com booking:', error);
       return null;
@@ -172,26 +186,32 @@ class CalComService {
     endDate?: string
   ): Promise<any[]> {
     try {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+      return await withCoalescing(
+        'calcom:getUserBookings',
+        { userEmail, startDate, endDate },
+        async () => {
+          const params = new URLSearchParams();
+          if (startDate) params.append('startDate', startDate);
+          if (endDate) params.append('endDate', endDate);
 
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/bookings?${params.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
+          const response = await fetch(
+            `${this.baseUrl}/api/v1/bookings?${params.toString()}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch user bookings: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          return data.bookings || [];
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user bookings: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.bookings || [];
     } catch (error) {
       console.error('Error fetching Cal.com user bookings:', error);
       return [];

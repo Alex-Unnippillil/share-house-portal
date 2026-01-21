@@ -1,4 +1,5 @@
 import { DocumentSigningRequest, DocumentSigningResponse } from '@/types/documents';
+import { withCoalescing } from '@/lib/fetcher/with-coalescing';
 
 const DOCUMENSO_BASE_URL = process.env.DOCUMENSO_BASE_URL || 'https://app.documenso.com';
 const DOCUMENSO_API_KEY = process.env.DOCUMENSO_API_KEY;
@@ -114,38 +115,50 @@ class DocumensoService {
    * Get document details
    */
   async getDocument(documentId: string): Promise<DocumensoDocument> {
-    const response = await fetch(`${this.baseUrl}/api/v1/documents/${documentId}`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
+    return withCoalescing(
+      'documenso:getDocument',
+      { documentId },
+      async () => {
+        const response = await fetch(`${this.baseUrl}/api/v1/documents/${documentId}`, {
+          method: 'GET',
+          headers: getAuthHeaders(),
+        });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso get document failed: ${error}`);
-    }
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso get document failed: ${error}`);
+        }
 
-    return response.json();
+        return response.json();
+      }
+    );
   }
 
   /**
    * Get signing URL for a recipient
    */
   async getSigningUrl(documentId: string, recipientId: string): Promise<string> {
-    const response = await fetch(
-      `${this.baseUrl}/api/v1/documents/${documentId}/recipients/${recipientId}/signing-url`,
-      {
-        method: 'GET',
-        headers: getAuthHeaders(),
+    return withCoalescing(
+      'documenso:getSigningUrl',
+      { documentId, recipientId },
+      async () => {
+        const response = await fetch(
+          `${this.baseUrl}/api/v1/documents/${documentId}/recipients/${recipientId}/signing-url`,
+          {
+            method: 'GET',
+            headers: getAuthHeaders(),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso get signing URL failed: ${error}`);
+        }
+
+        const data = await response.json();
+        return data.signingUrl;
       }
     );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso get signing URL failed: ${error}`);
-    }
-
-    const data = await response.json();
-    return data.signingUrl;
   }
 
   /**
