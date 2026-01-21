@@ -4,8 +4,13 @@ import path from "path"
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["tests/**/*.test.ts", "tests/**/*.spec.ts"],
-
+    include: [
+      "tests/**/*.test.ts",
+      "tests/**/*.spec.ts",
+      "tests/**/*.test.tsx",
+      "tests/**/*.spec.tsx",
+    ],
+    environmentMatchGlobs: [["tests/accessibility/**", "jsdom"]],
   },
   resolve: {
     alias: {
