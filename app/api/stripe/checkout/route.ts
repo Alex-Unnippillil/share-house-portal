@@ -1,27 +1,33 @@
 import { NextRequest } from "next/server"
+import type Stripe from "stripe"
 
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import { getAppBaseUrl, getStripe } from "@/lib/stripe"
+import { checkoutBodySchema } from "./schema"
 
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe()
-    const { priceId, quantity = 1, mode = "payment", metadata } = await req.json()
+    const payload = await req.json()
+    const validation = checkoutBodySchema.safeParse(payload)
 
-    if (!priceId || typeof priceId !== "string") {
+    if (!validation.success) {
       return jsonError("REQUEST_VALIDATION_ERROR", {
-        message: "priceId is required",
+        message: "Invalid checkout configuration",
+        details: validation.error.flatten(),
       })
     }
 
+    const { priceId, quantity, mode, metadata } = validation.data
+
     const baseUrl = getAppBaseUrl()
 
-    const sessionConfig: any = {
-      mode: mode === "subscription" ? "subscription" : "payment",
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
+      mode,
       line_items: [
         {
           price: priceId,
-          quantity: Number.isFinite(quantity) ? quantity : 1,
+          quantity,
         },
       ],
       success_url: `${baseUrl}/payments?status=success&session_id={CHECKOUT_SESSION_ID}`,
