@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "great_expectations_version": "0.18.11",
+    "notes": {
+      "format": "markdown",
+      "content": [
+        "Warehouse expectation suite for amenity booking facts sourced from Cal.com integrations.",
+        "Captures schema drift, required fields, and business logic around booking windows."
+      ]
+    }
+  },
+  "expectation_suite_name": "warehouse.amenity_bookings",
+  "data_asset_type": null,
+  "expectations": [
+    {
+      "expectation_type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "id",
+          "amenity_id",
+          "unit_id",
+          "host_tenant_id",
+          "start_time",
+          "end_time",
+          "status",
+          "created_at",
+          "updated_at"
+        ]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "amenity_id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "unit_id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "host_tenant_id",
+        "mostly": 0.95
+      },
+      "meta": {
+        "notes": "Occasional automated holds may not yet be associated to a tenant, but should be rare."
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "start_time",
+        "mostly": 0.999
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "end_time",
+        "mostly": 0.999
+      }
+    },
+    {
+      "expectation_type": "expect_column_pair_values_A_to_be_less_than_B",
+      "kwargs": {
+        "column_A": "start_time",
+        "column_B": "end_time",
+        "or_equal": false,
+        "mostly": 0.995
+      },
+      "meta": {
+        "notes": "Booking end time must occur after the start time."
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "status",
+        "value_set": [
+          "pending",
+          "confirmed",
+          "checked_in",
+          "completed",
+          "cancelled"
+        ]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "updated_at",
+        "mostly": 0.99
+      }
+    }
+  ]
+}
