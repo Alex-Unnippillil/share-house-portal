@@ -25,6 +25,8 @@ This playbook documents how Roomsily measures and protects critical experience-l
 | Stripe Payments Overview | Checkout conversion, webhook failures | <https://dashboard.stripe.com/live/payments>
 | Statuspage (Public) | External communication for incidents | <https://status.roomsily.com>
 
+> **IaC Source of Truth:** Dashboard JSON exports are stored under [`observability/dashboards`](../../observability/dashboards) and refreshed via `pnpm obs:dashboards:export`, which pulls the latest Datadog and Vercel configurations through their public APIs.
+
 ## Alert Channels
 | Trigger | Channel | Notes |
 | --- | --- | --- |
@@ -32,6 +34,16 @@ This playbook documents how Roomsily measures and protects critical experience-l
 | Performance regression (>50% budget burn) | Slack `#alerts-perf` | Auto-created incident thread via Incident Bot |
 | Payment failures spike | Slack `#alerts-payments` + Stripe email digest | Payments on-call leads response |
 | Database error rate | Slack `#alerts-data` + Datadog | Includes Supabase log excerpts |
+
+## Alert Rules as Code
+Alert thresholds and notification routing live in [`observability/alerts/rules.json`](../../observability/alerts/rules.json). The table below lists the key monitors and the runbook sections they point to during an incident.
+
+| Rule ID | Scope | Condition | Escalation | Runbook |
+| --- | --- | --- | --- | --- |
+| `roomsily-platform-p0` | Next.js / Vercel | 5xx rate ≥ 5 errors/min for 5 minutes | PagerDuty `roomsily-platform`, Slack `#alerts-perf` | [Next.js Deploys on Vercel](#nextjs-deploys-on-vercel) |
+| `supabase-latency-warning` | Supabase | RPC latency ≥ 250 ms p95 for 15 minutes | Slack `#alerts-data` | [Supabase Migrations](#supabase-migrations) |
+| `stripe-webhook-failures` | Stripe | Webhook failure ratio ≥ 2% for 10 minutes | Slack `#alerts-payments`, payments on-call email | [Stripe Integrations](#stripe-integrations) |
+| `error-budget-burn` | Cross-platform | Synthetic uptime anomaly over 4h window | Slack `#alerts-perf` | [Post-incident Checklist](#post-incident-checklist) |
 
 ## Incident Response Workflow
 1. **Triage:** Acknowledge the alert in PagerDuty/Slack within 5 minutes and assign an Incident Commander (IC) and Communications Lead (CL).
@@ -65,4 +77,10 @@ This playbook documents how Roomsily measures and protects critical experience-l
 - Update the SLO tracking spreadsheet with downtime/latency data.
 - File Jira follow-up tasks for long-term fixes within 24 hours.
 - Schedule a postmortem review within 2 business days for P1+ incidents.
+
+## Maintenance Checklist
+- Review `observability/alerts/rules.json` during the monthly on-call handoff to tune thresholds and confirm notification paths are still relevant.
+- Audit `observability/dashboards/**` dashboards quarterly by running `pnpm obs:dashboards:export` and verifying widget coverage against active SLOs.
+- Sample alert history in Slack `#alerts-*` at least once per sprint to identify alert fatigue; downgrade noisy monitors or add auto-remediation tasks as needed.
+- Confirm Statuspage and PagerDuty contact data every quarter to avoid paging stale distribution lists.
 

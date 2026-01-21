@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "obs:dashboards:export": "node scripts/observability/export-dashboards.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

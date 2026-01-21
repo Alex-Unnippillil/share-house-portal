@@ -1,0 +1,76 @@
+[
+  {
+    "id": "roomsily-platform-p0",
+    "name": "Tenant web 5xx spike",
+    "service": "Next.js / Vercel",
+    "severity": "critical",
+    "datadogMonitorId": 9123412,
+    "metric": "sum:trace.http.request.hits{service:roomsily-portal,env:production,status:5xx}.as_rate()",
+    "threshold": {
+      "comparison": ">=",
+      "value": 5,
+      "unit": "errors/min",
+      "evaluationWindowMinutes": 5
+    },
+    "notifications": [
+      "pagerduty:roomsily-platform",
+      "slack:#alerts-perf"
+    ],
+    "runbook": "docs/perf/playbook.md#nextjs-deploys-on-vercel"
+  },
+  {
+    "id": "supabase-latency-warning",
+    "name": "Supabase RPC latency burn",
+    "service": "Supabase",
+    "severity": "warning",
+    "datadogMonitorId": 9123550,
+    "metric": "avg:db.query.duration{service:supabase-api,env:production}.rollup(avg, 60)",
+    "threshold": {
+      "comparison": ">=",
+      "value": 250,
+      "unit": "ms",
+      "evaluationWindowMinutes": 15
+    },
+    "notifications": [
+      "slack:#alerts-data"
+    ],
+    "runbook": "docs/perf/playbook.md#supabase-migrations"
+  },
+  {
+    "id": "stripe-webhook-failures",
+    "name": "Stripe webhook failure rate",
+    "service": "Stripe",
+    "severity": "high",
+    "datadogMonitorId": 9123610,
+    "metric": "sum:trace.http.request.errors{service:stripe-webhooks,env:production}.as_rate() / sum:trace.http.request.hits{service:stripe-webhooks,env:production}.as_rate()",
+    "threshold": {
+      "comparison": ">=",
+      "value": 0.02,
+      "unit": "failure_ratio",
+      "evaluationWindowMinutes": 10
+    },
+    "notifications": [
+      "slack:#alerts-payments",
+      "email:payments-oncall@roomsily.com"
+    ],
+    "runbook": "docs/perf/playbook.md#stripe-integrations"
+  },
+  {
+    "id": "error-budget-burn",
+    "name": "Error budget burn 50%",
+    "service": "Cross-platform",
+    "severity": "medium",
+    "datadogMonitorId": 9123701,
+    "metric": "anomaly(sum:synthetics.http.up{test:roomsily-tenant,env:production}, 'robust', 2, direction='both', alert_window='last_4h', interval=300, seasonality='hourly')",
+    "threshold": {
+      "comparison": ">=",
+      "value": 0,
+      "unit": "anomaly_score",
+      "evaluationWindowMinutes": 240
+    },
+    "notifications": [
+      "slack:#alerts-perf"
+    ],
+    "runbook": "docs/perf/playbook.md#post-incident-checklist"
+  }
+]
