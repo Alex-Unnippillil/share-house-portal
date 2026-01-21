@@ -20,6 +20,7 @@ import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useSessionAutoSave } from "@/hooks/use-session-auto-save";
 
 const visitorBookingSchema = z.object({
   guestName: z.string().min(2, "Guest name must be at least 2 characters"),
@@ -38,6 +39,11 @@ const visitorBookingSchema = z.object({
 
 type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
 
+type VisitorBookingDraft = Omit<VisitorBookingFormData, "checkInDate" | "checkOutDate"> & {
+  checkInDate?: string | null
+  checkOutDate?: string | null
+};
+
 export function VisitorBookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyVisitorBooking } = useNotifications();
@@ -54,6 +60,35 @@ export function VisitorBookingForm() {
       purpose: "",
       emergencyContact: "",
       specialNotes: "",
+    },
+  });
+
+  const { clearDraft } = useSessionAutoSave<VisitorBookingDraft>({
+    storageKey: "visitor-booking-draft",
+    getValues: () => {
+      const values = form.getValues();
+      return {
+        ...values,
+        checkInDate: values.checkInDate ? values.checkInDate.toISOString() : null,
+        checkOutDate: values.checkOutDate ? values.checkOutDate.toISOString() : null,
+      };
+    },
+    onRestore: (draft) => {
+      const current = form.getValues();
+      const parsedCheckIn = draft.checkInDate ? new Date(draft.checkInDate) : undefined;
+      const parsedCheckOut = draft.checkOutDate ? new Date(draft.checkOutDate) : undefined;
+      form.reset({
+        ...current,
+        ...draft,
+        checkInDate:
+          parsedCheckIn && !Number.isNaN(parsedCheckIn.getTime())
+            ? parsedCheckIn
+            : current.checkInDate,
+        checkOutDate:
+          parsedCheckOut && !Number.isNaN(parsedCheckOut.getTime())
+            ? parsedCheckOut
+            : current.checkOutDate,
+      });
     },
   });
 
@@ -131,6 +166,7 @@ export function VisitorBookingForm() {
         description: "Your visitor booking has been submitted and notifications sent.",
       });
 
+      clearDraft();
       form.reset();
     } catch (error) {
       console.error('Error submitting visitor booking:', error);

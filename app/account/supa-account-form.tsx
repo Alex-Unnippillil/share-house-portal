@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import useSupabaseBrowser from "@/utils/supabase-browser"
+import { useSessionAutoSave } from "@/hooks/use-session-auto-save"
 
 import Avatar from "./avatar"
 import type { AccountProfile } from "./types"
@@ -41,6 +42,14 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
   const [profileState, setProfileState] = useState(() => createProfileState(user, profile))
   const [isSaving, setIsSaving] = useState(false)
 
+  const { clearDraft } = useSessionAutoSave<ProfileState>({
+    storageKey: "account-profile-draft",
+    getValues: () => profileState,
+    onRestore: (draft) => {
+      setProfileState((previous) => ({ ...previous, ...draft }))
+    },
+  })
+
   const persistProfile = useCallback(
     async (overrides: Partial<ProfileState> = {}) => {
       const payload = { ...profileState, ...overrides }
@@ -66,6 +75,8 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
           title: "Profile updated",
           description: "We saved your latest contact details.",
         })
+
+        clearDraft()
       } catch (error) {
         console.error("Failed to update profile", error)
         toast({
@@ -80,7 +91,7 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
         setIsSaving(false)
       }
     },
-    [profileState, supabase, user.id],
+    [clearDraft, profileState, supabase, user.id],
   )
 
   const handleChange = (field: keyof ProfileState) => (event: ChangeEvent<HTMLInputElement>) => {

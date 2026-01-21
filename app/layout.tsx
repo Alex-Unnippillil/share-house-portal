@@ -19,6 +19,7 @@ import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
+import { SessionTimeoutProvider } from "@/components/session/session-timeout-provider"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -117,51 +118,50 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
+      <html lang="en" suppressHydrationWarning>
+        <head></head>
+        <body
+          className={cn(
             "min-h-screen bg-background font-sans antialiased",
             fontSans.variable
           )}
         >
-<ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-             <div className="relative flex min-h-screen flex-col">
-              {/* <SiteHeader /> */}
-              <div className="flex-1">
-                <ErrorBoundary>
-                  <Suspense fallback={<RouteSkeleton />}>
-                    {children}
-                  </Suspense>
-                </ErrorBoundary>
-                <Toaster />
-                <Analytics />
-                <SpeedInsights />
+            <SessionTimeoutProvider>
+              <div className="relative flex min-h-screen flex-col">
+                {/* <SiteHeader /> */}
+                <div className="flex-1">
+                  <ErrorBoundary>
+                    <Suspense fallback={<RouteSkeleton />}>
+                      {children}
+                    </Suspense>
+                  </ErrorBoundary>
+                  <Toaster />
+                  <Analytics />
+                  <SpeedInsights />
+                </div>
               </div>
 
-   </div>
-{/* <SiteFooter/> */}
+              {/* <SiteFooter/> */}
 
+              {/*
+              enter your api info from termly.io or a provider of your choice
+              <Script
+                type="text/javascript"
+                src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
-{/*
-enter your api info from termly.io or a provider of your choice
-<Script
-  type="text/javascript"
-  src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
-
- */}
-   <CookieButton />
-   <TailwindIndicator />
+               */}
+              <CookieButton />
+              <TailwindIndicator />
+            </SessionTimeoutProvider>
           </ThemeProvider>
-
-
-
-</body>
-    </html>
+        </body>
+      </html>
     </ReactQueryClientProvider>
   )
 }
