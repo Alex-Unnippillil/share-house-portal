@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
+import { fetchDocumentStats, fetchDocumentsList, type SupabaseClientLike } from '@/lib/data/documents';
 import type { DocumentListFilters } from '@/types/documents';
 
 type QueryResult<T> = { data: T; error: { message: string } | null };
@@ -40,13 +40,13 @@ function createDocumentsQuery<T extends unknown[]>(result: QueryResult<T>) {
   return builder as QueryBuilder<T>;
 }
 
-function createSupabaseStub<T extends unknown[]>(query: QueryBuilder<T>) {
+function createSupabaseStub<T extends unknown[]>(query: QueryBuilder<T>): SupabaseClientLike {
   return {
     from: vi.fn((table: string) => {
       expect(table).toBe('documents');
       return query;
     }),
-  };
+  } as unknown as SupabaseClientLike;
 }
 
 describe('fetchDocumentsList', () => {

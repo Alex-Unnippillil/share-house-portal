@@ -2,7 +2,7 @@ import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import type { DocumentListFilters, DocumentStats, DocumentWithLease } from '@/types/documents';
 import type { Database } from '@/lib/supabase';
 
-type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
+export type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;
 
 type MemberRole = Database['public']['Tables']['profiles']['Row']['role'];
 
