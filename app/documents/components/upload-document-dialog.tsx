@@ -25,8 +25,21 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { uploadDocumentAction } from '../actions';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
+import { TemplatesGallery } from '@/components/templates/TemplatesGallery';
+import { applyTemplatePrefill, clearLastTemplateChoice, loadLastTemplateChoice, saveLastTemplateChoice } from '@/lib/templates';
+import type { TemplateRecord, TemplateSelectionMeta } from '@/types/templates';
 import { Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+
+const DOCUMENT_TEMPLATE_FIELDS = [
+  'title',
+  'description',
+  'document_type',
+  'tenant_id',
+  'unit_id',
+  'requires_signature',
+  'expires_at',
+] as const;
 
 export function UploadDocumentDialog() {
   const [open, setOpen] = useState(false);
@@ -41,6 +54,9 @@ export function UploadDocumentDialog() {
     expires_at: '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(() =>
+    loadLastTemplateChoice('document')
+  );
   const router = useRouter();
   const permissions = useDocumentPermissions();
 
@@ -48,6 +64,26 @@ export function UploadDocumentDialog() {
   if (!permissions.canUploadDocuments) {
     return null;
   }
+
+  const handleTemplateSelect = (
+    template: TemplateRecord,
+    meta?: TemplateSelectionMeta,
+  ) => {
+    setFormData(prev =>
+      applyTemplatePrefill(prev, template, {
+        allowedKeys: DOCUMENT_TEMPLATE_FIELDS,
+      })
+    );
+    setSelectedTemplateId(template.id);
+    if (!meta || meta.source === 'manual') {
+      saveLastTemplateChoice('document', template.id);
+    }
+  };
+
+  const handleTemplateClear = () => {
+    setSelectedTemplateId(null);
+    clearLastTemplateChoice('document');
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -146,6 +182,19 @@ export function UploadDocumentDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Start from a template</Label>
+            <p className="text-xs text-muted-foreground">
+              Selecting a template will prefill the document details below.
+            </p>
+            <TemplatesGallery
+              context="document"
+              defaultTemplateId={selectedTemplateId}
+              onSelect={handleTemplateSelect}
+              onClear={handleTemplateClear}
+            />
+          </div>
+
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="file">Document File</Label>

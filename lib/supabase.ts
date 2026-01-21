@@ -224,6 +224,18 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      templates: SupabaseTable<{
+        id: string
+        name: string
+        description: string | null
+        category: string | null
+        context: 'document' | 'onboarding'
+        form_values: Json
+        is_curated: boolean
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string
