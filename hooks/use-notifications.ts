@@ -278,26 +278,36 @@ export function useNotifications() {
     title: string
     description: string
     priority: string
-    propertyManager: { id: string; email: string; name: string }
+    propertyManagers: Array<{ id: string; email: string; name: string }>
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
-      // Email to property manager
-      {
-        to: data.propertyManager.email,
-        subject: `New Maintenance Request: ${data.title}`,
-        template: "maintenance-request",
-        data,
-        userId: data.propertyManager.id,
-      },
-      // In-app notification to property manager
-      {
-        userId: data.propertyManager.id,
+    const templateData = {
+      requesterName: data.requesterName,
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+    }
+
+    const notifications: (NotificationData | InAppNotification)[] = []
+
+    for (const manager of data.propertyManagers) {
+      if (manager.email) {
+        notifications.push({
+          to: manager.email,
+          subject: `New Maintenance Request: ${data.title}`,
+          template: "maintenance-request",
+          data: templateData,
+          userId: manager.id,
+        })
+      }
+
+      notifications.push({
+        userId: manager.id,
         title: "New Maintenance Request",
         message: `${data.requesterName} reported: ${data.title}`,
         type: "warning" as const,
         actionUrl: "/dashboard",
-      },
-    ]
+      })
+    }
 
     return sendBulkNotifications(notifications)
   }
