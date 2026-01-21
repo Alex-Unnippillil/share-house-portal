@@ -212,6 +212,20 @@ export type Database = {
         read: boolean | null
         created_at: string | null
         updated_at: string | null
+        thread_id: string
+        source: string
+        thread_label: string | null
+      }>
+      notification_thread_preferences: SupabaseTable<{
+        id: string
+        user_id: string
+        thread_id: string
+        source: string
+        muted: boolean
+        muted_at: string | null
+        thread_label: string | null
+        created_at: string | null
+        updated_at: string | null
       }>
       email_notifications: SupabaseTable<{
         id: string
