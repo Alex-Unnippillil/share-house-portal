@@ -14,9 +14,8 @@ import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
 
-const DEFAULT_LIMIT = 20
-const MAX_LIMIT = 100
-const MAX_PAGE = 50
+export const MAX_LIMIT = 100
+export const MAX_PAGE = 50
 const DEFAULT_RANGE_DAYS = 30
 const MAX_RANGE_DAYS = 90
 const MS_PER_DAY = 24 * 60 * 60 * 1000
@@ -29,31 +28,41 @@ const isoDateSchema = z
   })
   .transform((value) => new Date(value))
 
-const positiveIntegerParam = (fallback: number, name: string) =>
+const positiveIntegerParam = (
+  name: string,
+  options: { max?: number } = {}
+) =>
   z.preprocess(
     (value) => {
-      if (value === undefined) return fallback
-      if (typeof value === "string") {
-        const trimmed = value.trim()
-        if (trimmed === "") return Number.NaN
-        if (!/^\d+$/.test(trimmed)) return Number.NaN
-        return Number.parseInt(trimmed, 10)
+      if (typeof value === "number") {
+        return value.toString()
       }
-      if (typeof value === "number") return value
-      return Number.NaN
+      return value
     },
     z
-      .number({ invalid_type_error: `${name} must be a positive integer` })
-      .refine((num) => Number.isInteger(num) && num > 0, {
+      .string({ required_error: `${name} is required` })
+      .trim()
+      .min(1, { message: `${name} must be a positive integer` })
+      .refine((value) => /^\d+$/.test(value), {
         message: `${name} must be a positive integer`,
+      })
+      .transform((value) => Number.parseInt(value, 10))
+      .refine((num) => num > 0, {
+        message: `${name} must be a positive integer`,
+      })
+      .refine((num) => options.max === undefined || num <= options.max, {
+        message:
+          options.max !== undefined
+            ? `${name} cannot exceed ${options.max}`
+            : `${name} must be a positive integer`,
       })
   )
 
-const notificationsQuerySchema = z.object({
+export const notificationsQuerySchema = z.object({
   startDate: isoDateSchema.optional(),
   endDate: isoDateSchema.optional(),
-  limit: positiveIntegerParam(DEFAULT_LIMIT, "limit"),
-  page: positiveIntegerParam(1, "page"),
+  limit: positiveIntegerParam("limit", { max: MAX_LIMIT }),
+  page: positiveIntegerParam("page", { max: MAX_PAGE }),
 })
 
 function getClientIp(request: NextRequest) {
@@ -85,12 +94,7 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date()
-  const {
-    startDate,
-    endDate,
-    limit: requestedLimit,
-    page: requestedPage,
-  } = validation.data
+  const { startDate, endDate, limit, page } = validation.data
 
   let normalizedEndDate = endDate ?? now
   if (endDate && endDate > now) {
@@ -132,26 +136,6 @@ export async function GET(request: NextRequest) {
       minAllowedStart: maxRangeStart.toISOString(),
     })
     normalizedStartDate = maxRangeStart
-  }
-
-  let limit = requestedLimit
-  if (requestedLimit > MAX_LIMIT) {
-    suspiciousSignals.push({
-      reason: "limit_clamped",
-      attemptedLimit: requestedLimit,
-      maxAllowed: MAX_LIMIT,
-    })
-    limit = MAX_LIMIT
-  }
-
-  let page = requestedPage
-  if (requestedPage > MAX_PAGE) {
-    suspiciousSignals.push({
-      reason: "page_clamped",
-      attemptedPage: requestedPage,
-      maxAllowed: MAX_PAGE,
-    })
-    page = MAX_PAGE
   }
 
   const cookieStore = cookies()
@@ -206,6 +190,8 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       total: count,
+      totalPages:
+        typeof count === "number" ? Math.ceil(count / limit) : null,
       hasMore:
         typeof count === "number" ? from + (data?.length ?? 0) < count : null,
     },
