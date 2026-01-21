@@ -2,25 +2,11 @@ import "server-only"
 
 import { cache } from "react"
 
-export type DashboardTodo = {
-        id: string
-        title: string
-        createdBy: string
-        completed: boolean
-}
-
-async function wait(ms: number) {
-        return new Promise((resolve) => setTimeout(resolve, ms))
-}
+import { fetchDashboardTodos, type DashboardTodo } from "@/queries/dashboard-todos"
+import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
 
 export const getDashboardTodos = cache(async (): Promise<DashboardTodo[]> => {
-        await wait(200)
-        return [
-                {
-                        title: "Subscribe",
-                        createdBy: "091832901830",
-                        id: "101981908",
-                        completed: false,
-                },
-        ]
+  const supabase = (await createSupbaseServerClientReadOnly()) as TypedSupabaseClient
+  return fetchDashboardTodos(supabase)
 })
