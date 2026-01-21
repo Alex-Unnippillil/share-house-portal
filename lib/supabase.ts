@@ -365,3 +365,6 @@ export type TablesInsert<T extends keyof PublicSchema['Tables']> =
   PublicSchema['Tables'][T]['Insert']
 export type TablesUpdate<T extends keyof PublicSchema['Tables']> =
   PublicSchema['Tables'][T]['Update']
+
+export type RentPaymentRow = Tables<'rent_payments'>
+export type RentPaymentInsert = TablesInsert<'rent_payments'>
