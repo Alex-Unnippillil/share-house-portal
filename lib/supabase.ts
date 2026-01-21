@@ -213,6 +213,22 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      audit_logs: SupabaseTable<{
+        id: string
+        created_at: string | null
+        action: string
+        actor_user_id: string
+        actor_role:
+          | 'tenant'
+          | 'roommate'
+          | 'property_manager'
+          | 'admin'
+          | 'user'
+          | null
+        target_user_id: string | null
+        performed_under_impersonation: boolean | null
+        metadata: Json | null
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null
