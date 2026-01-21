@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,10 @@ import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
 import { MoreHorizontal, Eye, PenTool, Download, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import useSupabaseBrowser from "@/utils/supabase-browser";
+import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { CsatPrompt } from "@/components/feedback/CsatPrompt";
+import { canShowCsatPrompt } from "@/lib/feedback/client";
 
 interface DocumentActionsProps {
   document: DocumentWithLease;
@@ -25,7 +29,69 @@ export function DocumentActions({ document }: DocumentActionsProps) {
   const [showViewer, setShowViewer] = useState(false);
   const [showSignatureDialog, setShowSignatureDialog] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [csatState, setCsatState] = useState<
+    | {
+        open: boolean
+        contextId: string
+        entityName: string
+        reloadAfter: boolean
+      }
+    | null
+  >(null)
   const permissions = useDocumentPermissions();
+  const supabase = useSupabaseBrowser();
+  const client = supabase as unknown as TypedSupabaseClient;
+
+  useEffect(() => {
+    supabase.auth
+      .getUser()
+      .then(({ data }) => setUserId(data.user?.id ?? null))
+      .catch((error) => {
+        console.error('Unable to resolve user for CSAT prompt', error)
+      })
+  }, [supabase])
+
+  const handleCsatOpenChange = useCallback((nextOpen: boolean) => {
+    setCsatState((current) => (current ? { ...current, open: nextOpen } : current))
+  }, [])
+
+  const handleCsatClosed = useCallback(() => {
+    setCsatState((current) => {
+      if (current?.reloadAfter) {
+        window.location.reload()
+      }
+      return null
+    })
+  }, [])
+
+  const maybePromptDocumentCsat = useCallback(async () => {
+    if (!userId) {
+      return false
+    }
+
+    try {
+      const eligible = await canShowCsatPrompt(client, {
+        userId,
+        context: 'document_signed',
+        contextId: document.id,
+      })
+
+      if (eligible) {
+        setCsatState({
+          open: true,
+          contextId: document.id,
+          entityName: document.title,
+          reloadAfter: true,
+        })
+        return true
+      }
+    } catch (error) {
+      console.error('Unable to evaluate document CSAT eligibility', error)
+    }
+
+    return false
+  }, [client, document.id, document.title, userId])
 
   const handleView = () => {
     setShowViewer(true);
@@ -46,7 +112,10 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       const result = await signDocumentAction(document.id);
       if (result.success) {
         toast.success('Document signed successfully');
-        window.location.reload();
+        const shouldDelayReload = await maybePromptDocumentCsat();
+        if (!shouldDelayReload) {
+          window.location.reload();
+        }
       } else {
         toast.error(result.error || 'Failed to sign document');
       }
@@ -149,6 +218,20 @@ export function DocumentActions({ document }: DocumentActionsProps) {
         onOpenChange={setShowSignatureDialog}
         document={document}
       />
+
+      {userId && csatState ? (
+        <CsatPrompt
+          open={csatState.open}
+          onOpenChange={handleCsatOpenChange}
+          onDismiss={handleCsatClosed}
+          onSubmitted={handleCsatClosed}
+          userId={userId}
+          context="document_signed"
+          contextId={csatState.contextId}
+          entityName={csatState.entityName}
+          metadata={{ documentId: document.id }}
+        />
+      ) : null}
     </>
   );
 }

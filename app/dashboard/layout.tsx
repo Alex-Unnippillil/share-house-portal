@@ -8,6 +8,7 @@ import { readUserSession } from "@/utils/actions"
 import MobileSideNav from "./components/MobileSideNav"
 import SideNav from "./components/SideNav"
 import ToggleSidebar from "./components/ToggleSidebar"
+import { NpsSurveyEntry } from "./(dashboard)/components/nps-survey-entry"
 
 export default async function Layout({ children }: { children: ReactNode }) {
 	const { data: userSession } = await readUserSession();
@@ -24,6 +25,9 @@ export default async function Layout({ children }: { children: ReactNode }) {
 
                         <div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
                                 <ToggleSidebar />
+                                <Suspense fallback={null}>
+                                        <NpsSurveyEntry userId={userSession.session.user.id} />
+                                </Suspense>
                                 <ErrorBoundary>
                                         <Suspense fallback={<RouteSkeleton />}>
                                                 {children}

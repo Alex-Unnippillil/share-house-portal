@@ -16,6 +16,7 @@ import {
 } from "./components/skeletons"
 
 import InsightsPanel from "./components/insights-panel"
+import { FeedbackAnalyticsPanel } from "./components/feedback-analytics"
 
 export default function DashboardPage() {
   return (
@@ -65,6 +66,10 @@ export default function DashboardPage() {
           </Suspense>
         </div>
       </div>
+
+      <Suspense fallback={<DashboardCardSkeleton />}>
+        <FeedbackAnalyticsPanel />
+      </Suspense>
     </div>
   )
 }
