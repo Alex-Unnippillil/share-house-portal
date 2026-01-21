@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContextualHelpSearch } from "@/components/help/contextual-help-search";
 import { MaintenanceRequestForm } from "@/components/maintenance/maintenance-request-form";
 
 const maintenanceHighlights = [
@@ -54,6 +55,11 @@ export default function MaintenancePage() {
               </Card>
             ))}
           </div>
+          <ContextualHelpSearch
+            context="maintenance"
+            title="Maintenance help center"
+            description="Search escalation guides, triage checklists, and vendor coordination tips."
+          />
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { ContextualHelpSearch } from "@/components/help/contextual-help-search"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import { PaymentStatusFeed } from "./_components/payment-status-feed"
@@ -254,7 +255,11 @@ export default async function PaymentsPage() {
         <RoommateLedgerSection />
       </Suspense>
       <ReceiptHistoryCard receipts={receiptHistory} />
-
+      <ContextualHelpSearch
+        context="payments"
+        title="Payments help center"
+        description="Search help articles covering autopay, receipts, and billing adjustments without leaving the dashboard."
+      />
     </div>
   )
 }
