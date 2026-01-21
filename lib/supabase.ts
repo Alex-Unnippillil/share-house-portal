@@ -213,6 +213,24 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      perf_metrics: SupabaseTable<{
+        id: string
+        created_at: string | null
+        session_id: string
+        user_id: string | null
+        url: string
+        pathname: string
+        referrer: string | null
+        user_agent: string | null
+        locale: string | null
+        timezone: string | null
+        navigation_type: string | null
+        connection: Json | null
+        viewport: Json | null
+        metrics: Json
+        budget_status: Json
+        metadata: Json | null
+      }>
       email_notifications: SupabaseTable<{
         id: string
         user_id: string | null
