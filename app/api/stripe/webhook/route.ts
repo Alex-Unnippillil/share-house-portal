@@ -1,5 +1,9 @@
 import { headers } from "next/headers"
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import {
+  createClient,
+  type PostgrestError,
+  type SupabaseClient,
+} from "@supabase/supabase-js"
 
 import {
   sendEmailNotification,
@@ -8,6 +12,12 @@ import {
 import { jsonError } from "@/lib/errors"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+
+type StripeEvent = {
+  id: string
+  type: string
+  data: { object: unknown }
+}
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -53,26 +63,7 @@ export async function POST(req: Request) {
       webhookSecret
     )
 
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(supabase, event.data.object)
-        break
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(supabase, event.data.object)
-        break
-      case "customer.subscription.created":
-        await handleSubscriptionCreated(supabase, event.data.object)
-        break
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(supabase, event.data.object)
-        break
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(supabase, event.data.object)
-        break
-      default:
-        console.log(`Unhandled event type: ${event.type}`)
-        break
-    }
+    await processStripeEvent(supabase, event)
 
     return new Response("ok", { status: 200 })
   } catch (err) {
@@ -90,6 +81,67 @@ export async function POST(req: Request) {
       message,
     })
   }
+}
+
+async function markStripeEventHandled(
+  supabase: SupabaseClient<Database>,
+  eventId: string,
+  eventType: string
+): Promise<boolean> {
+  const { error } = await supabase.from("stripe_processed_events").insert({
+    event_id: eventId,
+    event_type: eventType,
+    processed_at: new Date().toISOString(),
+  })
+
+  if (!error) {
+    return true
+  }
+
+  if ((error as PostgrestError | null)?.code === "23505") {
+    // Event has already been processed
+    return false
+  }
+
+  throw new Error(
+    `Failed to record processed Stripe event ${eventId}: ${error?.message ?? "unknown error"}`
+  )
+}
+
+const EVENT_HANDLERS: Record<
+  StripeEvent["type"],
+  (supabase: SupabaseClient<Database>, payload: any) => Promise<void>
+> = {
+  "checkout.session.completed": handleCheckoutSessionCompleted,
+  "invoice.payment_succeeded": handleInvoicePaymentSucceeded,
+  "customer.subscription.created": handleSubscriptionCreated,
+  "customer.subscription.updated": handleSubscriptionUpdated,
+  "customer.subscription.deleted": handleSubscriptionDeleted,
+}
+
+export async function processStripeEvent(
+  supabase: SupabaseClient<Database>,
+  event: StripeEvent
+): Promise<boolean> {
+  const handler = EVENT_HANDLERS[event.type]
+
+  if (!handler) {
+    console.log(`Unhandled event type: ${event.type}`)
+    return false
+  }
+
+  const shouldProcess = await markStripeEventHandled(
+    supabase,
+    event.id,
+    event.type
+  )
+
+  if (!shouldProcess) {
+    return false
+  }
+
+  await handler(supabase, event.data.object)
+  return true
 }
 
 async function handleCheckoutSessionCompleted(
@@ -134,7 +186,11 @@ async function handleCheckoutSessionCompleted(
           },
         }
 
-        await supabase.from("rent_payments").insert(paymentData)
+        await supabase
+          .from("rent_payments")
+          .upsert(paymentData, {
+            onConflict: "stripe_payment_intent_id",
+          })
 
         // Send payment receipt notification if we have tenant info
         if (tenantId) {
@@ -225,6 +281,8 @@ async function handleInvoicePaymentSucceeded(
         tenant_id: subscription.metadata?.tenant_id,
         unit_id: subscription.metadata?.unit_id,
         payment_method_type: "card", // Default assumption
+        stripe_invoice_id: invoice.id,
+        stripe_payment_intent_id: invoice.payment_intent,
         billing_period_start: subscription.current_period_start
           ? new Date(subscription.current_period_start * 1000)
               .toISOString()
@@ -241,7 +299,11 @@ async function handleInvoicePaymentSucceeded(
           billing_reason: invoice.billing_reason,
         },
       }
-      await supabase.from("rent_payments").insert(subscriptionPayment)
+      await supabase
+        .from("rent_payments")
+        .upsert(subscriptionPayment, {
+          onConflict: "stripe_invoice_id",
+        })
 
       // Update subscription status if needed
       await supabase
