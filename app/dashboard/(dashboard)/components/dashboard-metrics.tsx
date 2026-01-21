@@ -36,7 +36,11 @@ export async function DashboardMetrics() {
         const trend = trendCopy[metric.trend.direction]
 
         return (
-          <Card key={metric.id} className="border-border/60 shadow-none">
+          <Card
+            key={metric.id}
+            className="border-border/60 shadow-none"
+            data-semantic-metric={metric.semanticMetricId}
+          >
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {metric.label}
@@ -51,6 +55,11 @@ export async function DashboardMetrics() {
               <p className="text-xs font-medium text-primary">
                 {trend.prefix} • {metric.trend.label}
               </p>
+              {metric.semanticMetricId ? (
+                <p className="text-[11px] text-muted-foreground">
+                  Semantic metric: <code className="font-mono text-[11px]">{metric.semanticMetricId}</code>
+                </p>
+              ) : null}
             </CardContent>
           </Card>
         )

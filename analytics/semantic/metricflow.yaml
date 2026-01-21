@@ -1,0 +1,305 @@
+version: 1
+
+semantic_models:
+  - name: rent_payments
+    description: >-
+      Fact table for rent and fee payments collected through Supabase. Values
+      are stored in cents and denormalised with payer/unit information so both
+      tenant- and property-manager dashboards can summarise outcomes.
+    node_relation:
+      schema_name: public
+      alias: rent_payments
+    defaults:
+      agg_time_dimension: processed_at
+    entities:
+      - name: payment
+        type: primary
+        expr: id
+      - name: tenant
+        type: foreign
+        expr: coalesce(tenant_id, user_id)
+      - name: unit
+        type: foreign
+        expr: unit_id
+    dimensions:
+      - name: payment_status
+        description: Stripe-aligned payment lifecycle state.
+        type: categorical
+        expr: status
+        type_params:
+          valid_values: [pending, succeeded, failed, cancelled, completed]
+      - name: processed_at
+        description: Timestamp the payment was processed or created when
+          processing is unavailable.
+        type: time
+        expr: coalesce(processed_at, created_at)
+        type_params:
+          time_granularity: day
+      - name: billing_period_start
+        description: Start of the billing period covered by the charge when present.
+        type: time
+        expr: billing_period_start
+        type_params:
+          time_granularity: day
+      - name: billing_period_end
+        description: End of the billing period covered by the charge when present.
+        type: time
+        expr: billing_period_end
+        type_params:
+          time_granularity: day
+      - name: currency
+        description: ISO currency code normalised to lowercase.
+        type: categorical
+        expr: lower(currency)
+      - name: payer_name
+        description: Denormalised payer full name for lookups and reporting.
+        type: categorical
+        expr: payer_name
+      - name: unit_label
+        description: Human readable unit string derived from metadata or the units table.
+        type: categorical
+        expr: unit
+    measures:
+      - name: rent_payments_total_amount
+        description: Sum of all rent payment amounts in USD.
+        agg: sum
+        expr: amount / 100.0
+      - name: rent_payments_collected_amount
+        description: Sum of successful rent payments in USD.
+        agg: sum
+        expr: amount / 100.0
+        filter:
+          where: "status IN ('succeeded', 'completed')"
+      - name: rent_payments_total_transactions
+        description: Count of rent payment attempts.
+        agg: count_distinct
+        expr: id
+      - name: rent_payments_successful_transactions
+        description: Count of payments that settled successfully.
+        agg: count_distinct
+        expr: id
+        filter:
+          where: "status IN ('succeeded', 'completed')"
+      - name: rent_payments_failed_transactions
+        description: Count of failed or cancelled payment attempts.
+        agg: count_distinct
+        expr: id
+        filter:
+          where: "status IN ('failed', 'cancelled')"
+
+  - name: amenity_bookings
+    description: Amenity reservation fact table powering booking calendars and utilisation reporting.
+    node_relation:
+      schema_name: public
+      alias: amenity_bookings
+    defaults:
+      agg_time_dimension: start_time
+    entities:
+      - name: booking
+        type: primary
+        expr: id
+      - name: amenity
+        type: foreign
+        expr: amenity_id
+      - name: creator
+        type: foreign
+        expr: created_by
+      - name: household
+        type: foreign
+        expr: household_id
+    dimensions:
+      - name: booking_status
+        description: Workflow status aligned with Cal.com state machine.
+        type: categorical
+        expr: status
+        type_params:
+          valid_values: [pending, confirmed, cancelled]
+      - name: start_time
+        description: Reservation start timestamp.
+        type: time
+        expr: start_time
+        type_params:
+          time_granularity: minute
+      - name: end_time
+        description: Reservation end timestamp.
+        type: time
+        expr: end_time
+        type_params:
+          time_granularity: minute
+    measures:
+      - name: amenity_bookings_total
+        description: Total amenity bookings regardless of status.
+        agg: count
+        expr: id
+      - name: amenity_bookings_confirmed
+        description: Confirmed amenity bookings.
+        agg: count
+        expr: id
+        filter:
+          where: "status = 'confirmed'"
+      - name: amenity_bookings_pending
+        description: Pending amenity bookings awaiting approval.
+        agg: count
+        expr: id
+        filter:
+          where: "status = 'pending'"
+      - name: amenity_bookings_cancelled
+        description: Cancelled amenity bookings.
+        agg: count
+        expr: id
+        filter:
+          where: "status = 'cancelled'"
+      - name: amenity_booking_duration_hours
+        description: Average duration of reservations in hours.
+        agg: average
+        expr: EXTRACT(EPOCH FROM (end_time - start_time)) / 3600.0
+        filter:
+          where: "end_time IS NOT NULL"
+      - name: amenity_bookings_active_households
+        description: Distinct households engaging with amenity bookings.
+        agg: count_distinct
+        expr: household_id
+        filter:
+          where: "household_id IS NOT NULL"
+
+  - name: maintenance_requests
+    description: Maintenance request workflow table capturing lifecycle, priorities, and completion timestamps.
+    node_relation:
+      schema_name: public
+      alias: maintenance_requests
+    defaults:
+      agg_time_dimension: created_at
+    entities:
+      - name: request
+        type: primary
+        expr: id
+      - name: requester
+        type: foreign
+        expr: requested_by
+      - name: assignee
+        type: foreign
+        expr: assigned_to
+      - name: unit
+        type: foreign
+        expr: unit_id
+    dimensions:
+      - name: request_status
+        description: Maintenance workflow status.
+        type: categorical
+        expr: status
+        type_params:
+          valid_values: [pending, in_progress, completed, cancelled]
+      - name: priority
+        description: Submitted priority.
+        type: categorical
+        expr: priority
+        type_params:
+          valid_values: [low, normal, high, urgent]
+      - name: created_at
+        description: Request creation timestamp.
+        type: time
+        expr: created_at
+        type_params:
+          time_granularity: day
+      - name: completed_at
+        description: Resolution timestamp when available.
+        type: time
+        expr: completed_at
+        type_params:
+          time_granularity: day
+      - name: category
+        description: User-supplied category label.
+        type: categorical
+        expr: category
+    measures:
+      - name: maintenance_requests_open
+        description: Maintenance requests that remain unresolved.
+        agg: count
+        expr: id
+        filter:
+          where: "status IN ('pending', 'in_progress')"
+      - name: maintenance_requests_completed
+        description: Requests marked as completed.
+        agg: count
+        expr: id
+        filter:
+          where: "status = 'completed'"
+      - name: maintenance_requests_cancelled
+        description: Requests cancelled or withdrawn.
+        agg: count
+        expr: id
+        filter:
+          where: "status = 'cancelled'"
+      - name: maintenance_requests_resolution_hours
+        description: Average turnaround time in hours for completed requests.
+        agg: average
+        expr: EXTRACT(EPOCH FROM (completed_at - created_at)) / 3600.0
+        filter:
+          where: "completed_at IS NOT NULL"
+
+metrics:
+  - name: rent_collected_amount
+    label: Rent collected (USD)
+    description: Total dollars collected from successful rent payments.
+    type: simple
+    type_params:
+      measure: rent_payments_collected_amount
+  - name: rent_collection_rate
+    label: Rent collection rate
+    description: Share of rent payments that settle successfully relative to all attempts.
+    type: ratio
+    type_params:
+      numerator: rent_payments_successful_transactions
+      denominator: rent_payments_total_transactions
+  - name: rent_payment_failure_rate
+    label: Rent failure rate
+    description: Share of rent payment attempts that failed or were cancelled.
+    type: ratio
+    type_params:
+      numerator: rent_payments_failed_transactions
+      denominator: rent_payments_total_transactions
+
+  - name: amenity_bookings_confirmed_count
+    label: Confirmed amenity bookings
+    description: Total confirmed bookings for amenities.
+    type: simple
+    type_params:
+      measure: amenity_bookings_confirmed
+  - name: amenity_booking_fill_rate
+    label: Amenity booking fill rate
+    description: Portion of bookings that convert from requested to confirmed.
+    type: ratio
+    type_params:
+      numerator: amenity_bookings_confirmed
+      denominator: amenity_bookings_total
+  - name: amenity_booking_avg_duration_hours
+    label: Average amenity booking duration (hours)
+    description: Mean reservation length for confirmed or pending bookings.
+    type: simple
+    type_params:
+      measure: amenity_booking_duration_hours
+  - name: amenity_bookings_active_households
+    label: Active booking households
+    description: Distinct households creating amenity bookings.
+    type: simple
+    type_params:
+      measure: amenity_bookings_active_households
+
+  - name: maintenance_open_tickets
+    label: Open maintenance tickets
+    description: Requests that are pending or in progress.
+    type: simple
+    type_params:
+      measure: maintenance_requests_open
+  - name: maintenance_resolved_count
+    label: Completed maintenance tickets
+    description: Maintenance requests marked completed for the selected period.
+    type: simple
+    type_params:
+      measure: maintenance_requests_completed
+  - name: maintenance_resolution_time_hours
+    label: Average maintenance resolution time (hours)
+    description: Mean hours between maintenance request creation and completion.
+    type: simple
+    type_params:
+      measure: maintenance_requests_resolution_hours

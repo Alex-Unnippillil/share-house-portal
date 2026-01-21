@@ -20,6 +20,8 @@ const rentCollectionData = [
   { month: "Jun", collected: 100 },
 ]
 
+const rentCollectionMetricId = "rent_collection_rate"
+
 const maintenanceData = [
   { month: "Jan", resolved: 8 },
   { month: "Feb", resolved: 11 },
@@ -28,6 +30,8 @@ const maintenanceData = [
   { month: "May", resolved: 15 },
   { month: "Jun", resolved: 12 },
 ]
+
+const maintenanceResolvedMetricId = "maintenance_resolved_count"
 
 const churnData = [
   { label: "Renewing", value: 64 },
@@ -100,7 +104,7 @@ export default function AnalyticsCharts() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-border/70">
+        <Card className="border-border/70" data-semantic-metric={rentCollectionMetricId}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-lg">
               Rent collection velocity
@@ -110,9 +114,12 @@ export default function AnalyticsCharts() {
             </CardTitle>
             <CardDescription>
               Percentage of rent collected on time by month for the current lease cycle.
+              <span className="mt-2 block text-xs text-muted-foreground">
+                Semantic metric: <code className="font-mono text-xs">{rentCollectionMetricId}</code>
+              </span>
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent data-semantic-metric={rentCollectionMetricId}>
             <div className="flex h-56 items-end gap-3">
               {rentCollectionData.map((entry) => (
                 <div key={entry.month} className="flex flex-1 flex-col items-center gap-2">
@@ -131,7 +138,7 @@ export default function AnalyticsCharts() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/70">
+        <Card className="border-border/70" data-semantic-metric={maintenanceResolvedMetricId}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-lg">
               Maintenance resolution pace
@@ -141,6 +148,9 @@ export default function AnalyticsCharts() {
             </CardTitle>
             <CardDescription>
               Tickets resolved per month with cumulative pace towards the quarterly SLA target.
+              <span className="mt-2 block text-xs text-muted-foreground">
+                Semantic metric: <code className="font-mono text-xs">{maintenanceResolvedMetricId}</code>
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -149,6 +159,7 @@ export default function AnalyticsCharts() {
               className="h-56 w-full overflow-visible rounded-lg bg-gradient-to-b from-primary/5 via-background to-background"
               role="img"
               aria-label="Maintenance tickets resolved per month"
+              data-semantic-metric={maintenanceResolvedMetricId}
             >
               <defs>
                 <linearGradient id="maintenanceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
