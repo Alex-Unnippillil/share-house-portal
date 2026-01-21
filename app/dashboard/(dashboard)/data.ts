@@ -2,6 +2,8 @@ import "server-only"
 
 import { cache } from "react"
 
+import type { MaintenancePriority, MaintenanceStatus } from "@/lib/maintenance/types"
+
 type WelcomeMessage = {
   title: string
   subtitle: string
@@ -70,8 +72,8 @@ type UpcomingBooking = {
 type MaintenanceTicket = {
   id: string
   title: string
-  status: "scheduled" | "in_progress" | "awaiting_vendor"
-  priority: "low" | "medium" | "high"
+  status: MaintenanceStatus
+  priority: MaintenancePriority
   updatedAt: string
 }
 
@@ -300,14 +302,21 @@ async function fetchMaintenanceTickets(): Promise<MaintenanceTicket[]> {
       id: "maintenance-1",
       title: "Washer door latch replacement",
       status: "scheduled",
-      priority: "medium",
+      priority: "normal",
       updatedAt: "2024-07-22T14:30:00.000Z",
     },
     {
       id: "maintenance-2",
       title: "HVAC seasonal tune-up",
-      status: "in_progress",
+      status: "awaiting_vendor",
       priority: "high",
+      updatedAt: "2024-07-21T09:00:00.000Z",
+    },
+    {
+      id: "maintenance-3",
+      title: "Shower valve temperature balancing",
+      status: "triaged",
+      priority: "urgent",
       updatedAt: "2024-07-21T09:00:00.000Z",
     },
   ]

@@ -302,6 +302,70 @@ export function useNotifications() {
     return sendBulkNotifications(notifications)
   }
 
+  const notifyMaintenanceSlaBreach = async (data: {
+    requestId: string
+    requestTitle: string
+    priority: string
+    breachType: 'response' | 'resolution'
+    dueAt: string
+    overdueWindow: string
+    propertyManager: { id: string; email?: string; name: string }
+    vendor?: { id?: string; email?: string; name: string }
+  }) => {
+    const notifications: (NotificationData | InAppNotification)[] = []
+
+    if (data.propertyManager.email) {
+      notifications.push({
+        to: data.propertyManager.email,
+        subject: `SLA breach: ${data.requestTitle}`,
+        template: 'maintenance-sla-breach',
+        data,
+        userId: data.propertyManager.id,
+      })
+    }
+
+    notifications.push({
+      userId: data.propertyManager.id,
+      title: 'Maintenance SLA breached',
+      message: `${data.breachType === 'response' ? 'Response' : 'Resolution'} SLA exceeded for ${data.requestTitle}`,
+      type: 'error',
+      actionUrl: '/maintenance',
+      metadata: {
+        requestId: data.requestId,
+        breachType: data.breachType,
+        dueAt: data.dueAt,
+        overdueWindow: data.overdueWindow,
+      },
+    })
+
+    if (data.vendor?.email) {
+      notifications.push({
+        to: data.vendor.email,
+        subject: `Vendor SLA alert: ${data.requestTitle}`,
+        template: 'maintenance-sla-breach',
+        data,
+        userId: data.vendor.id,
+      })
+    }
+
+    if (data.vendor?.id) {
+      notifications.push({
+        userId: data.vendor.id,
+        title: 'SLA deadline missed',
+        message: `${data.requestTitle} requires immediate attention.`,
+        type: 'warning',
+        actionUrl: '/maintenance',
+        metadata: {
+          requestId: data.requestId,
+          breachType: data.breachType,
+          dueAt: data.dueAt,
+        },
+      })
+    }
+
+    return sendBulkNotifications(notifications)
+  }
+
   const notifyPaymentReceipt = async (data: {
     tenantName: string
     amount: string
@@ -367,6 +431,7 @@ export function useNotifications() {
     sendBulkNotifications,
     notifyVisitorBooking,
     notifyMaintenanceRequest,
+    notifyMaintenanceSlaBreach,
     notifyPaymentReceipt,
     notifyDocumentSigned,
   }

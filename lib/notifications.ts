@@ -48,6 +48,9 @@ class NotificationService {
         "maintenance-request": this.getMaintenanceRequestTemplate(
           notification.data
         ),
+        "maintenance-sla-breach": this.getMaintenanceSlaBreachTemplate(
+          notification.data
+        ),
         "payment-receipt": this.getPaymentReceiptTemplate(notification.data),
         "document-signed": this.getDocumentSignedTemplate(notification.data),
         welcome: this.getWelcomeTemplate(notification.data),
@@ -190,6 +193,27 @@ class NotificationService {
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
         }/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Request</a>
+      </div>
+    `
+  }
+
+  private getMaintenanceSlaBreachTemplate(data?: any) {
+    const breachLabel =
+      data?.breachType === 'resolution' ? 'Resolution SLA' : 'Response SLA'
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Maintenance SLA Breach</h2>
+        <p><strong>Ticket:</strong> ${data?.requestTitle || 'Maintenance request'}</p>
+        <p><strong>Priority:</strong> ${data?.priority || 'normal'}</p>
+        <p><strong>Breach type:</strong> ${breachLabel}</p>
+        <p><strong>Deadline:</strong> ${
+          data?.dueAt ? new Date(data.dueAt).toLocaleString() : 'Unknown'
+        }</p>
+        <p><strong>Overdue by:</strong> ${data?.overdueWindow || 'Unknown duration'}</p>
+        <p>Please review the maintenance dashboard to reassign resources and notify the resident.</p>
+        <a href="${
+          process.env.NEXT_PUBLIC_APP_URL
+        }/maintenance" style="background: #db2777; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Ticket</a>
       </div>
     `
   }
