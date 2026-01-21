@@ -2,9 +2,6 @@ import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Suspense } from "react"
 
-import { Analytics } from "@vercel/analytics/react"
-import { SpeedInsights } from "@vercel/speed-insights/next"
-
 import "./globals.css"
 
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
@@ -19,6 +16,7 @@ import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
+import { DeferredAnalytics } from "@/components/deferred-analytics"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -139,8 +137,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   </Suspense>
                 </ErrorBoundary>
                 <Toaster />
-                <Analytics />
-                <SpeedInsights />
+                <DeferredAnalytics />
               </div>
 
    </div>
