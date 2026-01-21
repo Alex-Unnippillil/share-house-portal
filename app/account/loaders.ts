@@ -8,7 +8,7 @@ import type { User } from "@supabase/supabase-js"
 
 import type { Database } from "@/lib/supabase"
 
-import { createClient } from "@/utils/supa-server-actions"
+import { createServerClient } from "@/lib/supabase-client"
 
 import type { AccountProfile } from "./types"
 
@@ -24,7 +24,7 @@ export interface AccountPageData {
 
 export async function loadAccountPageData(): Promise<AccountPageData> {
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createServerClient(cookieStore)
 
   const {
     data: { user },

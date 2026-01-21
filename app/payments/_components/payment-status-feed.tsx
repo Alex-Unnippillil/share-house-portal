@@ -23,7 +23,7 @@ import {
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
 import type { CatchUpBalance } from "@/types/payments"
 import type { Tables } from "@/lib/supabase"
-import { createClient } from "@/utils/supabase-browser"
+import { createBrowserClient } from "@/lib/supabase-client"
 
 type StripePaymentStatus = Tables<"rent_payments">["status"]
 type PaymentFeedStatus = StripePaymentStatus | "history"
@@ -140,6 +140,8 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
     return map
   }, [initialStatuses])
 
+  const supabase = useMemo(() => createBrowserClient(), [])
+
   useEffect(() => {
     if (
       typeof window === "undefined" ||
@@ -148,8 +150,6 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
     ) {
       return
     }
-
-    const supabase = createClient()
 
     const channel = supabase
       .channel("rent_payments_status")
@@ -244,7 +244,7 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [roommateLookup])
+  }, [roommateLookup, supabase])
 
   return (
     <Card>

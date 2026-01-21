@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import { createClient } from "@/utils/supabase-browser";
+import { createBrowserClient } from "@/lib/supabase-client";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -27,7 +27,7 @@ export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);

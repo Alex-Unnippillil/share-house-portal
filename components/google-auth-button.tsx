@@ -1,12 +1,13 @@
 'use client';
 
-import useSupabaseBrowser from '@/utils/supabase-browser';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
-import { useEffect, useState } from 'react';
+
+import { createBrowserClient } from '@/lib/supabase-client';
 
 export default function AuthButton() {
-  const supabase = useSupabaseBrowser();
+  const supabase = useMemo(() => createBrowserClient(), []);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

@@ -1,4 +1,4 @@
-import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
+import type { TypedSupabaseClient } from '@/lib/supabase-client';
 import type { Database } from '@/lib/supabase';
 
 type SupabaseClientLike = Pick<TypedSupabaseClient, 'from'>;

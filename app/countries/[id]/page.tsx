@@ -1,11 +1,13 @@
 'use client'
 
-import useSupabaseBrowser from '@/utils/supabase-browser'
+import { useMemo } from 'react'
+
+import { createBrowserClient } from '@/lib/supabase-client'
 import { getCountryById } from '@/queries/country-by-id'
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
 
 export default function CountryPage({ params }: { params: { id: number } }) {
-  const supabase = useSupabaseBrowser()
+  const supabase = useMemo(() => createBrowserClient(), [])
   const {
     data: country,
     isLoading,

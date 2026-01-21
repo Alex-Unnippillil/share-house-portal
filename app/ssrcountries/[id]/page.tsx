@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { prefetchQuery } from '@supabase-cache-helpers/postgrest-react-query'
-import { createClient } from '@/utils/supa-server-actions'
+import { createServerClient } from '@/lib/supabase-client'
 import { cookies } from 'next/headers'
 import Country from './country'
 import { getCountryById } from '@/queries/country-by-id'
@@ -8,7 +8,7 @@ import { getCountryById } from '@/queries/country-by-id'
 export default async function CountryPage({ params }: { params: { id: number } }) {
   const queryClient = new QueryClient()
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createServerClient(cookieStore)
 
   await prefetchQuery(queryClient, getCountryById(supabase, params.id))
 

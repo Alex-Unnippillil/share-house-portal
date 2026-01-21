@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 
-import useSupabaseBrowser from "@/utils/supabase-browser"
+import { createBrowserClient } from "@/lib/supabase-client"
 
 export function useAuth() {
-  const supabase = useSupabaseBrowser()
+  const supabase = useMemo(() => createBrowserClient(), [])
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
