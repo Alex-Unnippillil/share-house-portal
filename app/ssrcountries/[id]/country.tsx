@@ -1,9 +1,10 @@
 // app/posts/posts.jsx
 'use client'
 
-import useSupabaseBrowser from '@/utils/supabase-browser'
+import { useQuery } from '@tanstack/react-query'
+
 import { getCountryById } from '@/queries/country-by-id'
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
+import useSupabaseBrowser from '@/utils/supabase-browser'
 
 export default function Country({ id }: { id: number }) {
   const supabase = useSupabaseBrowser()
