@@ -19,6 +19,7 @@ import { RoommateLedger } from "./_components/roommate-ledger"
 import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
 import {
   calculateOutstanding,
+  formatAutopayDay,
   getNextOutstandingCharge,
 } from "@/lib/payments/catch-up"
 import { formatCurrency } from "@/lib/payments/currency"
@@ -203,37 +204,98 @@ export default async function PaymentsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {roommateSummaries.map(({ balance, outstanding, nextCharge }) => (
-                <div
-                  key={balance.roommateId}
-                  className="flex flex-wrap items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">{balance.roommateName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {balance.unitLabel} · {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrency(
-                        balance.lastPaymentAmount,
-                        balance.currency,
-                      )}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold">
-                      {formatCurrency(outstanding, balance.currency)}
-                    </p>
-                    {nextCharge ? (
+              {roommateSummaries.map(({ balance, outstanding, nextCharge }) => {
+                const schedule = balance.autopaySchedule
+                const leaseDueDay = schedule?.leaseDueDay
+                const roommateDueDay = schedule?.roommateDueDay ?? leaseDueDay
+                const nextDueLabel = schedule
+                  ? format(parseISO(schedule.nextDueDate), "MMM d")
+                  : undefined
+                const graceLabel = schedule
+                  ? format(parseISO(schedule.gracePeriodEndsOn), "MMM d")
+                  : undefined
+                const lateFeeLabel = (() => {
+                  if (!schedule?.lateFee) {
+                    return null
+                  }
+                  const appliesOn = format(parseISO(schedule.lateFee.appliesOn), "MMM d")
+                  switch (schedule.lateFee.status) {
+                    case "applied":
+                      return `Late fee ${formatCurrency(schedule.lateFee.amount, balance.currency)} applied ${appliesOn}`
+                    case "scheduled":
+                      return `Late fee ${formatCurrency(schedule.lateFee.amount, balance.currency)} scheduled ${appliesOn}`
+                    default:
+                      return `Late fee ${formatCurrency(schedule.lateFee.amount, balance.currency)} projected ${appliesOn}`
+                  }
+                })()
+                const reminderSummary = schedule?.reminders
+                  .map((reminder) => {
+                    const reminderDate = (() => {
+                      try {
+                        return format(parseISO(reminder.sendAt), "MMM d")
+                      } catch (error) {
+                        return reminder.sendAt
+                      }
+                    })()
+                    const channelLabel = reminder.channel.toUpperCase()
+                    const statusLabel = reminder.status === "sent" ? "sent" : "scheduled"
+                    return `${channelLabel} ${reminderDate} ${statusLabel}`
+                  })
+                  .join(" · ")
+
+                return (
+                  <div
+                    key={balance.roommateId}
+                    className="flex flex-wrap items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{balance.roommateName}</p>
                       <p className="text-xs text-muted-foreground">
-                        Next: {nextCharge.description} due {format(parseISO(nextCharge.dueDate), "MMM d")}
+                        {balance.unitLabel} · {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
                       </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No outstanding charges</p>
-                    )}
+                      {schedule ? (
+                        <p className="text-xs text-muted-foreground">
+                          Lease due {leaseDueDay ? formatAutopayDay(leaseDueDay) : "—"}
+                          {roommateDueDay && leaseDueDay !== roommateDueDay
+                            ? ` · Roommate share ${formatAutopayDay(roommateDueDay)}`
+                            : null}
+                        </p>
+                      ) : null}
+                      <p className="text-xs text-muted-foreground">
+                        Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrency(
+                          balance.lastPaymentAmount,
+                          balance.currency,
+                        )}
+                      </p>
+                      {schedule && nextDueLabel && graceLabel ? (
+                        <p className="text-xs text-muted-foreground">
+                          Next autopay {nextDueLabel} · Grace through {graceLabel}
+                        </p>
+                      ) : null}
+                      {lateFeeLabel ? (
+                        <p className="text-xs text-muted-foreground">{lateFeeLabel}</p>
+                      ) : null}
+                      {reminderSummary ? (
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Reminders {reminderSummary}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">
+                        {formatCurrency(outstanding, balance.currency)}
+                      </p>
+                      {nextCharge ? (
+                        <p className="text-xs text-muted-foreground">
+                          Next: {nextCharge.description} due {format(parseISO(nextCharge.dueDate), "MMM d")}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">No outstanding charges</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </CardContent>
           </Card>
           <PaymentStatusFeed balances={catchUpBalances} />

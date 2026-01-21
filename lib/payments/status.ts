@@ -2,7 +2,10 @@ import { calculateOutstanding, formatAutopayDay } from "./catch-up"
 import { roundToCurrency } from "./currency"
 
 import type {
+  AutopayLateFee,
+  AutopayReminder,
   AutopayStatus,
+  AutopaySchedule,
   CatchUpBalance,
   CatchUpChargeCategory,
 } from "@/types/payments"
@@ -44,6 +47,24 @@ export interface RoommateAutopayState {
   currency: string
   lastPaymentAmount: number
   lastPaymentDate: string
+  leaseDueDay?: number
+  roommateDueDay?: number
+  nextDueDate?: string
+  gracePeriodDays?: number
+  gracePeriodEndsOn?: string
+  lateFee?: AutopayLateFee
+  reminders: AutopayReminder[]
+}
+
+export function getEffectiveAutopayDay(
+  schedule: AutopaySchedule | undefined,
+  fallbackDay: number,
+): number {
+  if (!schedule) {
+    return fallbackDay
+  }
+
+  return schedule.roommateDueDay ?? schedule.leaseDueDay ?? fallbackDay
 }
 
 export function createRoommateAutopayState(
@@ -54,11 +75,21 @@ export function createRoommateAutopayState(
     roommateName: balance.roommateName,
     unitLabel: balance.unitLabel,
     autopayStatus: balance.autopayStatus,
-    autopayDay: balance.autopayDay,
+    autopayDay: getEffectiveAutopayDay(
+      balance.autopaySchedule,
+      balance.autopayDay,
+    ),
     outstanding: roundToCurrency(calculateOutstanding(balance.charges)),
     currency: balance.currency,
     lastPaymentAmount: balance.lastPaymentAmount,
     lastPaymentDate: balance.lastPaymentDate,
+    leaseDueDay: balance.autopaySchedule?.leaseDueDay,
+    roommateDueDay: balance.autopaySchedule?.roommateDueDay,
+    nextDueDate: balance.autopaySchedule?.nextDueDate,
+    gracePeriodDays: balance.autopaySchedule?.gracePeriodDays,
+    gracePeriodEndsOn: balance.autopaySchedule?.gracePeriodEndsOn,
+    lateFee: balance.autopaySchedule?.lateFee,
+    reminders: balance.autopaySchedule?.reminders ?? [],
   }))
 }
 

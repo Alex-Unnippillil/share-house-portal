@@ -312,7 +312,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                   </span>
                 </div>
                 {selectedBalance ? (
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  <div className="mt-3 grid gap-3 text-xs text-muted-foreground md:grid-cols-2">
                     <div>
                       <p className="font-medium text-foreground">Autopay</p>
                       <p>
@@ -323,6 +323,104 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                       <p className="font-medium text-foreground">Last payment</p>
                       <p>{format(parseISO(selectedBalance.lastPaymentDate), "MMM d, yyyy")}</p>
                     </div>
+                    {selectedBalance.autopaySchedule ? (
+                      <div className="space-y-1 md:col-span-2">
+                        <p className="font-medium text-foreground">Autopay window</p>
+                        <p>
+                          Lease due {formatAutopayDay(selectedBalance.autopaySchedule.leaseDueDay)}
+                          {selectedBalance.autopaySchedule.roommateDueDay &&
+                          selectedBalance.autopaySchedule.roommateDueDay !==
+                            selectedBalance.autopaySchedule.leaseDueDay
+                            ? ` · Roommate share ${formatAutopayDay(
+                                selectedBalance.autopaySchedule.roommateDueDay,
+                              )}`
+                            : ""}
+                        </p>
+                        <p>
+                          Next run
+                          {(() => {
+                            try {
+                              return ` ${format(
+                                parseISO(selectedBalance.autopaySchedule!.nextDueDate),
+                                "MMM d, yyyy",
+                              )}`
+                            } catch (error) {
+                              return ` ${selectedBalance.autopaySchedule!.nextDueDate}`
+                            }
+                          })()}
+                          {(() => {
+                            const schedule = selectedBalance.autopaySchedule!
+                            try {
+                              const graceLabel = format(
+                                parseISO(schedule.gracePeriodEndsOn),
+                                "MMM d, yyyy",
+                              )
+                              return ` · ${schedule.gracePeriodDays}-day grace through ${graceLabel}`
+                            } catch (error) {
+                              return ` · ${schedule.gracePeriodDays}-day grace through ${schedule.gracePeriodEndsOn}`
+                            }
+                          })()}
+                        </p>
+                        {selectedBalance.autopaySchedule.lateFee ? (
+                          <p>
+                            {formatCurrency(
+                              selectedBalance.autopaySchedule.lateFee.amount,
+                              selectedBalance.currency,
+                            )}
+                            {(() => {
+                              const lateFee = selectedBalance.autopaySchedule!.lateFee!
+                              try {
+                                const applies = format(
+                                  parseISO(lateFee.appliesOn),
+                                  "MMM d, yyyy",
+                                )
+                                if (lateFee.status === "applied") {
+                                  return ` late fee applied ${applies}`
+                                }
+                                if (lateFee.status === "scheduled") {
+                                  return ` late fee scheduled ${applies}`
+                                }
+                                return ` late fee projected ${applies}`
+                              } catch (error) {
+                                if (lateFee.status === "applied") {
+                                  return ` late fee applied ${lateFee.appliesOn}`
+                                }
+                                if (lateFee.status === "scheduled") {
+                                  return ` late fee scheduled ${lateFee.appliesOn}`
+                                }
+                                return ` late fee projected ${lateFee.appliesOn}`
+                              }
+                            })()}
+                          </p>
+                        ) : null}
+                        {selectedBalance.autopaySchedule.reminders.length > 0 ? (
+                          <div className="space-y-1">
+                            <p className="font-medium text-foreground">Reminders</p>
+                            <ul className="space-y-1 text-xs">
+                              {selectedBalance.autopaySchedule.reminders.map((reminder) => {
+                                const channelLabel = reminder.channel.toUpperCase()
+                                const sendLabel = (() => {
+                                  try {
+                                    return format(parseISO(reminder.sendAt), "MMM d, h:mma")
+                                  } catch (error) {
+                                    return reminder.sendAt
+                                  }
+                                })()
+                                const statusLabel = reminder.status === "sent" ? "sent" : "scheduled"
+                                return (
+                                  <li key={reminder.id} className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="font-medium text-foreground">{channelLabel}</span>
+                                    <span className="text-muted-foreground">
+                                      {sendLabel} · {statusLabel}
+                                    </span>
+                                  </li>
+                                )
+                              })}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

@@ -64,6 +64,37 @@ export const catchUpBalances: CatchUpBalance[] = [
         email: "morgan.ellis@sharehouse.example",
       },
     },
+    autopaySchedule: {
+      leaseDueDay: 1,
+      roommateDueDay: 1,
+      nextDueDate: "2024-07-01",
+      gracePeriodDays: 3,
+      gracePeriodEndsOn: "2024-07-04",
+      lateFee: {
+        amount: 75,
+        currency: "USD",
+        status: "projected",
+        appliesOn: "2024-07-05",
+      },
+      reminders: [
+        {
+          id: "rm_avery_email_july",
+          channel: "email",
+          sendAt: "2024-06-27T15:00:00Z",
+          status: "scheduled",
+          message:
+            "July rent autopay will run on the 1st. Reach out if anything looks off before then.",
+        },
+        {
+          id: "rm_avery_sms_july",
+          channel: "sms",
+          sendAt: "2024-06-30T15:00:00Z",
+          status: "scheduled",
+          message:
+            "Reminder: Avery's rent share will autopay July 1 after the three-day grace window opens.",
+        },
+      ],
+    },
   },
   {
     roommateId: "rm_jordan",
@@ -71,7 +102,7 @@ export const catchUpBalances: CatchUpBalance[] = [
     unitLabel: "Unit 3B",
     currency: "USD",
     monthlyShare: 1260,
-    autopayDay: 1,
+    autopayDay: 3,
     autopayStatus: "paused",
     lastPaymentDate: "2024-05-12",
     lastPaymentAmount: 800,
@@ -123,6 +154,45 @@ export const catchUpBalances: CatchUpBalance[] = [
         email: "morgan.ellis@sharehouse.example",
       },
     },
+    autopaySchedule: {
+      leaseDueDay: 1,
+      roommateDueDay: 3,
+      nextDueDate: "2024-07-03",
+      gracePeriodDays: 5,
+      gracePeriodEndsOn: "2024-07-08",
+      lateFee: {
+        amount: 75,
+        currency: "USD",
+        status: "scheduled",
+        appliesOn: "2024-07-09",
+      },
+      reminders: [
+        {
+          id: "rm_jordan_email_july",
+          channel: "email",
+          sendAt: "2024-06-26T16:00:00Z",
+          status: "sent",
+          message:
+            "Jordan's autopay is paused—please confirm the July 3 due date or make a manual payment.",
+        },
+        {
+          id: "rm_jordan_sms_july",
+          channel: "sms",
+          sendAt: "2024-07-02T17:00:00Z",
+          status: "scheduled",
+          message:
+            "Heads up: Jordan's rent share will post July 3. Autopay is paused until you resume it.",
+        },
+        {
+          id: "rm_jordan_push_july",
+          channel: "push",
+          sendAt: "2024-07-03T13:00:00Z",
+          status: "scheduled",
+          message:
+            "Final reminder: July rent is due today. Grace runs through July 8 before late fees hit.",
+        },
+      ],
+    },
   },
   {
     roommateId: "rm_priya",
@@ -130,7 +200,7 @@ export const catchUpBalances: CatchUpBalance[] = [
     unitLabel: "Unit 3B",
     currency: "USD",
     monthlyShare: 1260,
-    autopayDay: 1,
+    autopayDay: 5,
     autopayStatus: "disabled",
     lastPaymentDate: "2024-04-30",
     lastPaymentAmount: 1260,
@@ -173,6 +243,38 @@ export const catchUpBalances: CatchUpBalance[] = [
         name: "Morgan Ellis",
         email: "morgan.ellis@sharehouse.example",
       },
+    },
+    autopaySchedule: {
+      leaseDueDay: 1,
+      roommateDueDay: 5,
+      nextDueDate: "2024-07-05",
+      gracePeriodDays: 2,
+      gracePeriodEndsOn: "2024-07-07",
+      lateFee: {
+        amount: 75,
+        currency: "USD",
+        status: "applied",
+        appliesOn: "2024-06-08",
+        lastAppliedAt: "2024-06-08",
+      },
+      reminders: [
+        {
+          id: "rm_priya_email_june",
+          channel: "email",
+          sendAt: "2024-05-30T15:30:00Z",
+          status: "sent",
+          message:
+            "Priya's autopay is off—please schedule payment before July 5 to avoid additional late fees.",
+        },
+        {
+          id: "rm_priya_push_july",
+          channel: "push",
+          sendAt: "2024-07-04T15:00:00Z",
+          status: "scheduled",
+          message:
+            "Priya's rent share is due July 5 with a two-day grace period before fees post again.",
+        },
+      ],
     },
   },
 ]
