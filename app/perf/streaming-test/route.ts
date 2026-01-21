@@ -7,6 +7,7 @@ import {
         loadRoommateUpdatesUncached,
         loadWelcomeMessageUncached,
 } from "@/app/dashboard/(dashboard)/data"
+import { withApiCacheControl } from "@/lib/http/cache-control"
 
 export async function GET() {
         const sequentialStart = performance.now()
@@ -25,9 +26,11 @@ export async function GET() {
         ])
         const parallelDuration = performance.now() - parallelStart
 
-        return NextResponse.json({
-                sequentialDuration,
-                parallelDuration,
-                improvement: sequentialDuration - parallelDuration,
-        })
+        return withApiCacheControl(
+                NextResponse.json({
+                        sequentialDuration,
+                        parallelDuration,
+                        improvement: sequentialDuration - parallelDuration,
+                })
+        )
 }

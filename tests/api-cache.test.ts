@@ -6,6 +6,7 @@ import {
   clearFetcherCache,
   fetcher,
 } from "@/lib/utils"
+import { DEFAULT_API_CACHE_CONTROL_HEADER } from "@/lib/http/cache-control"
 
 describe("documents API caching", () => {
   const originalFetch = global.fetch
@@ -41,6 +42,9 @@ describe("documents API caching", () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get("etag")).toBeTruthy()
+    expect(response.headers.get("cache-control")).toBe(
+      DEFAULT_API_CACHE_CONTROL_HEADER
+    )
 
     const body = await response.json()
     expect(body.meta.count).toBe(body.documents.length)
@@ -63,6 +67,9 @@ describe("documents API caching", () => {
     const conditionalResponse = await getDocuments(conditionalRequest)
     expect(conditionalResponse.status).toBe(304)
     expect(conditionalResponse.headers.get("etag")).toBe(etag)
+    expect(conditionalResponse.headers.get("cache-control")).toBe(
+      DEFAULT_API_CACHE_CONTROL_HEADER
+    )
   })
 
   it("reuses cached data when fetcher encounters a 304", async () => {
