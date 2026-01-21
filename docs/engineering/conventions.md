@@ -65,5 +65,6 @@ The repository is organized to keep infrastructure, services, clients, and share
 - Secrets must never be committed; use the centralized secret manager integration referenced in `infra/secrets/`.
 - Follow least-privilege principles when defining IAM roles or service accounts.
 - Ensure dependency scanning and container image scanning steps succeed before requesting review.
+- Supabase auth tokens must embed the `https://share.house/claims` payload with a `household_id` string and an array of `roles` (e.g. `tenant`, `admin`). Middleware enforces RBAC using these fields and will redirect or block requests that omit them.
 
 These conventions will evolve with the platform. Propose updates via a new ADR or an update to this document and circulate it in the Platform Engineering Guild for approval.
