@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "dev:seed": "node scripts/dev-seed.cjs",
+    "vercel-build": "node scripts/vercel-build.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
