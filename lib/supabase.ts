@@ -184,6 +184,34 @@ export type Database = {
         attachments: Json | null
         metadata: Json | null
       }>
+      messages: SupabaseTable<{
+        id: string
+        thread_id: string | null
+        unit_id: string
+        author_id: string
+        content: string
+        visible: boolean
+        flagged_count: number
+        last_flagged_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      message_flags: SupabaseTable<{
+        id: string
+        message_id: string
+        flagged_by: string
+        severity: 'low' | 'medium' | 'high'
+        status: 'open' | 'hidden' | 'escalated' | 'resolved'
+        reason: string
+        resolution_notes: string | null
+        escalation_notes: string | null
+        escalated_at: string | null
+        moderated_by: string | null
+        moderated_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       visitor_logs: SupabaseTable<{
         id: string
         guest_name: string
