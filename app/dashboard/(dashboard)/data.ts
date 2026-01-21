@@ -59,6 +59,20 @@ type QuickAction = {
   href: string
 }
 
+type ContributionCategory = {
+  id: string
+  name: string
+  charges: number
+  outstanding: number
+  issued: number
+}
+
+type ContributionOverview = {
+  outstandingTotal: number
+  invoicedTotal: number
+  categories: ContributionCategory[]
+}
+
 type UpcomingBooking = {
   id: string
   amenity: string
@@ -260,6 +274,64 @@ export function loadQuickActionsUncached() {
   return fetchQuickActions()
 }
 
+async function fetchContributionOverview(): Promise<ContributionOverview> {
+  await wait(180)
+  return {
+    outstandingTotal: 2645,
+    invoicedTotal: 4785,
+    categories: [
+      {
+        id: "rent",
+        name: "Rent",
+        charges: 3,
+        outstanding: 2000,
+        issued: 3780,
+      },
+      {
+        id: "security-deposit",
+        name: "Security deposit",
+        charges: 3,
+        outstanding: 430,
+        issued: 750,
+      },
+      {
+        id: "utilities",
+        name: "Utilities",
+        charges: 2,
+        outstanding: 107,
+        issued: 107,
+      },
+      {
+        id: "parking",
+        name: "Parking",
+        charges: 1,
+        outstanding: 40,
+        issued: 80,
+      },
+      {
+        id: "shared-fees",
+        name: "Shared fees",
+        charges: 1,
+        outstanding: 38,
+        issued: 38,
+      },
+      {
+        id: "maintenance",
+        name: "Maintenance",
+        charges: 1,
+        outstanding: 30,
+        issued: 30,
+      },
+    ],
+  }
+}
+
+export const getContributionOverview = cache(fetchContributionOverview)
+
+export function loadContributionOverviewUncached() {
+  return fetchContributionOverview()
+}
+
 async function fetchUpcomingBookings(): Promise<UpcomingBooking[]> {
   await wait(200)
   return [
@@ -328,4 +400,6 @@ export type {
   RoommateUpdate,
   UpcomingBooking,
   WelcomeMessage,
+  ContributionCategory,
+  ContributionOverview,
 }

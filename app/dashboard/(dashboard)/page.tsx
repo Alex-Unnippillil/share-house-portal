@@ -16,6 +16,7 @@ import {
 } from "./components/skeletons"
 
 import InsightsPanel from "./components/insights-panel"
+import { ContributionBreakdownCard } from "./components/contribution-breakdown-card"
 
 export default function DashboardPage() {
   return (
@@ -57,6 +58,9 @@ export default function DashboardPage() {
 
 
         <div className="space-y-4">
+          <Suspense fallback={<DashboardCardSkeleton />}>
+            <ContributionBreakdownCard />
+          </Suspense>
           <Suspense fallback={<DashboardCardSkeleton />}>
             <UpcomingBookingsCard />
           </Suspense>
