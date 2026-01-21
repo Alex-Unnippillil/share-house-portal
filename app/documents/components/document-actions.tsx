@@ -37,6 +37,9 @@ export function DocumentActions({ document }: DocumentActionsProps) {
       // If we have an external signing flow via Documenso, open it
       const urlResult = await getSigningUrlAction(document.id);
       if (urlResult.success && urlResult.data?.signing_url) {
+        if (urlResult.fallbackNotice) {
+          toast.warning(urlResult.fallbackNotice);
+        }
         window.open(urlResult.data.signing_url, '_blank');
         setLoading(null);
         return;

@@ -1,3 +1,5 @@
+import { ExternalApiResult } from '@/lib/circuit-breaker';
+import { documensoCircuitBreaker } from '@/lib/external-integrations';
 import { DocumentSigningRequest, DocumentSigningResponse } from '@/types/documents';
 
 const DOCUMENSO_BASE_URL = process.env.DOCUMENSO_BASE_URL || 'https://app.documenso.com';
@@ -70,24 +72,36 @@ class DocumensoService {
   /**
    * Upload a document to Documenso
    */
-  async uploadDocument(file: File): Promise<DocumensoUploadResponse> {
-    const formData = new FormData();
-    formData.append('file', file);
+  async uploadDocument(file: File): Promise<ExternalApiResult<DocumensoUploadResponse>> {
+    return documensoCircuitBreaker.execute(
+      'upload-document',
+      async () => {
+        const formData = new FormData();
+        formData.append('file', file);
 
-    const response = await fetch(`${this.baseUrl}/api/v1/documents/upload`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
+        const response = await fetch(`${this.baseUrl}/api/v1/documents/upload`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso upload failed: ${error}`);
+        }
+
+        return response.json();
       },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso upload failed: ${error}`);
-    }
-
-    return response.json();
+      {
+        cacheResult: false,
+        allowFallback: false,
+        context: {
+          operation: 'uploadDocument',
+        },
+      }
+    );
   }
 
   /**
@@ -95,90 +109,160 @@ class DocumensoService {
    */
   async createDocumentSigningEnvelope(
     request: DocumensoCreateDocumentRequest
-  ): Promise<DocumensoCreateDocumentResponse> {
-    const response = await fetch(`${this.baseUrl}/api/v1/documents`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(request),
-    });
+  ): Promise<ExternalApiResult<DocumensoCreateDocumentResponse>> {
+    return documensoCircuitBreaker.execute(
+      'create-envelope',
+      async () => {
+        const response = await fetch(`${this.baseUrl}/api/v1/documents`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(request),
+        });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso create document failed: ${error}`);
-    }
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso create document failed: ${error}`);
+        }
 
-    return response.json();
+        return response.json();
+      },
+      {
+        cacheResult: false,
+        allowFallback: false,
+        context: {
+          operation: 'createDocumentSigningEnvelope',
+        },
+      }
+    );
   }
 
   /**
    * Get document details
    */
-  async getDocument(documentId: string): Promise<DocumensoDocument> {
-    const response = await fetch(`${this.baseUrl}/api/v1/documents/${documentId}`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
+  async getDocument(documentId: string): Promise<ExternalApiResult<DocumensoDocument>> {
+    return documensoCircuitBreaker.execute(
+      `document:${documentId}`,
+      async () => {
+        const response = await fetch(`${this.baseUrl}/api/v1/documents/${documentId}`, {
+          method: 'GET',
+          headers: getAuthHeaders(),
+        });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso get document failed: ${error}`);
-    }
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso get document failed: ${error}`);
+        }
 
-    return response.json();
+        return response.json();
+      },
+      {
+        fallbackValue: undefined,
+        context: {
+          operation: 'getDocument',
+          documentId,
+        },
+      }
+    );
   }
 
   /**
    * Get signing URL for a recipient
    */
-  async getSigningUrl(documentId: string, recipientId: string): Promise<string> {
-    const response = await fetch(
-      `${this.baseUrl}/api/v1/documents/${documentId}/recipients/${recipientId}/signing-url`,
+  async getSigningUrl(
+    documentId: string,
+    recipientId: string
+  ): Promise<ExternalApiResult<string>> {
+    return documensoCircuitBreaker.execute(
+      `signing-url:${documentId}:${recipientId}`,
+      async () => {
+        const response = await fetch(
+          `${this.baseUrl}/api/v1/documents/${documentId}/recipients/${recipientId}/signing-url`,
+          {
+            method: 'GET',
+            headers: getAuthHeaders(),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso get signing URL failed: ${error}`);
+        }
+
+        const data = await response.json();
+        return data.signingUrl as string;
+      },
       {
-        method: 'GET',
-        headers: getAuthHeaders(),
+        fallbackValue: '',
+        context: {
+          operation: 'getSigningUrl',
+          documentId,
+          recipientId,
+        },
       }
     );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso get signing URL failed: ${error}`);
-    }
-
-    const data = await response.json();
-    return data.signingUrl;
   }
 
   /**
    * Send signing reminder
    */
-  async sendSigningReminder(documentId: string, recipientId: string): Promise<void> {
-    const response = await fetch(
-      `${this.baseUrl}/api/v1/documents/${documentId}/recipients/${recipientId}/remind`,
+  async sendSigningReminder(
+    documentId: string,
+    recipientId: string
+  ): Promise<ExternalApiResult<void>> {
+    return documensoCircuitBreaker.execute(
+      `remind:${documentId}:${recipientId}`,
+      async () => {
+        const response = await fetch(
+          `${this.baseUrl}/api/v1/documents/${documentId}/recipients/${recipientId}/remind`,
+          {
+            method: 'POST',
+            headers: getAuthHeaders(),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso send reminder failed: ${error}`);
+        }
+      },
       {
-        method: 'POST',
-        headers: getAuthHeaders(),
+        cacheResult: false,
+        allowFallback: false,
+        context: {
+          operation: 'sendSigningReminder',
+          documentId,
+          recipientId,
+        },
       }
     );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso send reminder failed: ${error}`);
-    }
   }
 
   /**
    * Cancel a document
    */
-  async cancelDocument(documentId: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/api/v1/documents/${documentId}/cancel`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-    });
+  async cancelDocument(documentId: string): Promise<ExternalApiResult<void>> {
+    return documensoCircuitBreaker.execute(
+      `cancel:${documentId}`,
+      async () => {
+        const response = await fetch(`${this.baseUrl}/api/v1/documents/${documentId}/cancel`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+        });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso cancel document failed: ${error}`);
-    }
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso cancel document failed: ${error}`);
+        }
+      },
+      {
+        cacheResult: false,
+        allowFallback: false,
+        context: {
+          operation: 'cancelDocument',
+          documentId,
+        },
+      }
+    );
   }
 
   /**
@@ -188,22 +272,35 @@ class DocumensoService {
     templateId: string,
     title: string,
     recipients: DocumensoCreateDocumentRequest['recipients']
-  ): Promise<DocumensoCreateDocumentResponse> {
-    const response = await fetch(`${this.baseUrl}/api/v1/templates/${templateId}/use`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        title,
-        recipients,
-      }),
-    });
+  ): Promise<ExternalApiResult<DocumensoCreateDocumentResponse>> {
+    return documensoCircuitBreaker.execute(
+      `template:${templateId}`,
+      async () => {
+        const response = await fetch(`${this.baseUrl}/api/v1/templates/${templateId}/use`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            title,
+            recipients,
+          }),
+        });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso create from template failed: ${error}`);
-    }
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso create from template failed: ${error}`);
+        }
 
-    return response.json();
+        return response.json();
+      },
+      {
+        cacheResult: false,
+        allowFallback: false,
+        context: {
+          operation: 'createFromTemplate',
+          templateId,
+        },
+      }
+    );
   }
 }
 
@@ -225,7 +322,16 @@ export async function createLeaseSigningRequest(
 ): Promise<DocumentSigningResponse> {
   try {
     // Upload the document first
-    const uploadResponse = await documensoService.uploadDocument(request.file);
+    const uploadResult = await documensoService.uploadDocument(request.file);
+    const uploadResponse = uploadResult.data;
+
+    if (!uploadResponse) {
+      return {
+        success: false,
+        error: 'Failed to upload document to Documenso.',
+        fallbackNotice: uploadResult.error,
+      };
+    }
 
     // Create recipients from tenant emails
     const recipients = request.tenantEmails.map((email, index) => ({
@@ -239,7 +345,7 @@ export async function createLeaseSigningRequest(
     // TODO: Add property manager email from profile
 
     // Create the document envelope
-    const docResponse = await documensoService.createDocumentSigningEnvelope({
+    const envelopeResult = await documensoService.createDocumentSigningEnvelope({
       title: request.document_id, // Using document_id as title for now
       documentDataId: uploadResponse.documentDataId,
       recipients,
@@ -248,17 +354,38 @@ export async function createLeaseSigningRequest(
         ? new Date(Date.now() + request.expires_in_days * 24 * 60 * 60 * 1000).toISOString()
         : undefined,
     });
+    const docResponse = envelopeResult.data;
 
     // Get signing URL for the first recipient
-    const signingUrl = await documensoService.getSigningUrl(
+    const signingUrlResult = await documensoService.getSigningUrl(
       docResponse.id,
       docResponse.recipients[0].id
     );
+
+    const fallbackMessages: string[] = [];
+    if (signingUrlResult.fromCache) {
+      fallbackMessages.push(
+        'Documenso is responding slowly. Showing the most recent signing link we have on file.'
+      );
+    }
+    if (signingUrlResult.error) {
+      fallbackMessages.push(signingUrlResult.error);
+    }
+
+    const signingUrl = signingUrlResult.data;
+    if (!signingUrl) {
+      return {
+        success: false,
+        error: 'A signing URL is not currently available. Please try again shortly.',
+        fallbackNotice: fallbackMessages.join(' ') || undefined,
+      };
+    }
 
     return {
       success: true,
       envelope_id: docResponse.id,
       signing_url: signingUrl,
+      fallbackNotice: fallbackMessages.join(' ') || undefined,
     };
   } catch (error) {
     console.error('Error creating lease signing request:', error);

@@ -96,6 +96,7 @@ export interface DocumentSigningResponse {
   envelope_id?: string;
   signing_url?: string;
   error?: string;
+  fallbackNotice?: string;
 }
 
 export interface DocumentUploadRequest {

@@ -51,6 +51,7 @@ interface ActionResult<T = any> {
   data?: T;
   error?: string;
   message?: string;
+  fallbackNotice?: string;
 }
 
 // Get documents with optional filters
@@ -283,6 +284,15 @@ export async function createSigningRequestAction(
 
     // Upload file to Documenso to obtain documentDataId
     const uploadResult = await documensoService.uploadDocument(file);
+    const uploadResponse = uploadResult.data;
+
+    if (!uploadResponse) {
+      return {
+        success: false,
+        error: 'Failed to upload document to Documenso.',
+        fallbackNotice: uploadResult.error,
+      };
+    }
 
     // Get tenant emails for lease documents
     let tenantEmails = [validatedData.signer_email];
@@ -311,7 +321,7 @@ export async function createSigningRequestAction(
     // Create signing request via Documenso
     const signingResult = await documensoService.createDocumentSigningEnvelope({
       title: document.title,
-      documentDataId: uploadResult.documentDataId,
+      documentDataId: uploadResponse.documentDataId,
       recipients: tenantEmails.map((email, index) => ({
         email,
         name: tenantNames[index] || email.split('@')[0],
@@ -324,7 +334,9 @@ export async function createSigningRequestAction(
         : undefined,
     });
 
-    if (!signingResult) {
+    const envelope = signingResult.data;
+
+    if (!envelope) {
       return { success: false, error: 'Failed to create signing request.' };
     }
 
@@ -332,7 +344,7 @@ export async function createSigningRequestAction(
     await (supabase as any)
       .from('documents')
       .update({
-        documenso_envelope_id: signingResult.id,
+        documenso_envelope_id: envelope.id,
         status: 'pending_signature'
       })
       .eq('id', document.id);
@@ -355,7 +367,7 @@ export async function createSigningRequestAction(
       }
     }
 
-    for (const recipient of signingResult.recipients) {
+    for (const recipient of envelope.recipients) {
       const signerId = emailToProfileId.get(recipient.email);
       if (!signerId) {
         continue; // skip recipients we cannot map to a user
@@ -376,14 +388,32 @@ export async function createSigningRequestAction(
     await supabase.rpc('log_document_access', {
       p_document_id: document.id,
       p_action: 'signing_request_created',
-      p_metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
+      p_metadata: { envelope_id: envelope.id, recipients: tenantEmails }
     });
+
+    const fallbackMessages: string[] = [];
+
+    const signingUrlResult = await documensoService.getSigningUrl(
+      envelope.id,
+      envelope.recipients[0].id
+    );
+
+    if (signingUrlResult.fromCache) {
+      fallbackMessages.push(
+        'Documenso service is degraded. Showing cached signing link which may be stale.'
+      );
+    }
+
+    if (signingUrlResult.error) {
+      fallbackMessages.push(signingUrlResult.error);
+    }
 
     revalidatePath('/documents');
     return {
       success: true,
-      data: { envelope_id: signingResult.id },
-      message: 'Signing request created successfully.'
+      data: { envelope_id: envelope.id, signing_url: signingUrlResult.data || undefined },
+      message: 'Signing request created successfully.',
+      fallbackNotice: fallbackMessages.join(' ') || undefined,
     };
   } catch (error) {
     console.error('Unexpected error in createSigningRequestAction:', error);
@@ -505,12 +535,26 @@ export async function getSigningUrlAction(
     }
 
     // Get signing URL from Documenso
-    const url = await documensoService.getSigningUrl(
+    const signingUrlResult = await documensoService.getSigningUrl(
       document.documenso_envelope_id,
       signature.documenso_signature_id
     );
 
-    return { success: true, data: { signing_url: url } };
+    const fallbackMessages: string[] = [];
+    if (signingUrlResult.fromCache) {
+      fallbackMessages.push(
+        'Documenso is currently unavailable. Serving a cached signing link.'
+      );
+    }
+    if (signingUrlResult.error) {
+      fallbackMessages.push(signingUrlResult.error);
+    }
+
+    return {
+      success: true,
+      data: { signing_url: signingUrlResult.data },
+      fallbackNotice: fallbackMessages.join(' ') || undefined,
+    };
   } catch (error) {
     console.error('Unexpected error in getSigningUrlAction:', error);
     return {

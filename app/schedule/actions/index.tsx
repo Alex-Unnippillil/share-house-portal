@@ -55,7 +55,7 @@ export async function scheduleMeetingAction(
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     console.error('Authentication error in server action:', authError);
-    return { success: false, message: null, error: 'You must be logged in to schedule a meeting.', googleEventLink: null };
+    return { success: false, message: null, error: 'You must be logged in to schedule a meeting.', googleEventLink: null, fallbackNotice: null };
   }
 
    // 2. Validate Form Data (using the updated schema with coerce)
@@ -79,7 +79,7 @@ export async function scheduleMeetingAction(
            .map(errors => errors?.join('. '))
            .filter(Boolean)
            .join(' ');
-       return { success: false, message: null, error: errorMessages || 'Invalid form data provided.', googleEventLink: null };
+       return { success: false, message: null, error: errorMessages || 'Invalid form data provided.', googleEventLink: null, fallbackNotice: null };
    }
 
    // --- IMPORTANT: validationResult.data now contains actual Date objects ---
@@ -88,7 +88,7 @@ export async function scheduleMeetingAction(
    // 3. Basic check: User email from form should match logged-in user
    if (validatedData.userEmail !== user.email) {
        console.error(`Security Alert: Form email (${validatedData.userEmail}) does not match authenticated user (${user.email})`);
-       return { success: false, message: null, error: 'User email mismatch.', googleEventLink: null };
+       return { success: false, message: null, error: 'User email mismatch.', googleEventLink: null, fallbackNotice: null };
    }
 
 
@@ -104,14 +104,27 @@ export async function scheduleMeetingAction(
       description: validatedData.description || `Scheduled by ${validatedData.userEmail}`,
     });
 
-    if (!calendarResult.success || !calendarResult.eventId) {
-      console.error("Failed to create Google Calendar event:", calendarResult.error);
-      // Pass specific Google error back if available
-      const errorMessage = calendarResult.error || 'Failed to create Google Calendar event.';
-      return { success: false, message: null, error: errorMessage, googleEventLink: null };
+    const eventData = calendarResult.data;
+    const fallbackNotice =
+      calendarResult.fromCache
+        ? calendarResult.error ||
+          'Google Calendar is unavailable. We are using cached data for reference.'
+        : undefined;
+
+    if (!eventData || !eventData.success || !eventData.eventId) {
+      console.error('Failed to create Google Calendar event:', eventData?.error || calendarResult.error);
+      const errorMessage =
+        eventData?.error || calendarResult.error || 'Failed to create Google Calendar event.';
+      return {
+        success: false,
+        message: null,
+        error: errorMessage,
+        googleEventLink: eventData?.link || null,
+        fallbackNotice,
+      };
     }
 
-    console.log(`Google Event created: ${calendarResult.eventId}, Link: ${calendarResult.link}`);
+    console.log(`Google Event created: ${eventData.eventId}, Link: ${eventData.link}`);
 
     // 5. Store meeting info in Supabase DB
     //    Pass the validated Date objects directly to the Supabase client.
@@ -122,7 +135,7 @@ export async function scheduleMeetingAction(
         user_id: user.id,
         start_time: validatedData.startTime, // Pass Date object
         end_time: validatedData.endTime,     // Pass Date object
-        google_event_id: calendarResult.eventId,
+        google_event_id: eventData.eventId,
         summary: validatedData.summary,
       });
 
@@ -140,10 +153,11 @@ export async function scheduleMeetingAction(
 
     // 7. Return success state
     return {
-        success: true,
-        message: 'Meeting scheduled successfully! Check your email for the invite.',
-        error: null,
-        googleEventLink: calendarResult.link,
+      success: true,
+      message: 'Meeting scheduled successfully! Check your email for the invite.',
+      error: null,
+      googleEventLink: eventData.link,
+      fallbackNotice,
     };
 
   } catch (error) {
@@ -152,6 +166,6 @@ export async function scheduleMeetingAction(
      if (error instanceof Error) {
          errorMessage = error.message;
      }
-    return { success: false, message: null, error: errorMessage, googleEventLink: null };
+    return { success: false, message: null, error: errorMessage, googleEventLink: null, fallbackNotice: null };
   }
 }

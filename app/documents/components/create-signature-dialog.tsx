@@ -76,6 +76,9 @@ export function CreateSignatureDialog({
 
       if (result.success) {
         toast.success('Signing request created successfully');
+        if (result.fallbackNotice) {
+          toast.warning(result.fallbackNotice);
+        }
         onOpenChange(false);
         setFormData({
           signer_email: '',
