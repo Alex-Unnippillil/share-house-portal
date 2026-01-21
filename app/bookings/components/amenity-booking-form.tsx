@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/utils/supabase-browser"
 import { cn } from "@/lib/utils"
+import { useBookingMutation } from "@/hooks/mutations/use-booking-mutation"
 
 interface Amenity {
   id: string
@@ -129,6 +130,7 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
   const [lastDuration, setLastDuration] = useState<number | null>(null)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [isPending, startTransition] = useTransition()
+  const bookingMutation = useBookingMutation()
 
   const statusBadge = (() => {
     switch (status) {
@@ -198,6 +200,62 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
     })
   }
 
+  const handleBooking = async () => {
+    const startIso = toIsoString(startValue)
+    const endIso = toIsoString(endValue)
+
+    if (!startIso || !endIso) {
+      toast.error("Please provide valid start and end times")
+      return
+    }
+
+    if (status === "conflict") {
+      toast.error("Resolve conflicts before booking")
+      return
+    }
+
+    try {
+      const result = await bookingMutation.mutate({
+        amenityId: amenity.id,
+        amenityName: amenity.name,
+        start: startIso,
+        end: endIso,
+        description: amenity.description ?? null,
+      })
+
+      if (result.status === "synced") {
+        toast.success("Booking confirmed", {
+          description: result.data.bookingUrl
+            ? `You're all set! Manage it at ${result.data.bookingUrl}`
+            : "You're all set! We'll notify you with the details.",
+        })
+        setConflicts([])
+        setStatus("idle")
+        setLastCheckedAt(null)
+        setLastDuration(null)
+        return
+      }
+
+      if (result.status === "queued") {
+        toast.info("Offline - booking queued", {
+          description: "We'll submit this booking once you're back online.",
+        })
+        return
+      }
+
+      if (result.status === "conflict") {
+        toast.error("Booking conflict", {
+          description: result.error.message,
+        })
+        setStatus("conflict")
+        return
+      }
+    } catch (error) {
+      console.error("Error creating amenity booking", error)
+      toast.error("Unable to create booking right now")
+    }
+  }
+
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
@@ -234,15 +292,31 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
           )}
         </div>
 
-        <Button disabled={isPending} type="submit">
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="size-4 animate-spin" /> Checking
-            </span>
-          ) : (
-            "Check availability"
-          )}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button disabled={isPending} type="submit">
+            {isPending ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" /> Checking
+              </span>
+            ) : (
+              "Check availability"
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleBooking}
+            disabled={bookingMutation.isMutating || isPending}
+          >
+            {bookingMutation.isMutating ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" /> Booking
+              </span>
+            ) : (
+              "Confirm booking"
+            )}
+          </Button>
+        </div>
       </div>
 
       {conflicts.length > 0 && (
@@ -303,6 +377,13 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
           Response time: {lastDuration.toFixed(1)}ms
           {lastDuration <= 20 ? " • within 20ms budget" : " • exceeded 20ms budget"}
           {lastCheckedAt ? ` • Checked at ${displayFormatter.format(lastCheckedAt)}` : ""}
+        </p>
+      )}
+
+      {bookingMutation.pendingCount > 0 && (
+        <p className="text-xs text-muted-foreground" role="status">
+          {bookingMutation.pendingCount} booking request
+          {bookingMutation.pendingCount > 1 ? "s" : ""} queued for sync.
         </p>
       )}
     </form>
