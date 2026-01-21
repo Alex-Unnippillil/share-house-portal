@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { PersonIcon, CrumpledPaperIcon } from "@radix-ui/react-icons";
+import { BarChart3 } from "lucide-react";
 import SmartLink from "@/components/navigation/SmartLink";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -38,13 +39,14 @@ export default function NavLinks() {
 
 	const isLandlord = role === 'property_manager' || role === 'admin' || role === 'landlord';
 
-	const links = isLandlord
-		? [
-			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
-			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
-			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
-			{ href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
-		]
+        const links = isLandlord
+                ? [
+                        { href: "/dashboard/usage", text: "Usage", Icon: BarChart3 },
+                        { href: "/dashboard/members", text: "Members", Icon: PersonIcon },
+                        { href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
+                        { href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
+                        { href: "/messaging", text: "Message Board", Icon: CrumpledPaperIcon },
+                ]
 		: [
 			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
 			{ href: "/documents", text: "My Lease", Icon: CrumpledPaperIcon },

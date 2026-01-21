@@ -14,9 +14,36 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
   Relationships: never[]
 }
 
+type AnalyticsEventType =
+  | 'rent_payment_submitted'
+  | 'rent_payment_failed'
+  | 'amenity_booking_created'
+  | 'document_signed'
+  | 'maintenance_request_filed'
+  | 'message_posted'
+
 export type Database = {
   public: {
     Tables: {
+      analytics_events: SupabaseTable<{
+        id: string
+        event_type: AnalyticsEventType
+        occurred_at: string
+        actor_id: string | null
+        unit_id: string | null
+        metadata: Json
+        created_at: string | null
+      }>
+      analytics_daily_rollups: SupabaseTable<{
+        rollup_date: string
+        event_type: AnalyticsEventType
+        scope: string
+        event_count: number
+        unique_actor_count: number
+        metadata: Json
+        created_at: string | null
+        updated_at: string | null
+      }>
       amenity_bookings: SupabaseTable<{
         id: string
         amenity_id: string
@@ -302,6 +329,10 @@ export type Database = {
         }
         Returns: Json
       }
+      refresh_analytics_daily_rollups: {
+        Args: { target_date?: string | null }
+        Returns: void
+      }
       get_unread_notification_count: {
         Args: { user_uuid?: string | null }
         Returns: number
@@ -315,7 +346,9 @@ export type Database = {
         Returns: unknown
       }
     }
-    Enums: Record<string, never>
+    Enums: {
+      analytics_event_type: AnalyticsEventType
+    }
     CompositeTypes: Record<string, never>
   }
   storage: {
