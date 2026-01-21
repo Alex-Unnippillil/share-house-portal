@@ -54,6 +54,7 @@ export type Database = {
         description: string | null
         document_type: 'lease' | 'addendum' | 'insurance' | 'maintenance' | 'other'
         status: 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled'
+        state: 'draft' | 'published'
         file_url: string | null
         documenso_envelope_id: string | null
         documenso_template_id: string | null
@@ -66,6 +67,18 @@ export type Database = {
         signed_at: string | null
         version: number | null
         parent_document_id: string | null
+        published_at: string | null
+      }>
+      document_versions: SupabaseTable<{
+        id: string
+        document_id: string
+        version: number
+        state: 'draft' | 'published'
+        status: 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled'
+        snapshot: Json
+        created_at: string | null
+        created_by: string | null
+        published_at: string | null
       }>
       document_signatures: SupabaseTable<{
         id: string
