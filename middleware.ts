@@ -3,6 +3,11 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import {
+  evaluateTenantSecurity,
+  resolveClientIp,
+} from '@/lib/security/tenant-policy'
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -55,6 +60,45 @@ export async function middleware(request: NextRequest) {
       },
     }
   )
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const user = session?.user
+
+  if (user) {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('ip_allow_cidrs, session_ttl_seconds')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!error && profile) {
+      const evaluation = evaluateTenantSecurity({
+        requestIp: resolveClientIp(request.headers, request.ip ?? null),
+        allowedCidrs: profile.ip_allow_cidrs,
+        sessionTtlSeconds: profile.session_ttl_seconds,
+        lastSignInAt: user.last_sign_in_at ?? null,
+      })
+
+      if (!evaluation.allowed) {
+        const message =
+          evaluation.reason === 'ip'
+            ? 'Access denied from this network. Contact your property manager to update the allowlist.'
+            : 'Your session has expired based on household security settings. Please sign in again.'
+
+        return NextResponse.json(
+          {
+            error: 'tenant_security_blocked',
+            reason: evaluation.reason,
+            message,
+          },
+          { status: 403 }
+        )
+      }
+    }
+  }
 
   await supabase.auth.getUser()
 
