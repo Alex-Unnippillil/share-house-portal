@@ -2,6 +2,8 @@ import "server-only"
 
 import { cache } from "react"
 
+import { measureDataFetch } from "@/lib/performance/server"
+
 type WelcomeMessage = {
   title: string
   subtitle: string
@@ -80,19 +82,27 @@ async function wait(ms: number) {
 }
 
 async function fetchWelcomeMessage(): Promise<WelcomeMessage> {
-  await wait(120)
-  return {
-    title: "Welcome back, Jordan",
-    subtitle: "Here’s what’s happening with Unit 3B today.",
-    primaryAction: {
-      href: "/payments",
-      label: "Settle rent",
+  return measureDataFetch(
+    {
+      route: "/dashboard",
+      detail: "welcome-message",
     },
-    secondaryAction: {
-      href: "/schedule",
-      label: "Book an amenity",
-    },
-  }
+    async () => {
+      await wait(120)
+      return {
+        title: "Welcome back, Jordan",
+        subtitle: "Here’s what’s happening with Unit 3B today.",
+        primaryAction: {
+          href: "/payments",
+          label: "Settle rent",
+        },
+        secondaryAction: {
+          href: "/schedule",
+          label: "Book an amenity",
+        },
+      }
+    }
+  )
 }
 
 export const getWelcomeMessage = cache(fetchWelcomeMessage)
@@ -102,15 +112,23 @@ export function loadWelcomeMessageUncached() {
 }
 
 async function fetchRentSummary(): Promise<RentSummary> {
-  await wait(240)
-  return {
-    amount: 1260,
-    dueDate: "2024-08-01",
-    autopayEnabled: true,
-    balance: 0,
-    lastPaymentDate: "2024-07-01",
-    status: "due_soon",
-  }
+  return measureDataFetch(
+    {
+      route: "/dashboard",
+      detail: "rent-summary",
+    },
+    async () => {
+      await wait(240)
+      return {
+        amount: 1260,
+        dueDate: "2024-08-01",
+        autopayEnabled: true,
+        balance: 0,
+        lastPaymentDate: "2024-07-01",
+        status: "due_soon",
+      }
+    }
+  )
 }
 
 export const getRentSummary = cache(fetchRentSummary)
@@ -120,30 +138,38 @@ export function loadRentSummaryUncached() {
 }
 
 async function fetchRecentDocuments(): Promise<DocumentSummary[]> {
-  await wait(180)
-  return [
+  return measureDataFetch(
     {
-      name: "Lease agreement v2.pdf",
-      href: "/documents",
-      category: "Lease",
-      status: "viewed",
-      updatedAt: "2024-06-15",
+      route: "/dashboard",
+      detail: "recent-documents",
     },
-    {
-      name: "House rules.pdf",
-      href: "/documents",
-      category: "Policies",
-      status: "new",
-      updatedAt: "2024-07-10",
-    },
-    {
-      name: "September chore rotation.pdf",
-      href: "/documents",
-      category: "Chores",
-      status: "action_required",
-      updatedAt: "2024-07-22",
-    },
-  ]
+    async () => {
+      await wait(180)
+      return [
+        {
+          name: "Lease agreement v2.pdf",
+          href: "/documents",
+          category: "Lease",
+          status: "viewed",
+          updatedAt: "2024-06-15",
+        },
+        {
+          name: "House rules.pdf",
+          href: "/documents",
+          category: "Policies",
+          status: "new",
+          updatedAt: "2024-07-10",
+        },
+        {
+          name: "September chore rotation.pdf",
+          href: "/documents",
+          category: "Chores",
+          status: "action_required",
+          updatedAt: "2024-07-22",
+        },
+      ]
+    }
+  )
 }
 
 export const getRecentDocuments = cache(fetchRecentDocuments)
@@ -153,31 +179,39 @@ export function loadRecentDocumentsUncached() {
 }
 
 async function fetchRoommateUpdates(): Promise<RoommateUpdate[]> {
-  await wait(320)
-  const now = new Date()
-  return [
+  return measureDataFetch(
     {
-      id: "1",
-      author: "Jordan",
-      message: "Wi-Fi was down earlier — rebooted the router and it’s stable again.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 45).toISOString(),
-      topic: "maintenance",
+      route: "/dashboard",
+      detail: "roommate-updates",
     },
-    {
-      id: "2",
-      author: "Avery",
-      message: "Can we swap parking spots this weekend while my guests visit?",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 5).toISOString(),
-      topic: "logistics",
-    },
-    {
-      id: "3",
-      author: "Property manager",
-      message: "Reminder: fire alarm inspection on Thursday at 10:00 AM.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
-      topic: "announcement",
-    },
-  ]
+    async () => {
+      await wait(320)
+      const now = new Date()
+      return [
+        {
+          id: "1",
+          author: "Jordan",
+          message: "Wi-Fi was down earlier — rebooted the router and it’s stable again.",
+          timestamp: new Date(now.getTime() - 1000 * 60 * 45).toISOString(),
+          topic: "maintenance",
+        },
+        {
+          id: "2",
+          author: "Avery",
+          message: "Can we swap parking spots this weekend while my guests visit?",
+          timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 5).toISOString(),
+          topic: "logistics",
+        },
+        {
+          id: "3",
+          author: "Property manager",
+          message: "Reminder: fire alarm inspection on Thursday at 10:00 AM.",
+          timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
+          topic: "announcement",
+        },
+      ]
+    }
+  )
 }
 
 export const getRoommateUpdates = cache(fetchRoommateUpdates)
@@ -187,41 +221,49 @@ export function loadRoommateUpdatesUncached() {
 }
 
 async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
-  await wait(160)
-  return [
+  return measureDataFetch(
     {
-      id: "rent",
-      label: "This month’s rent",
-      value: "$1,260",
-      helperText: "Due in 5 days",
-      trend: { direction: "neutral", label: "Autopay scheduled" },
-      icon: "rent",
+      route: "/dashboard",
+      detail: "dashboard-metrics",
     },
-    {
-      id: "calendar",
-      label: "Upcoming bookings",
-      value: "3",
-      helperText: "Kitchen, TV room & parking",
-      trend: { direction: "up", label: "+1 vs last week" },
-      icon: "calendar",
-    },
-    {
-      id: "roommates",
-      label: "Roommate updates",
-      value: "4",
-      helperText: "New notes in the last 24h",
-      trend: { direction: "up", label: "Active thread" },
-      icon: "roommates",
-    },
-    {
-      id: "maintenance",
-      label: "Open maintenance",
-      value: "2",
-      helperText: "Both scheduled for this week",
-      trend: { direction: "down", label: "No overdue items" },
-      icon: "maintenance",
-    },
-  ]
+    async () => {
+      await wait(160)
+      return [
+        {
+          id: "rent",
+          label: "This month’s rent",
+          value: "$1,260",
+          helperText: "Due in 5 days",
+          trend: { direction: "neutral", label: "Autopay scheduled" },
+          icon: "rent",
+        },
+        {
+          id: "calendar",
+          label: "Upcoming bookings",
+          value: "3",
+          helperText: "Kitchen, TV room & parking",
+          trend: { direction: "up", label: "+1 vs last week" },
+          icon: "calendar",
+        },
+        {
+          id: "roommates",
+          label: "Roommate updates",
+          value: "4",
+          helperText: "New notes in the last 24h",
+          trend: { direction: "up", label: "Active thread" },
+          icon: "roommates",
+        },
+        {
+          id: "maintenance",
+          label: "Open maintenance",
+          value: "2",
+          helperText: "Both scheduled for this week",
+          trend: { direction: "down", label: "No overdue items" },
+          icon: "maintenance",
+        },
+      ]
+    }
+  )
 }
 
 export const getDashboardMetrics = cache(fetchDashboardMetrics)
@@ -231,27 +273,35 @@ export function loadDashboardMetricsUncached() {
 }
 
 async function fetchQuickActions(): Promise<QuickAction[]> {
-  await wait(140)
-  return [
+  return measureDataFetch(
     {
-      id: "payments",
-      label: "Record a payment",
-      description: "Log an off-platform rent payment",
-      href: "/payments",
+      route: "/dashboard",
+      detail: "quick-actions",
     },
-    {
-      id: "amenity",
-      label: "Reserve an amenity",
-      description: "Kitchen, TV room, parking & more",
-      href: "/schedule",
-    },
-    {
-      id: "visitor",
-      label: "Register a visitor",
-      description: "Stay compliant with overnight policy",
-      href: "/visitors",
-    },
-  ]
+    async () => {
+      await wait(140)
+      return [
+        {
+          id: "payments",
+          label: "Record a payment",
+          description: "Log an off-platform rent payment",
+          href: "/payments",
+        },
+        {
+          id: "amenity",
+          label: "Reserve an amenity",
+          description: "Kitchen, TV room, parking & more",
+          href: "/schedule",
+        },
+        {
+          id: "visitor",
+          label: "Register a visitor",
+          description: "Stay compliant with overnight policy",
+          href: "/visitors",
+        },
+      ]
+    }
+  )
 }
 
 export const getQuickActions = cache(fetchQuickActions)
@@ -261,30 +311,38 @@ export function loadQuickActionsUncached() {
 }
 
 async function fetchUpcomingBookings(): Promise<UpcomingBooking[]> {
-  await wait(200)
-  return [
+  return measureDataFetch(
     {
-      id: "booking-1",
-      amenity: "Kitchen",
-      date: "2024-07-26",
-      timeframe: "5:00 – 7:00 PM",
-      status: "confirmed",
+      route: "/dashboard",
+      detail: "upcoming-bookings",
     },
-    {
-      id: "booking-2",
-      amenity: "Parking spot",
-      date: "2024-07-27",
-      timeframe: "All day",
-      status: "pending",
-    },
-    {
-      id: "booking-3",
-      amenity: "PlayStation nook",
-      date: "2024-07-28",
-      timeframe: "8:00 – 10:00 PM",
-      status: "confirmed",
-    },
-  ]
+    async () => {
+      await wait(200)
+      return [
+        {
+          id: "booking-1",
+          amenity: "Kitchen",
+          date: "2024-07-26",
+          timeframe: "5:00 – 7:00 PM",
+          status: "confirmed",
+        },
+        {
+          id: "booking-2",
+          amenity: "Parking spot",
+          date: "2024-07-27",
+          timeframe: "All day",
+          status: "pending",
+        },
+        {
+          id: "booking-3",
+          amenity: "PlayStation nook",
+          date: "2024-07-28",
+          timeframe: "8:00 – 10:00 PM",
+          status: "confirmed",
+        },
+      ]
+    }
+  )
 }
 
 export const getUpcomingBookings = cache(fetchUpcomingBookings)
@@ -294,23 +352,31 @@ export function loadUpcomingBookingsUncached() {
 }
 
 async function fetchMaintenanceTickets(): Promise<MaintenanceTicket[]> {
-  await wait(220)
-  return [
+  return measureDataFetch(
     {
-      id: "maintenance-1",
-      title: "Washer door latch replacement",
-      status: "scheduled",
-      priority: "medium",
-      updatedAt: "2024-07-22T14:30:00.000Z",
+      route: "/dashboard",
+      detail: "maintenance-tickets",
     },
-    {
-      id: "maintenance-2",
-      title: "HVAC seasonal tune-up",
-      status: "in_progress",
-      priority: "high",
-      updatedAt: "2024-07-21T09:00:00.000Z",
-    },
-  ]
+    async () => {
+      await wait(220)
+      return [
+        {
+          id: "maintenance-1",
+          title: "Washer door latch replacement",
+          status: "scheduled",
+          priority: "medium",
+          updatedAt: "2024-07-22T14:30:00.000Z",
+        },
+        {
+          id: "maintenance-2",
+          title: "HVAC seasonal tune-up",
+          status: "in_progress",
+          priority: "high",
+          updatedAt: "2024-07-21T09:00:00.000Z",
+        },
+      ]
+    }
+  )
 }
 
 export const getMaintenanceTickets = cache(fetchMaintenanceTickets)
