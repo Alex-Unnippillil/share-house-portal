@@ -1,0 +1,1 @@
+export const DASHBOARD_UNDO_WINDOW_MS = 30_000

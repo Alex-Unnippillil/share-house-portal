@@ -29,6 +29,28 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      dashboard_members: SupabaseTable<{
+        id: string
+        name: string
+        role: 'admin' | 'user'
+        status: 'active' | 'resigned'
+        created_at: string | null
+      }>
+      dashboard_todos: SupabaseTable<{
+        id: string
+        title: string
+        created_by: string
+        completed: boolean
+        created_at: string | null
+      }>
+      deletion_events: SupabaseTable<{
+        id: string
+        entity: string
+        record_id: string
+        payload: Json
+        expires_at: string
+        created_at: string | null
+      }>
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
