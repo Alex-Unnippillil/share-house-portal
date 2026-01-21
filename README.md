@@ -78,6 +78,9 @@ DOCUMENSO_BASE_URL="your_documenso_instance_url"
 # Calendar (Optional)
 CALCOM_API_KEY="your_calcom_api_key"
 CALCOM_BASE_URL="your_calcom_instance_url"
+
+# Encryption
+ENCRYPTION_KEY="32-byte-application-secret"
 ```
 
 ### Database Setup
@@ -114,6 +117,11 @@ Deploy to Vercel with the following environment variables configured in your Ver
 - All Supabase environment variables
 - Stripe keys (use live keys for production)
 - Document and calendar service URLs/keys
+- `ENCRYPTION_KEY` (32-byte secret used for AES-256-GCM payload encryption)
+
+### Encryption Key Rotation
+
+Refer to [docs/security/encryption.md](docs/security/encryption.md) for guidance on generating a compliant `ENCRYPTION_KEY` value and planning zero-downtime rotations.
 
 ## Operations & Reliability
 
