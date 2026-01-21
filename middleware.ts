@@ -1,7 +1,10 @@
 // content security policy requirements vary from app to app head to https://nextjs.org/docs/pages/building-your-application/configuring/content-security-policy to learn how to configure nonces within middleware and or how to set policies within your next.config file
 
+import { type User } from '@supabase/supabase-js'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+
+import { enforcePlanRateLimit } from '@/lib/rate-limit/enforcer'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -56,9 +59,45 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  let supabaseUser: User | null = null
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    supabaseUser = user ?? null
+  } catch {
+    supabaseUser = null
+  }
+
+  const rateLimitResult = await enforcePlanRateLimit({
+    request,
+    user: supabaseUser,
+  })
+
+  if (rateLimitResult.blocked && rateLimitResult.response) {
+    propagateCookies(response, rateLimitResult.response)
+    return rateLimitResult.response
+  }
+
+  if (rateLimitResult.headers) {
+    for (const [key, value] of Object.entries(rateLimitResult.headers)) {
+      if (typeof value === 'string') {
+        response.headers.set(key, value)
+      }
+    }
+  }
 
   return response
+}
+
+function propagateCookies(source: NextResponse, target: NextResponse) {
+  try {
+    for (const cookie of source.cookies.getAll()) {
+      target.cookies.set(cookie)
+    }
+  } catch {
+    // Ignore propagation errors; cookies are a best-effort copy.
+  }
 }
 
 export const config = {
@@ -77,5 +116,6 @@ export const config = {
         { type: 'header', key: 'purpose', value: 'prefetch' },
       ],
     },
+    '/api/:path*',
   ],
 }

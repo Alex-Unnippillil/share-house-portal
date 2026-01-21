@@ -201,6 +201,23 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      tenant_plans: SupabaseTable<{
+        tenant_id: string
+        plan_code: 'starter' | 'growth' | 'scale'
+        overrides: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      tenant_plan_usage_counters: SupabaseTable<{
+        tenant_id: string
+        feature: string
+        window_start: string
+        window_end: string
+        usage: number
+        limit: number | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       notifications: SupabaseTable<{
         id: string
         user_id: string
