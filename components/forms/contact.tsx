@@ -1,147 +1,152 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useRouter } from 'next/navigation';
-import { Icons } from "@/components/icons"
-import { ChevronRight } from 'lucide-react'
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Loader2, ChevronRight } from "lucide-react"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+
+import { Button } from "@/components/ui/button"
 import {
-        Form,
-        FormControl,
-        FormDescription,
-        FormField,
-        FormItem,
-        FormLabel,
-        FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { cn } from "@/lib/utils";
-import { useTransition, useState } from "react";
-import { submitInquiry } from '@/app/contact/actions'
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/components/ui/use-toast"
+import { submitInquiry } from "@/app/contact/actions"
 
 const ContactSchema = z.object({
-        name: z.string().min(1, { message: "Name can not be empty" }),
-        email: z.string().email(),
-        message: z.string().min(1, { message: "Message can not be empty" }),
-});
-type ContactValues = z.infer<typeof ContactSchema>
-export function Contact() {
-        const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-const router = useRouter();
-        const form = useForm<z.infer<typeof ContactSchema>>({
-                resolver: zodResolver(ContactSchema),
-                defaultValues: {
-                        name: "",
-                        email: "",
-                        message: "",
-                },
-        });
+  name: z
+    .string()
+    .min(1, { message: "Please let us know who we’ll be speaking with." })
+    .max(80, { message: "Name looks a little long—mind shortening it?" }),
+  email: z.string().email({ message: "Add a valid email so we can reply." }),
+  message: z
+    .string()
+    .min(10, { message: "Share a few more details so we can help." })
+    .max(1000, { message: "Message is a bit long. Try keeping it under 1,000 characters." }),
+})
 
-        async function onSubmit(data: ContactValues) {
+type ContactValues = z.infer<typeof ContactSchema>
+
+export function Contact() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const form = useForm<ContactValues>({
+    resolver: zodResolver(ContactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
+  })
+
+  async function onSubmit(values: ContactValues) {
     setIsLoading(true)
 
     try {
-      const result = await submitInquiry(data);
+      const result = await submitInquiry(values)
 
       if (result.success) {
         toast({
           title: "Message sent!",
-          description: "Thank you for contacting us. We will respond within 24 hours.",
-        });
-        form.reset();
+          description: "Thanks for reaching out. We’ll follow up within one business day.",
+        })
+        form.reset()
       } else {
         toast({
-          title: "Error",
+          title: "Unable to send",
           description: result.message,
           variant: "destructive",
-        });
+        })
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Something went wrong",
+        description: "Please try again or email us directly at alex@myunni.com.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
 
-
-
-        return (
-
-                        <Form {...form}>
-                                <form
-                                        onSubmit={form.handleSubmit(onSubmit)}
-                                        className="w-full space-y-6 px-2"
-                                >
-<FormField
-                                                control={form.control}
-                                                name="name"
-                                                render={({ field }) => (
-                                                        <FormItem>
-                                                                <FormLabel>Name</FormLabel>
-                                                                <FormControl>
-                                                                        <Input placeholder="Satoshi Nakamoto" {...field} />
-                                                                </FormControl>
-
-                                                                <FormMessage />
-                                                        </FormItem>
-                                                )}
-                                        />
-                                             <FormField
-                                                control={form.control}
-                                                name="email"
-                                                render={({ field }) => (
-                                                        <FormItem>
-                                                                <FormLabel>Email</FormLabel>
-                                                                <FormControl>
-                                                                        <Input placeholder="roomsily@example.com" {...field} disabled={isLoading}/>
-                                                                </FormControl>
-
-                                                                <FormMessage />
-                                                        </FormItem>
-                                                )}
-                                        />
-                                        <FormField
-                                                control={form.control}
-                                                name="message"
-                                                render={({ field }) => (
-                                                        <FormItem>
-                                                                <FormLabel>Message</FormLabel>
-                                                                <FormControl>
-                                                                        <Textarea
-                                                                                placeholder="message"
-                                                                                {...field}
-
-                                                                        />
-                                                                </FormControl>
-                                                                <FormDescription>
-                                                                        {
-                                                                                "This is a form description."
-                                                                        }
-                                                                </FormDescription>
-                                                                <FormMessage />
-                                                        </FormItem>
-                                                )}
-                                        />
-           <Button
-            type="submit"
-            disabled={isLoading}
-                                className="flex w-1/2 items-center gap-2"
-                                variant="outline"
-                        >
-                                Send Message
-                                <ChevronRight className="ml-2 size-4"/>
-   </Button>
-                                </form>
-                        </Form>
-        );
-        }
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Alex Unnipillil" {...field} disabled={isLoading} autoComplete="name" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="roomsily@example.com"
+                  {...field}
+                  disabled={isLoading}
+                  autoComplete="email"
+                  inputMode="email"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="message"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>How can we help?</FormLabel>
+              <FormControl>
+                <Textarea
+                  rows={5}
+                  placeholder="Share details about your property, household, or the support you need."
+                  {...field}
+                  disabled={isLoading}
+                />
+              </FormControl>
+              <FormDescription>
+                Give us a quick overview—amenity bookings, rent workflows, onboarding questions, or anything else on your mind.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={isLoading} className="w-full justify-center gap-2">
+          {isLoading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Sending
+            </>
+          ) : (
+            <>
+              Send message
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </>
+          )}
+        </Button>
+      </form>
+    </Form>
+  )
+}
