@@ -29,6 +29,30 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      audit_logs: SupabaseTable<{
+        id: string
+        created_at: string
+        actor_id: string | null
+        actor_role:
+          | 'tenant'
+          | 'roommate'
+          | 'property_manager'
+          | 'admin'
+          | 'user'
+          | 'system'
+          | null
+        actor_email: string | null
+        actor_name: string | null
+        entity_type: string
+        entity_id: string | null
+        entity_name: string | null
+        action: string
+        payload: Json
+        context: Json | null
+        household_id: string | null
+        ip_address: string | null
+        user_agent: string | null
+      }>
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
@@ -313,6 +337,14 @@ export type Database = {
       update_updated_at_column: {
         Args: Record<string, never>
         Returns: unknown
+      }
+      get_audit_log_filter_options: {
+        Args: Record<string, never>
+        Returns: {
+          actor_roles: string[] | null
+          actions: string[] | null
+          entity_types: string[] | null
+        }[]
       }
     }
     Enums: Record<string, never>
