@@ -129,7 +129,7 @@ const nextConfig = {
     },
 
 
-   pageExtensions: ['ts', 'tsx', 'mdx', 'js', 'jsx', 'rs'],
+   pageExtensions: ['ts', 'tsx', 'mdx', 'js', 'jsx'],
 }
 
 module.exports = withMDX(nextConfig)

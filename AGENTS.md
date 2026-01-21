@@ -17,6 +17,8 @@
 | Documents | Documenso | Host document workflows for lease agreement distribution and signing. |
 | Deployment | Vercel | Configure env vars for Supabase, Stripe, Cal.com, and Documenso endpoints. |
 
+- Rust functions are currently out of scope; implement API routes with Next.js Server Actions and TypeScript handlers.
+
 ## Key Features
 1. **Authentication & RBAC**
    - Supabase Auth with email magic links + optional passwordless via OTP.
