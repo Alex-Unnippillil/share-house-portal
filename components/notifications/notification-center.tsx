@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
+import { usePreferences } from "@/components/preferences/preferences-provider";
 
 interface Notification {
   id: string;
@@ -28,6 +29,7 @@ export function NotificationCenter() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
+  const { formatDate } = usePreferences();
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
@@ -170,7 +172,7 @@ export function NotificationCenter() {
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return date.toLocaleDateString();
+    return formatDate(date, { dateStyle: 'medium' });
   };
 
   return (

@@ -2,7 +2,7 @@ import "server-only"
 
 import { cache } from "react"
 
-type WelcomeMessage = {
+export type WelcomeMessage = {
   title: string
   subtitle: string
   primaryAction: {
@@ -15,7 +15,7 @@ type WelcomeMessage = {
   }
 }
 
-type RentSummary = {
+export type RentSummary = {
   amount: number
   dueDate: string
   autopayEnabled: boolean
@@ -24,7 +24,7 @@ type RentSummary = {
   status: "due_soon" | "overdue" | "paid"
 }
 
-type DocumentSummary = {
+export type DocumentSummary = {
   name: string
   href: string
   category: string
@@ -32,7 +32,7 @@ type DocumentSummary = {
   updatedAt: string
 }
 
-type RoommateUpdate = {
+export type RoommateUpdate = {
   id: string
   author: string
   message: string
@@ -40,7 +40,7 @@ type RoommateUpdate = {
   topic: "maintenance" | "announcement" | "logistics"
 }
 
-type DashboardMetric = {
+export type DashboardMetric = {
   id: string
   label: string
   value: string
@@ -52,14 +52,14 @@ type DashboardMetric = {
   icon: "rent" | "calendar" | "roommates" | "maintenance"
 }
 
-type QuickAction = {
+export type QuickAction = {
   id: string
   label: string
   description: string
   href: string
 }
 
-type UpcomingBooking = {
+export type UpcomingBooking = {
   id: string
   amenity: string
   date: string
@@ -67,7 +67,7 @@ type UpcomingBooking = {
   status: "confirmed" | "pending" | "waitlisted"
 }
 
-type MaintenanceTicket = {
+export type MaintenanceTicket = {
   id: string
   title: string
   status: "scheduled" | "in_progress" | "awaiting_vendor"

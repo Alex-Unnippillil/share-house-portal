@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useCallback, useMemo, useState, useTransition } from "react"
 import type { FormEvent } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/utils/supabase-browser"
 import { cn } from "@/lib/utils"
+import { usePreferences } from "@/components/preferences/preferences-provider"
 
 interface Amenity {
   id: string
@@ -59,20 +60,6 @@ function formatDateTimeLocal(date: Date) {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-const displayFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-})
-
-function formatForDisplay(value: unknown) {
-  if (typeof value !== "string") return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return displayFormatter.format(date)
-}
-
 function toIsoString(value: string | undefined) {
   if (!value) return null
   const date = new Date(value)
@@ -113,6 +100,7 @@ function normaliseConflicts(payload: RpcPayload): ConflictEntry[] {
 
 export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
   const supabase = useMemo(() => createClient(), [])
+  const { formatDate } = usePreferences()
   const [startValue, setStartValue] = useState(() => {
     const now = new Date()
     const defaultStart = new Date(now.getTime() + 60 * 60 * 1000)
@@ -129,6 +117,21 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
   const [lastDuration, setLastDuration] = useState<number | null>(null)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  const formatForDisplay = useCallback(
+    (value: unknown) => {
+      if (typeof value !== "string") return null
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return null
+      return formatDate(date, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    },
+    [formatDate],
+  )
 
   const statusBadge = (() => {
     switch (status) {
@@ -302,7 +305,14 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
         <p className="text-xs text-muted-foreground">
           Response time: {lastDuration.toFixed(1)}ms
           {lastDuration <= 20 ? " • within 20ms budget" : " • exceeded 20ms budget"}
-          {lastCheckedAt ? ` • Checked at ${displayFormatter.format(lastCheckedAt)}` : ""}
+          {lastCheckedAt
+            ? ` • Checked at ${formatDate(lastCheckedAt, {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}`
+            : ""}
         </p>
       )}
     </form>

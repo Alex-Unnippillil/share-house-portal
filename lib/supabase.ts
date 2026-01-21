@@ -42,6 +42,8 @@ export type Database = {
         unit_id: string | null
         phone: string | null
         language: string | null
+        locale: string | null
+        timezone: string | null
         stripe_customer_id: string | null
         rent_share: number | null
         metadata: Json | null
