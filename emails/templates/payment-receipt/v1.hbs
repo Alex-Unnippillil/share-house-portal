@@ -1,0 +1,93 @@
+<div style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f8fafc; padding: 24px;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);">
+    <div style="background-color: #111827; color: #f8fafc; padding: 24px;">
+      <h1 style="margin: 0; font-size: 24px;">{{businessName}}</h1>
+      <p style="margin: 8px 0 0; color: #cbd5f5;">Payment Receipt</p>
+    </div>
+
+    <div style="padding: 24px;">
+      <p style="margin: 0 0 16px; font-size: 16px; color: #0f172a;">Hi {{customerName}},</p>
+      <p style="margin: 0 0 24px; color: #475569; line-height: 1.6;">
+        Thank you for your payment. This email is a receipt for your recent transaction. A summary of the payment is included below for your records.
+      </p>
+
+      <div style="background-color: #f1f5f9; border-radius: 10px; padding: 16px; margin-bottom: 24px; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div>
+          <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Payment ID</p>
+          <p style="margin: 4px 0 0; color: #0f172a; font-weight: 600;">{{paymentId}}</p>
+        </div>
+        <div>
+          <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Paid On</p>
+          <p style="margin: 4px 0 0; color: #0f172a; font-weight: 600;">{{paymentDate}}</p>
+        </div>
+        <div>
+          <p style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Amount Paid</p>
+          <p style="margin: 4px 0 0; color: #0f172a; font-weight: 600;">{{amountPaid}}</p>
+        </div>
+      </div>
+
+      {{#if showLineItems}}
+      <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">Item</th>
+            <th style="text-align: right; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">Qty</th>
+            <th style="text-align: right; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">Unit</th>
+            <th style="text-align: right; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each lineItems}}
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">{{description}}</td>
+            <td style="padding: 8px 0; text-align: right; border-bottom: 1px solid #f1f5f9;">{{quantity}}</td>
+            <td style="padding: 8px 0; text-align: right; border-bottom: 1px solid #f1f5f9;">{{unitAmount}}</td>
+            <td style="padding: 8px 0; text-align: right; border-bottom: 1px solid #f1f5f9;">{{totalAmount}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{/if}}
+
+      {{#if showAdjustments}}
+      <div style="margin-top: 16px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tbody>
+            {{#each totals}}
+            <tr>
+              <td style="padding: 4px 0; text-align: right; color: {{#if emphasis}}#0f172a{{else}}#475569{{/if}}; font-weight: {{#if emphasis}}600{{else}}500{{/if}};">{{label}}</td>
+              <td style="padding: 4px 0; text-align: right; font-weight: {{#if emphasis}}600{{else}}500{{/if}};">{{value}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <p style="text-align: right; font-weight: 600; margin-top: 16px;">Total: {{amountPaid}}</p>
+      {{/if}}
+
+      {{#if showBillingAddress}}
+      <div style="margin-top: 24px;">
+        <h3 style="margin: 0 0 8px; font-size: 16px; color: #0f172a;">Billing Address</h3>
+        <p style="margin: 0; white-space: pre-line; color: #475569;">{{billingAddress}}</p>
+      </div>
+      {{/if}}
+
+      {{#if showNotes}}
+      <div style="margin-top: 24px;">
+        <h3 style="margin: 0 0 8px; font-size: 16px; color: #0f172a;">Notes</h3>
+        <p style="margin: 0; color: #475569;">{{notes}}</p>
+      </div>
+      {{/if}}
+
+      <div style="margin-top: 32px; color: #475569; font-size: 14px; line-height: 1.6;">
+        <p style="margin: 0;">
+          If you have any questions about this payment, please contact{{#if supportEmail}}
+          <a href="mailto:{{supportEmail}}" style="color: #2563eb; text-decoration: none; margin-left: 4px;">{{supportEmail}}</a>{{else}}
+          our support team{{/if}}.
+        </p>
+        <p style="margin: 16px 0 0;">Thank you for choosing {{businessName}}.</p>
+      </div>
+    </div>
+  </div>
+</div>

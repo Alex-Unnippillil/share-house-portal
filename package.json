@@ -53,6 +53,7 @@
     "gaxios": "^6.7.1",
     "google-auth-library": "^9.15.1",
     "googleapis": "^148.0.0",
+    "handlebars": "^4.7.8",
     "lucide-react": "0.302.0",
     "next": "14.2.35",
     "next-compose-plugins": "^2.2.1",
