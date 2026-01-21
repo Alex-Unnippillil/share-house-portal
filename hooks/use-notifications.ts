@@ -278,26 +278,51 @@ export function useNotifications() {
     title: string
     description: string
     priority: string
-    propertyManager: { id: string; email: string; name: string }
+    category?: string | null
+    location?: string | null
+    unitLabel?: string | null
+    submittedAt?: string
+    requestId?: string
+    propertyManager: { id: string; email?: string; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
-      // Email to property manager
-      {
+    const templateData = {
+      requesterName: data.requesterName,
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      category: data.category ?? null,
+      location: data.location ?? null,
+      unitLabel: data.unitLabel ?? null,
+      submittedAt: data.submittedAt ?? new Date().toISOString(),
+      requestId: data.requestId ?? null,
+    }
+
+    const notifications: (NotificationData | InAppNotification)[] = []
+
+    if (data.propertyManager.email) {
+      notifications.push({
         to: data.propertyManager.email,
         subject: `New Maintenance Request: ${data.title}`,
         template: "maintenance-request",
-        data,
+        data: templateData,
         userId: data.propertyManager.id,
+      })
+    }
+
+    notifications.push({
+      userId: data.propertyManager.id,
+      title: "New Maintenance Request",
+      message: `${data.requesterName} reported: ${data.title}${
+        data.location ? ` (${data.location})` : ""
+      }`,
+      type: "warning" as const,
+      actionUrl: "/dashboard",
+      metadata: {
+        ...templateData,
+        requesterName: data.requesterName,
+        propertyManager: data.propertyManager.name,
       },
-      // In-app notification to property manager
-      {
-        userId: data.propertyManager.id,
-        title: "New Maintenance Request",
-        message: `${data.requesterName} reported: ${data.title}`,
-        type: "warning" as const,
-        actionUrl: "/dashboard",
-      },
-    ]
+    })
 
     return sendBulkNotifications(notifications)
   }
