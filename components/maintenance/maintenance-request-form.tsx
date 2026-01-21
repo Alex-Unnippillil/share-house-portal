@@ -15,6 +15,8 @@ import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { CsatQuickPrompt } from "@/components/surveys/csat-quick-prompt";
+import { buildMaintenanceCsatContext, CSAT_FLOW_MAINTENANCE } from "@/lib/surveys";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -47,6 +49,9 @@ const priorities = [
 
 export function MaintenanceRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [csatContext, setCsatContext] = useState<string | null>(null);
+  const [csatOpen, setCsatOpen] = useState(false);
+  const [csatMetadata, setCsatMetadata] = useState<Record<string, unknown> | null>(null);
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
@@ -125,6 +130,15 @@ export function MaintenanceRequestForm() {
       });
 
       form.reset();
+
+      const contextIdentifier = buildMaintenanceCsatContext(request.id);
+      setCsatContext(contextIdentifier);
+      setCsatMetadata({
+        surface: "maintenance_request_submission",
+        request_id: request.id,
+        priority: data.priority,
+      });
+      setCsatOpen(true);
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
       toast({
@@ -242,6 +256,19 @@ export function MaintenanceRequestForm() {
           {isSubmitting ? "Submitting..." : "Submit Maintenance Request"}
         </Button>
       </form>
+      <CsatQuickPrompt
+        open={csatOpen}
+        flow={CSAT_FLOW_MAINTENANCE}
+        contextIdentifier={csatContext}
+        metadata={csatMetadata}
+        onOpenChange={(open) => {
+          setCsatOpen(open);
+          if (!open) {
+            setCsatContext(null);
+            setCsatMetadata(null);
+          }
+        }}
+      />
     </Form>
   );
 }
