@@ -9,6 +9,7 @@ import "./globals.css"
 
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
+import { CommandPaletteProvider } from "@/components/command-palette"
 import { CookieButton } from "@/components/cookie-button"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
@@ -117,51 +118,49 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <ReactQueryClientProvider>
-    <html lang="en" suppressHydrationWarning>
-    <head></head>
-      <body className={cn(
+      <html lang="en" suppressHydrationWarning>
+        <head></head>
+        <body
+          className={cn(
             "min-h-screen bg-background font-sans antialiased",
             fontSans.variable
           )}
         >
-<ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-             <div className="relative flex min-h-screen flex-col">
-              {/* <SiteHeader /> */}
-              <div className="flex-1">
-                <ErrorBoundary>
-                  <Suspense fallback={<RouteSkeleton />}>
-                    {children}
-                  </Suspense>
-                </ErrorBoundary>
-                <Toaster />
-                <Analytics />
-                <SpeedInsights />
+            <CommandPaletteProvider>
+              <div className="relative flex min-h-screen flex-col">
+                {/* <SiteHeader /> */}
+                <div className="flex-1">
+                  <ErrorBoundary>
+                    <Suspense fallback={<RouteSkeleton />}>
+                      {children}
+                    </Suspense>
+                  </ErrorBoundary>
+                  <Toaster />
+                  <Analytics />
+                  <SpeedInsights />
+                </div>
               </div>
+              {/* <SiteFooter/> */}
 
-   </div>
-{/* <SiteFooter/> */}
-
-
-{/*
+              {/*
 enter your api info from termly.io or a provider of your choice
 <Script
   type="text/javascript"
   src="https://app.termly.io/resource-blocker/123456789abcdefg"/>
 
  */}
-   <CookieButton />
-   <TailwindIndicator />
+              <CookieButton />
+              <TailwindIndicator />
+            </CommandPaletteProvider>
           </ThemeProvider>
-
-
-
-</body>
-    </html>
+        </body>
+      </html>
     </ReactQueryClientProvider>
   )
 }

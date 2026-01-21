@@ -5,6 +5,8 @@ import {
   Menu,
   Linkedin,
   LucideIcon,
+  Mic,
+  MicOff,
 } from "lucide-react"
 
 export type Icon = LucideIcon
@@ -14,6 +16,8 @@ export const Icons = {
   moon: Moon,
   menu: Menu,
   linkedin: Linkedin,
+  mic: Mic,
+  micOff: MicOff,
   twitter: (props: LucideProps) => (
     <svg
       {...props}
