@@ -3,11 +3,17 @@
 import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
 
-export interface NotificationData {
+export type NotificationResult<T = unknown> = {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+export interface EmailNotification {
   to: string | string[]
   subject: string
   template: string
-  data?: Record<string, any>
+  data?: Record<string, unknown>
   userId?: string
 }
 
@@ -17,20 +23,44 @@ export interface InAppNotification {
   message: string
   type: "info" | "success" | "warning" | "error"
   actionUrl?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
-class NotificationService {
+export interface NotificationDispatchResult {
+  index: number
+  success: boolean
+  error?: string
+}
+
+export interface NotificationBatchResult {
+  success: boolean
+  results: NotificationDispatchResult[]
+}
+
+export interface NotificationService {
+  sendEmail(notification: EmailNotification): Promise<NotificationResult>
+  sendInApp(notification: InAppNotification): Promise<NotificationResult>
+  sendBulk(
+    notifications: Array<EmailNotification | InAppNotification>
+  ): Promise<NotificationBatchResult>
+}
+
+export class ResendNotificationService implements NotificationService {
   private resend: Resend | null = null
 
-  constructor() {
+  constructor(resendClient?: Resend | null) {
+    if (resendClient) {
+      this.resend = resendClient
+      return
+    }
+
     const apiKey = process.env.RESEND_API_KEY
     if (apiKey && apiKey !== "re_your_resend_api_key_here") {
       this.resend = new Resend(apiKey)
     }
   }
 
-  async sendEmail(notification: NotificationData) {
+  async sendEmail(notification: EmailNotification): Promise<NotificationResult> {
     if (!this.resend) {
       console.warn(
         "Resend API key not configured. Skipping email notification."
@@ -51,10 +81,12 @@ class NotificationService {
         "payment-receipt": this.getPaymentReceiptTemplate(notification.data),
         "document-signed": this.getDocumentSignedTemplate(notification.data),
         welcome: this.getWelcomeTemplate(notification.data),
-      }
+      } as const
 
       const emailContent =
-        emailTemplates[notification.template as keyof typeof emailTemplates]
+        emailTemplates[
+          notification.template as keyof typeof emailTemplates
+        ]
       if (!emailContent) {
         throw new Error(`Email template '${notification.template}' not found`)
       }
@@ -71,7 +103,6 @@ class NotificationService {
         return { success: false, error: error.message }
       }
 
-      // Store email notification in database for tracking
       if (notification.userId) {
         await this.storeEmailNotification(notification)
       }
@@ -86,7 +117,7 @@ class NotificationService {
     }
   }
 
-  async sendInAppNotification(notification: InAppNotification) {
+  async sendInApp(notification: InAppNotification): Promise<NotificationResult> {
     try {
       const supabase = await createSupbaseServerClient()
 
@@ -118,27 +149,43 @@ class NotificationService {
     }
   }
 
-  async sendBulkNotification(
-    notifications: (NotificationData | InAppNotification)[]
-  ) {
-    const results = await Promise.allSettled(
-      notifications.map((notification) => {
-        if ("to" in notification) {
-          return this.sendEmail(notification)
-        } else {
-          return this.sendInAppNotification(notification)
-        }
-      })
+  async sendBulk(
+    notifications: Array<EmailNotification | InAppNotification>
+  ): Promise<NotificationBatchResult> {
+    const settled = await Promise.allSettled(
+      notifications.map((notification) =>
+        "to" in notification
+          ? this.sendEmail(notification)
+          : this.sendInApp(notification)
+      )
     )
 
-    return results.map((result, index) => ({
-      index,
-      success: result.status === "fulfilled" ? result.value.success : false,
-      error: result.status === "rejected" ? result.reason : result.value.error,
-    }))
+    const results = settled.map<NotificationDispatchResult>((result, index) => {
+      if (result.status === "fulfilled") {
+        return {
+          index,
+          success: result.value.success,
+          error: result.value.error,
+        }
+      }
+
+      const error =
+        result.reason instanceof Error
+          ? result.reason.message
+          : typeof result.reason === "string"
+          ? result.reason
+          : "Unknown error"
+
+      return { index, success: false, error }
+    })
+
+    return {
+      success: results.every((entry) => entry.success),
+      results,
+    }
   }
 
-  private async storeEmailNotification(notification: NotificationData) {
+  private async storeEmailNotification(notification: EmailNotification) {
     try {
       const supabase = await createSupbaseServerClient()
 
@@ -157,16 +204,16 @@ class NotificationService {
     }
   }
 
-  private getVisitorBookingTemplate(data?: any) {
+  private getVisitorBookingTemplate(data?: Record<string, unknown>) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Overnight Visitor Booking</h2>
-        <p><strong>Guest:</strong> ${data?.guestName || "Unknown"}</p>
-        <p><strong>Host:</strong> ${data?.hostName || "Unknown"}</p>
-        <p><strong>Dates:</strong> ${data?.checkInDate || "Unknown"} to ${
-      data?.checkOutDate || "Unknown"
+        <p><strong>Guest:</strong> ${data?.guestName ?? "Unknown"}</p>
+        <p><strong>Host:</strong> ${data?.hostName ?? "Unknown"}</p>
+        <p><strong>Dates:</strong> ${data?.checkInDate ?? "Unknown"} to ${
+      data?.checkOutDate ?? "Unknown"
     }</p>
-        <p><strong>Purpose:</strong> ${data?.purpose || "Not specified"}</p>
+        <p><strong>Purpose:</strong> ${data?.purpose ?? "Not specified"}</p>
         <p>Please review this booking request in the dashboard.</p>
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
@@ -175,18 +222,18 @@ class NotificationService {
     `
   }
 
-  private getMaintenanceRequestTemplate(data?: any) {
+  private getMaintenanceRequestTemplate(data?: Record<string, unknown>) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>New Maintenance Request</h2>
         <p><strong>Requested by:</strong> ${
-          data?.requesterName || "Unknown"
+          data?.requesterName ?? "Unknown"
         }</p>
-        <p><strong>Issue:</strong> ${data?.title || "Unknown"}</p>
+        <p><strong>Issue:</strong> ${data?.title ?? "Unknown"}</p>
         <p><strong>Description:</strong> ${
-          data?.description || "No description provided"
+          data?.description ?? "No description provided"
         }</p>
-        <p><strong>Priority:</strong> ${data?.priority || "Normal"}</p>
+        <p><strong>Priority:</strong> ${data?.priority ?? "Normal"}</p>
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
         }/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Request</a>
@@ -194,71 +241,73 @@ class NotificationService {
     `
   }
 
-  private getPaymentReceiptTemplate(data?: any) {
+  private getPaymentReceiptTemplate(data?: Record<string, unknown>) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Payment Receipt</h2>
-        <p><strong>Tenant:</strong> ${data?.tenantName || "Unknown"}</p>
-        <p><strong>Amount:</strong> $${data?.amount || "0.00"}</p>
+        <p><strong>Tenant:</strong> ${data?.tenantName ?? "Unknown"}</p>
+        <p><strong>Amount:</strong> $${data?.amount ?? "0.00"}</p>
         <p><strong>Description:</strong> ${
-          data?.description || "Rent payment"
+          data?.description ?? "Rent payment"
         }</p>
         <p><strong>Date:</strong> ${
-          data?.date || new Date().toLocaleDateString()
+          data?.date ?? new Date().toLocaleDateString()
         }</p>
         <p>Thank you for your payment!</p>
       </div>
     `
   }
 
-  private getDocumentSignedTemplate(data?: any) {
+  private getDocumentSignedTemplate(data?: Record<string, unknown>) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Document Signed</h2>
-        <p><strong>Document:</strong> ${data?.documentTitle || "Unknown"}</p>
-        <p><strong>Signed by:</strong> ${data?.signerName || "Unknown"}</p>
+        <p><strong>Document:</strong> ${data?.documentTitle ?? "Unknown"}</p>
+        <p><strong>Signed by:</strong> ${data?.signerName ?? "Unknown"}</p>
         <p><strong>Date:</strong> ${
-          data?.signedAt || new Date().toLocaleDateString()
+          data?.signedAt ?? new Date().toLocaleDateString()
         }</p>
-        <a href="${
-          process.env.NEXT_PUBLIC_APP_URL
-        }/documents" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Document</a>
+        <p>The signed document is now available in your portal.</p>
       </div>
     `
   }
 
-  private getWelcomeTemplate(data?: any) {
+  private getWelcomeTemplate(data?: Record<string, unknown>) {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Welcome to Roomsily!</h2>
-        <p>Hello ${data?.firstName || "there"}!</p>
-        <p>Welcome to your Roomsily co-living hub. You can now:</p>
-        <ul>
-          <li>Manage your rent payments</li>
-          <li>Book shared amenities</li>
-          <li>Access important documents</li>
-          <li>Communicate with roommates</li>
-        </ul>
+        <p>Hi ${data?.tenantName ?? "there"},</p>
+        <p>We're excited to have you at ${data?.propertyName ?? "your new home"}.</p>
+        <p>You can now manage rent payments, amenity bookings, and communications all in one place.</p>
         <a href="${
           process.env.NEXT_PUBLIC_APP_URL
-        }/dashboard" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Get Started</a>
+        }/dashboard" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Dashboard</a>
       </div>
     `
   }
 }
 
-const notificationService = new NotificationService()
+const defaultNotificationService = new ResendNotificationService()
 
-export async function sendEmailNotification(notification: NotificationData) {
-  return notificationService.sendEmail(notification)
-}
-
-export async function sendInAppNotification(notification: InAppNotification) {
-  return notificationService.sendInAppNotification(notification)
-}
-
-export async function sendBulkNotifications(
-  notifications: (NotificationData | InAppNotification)[]
+export function createNotificationClient(
+  service: NotificationService = defaultNotificationService
 ) {
-  return notificationService.sendBulkNotification(notifications)
+  return {
+    sendEmailNotification: (notification: EmailNotification) =>
+      service.sendEmail(notification),
+    sendInAppNotification: (notification: InAppNotification) =>
+      service.sendInApp(notification),
+    sendBulkNotifications: (
+      notifications: Array<EmailNotification | InAppNotification>
+    ) => service.sendBulk(notifications),
+  }
 }
+
+export const notificationService: NotificationService =
+  defaultNotificationService
+
+export const {
+  sendEmailNotification,
+  sendInAppNotification,
+  sendBulkNotifications,
+} = createNotificationClient(notificationService)

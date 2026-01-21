@@ -1,10 +1,7 @@
 import { headers } from "next/headers"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
-import {
-  sendEmailNotification,
-  sendInAppNotification,
-} from "@/lib/notifications"
+import { notificationService } from "@/lib/notifications"
 import { jsonError } from "@/lib/errors"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
@@ -147,7 +144,7 @@ async function handleCheckoutSessionCompleted(
               .single()
 
             if (tenantProfile?.email) {
-              await sendEmailNotification({
+              const emailResult = await notificationService.sendEmail({
                 to: tenantProfile.email,
                 subject: `Payment Receipt - $${paymentData.amount}`,
                 template: "payment-receipt",
@@ -162,14 +159,28 @@ async function handleCheckoutSessionCompleted(
                 userId: tenantId,
               })
 
+              if (!emailResult.success) {
+                console.warn("Failed to dispatch payment receipt email", {
+                  tenantId,
+                  error: emailResult.error,
+                })
+              }
+
               // Also send in-app notification
-              await sendInAppNotification({
+              const inAppResult = await notificationService.sendInApp({
                 userId: tenantId,
                 title: "Payment Successful",
                 message: `Your payment of $${paymentData.amount} has been processed successfully.`,
                 type: "success",
                 actionUrl: "/payments",
               })
+
+              if (!inAppResult.success) {
+                console.warn("Failed to persist in-app payment notification", {
+                  tenantId,
+                  error: inAppResult.error,
+                })
+              }
             }
           } catch (notificationError) {
             console.error(

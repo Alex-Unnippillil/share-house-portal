@@ -1,13 +1,12 @@
 "use client"
 
-import type { InAppNotification, NotificationData } from "@/lib/notifications"
+import type {
+  EmailNotification,
+  InAppNotification,
+  NotificationBatchResult,
+  NotificationResult,
+} from "@/lib/notifications"
 import { useToast } from "@/components/ui/use-toast"
-
-type NotificationResult = { success: boolean; error?: string }
-type BulkNotificationResult = {
-  success: boolean
-  results: Array<{ index: number; success: boolean; error: unknown }>
-}
 
 type ParsedApiError = { message: string; details?: unknown }
 
@@ -68,7 +67,7 @@ async function postNotification<T>(payload: unknown): Promise<T> {
 export function useNotifications() {
   const { toast } = useToast()
 
-  const sendEmail = async (notification: NotificationData) => {
+  const sendEmail = async (notification: EmailNotification) => {
     try {
       const result = await postNotification<NotificationResult>({
         type: "email",
@@ -128,10 +127,10 @@ export function useNotifications() {
   }
 
   const sendBulkNotifications = async (
-    notifications: (NotificationData | InAppNotification)[]
+    notifications: (EmailNotification | InAppNotification)[]
   ) => {
     try {
-      const response = await postNotification<BulkNotificationResult>({
+      const response = await postNotification<NotificationBatchResult>({
         type: "bulk",
         notifications,
       })
@@ -173,7 +172,7 @@ export function useNotifications() {
         "results" in details &&
         Array.isArray((details as Record<string, unknown>).results)
       ) {
-        const results = (details as { results: BulkNotificationResult["results"] }).results
+        const results = (details as { results: NotificationBatchResult["results"] }).results
         const successCount = results.filter((r) => r.success).length
         const failureCount = results.length - successCount
 
@@ -221,7 +220,7 @@ export function useNotifications() {
     roommates: Array<{ id: string; email: string; name: string }>
     propertyManager: { id: string; email: string; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = []
+    const notifications: (EmailNotification | InAppNotification)[] = []
     const templateData = {
       guestName: data.guestName,
       hostName: data.hostName,
@@ -280,7 +279,7 @@ export function useNotifications() {
     priority: string
     propertyManager: { id: string; email: string; name: string }
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
+    const notifications: (EmailNotification | InAppNotification)[] = [
       // Email to property manager
       {
         to: data.propertyManager.email,
@@ -310,7 +309,7 @@ export function useNotifications() {
     tenantEmail: string
     tenantId: string
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
+    const notifications: (EmailNotification | InAppNotification)[] = [
       // Email receipt to tenant
       {
         to: data.tenantEmail,
@@ -339,7 +338,7 @@ export function useNotifications() {
     signerEmail: string
     signerId: string
   }) => {
-    const notifications: (NotificationData | InAppNotification)[] = [
+    const notifications: (EmailNotification | InAppNotification)[] = [
       // Email confirmation to signer
       {
         to: data.signerEmail,
