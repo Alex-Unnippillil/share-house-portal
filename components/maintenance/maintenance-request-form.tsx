@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +14,7 @@ import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { MAINTENANCE_REQUEST_CREATED_EVENT } from "./constants";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -45,7 +45,12 @@ const priorities = [
   { value: "urgent", label: "Urgent - Emergency fix needed" },
 ];
 
-export function MaintenanceRequestForm() {
+type MaintenanceRequestFormProps = {
+  onSuccess?: () => void;
+};
+
+export function MaintenanceRequestForm(props?: MaintenanceRequestFormProps) {
+  const { onSuccess } = props ?? {};
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
@@ -124,7 +129,12 @@ export function MaintenanceRequestForm() {
         description: "Your maintenance request has been submitted and notifications sent.",
       });
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent(MAINTENANCE_REQUEST_CREATED_EVENT));
+      }
+
       form.reset();
+      onSuccess?.();
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
       toast({
