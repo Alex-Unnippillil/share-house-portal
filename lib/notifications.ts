@@ -199,13 +199,24 @@ class NotificationService {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Payment Receipt</h2>
         <p><strong>Tenant:</strong> ${data?.tenantName || "Unknown"}</p>
-        <p><strong>Amount:</strong> $${data?.amount || "0.00"}</p>
+        <p><strong>Amount:</strong> ${data?.amount || "$0.00"}</p>
+        <p><strong>Currency:</strong> ${data?.currency?.toUpperCase() || "USD"}</p>
+        ${
+          data?.paymentMethodLast4
+            ? `<p><strong>Payment Method:</strong> Card ending in ${data.paymentMethodLast4}</p>`
+            : ""
+        }
         <p><strong>Description:</strong> ${
           data?.description || "Rent payment"
         }</p>
         <p><strong>Date:</strong> ${
           data?.date || new Date().toLocaleDateString()
         }</p>
+        ${
+          data?.downloadUrl
+            ? `<p><a href="${data.downloadUrl}">Download receipt</a></p>`
+            : ""
+        }
         <p>Thank you for your payment!</p>
       </div>
     `

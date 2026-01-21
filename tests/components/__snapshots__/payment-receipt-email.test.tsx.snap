@@ -1,0 +1,143 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PaymentReceiptEmail > renders minimal receipts without optional sections 1`] = `
+"<div style="font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;background-color:#f8fafc;padding:24px">
+<div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 10px 25px rgba(15, 23, 42, 0.08)">
+<div style="background-color:#111827;color:#f8fafc;padding:24px">
+<h1 style="margin:0;font-size:24px">Roomsily</h1>
+<p style="margin:8px 0 0;color:#cbd5f5">Payment Receipt</p>
+</div>
+<div style="padding:24px">
+<p style="margin:0 0 16px;font-size:16px;color:#0f172a">Hi Kai Patel,</p>
+<p style="margin:0 0 24px;color:#475569;line-height:1.6">Thank you for your payment. This email is a receipt for your recent transaction. A summary of the payment is included below for your records.</p>
+<div style="background-color:#f1f5f9;border-radius:10px;padding:16px;margin-bottom:24px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr))">
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Payment ID</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">pi_minimal_54321</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Paid On</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">Jul 1, 2024, 12:00 AM</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Amount Paid</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">$950.00</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Currency</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">USD</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Payment Method</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">—</p>
+</div>
+</div>
+<p style="text-align:right;font-weight:600;margin-top:16px">Total: $950.00</p>
+<div style="margin-top:32px;color:#475569;font-size:14px;line-height:1.6">
+<p style="margin:0">If you have any questions about this payment, please contact our support team.</p>
+<p style="margin:16px 0 0">Thank you for choosing Roomsily.</p>
+</div>
+</div>
+</div>
+</div>"
+`;
+
+exports[`PaymentReceiptEmail > renders the full receipt layout with payment metadata 1`] = `
+"<div style="font-family:ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;background-color:#f8fafc;padding:24px">
+<div style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 10px 25px rgba(15, 23, 42, 0.08)">
+<div style="background-color:#111827;color:#f8fafc;padding:24px">
+<h1 style="margin:0;font-size:24px">Roomsily</h1>
+<p style="margin:8px 0 0;color:#cbd5f5">Payment Receipt</p>
+</div>
+<div style="padding:24px">
+<p style="margin:0 0 16px;font-size:16px;color:#0f172a">Hi Avery Johnson,</p>
+<p style="margin:0 0 24px;color:#475569;line-height:1.6">Thank you for your payment. This email is a receipt for your recent transaction. A summary of the payment is included below for your records.</p>
+<div style="background-color:#f1f5f9;border-radius:10px;padding:16px;margin-bottom:24px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr))">
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Payment ID</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">pi_full_98765</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Paid On</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">Jun 15, 2024, 10:30 AM</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Amount Paid</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">$1,825.50</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Currency</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">USD</p>
+</div>
+<div>
+<p style="margin:0;color:#64748b;font-size:12px;text-transform:uppercase">Payment Method</p>
+<p style="margin:4px 0 0;color:#0f172a;font-weight:600">Visa ending in 4242</p>
+</div>
+</div>
+<table style="width:100%;border-collapse:collapse;margin-top:16px">
+<thead>
+<tr>
+<th style="text-align:left;padding:8px 0;border-bottom:1px solid #e2e8f0">Item</th>
+<th style="text-align:right;padding:8px 0;border-bottom:1px solid #e2e8f0">Qty</th>
+<th style="text-align:right;padding:8px 0;border-bottom:1px solid #e2e8f0">Unit</th>
+<th style="text-align:right;padding:8px 0;border-bottom:1px solid #e2e8f0">Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:8px 0;border-bottom:1px solid #f1f5f9">June Rent</td>
+<td style="padding:8px 0;text-align:right;border-bottom:1px solid #f1f5f9">1</td>
+<td style="padding:8px 0;text-align:right;border-bottom:1px solid #f1f5f9">$1,750.00</td>
+<td style="padding:8px 0;text-align:right;border-bottom:1px solid #f1f5f9">$1,750.00</td>
+</tr>
+<tr>
+<td style="padding:8px 0;border-bottom:1px solid #f1f5f9">Utilities</td>
+<td style="padding:8px 0;text-align:right;border-bottom:1px solid #f1f5f9">1</td>
+<td style="padding:8px 0;text-align:right;border-bottom:1px solid #f1f5f9">$75.50</td>
+<td style="padding:8px 0;text-align:right;border-bottom:1px solid #f1f5f9">$75.50</td>
+</tr>
+</tbody>
+</table>
+<div style="margin-top:16px">
+<table style="width:100%;border-collapse:collapse">
+<tbody>
+<tr>
+<td style="padding:4px 0;text-align:right;color:#475569">Subtotal</td>
+<td style="padding:4px 0;text-align:right;font-weight:500">$1,800.00</td>
+</tr>
+<tr>
+<td style="padding:4px 0;text-align:right;color:#475569">Tax</td>
+<td style="padding:4px 0;text-align:right;font-weight:500">$25.50</td>
+</tr>
+<tr>
+<td style="padding:4px 0;text-align:right;color:#475569">Discount</td>
+<td style="padding:4px 0;text-align:right;font-weight:500">-$0.00</td>
+</tr>
+<tr>
+<td style="padding:8px 0;text-align:right;font-weight:600">Total Paid</td>
+<td style="padding:8px 0;text-align:right;font-weight:600">$1,825.50</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="margin-top:24px">
+<a href="https://receipts.roomsily.dev/full-example.pdf" style="display:inline-block;background-color:#2563eb;color:#ffffff;padding:10px 16px;border-radius:8px;font-weight:600;text-decoration:none" target="_blank" rel="noopener noreferrer">Download receipt</a>
+</div>
+<div style="margin-top:24px">
+<h3 style="margin:0 0 8px;font-size:16px;color:#0f172a">Billing Address</h3>
+<p style="margin:0;white-space:pre-line;color:#475569">Avery Johnson
+44 Innovation Way
+Seattle, WA 98109</p>
+</div>
+<div style="margin-top:24px">
+<h3 style="margin:0 0 8px;font-size:16px;color:#0f172a">Notes</h3>
+<p style="margin:0;color:#475569">Keep shining, Avery!</p>
+</div>
+<div style="margin-top:32px;color:#475569;font-size:14px;line-height:1.6">
+<p style="margin:0">If you have any questions about this payment, please contact<a href="mailto:support@roomsily.com" style="color:#2563eb;text-decoration:none;margin-left:4px">support@roomsily.com</a>.</p>
+<p style="margin:16px 0 0">Thank you for choosing Roomsily.</p>
+</div>
+</div>
+</div>
+</div>"
+`;

@@ -21,17 +21,21 @@ export interface PaymentReceiptEmailProps {
   subtotalAmount?: number;
   taxAmount?: number;
   discountAmount?: number;
+  paymentMethodBrand?: string;
+  paymentMethodLast4?: string;
+  downloadUrl?: string;
 }
 
 const formatCurrency = (amount: number, currency: string) => {
+  const normalizedCurrency = currency.toUpperCase();
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency,
+      currency: normalizedCurrency,
     }).format(amount);
   } catch (error) {
     const formattedAmount = amount.toFixed(2);
-    return `${formattedAmount} ${currency}`;
+    return `${formattedAmount} ${normalizedCurrency}`;
   }
 };
 
@@ -141,6 +145,27 @@ const renderTotals = (
   );
 };
 
+const formatPaymentMethod = (
+  brand?: string,
+  last4?: string,
+) => {
+  if (!brand && !last4) {
+    return "—";
+  }
+
+  if (!last4) {
+    return brand ?? "—";
+  }
+
+  const normalizedBrand = brand
+    ? brand.replace(/_/g, " ")
+    : "Card";
+
+  const titleCased = normalizedBrand.replace(/\b\w/g, (char) => char.toUpperCase());
+
+  return `${titleCased} ending in ${last4}`;
+};
+
 export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> = ({
   customerName,
   paymentId,
@@ -155,6 +180,9 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
   subtotalAmount,
   taxAmount,
   discountAmount,
+  paymentMethodBrand,
+  paymentMethodLast4,
+  downloadUrl,
 }) => {
   return (
     <div
@@ -195,7 +223,7 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
               padding: '16px',
               marginBottom: '24px',
               display: 'grid',
-              gap: '8px',
+              gap: '12px',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             }}
           >
@@ -221,6 +249,22 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
                 {formatCurrency(amountPaid, currency)}
               </p>
             </div>
+            <div>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+                Currency
+              </p>
+              <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
+                {currency.toUpperCase()}
+              </p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+                Payment Method
+              </p>
+              <p style={{ margin: '4px 0 0', color: '#0f172a', fontWeight: 600 }}>
+                {formatPaymentMethod(paymentMethodBrand, paymentMethodLast4)}
+              </p>
+            </div>
           </div>
 
           {renderLineItems(items, currency)}
@@ -232,6 +276,27 @@ export const PaymentReceiptEmail: React.FC<Readonly<PaymentReceiptEmailProps>> =
             amountPaid,
             currency,
           })}
+
+          {downloadUrl && (
+            <div style={{ marginTop: '24px' }}>
+              <a
+                href={downloadUrl}
+                style={{
+                  display: 'inline-block',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download receipt
+              </a>
+            </div>
+          )}
 
           {billingAddress && (
             <div style={{ marginTop: '24px' }}>
