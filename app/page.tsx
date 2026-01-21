@@ -47,6 +47,9 @@ const integrationBadges = [
   "Documenso",
 ]
 
+const heroImageBlurDataURL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23ede9fe'/%3E%3Cstop offset='100%25' stop-color='%23f8fafc'/%3E%3C/linearGradient%3E%3Crect width='1200' height='720' fill='url(%23g)'/%3E%3C/svg%3E"
+
 const heroMetrics = [
   { value: "99.2%", label: "Rent collected on schedule", icon: PiggyBank },
   { value: "8 min", label: "Average roommate onboarding", icon: Users },
@@ -289,7 +292,9 @@ export default async function IndexPage() {
                   width={960}
                   height={720}
                   priority
-                  sizes="(min-width: 1024px) 480px, 100vw"
+                  sizes="(min-width: 1280px) 36vw, (min-width: 1024px) 45vw, 92vw"
+                  placeholder="blur"
+                  blurDataURL={heroImageBlurDataURL}
                   className="w-full object-contain"
                 />
                 <div className="absolute bottom-6 left-6 flex flex-col gap-3 rounded-2xl border border-white/20 bg-background/90 p-4 text-left shadow-lg shadow-primary/10">

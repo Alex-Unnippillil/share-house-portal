@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronRight, Star, Zap, Shield } from "lucide-react"
-import { Contact } from '@/components/forms/contact'
+import { Contact } from "@/components/forms/contact"
+
+const teamAvatarBlurDataURL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='avatarGradient' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23e5e7ff'/%3E%3Cstop offset='100%25' stop-color='%23f5f3ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23avatarGradient)'/%3E%3C/svg%3E"
 
 export default function AboutPage() {
   return (
@@ -49,7 +52,13 @@ export default function AboutPage() {
               <Card>
                 <CardHeader className="text-center">
                   <Avatar className="mx-auto mb-4 size-24">
-                    <AvatarImage src={member.avatar} alt={member.name} />
+                    <AvatarImage
+                      src={member.avatar}
+                      alt={member.name}
+                      sizes="96px"
+                      placeholder="blur"
+                      blurDataURL={teamAvatarBlurDataURL}
+                    />
                     <AvatarFallback>
                       {member.name
                         .split(" ")
