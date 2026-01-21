@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "css:purge": "node scripts/check-css-size.mjs"
+    "css:purge": "node scripts/check-css-size.mjs",
+    "db:replica:staging-green": "bash scripts/db/setup-staging-green-replica.sh",
+    "db:migrate:staging-green": "bash scripts/db/migrate-staging-green.sh",
+    "db:cutover:staging-green": "bash scripts/db/cutover-smoke.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
