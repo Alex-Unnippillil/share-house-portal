@@ -2,32 +2,77 @@
 
 import crypto from "crypto"
 
-// In a real application, use a secure environment variable for this
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "your-secure-encryption-key-min-32-chars"
-const IV_LENGTH = 16 // For AES, this is always 16
+const ALGORITHM = "aes-256-gcm"
+const IV_LENGTH = 12
 
-export async function encrypt(text: string): Promise<string> {
+const rawKey =
+  process.env.DOCUMENT_ENCRYPTION_KEY ||
+  process.env.ENCRYPTION_KEY ||
+  "your-secure-encryption-key-min-32-chars"
+
+const ENCRYPTION_KEY = crypto.createHash("sha256").update(rawKey).digest()
+
+export type EncryptedPayload = {
+  cipherText: Buffer
+  iv: string
+  authTag: string
+  algorithm: string
+}
+
+export function encryptBuffer(buffer: Buffer): EncryptedPayload {
   const iv = crypto.randomBytes(IV_LENGTH)
-  // Use type assertion to fix the TypeScript error
-  const key = Buffer.from(ENCRYPTION_KEY)
-  // Specify the algorithm type explicitly
-  const cipher = crypto.createCipheriv("aes-256-cbc" as crypto.CipherCCMTypes, key, iv)
-  let encrypted = cipher.update(text)
-  encrypted = Buffer.concat([encrypted, cipher.final()])
-  return `${iv.toString("hex")}:${encrypted.toString("hex")}`
+  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv)
+  const cipherText = Buffer.concat([cipher.update(buffer), cipher.final()])
+  const authTag = cipher.getAuthTag().toString("hex")
+
+  return {
+    cipherText,
+    iv: iv.toString("hex"),
+    authTag,
+    algorithm: ALGORITHM.toUpperCase(),
+  }
 }
 
-export async function decrypt(text: string): Promise<string> {
-  const [ivHex, encryptedHex] = text.split(":")
-  const iv = Buffer.from(ivHex, "hex")
-  const encryptedText = Buffer.from(encryptedHex, "hex")
-  // Use type assertion to fix the TypeScript error
-  const key = Buffer.from(ENCRYPTION_KEY)
-  // Specify the algorithm type explicitly
-  const decipher = crypto.createDecipheriv("aes-256-cbc" as crypto.CipherCCMTypes, key, iv)
-  let decrypted = decipher.update(encryptedText)
-  decrypted = Buffer.concat([decrypted, decipher.final()])
-  return decrypted.toString()
+type DecryptParams = {
+  cipherText: Buffer
+  iv: string
+  authTag: string
+  algorithm?: string | null
 }
 
+export function decryptBuffer({
+  cipherText,
+  iv,
+  authTag,
+  algorithm,
+}: DecryptParams): Buffer {
+  const normalizedAlgorithm = (algorithm || ALGORITHM).toLowerCase()
+  if (normalizedAlgorithm !== ALGORITHM) {
+    throw new Error(`Unsupported encryption algorithm: ${algorithm}`)
+  }
 
+  const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, Buffer.from(iv, "hex"))
+  decipher.setAuthTag(Buffer.from(authTag, "hex"))
+
+  return Buffer.concat([decipher.update(cipherText), decipher.final()])
+}
+
+export function encrypt(text: string): string {
+  const { cipherText, iv, authTag } = encryptBuffer(Buffer.from(text, "utf8"))
+  return `${iv}:${authTag}:${cipherText.toString("hex")}`
+}
+
+export function decrypt(payload: string): string {
+  const [iv, authTag, cipherHex] = payload.split(":")
+  if (!iv || !authTag || !cipherHex) {
+    throw new Error("Invalid encrypted payload format")
+  }
+
+  const decrypted = decryptBuffer({
+    cipherText: Buffer.from(cipherHex, "hex"),
+    iv,
+    authTag,
+  })
+
+  return decrypted.toString("utf8")
+}

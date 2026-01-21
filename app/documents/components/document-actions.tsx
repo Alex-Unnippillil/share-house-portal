@@ -27,6 +27,9 @@ export function DocumentActions({ document }: DocumentActionsProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const permissions = useDocumentPermissions();
 
+  const appendQueryParam = (url: string, param: string) =>
+    url.includes('?') ? `${url}&${param}` : `${url}?${param}`;
+
   const handleView = () => {
     setShowViewer(true);
   };
@@ -64,7 +67,8 @@ export function DocumentActions({ document }: DocumentActionsProps) {
 
   const handleDownload = () => {
     if (document.file_url) {
-      window.open(document.file_url, '_blank');
+      const downloadUrl = appendQueryParam(document.file_url, 'download=1');
+      window.open(downloadUrl, '_blank');
     }
   };
 

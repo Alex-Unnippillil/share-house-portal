@@ -13,6 +13,11 @@ export interface Document {
   document_type: DocumentType;
   status: DocumentStatus;
   file_url?: string;
+  storage_path?: string;
+  encryption_iv?: string | null;
+  encryption_tag?: string | null;
+  encryption_algorithm?: string | null;
+  encrypted_at?: string | null;
   documenso_envelope_id?: string;
   documenso_template_id?: string;
   metadata: Record<string, any>;
