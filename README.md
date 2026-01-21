@@ -25,6 +25,11 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 - **Lease Agreements**: Digital lease management with version history
 - **Audit Trails**: Complete document access logging for compliance
 
+### 🧺 **Shared Supplies**
+- **Automatic Cost Splitting**: Household purchases are divided equally across active members using the generator in `lib/supplies/share-generator.ts`.
+- **Membership-Aware Calculations**: The `handleHouseholdMembershipChange` server action (`app/supplies/actions/household-membership.ts`) detects additions or departures and only recalculates `supply_shares` for purchases on or after the change date, leaving existing records untouched.
+- **Verified by Tests**: `tests/supply-shares.test.ts` covers both join and departure scenarios to ensure historical purchases remain unchanged while future splits use the updated roster.
+
 ### 💬 **Communication**
 - **Realtime Messaging**: Roommate-to-roommate communication with threads
 - **Notifications**: In-app and email notifications for important events
