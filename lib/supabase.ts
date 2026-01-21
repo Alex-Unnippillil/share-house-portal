@@ -45,6 +45,12 @@ export type Database = {
         stripe_customer_id: string | null
         rent_share: number | null
         metadata: Json | null
+        search_document: unknown | null
+      }>
+      member_search_synonyms: SupabaseTable<{
+        term: string
+        synonyms: string[]
+        updated_at: string
       }>
       documents: SupabaseTable<{
         id: string
@@ -313,6 +319,35 @@ export type Database = {
       update_updated_at_column: {
         Args: Record<string, never>
         Returns: unknown
+      }
+      search_members: {
+        Args: {
+          search_input?: string | null
+          role_filters?: string[] | null
+          unit_filters?: string[] | null
+          result_limit?: number | null
+        }
+        Returns: Array<{
+          id: string | null
+          full_name: string | null
+          email: string | null
+          role: string | null
+          unit_id: string | null
+          highlight: string | null
+          rank: number | null
+        }>
+      }
+      search_members_facets: {
+        Args: {
+          search_input?: string | null
+          role_filters?: string[] | null
+          unit_filters?: string[] | null
+        }
+        Returns: Array<{
+          facet: string | null
+          value: string | null
+          count: number | null
+        }>
       }
     }
     Enums: Record<string, never>
