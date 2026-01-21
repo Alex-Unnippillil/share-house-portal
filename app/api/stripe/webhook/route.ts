@@ -1,6 +1,8 @@
 import { headers } from "next/headers"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
+export const runtime = "nodejs"
+
 import {
   sendEmailNotification,
   sendInAppNotification,
