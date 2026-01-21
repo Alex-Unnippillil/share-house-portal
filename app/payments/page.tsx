@@ -240,8 +240,10 @@ export default async function PaymentsPage() {
           <ContributionSummaryCard balances={catchUpBalances} />
           <Card>
             <CardHeader>
-              <CardTitle>Pay with Stripe</CardTitle>
-              <CardDescription>Create a quick checkout or open Billing Portal</CardDescription>
+              <CardTitle>Stripe quick actions</CardTitle>
+              <CardDescription>
+                Create a one-time checkout link or open a tenant billing portal with sandbox IDs.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <StripeActions />
