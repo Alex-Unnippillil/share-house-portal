@@ -13,8 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -50,7 +48,6 @@ export function MaintenanceRequestForm() {
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   const form = useForm<MaintenanceRequestFormData>({
     resolver: zodResolver(maintenanceRequestSchema),
@@ -72,7 +69,11 @@ export function MaintenanceRequestForm() {
       if (!user) throw new Error("Not authenticated");
 
       // Get user profile
-      const profile = await fetchMemberProfile(typedSupabase, user.id);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, unit_id')
+        .eq('id', user.id)
+        .single();
 
       if (!profile) throw new Error("Profile not found");
 
@@ -80,9 +81,13 @@ export function MaintenanceRequestForm() {
         throw new Error("User is not assigned to a unit");
       }
 
-      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        roles: ['property_manager'],
-      });
+      // Get property manager for this unit
+      const { data: propertyManager } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('unit_id', profile.unit_id!)
+        .eq('role', 'property_manager')
+        .single();
 
       if (!propertyManager) {
         throw new Error("Property manager not found for this unit");
@@ -98,7 +103,7 @@ export function MaintenanceRequestForm() {
           category: data.category || null,
           location: data.location || null,
           requested_by: user.id,
-          unit_id: profile.unit_id,
+          unit_id: (profile as any).unit_id,
           status: 'pending',
         })
         .select()
@@ -108,7 +113,7 @@ export function MaintenanceRequestForm() {
 
       // Send notifications
       await notifyMaintenanceRequest({
-        requesterName: profile.full_name || user.email || 'Unknown',
+        requesterName: (profile as any).full_name || user.email || 'Unknown',
         title: data.title,
         description: data.description,
         priority: data.priority,
