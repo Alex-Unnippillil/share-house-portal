@@ -49,8 +49,8 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm/yarn/pnpm
+- Node.js 20 (use the pinned version via [`nvm`](https://github.com/nvm-sh/nvm))
+- pnpm (managed via [Corepack](https://nodejs.org/api/corepack.html))
 - Supabase account
 - Stripe account
 - Vercel account (for deployment)
@@ -92,11 +92,17 @@ supabase db push
 ### Development
 
 ```bash
+# Match the Node.js version used in CI
+nvm use
+
+# Enable Corepack so the pinned pnpm release is used
+corepack enable
+
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
