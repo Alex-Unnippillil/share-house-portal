@@ -4,6 +4,13 @@ import * as React from "react"
 import NextLink from "next/link"
 import { useRouter } from "next/navigation"
 
+import {
+  SMARTLINK_MODE_EVENT,
+  initializeSmartLinkMetrics,
+  type SmartLinkMode,
+  type SmartLinkModeChangeDetail,
+} from "@/components/navigation/smart-link-metrics"
+
 export type SmartLinkIntent = "standard" | "critical" | "passive" | "navigation"
 
 export interface SmartLinkProps
@@ -34,11 +41,13 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       prefetch: prefetchProp,
       onPointerEnter,
       onFocus,
+      onClick,
       href,
       ...rest
     } = props
 
     const router = useRouter()
+    const [performanceMode, setPerformanceMode] = React.useState<SmartLinkMode>("default")
     const innerRef = React.useRef<HTMLAnchorElement | null>(null)
     const combinedRef = React.useCallback(
       (node: AnchorRef) => {
@@ -65,6 +74,37 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
     const [isVisible, setIsVisible] = React.useState(false)
     const hasPrefetchedRef = React.useRef(false)
 
+    React.useEffect(() => {
+      if (typeof window === "undefined") {
+        return
+      }
+
+      initializeSmartLinkMetrics()
+
+      const handleModeChange = (event: Event) => {
+        const detail = (event as CustomEvent<SmartLinkModeChangeDetail>).detail
+        const nextMode = detail?.mode ?? window.__smartlinkNavigationMetrics?.mode ?? "default"
+        setPerformanceMode(nextMode)
+      }
+
+      const currentMode = window.__smartlinkNavigationMetrics?.mode ?? "default"
+      setPerformanceMode(currentMode)
+
+      window.addEventListener(SMARTLINK_MODE_EVENT, handleModeChange as EventListener)
+
+      return () => {
+        window.removeEventListener(SMARTLINK_MODE_EVENT, handleModeChange as EventListener)
+      }
+    }, [])
+
+    const effectiveIntent = React.useMemo(() => {
+      if (intent === "standard" && performanceMode === "aggressive") {
+        return "critical"
+      }
+
+      return intent
+    }, [intent, performanceMode])
+
     const prefetchHint = React.useMemo<PrefetchHint>(() => {
       if (!isInternalHref) {
         return "never"
@@ -74,7 +114,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
         return prefetchProp ? "viewport" : "never"
       }
 
-      switch (intent) {
+      switch (effectiveIntent) {
         case "critical":
           return "immediate"
         case "passive":
@@ -84,7 +124,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
         default:
           return "viewport"
       }
-    }, [intent, isInternalHref, prefetchProp])
+    }, [effectiveIntent, isInternalHref, prefetchProp])
 
     const prefetchHref = React.useMemo(() => {
       if (!isInternalHref) {
@@ -154,6 +194,24 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
       }
     }, [isVisible, prefetchHint, prefetchHref])
 
+    const handleClick = React.useCallback(
+      (event: React.MouseEvent<HTMLAnchorElement>) => {
+        if (isInternalHref && typeof window !== "undefined" && typeof performance !== "undefined") {
+          window.__smartlinkNavigationStart = {
+            href: typeof href === "string" ? href : undefined,
+            startedAt: performance.now(),
+          }
+        }
+
+        onClick?.(event)
+
+        if (event.defaultPrevented && typeof window !== "undefined") {
+          window.__smartlinkNavigationStart = undefined
+        }
+      },
+      [href, isInternalHref, onClick]
+    )
+
     const handlePointerEnter = React.useCallback(
       (event: React.PointerEvent<HTMLAnchorElement>) => {
         onPointerEnter?.(event)
@@ -208,6 +266,7 @@ export const SmartLink = React.forwardRef<HTMLAnchorElement, SmartLinkProps>(
         ref={combinedRef}
         href={href}
         prefetch={shouldPrefetch}
+        onClick={handleClick}
         onPointerEnter={handlePointerEnter}
         onFocus={handleFocus}
         {...rest}
