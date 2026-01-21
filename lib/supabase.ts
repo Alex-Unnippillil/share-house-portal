@@ -201,6 +201,49 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      messaging_threads: SupabaseTable<{
+        id: string
+        subject: string
+        summary: string | null
+        category: string | null
+        unit_label: string | null
+        created_by: string | null
+        created_at: string | null
+        updated_at: string | null
+        last_message_at: string | null
+        metadata: Json | null
+      }>
+      messaging_moderation_queue: SupabaseTable<{
+        id: string
+        thread_id: string
+        severity: 'high' | 'medium' | 'low'
+        status: 'needs_review' | 'monitoring' | 'escalated' | 'resolved' | 'archived'
+        flags: number
+        flagged_by_profile_id: string | null
+        flagged_by_display: string
+        flagged_reason: string | null
+        next_step: string | null
+        watchers: string[] | null
+        last_activity: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      messaging_moderation_messages: SupabaseTable<{
+        id: string
+        queue_id: string
+        sender_profile_id: string | null
+        sender_name: string
+        sent_at: string
+        content: string
+        is_flagged: boolean | null
+      }>
+      messaging_moderation_events: SupabaseTable<{
+        id: string
+        queue_id: string
+        occurred_at: string
+        description: string
+        recorded_by_profile_id: string | null
+      }>
       notifications: SupabaseTable<{
         id: string
         user_id: string
