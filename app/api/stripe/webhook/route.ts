@@ -8,22 +8,22 @@ import {
 import { jsonError } from "@/lib/errors"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { getSupabaseServiceRoleConfig } from "@/utils/supabase/env"
 
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  try {
+    const { url, serviceRoleKey } = getSupabaseServiceRoleConfig()
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Supabase admin credentials are not configured")
+    return createClient<Database>(url, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  } catch (error) {
+    console.error("Supabase admin credentials are not configured", error)
     return null
   }
-
-  return createClient<Database>(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
 }
 
 export async function POST(req: Request) {

@@ -5,6 +5,7 @@ import { useMemo } from "react"
 
 import type { Database } from "@/lib/supabase"
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
+import { getSupabaseClientConfig } from "@/utils/supabase/env"
 
 let client: TypedSupabaseClient
 
@@ -13,9 +14,11 @@ function getSupabaseBrowserClient() {
     return client
   }
 
+  const { url, anonKey } = getSupabaseClientConfig()
+
   client = createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    url,
+    anonKey,
   )
 
   return client
