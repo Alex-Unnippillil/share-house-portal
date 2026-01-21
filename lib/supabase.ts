@@ -17,17 +17,69 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
 export type Database = {
   public: {
     Tables: {
+      amenities: SupabaseTable<{
+        id: string
+        property_id: string | null
+        unit_id: string | null
+        slug: string
+        name: string
+        description: string | null
+        amenity_type: string
+        location: string | null
+        active: boolean
+        booking_buffer_minutes: number | null
+        booking_window_start: string | null
+        booking_window_end: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       amenity_bookings: SupabaseTable<{
         id: string
         amenity_id: string
         household_id: string | null
         created_by: string
+        unit_id: string | null
         status: 'pending' | 'confirmed' | 'cancelled'
         start_time: string
         end_time: string
         created_at: string | null
         updated_at: string | null
         metadata: Json | null
+      }>
+      properties: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        name: string
+        slug: string | null
+        description: string | null
+        address_line1: string | null
+        address_line2: string | null
+        city: string | null
+        state: string | null
+        postal_code: string | null
+        country: string | null
+        timezone: string | null
+        metadata: Json | null
+      }>
+      units: SupabaseTable<{
+        id: string
+        property_id: string | null
+        label: string
+        unit_number: string | null
+        floor: string | null
+        bedrooms: number | null
+        bathrooms: number | null
+        rent_amount: number | null
+        rent_frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+        rent_due_day: number | null
+        square_feet: number | null
+        occupancy_limit: number | null
+        status: 'active' | 'inactive' | 'archived'
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
       }>
       profiles: SupabaseTable<{
         id: string
@@ -224,6 +276,83 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      message_threads: SupabaseTable<{
+        id: string
+        unit_id: string | null
+        household_id: string | null
+        title: string
+        category: string | null
+        status: 'open' | 'closed' | 'archived' | 'locked'
+        created_by: string
+        pinned: boolean | null
+        locked: boolean | null
+        last_activity_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      messages: SupabaseTable<{
+        id: string
+        thread_id: string
+        author_id: string
+        parent_id: string | null
+        message_type: 'message' | 'system' | 'announcement' | 'poll'
+        body: string | null
+        rich_content: Json | null
+        metadata: Json | null
+        edited_at: string | null
+        deleted_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      message_reactions: SupabaseTable<{
+        id: string
+        message_id: string
+        user_id: string
+        emoji: string
+        created_at: string | null
+      }>
+      message_attachments: SupabaseTable<{
+        id: string
+        message_id: string
+        file_name: string
+        storage_path: string
+        file_type: string | null
+        file_size: number | null
+        metadata: Json | null
+        created_at: string | null
+      }>
+      message_reads: SupabaseTable<{
+        id: string
+        message_id: string
+        user_id: string
+        read_at: string | null
+      }>
+      polls: SupabaseTable<{
+        id: string
+        thread_id: string
+        created_by: string
+        question: string
+        allow_multiple: boolean | null
+        closes_at: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      poll_options: SupabaseTable<{
+        id: string
+        poll_id: string
+        label: string
+        position: number | null
+        created_at: string | null
+      }>
+      poll_votes: SupabaseTable<{
+        id: string
+        poll_id: string
+        option_id: string
+        voter_id: string
+        created_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string
@@ -240,6 +369,35 @@ export type Database = {
         id: string
         user_id: string
         refresh_token: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      floorplans: SupabaseTable<{
+        id: string
+        unit_id: string | null
+        household_id: string | null
+        title: string
+        version: number | null
+        svg_document: string | null
+        image_url: string | null
+        storage_path: string | null
+        created_by: string | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      floorplan_annotations: SupabaseTable<{
+        id: string
+        floorplan_id: string
+        created_by: string | null
+        assignee_id: string | null
+        label: string
+        annotation_type: 'storage' | 'chore' | 'maintenance' | 'note' | 'other'
+        description: string | null
+        coordinates: Json
+        color: string | null
+        visibility_scope: 'roommate' | 'household' | 'property_manager' | 'public'
+        metadata: Json | null
         created_at: string | null
         updated_at: string | null
       }>
