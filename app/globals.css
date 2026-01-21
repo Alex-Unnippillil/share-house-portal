@@ -13,7 +13,11 @@ body {}
 @layer base {
   :root {
     --background: 0 0% 100%;
+    --background-muted: 210 40% 96%;
+    --background-inverse: 222 47% 11%;
     --foreground: 222 47% 11%;
+    --foreground-muted: 215 20% 45%;
+    --foreground-inverse: 0 0% 100%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
@@ -22,8 +26,8 @@ body {}
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 20% 45%;
+    --muted: var(--background-muted);
+    --muted-foreground: var(--foreground-muted);
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 72% 51%;
@@ -36,7 +40,11 @@ body {}
 
   .dark {
     --background: 222 47% 11%;
+    --background-muted: 217 33% 17%;
+    --background-inverse: 0 0% 100%;
     --foreground: 210 40% 98%;
+    --foreground-muted: 215 20% 65%;
+    --foreground-inverse: 222 47% 11%;
     --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
@@ -45,8 +53,8 @@ body {}
     --primary-foreground: 222 47% 11%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: var(--background-muted);
+    --muted-foreground: var(--foreground-muted);
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62% 30%;
