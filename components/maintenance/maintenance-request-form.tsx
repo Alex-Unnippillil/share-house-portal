@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CsatPrompt } from "@/components/feedback/csat-prompt";
 import { useNotifications } from "@/hooks/use-notifications";
 import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
@@ -47,6 +48,7 @@ const priorities = [
 
 export function MaintenanceRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCsatPrompt, setShowCsatPrompt] = useState(false);
   const { notifyMaintenanceRequest } = useNotifications();
   const { toast } = useToast();
   const supabase = createClient();
@@ -125,6 +127,7 @@ export function MaintenanceRequestForm() {
       });
 
       form.reset();
+      setShowCsatPrompt(true);
     } catch (error) {
       console.error('Error submitting maintenance request:', error);
       toast({
@@ -138,11 +141,12 @@ export function MaintenanceRequestForm() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="title"
+    <div className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="title"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Issue Title *</FormLabel>
@@ -241,7 +245,11 @@ export function MaintenanceRequestForm() {
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Submitting..." : "Submit Maintenance Request"}
         </Button>
-      </form>
-    </Form>
+        </form>
+      </Form>
+      {showCsatPrompt ? (
+        <CsatPrompt flow="maintenance_request" onDismiss={() => setShowCsatPrompt(false)} />
+      ) : null}
+    </div>
   );
 }
