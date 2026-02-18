@@ -17,6 +17,22 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
 export type Database = {
   public: {
     Tables: {
+      audit_logs: SupabaseTable<{
+        id: string
+        action: string | null
+        event_type: string | null
+        actor_id: string | null
+        actor_role: string | null
+        target_type: string | null
+        target_id: string | null
+        property_id: string | null
+        unit_id: string | null
+        thread_id: string | null
+        message_id: string | null
+        metadata: Json | null
+        occurred_at: string | null
+        created_at: string | null
+      }>
       bookings: SupabaseTable<{
         id: string
         created_at: string | null
@@ -321,24 +337,6 @@ export type Database = {
         sent_at: string | null
         error_message: string | null
         metadata: Json | null
-      }>
-      audit_logs: SupabaseTable<{
-        id: string
-        actor_id: string | null
-        actor_role: string | null
-        action: string | null
-        event_type: string | null
-        target_type: string | null
-        target_id: string | null
-        entity_type: string | null
-        entity_id: string | null
-        property_id: string | null
-        unit_id: string | null
-        thread_id: string | null
-        message_id: string | null
-        metadata: Json | null
-        occurred_at: string | null
-        created_at: string | null
       }>
       meetings: SupabaseTable<{
         id: string

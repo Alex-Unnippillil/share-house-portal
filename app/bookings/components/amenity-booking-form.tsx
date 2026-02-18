@@ -1,7 +1,8 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
 import type { FormEvent } from "react"
+import { useMemo, useState, useTransition } from "react"
+import { track } from "@vercel/analytics"
 import { ExternalLink, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -73,46 +74,77 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
       setErrors([])
       setWarnings([])
 
-      const response = await fetch("/api/bookings/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      try {
+        track("booking_conflict_check", {
           amenityId: amenity.id,
-          startTime,
-          endTime,
-          recurrence: {
-            enabled: allowRecurring,
-            frequency,
-            count: allowRecurring ? occurrences : undefined,
+          hasRecurrence: allowRecurring,
+        })
+
+        const response = await fetch("/api/bookings/validate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      })
+          body: JSON.stringify({
+            amenityId: amenity.id,
+            startTime,
+            endTime,
+            recurrence: {
+              enabled: allowRecurring,
+              frequency,
+              count: allowRecurring ? occurrences : undefined,
+            },
+          }),
+        })
 
-      const payload = (await response.json()) as {
-        ok?: boolean
-        allowed?: boolean
-        errors?: string[]
-        warnings?: string[]
-        conflicts?: unknown[]
+        const payload = (await response.json()) as {
+          ok?: boolean
+          allowed?: boolean
+          errors?: string[]
+          warnings?: string[]
+          conflicts?: unknown[]
+        }
+
+        if (!response.ok || !payload.ok) {
+          toast.error("Unable to validate booking right now")
+          return
+        }
+
+        const nextWarnings = payload.warnings ?? []
+        const nextErrors = payload.errors ?? []
+        const nextConflictCount = payload.conflicts?.length ?? 0
+
+        setWarnings(nextWarnings)
+        setErrors(nextErrors)
+        setConflictCount(nextConflictCount)
+
+        if (nextConflictCount > 0) {
+          track("booking_conflict_detected", {
+            amenityId: amenity.id,
+            conflictCount: nextConflictCount,
+          })
+
+          void postOperationalMetric("booking_conflicts_total", {
+            amenityId: amenity.id,
+            conflictCount: nextConflictCount,
+          })
+        }
+
+        if (!payload.allowed) {
+          toast.error("Booking violates policy or conflicts with another reservation")
+          return
+        }
+
+        toast.success("Validation passed. Complete this reservation in Cal.com below.")
+      } catch (error) {
+        console.error("Unexpected error during conflict check", error)
+        track("booking_conflict_check_failed", { amenityId: amenity.id })
+        void postOperationalMetric("webhook_failures_total", {
+          source: "booking_conflict_check",
+          amenityId: amenity.id,
+        })
+        toast.error("Something went wrong while checking availability")
       }
-
-      if (!response.ok || !payload.ok) {
-        toast.error("Unable to validate booking right now")
-        return
-      }
-
-      setWarnings(payload.warnings ?? [])
-      setErrors(payload.errors ?? [])
-      setConflictCount(payload.conflicts?.length ?? 0)
-
-      if (!payload.allowed) {
-        toast.error("Booking violates policy or conflicts with another reservation")
-        return
-      }
-
-      toast.success("Validation passed. Complete this reservation in Cal.com below.")
     })
   }
 

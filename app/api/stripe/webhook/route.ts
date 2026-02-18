@@ -26,22 +26,6 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   })
 }
 
-
-function toSubscriptionStatus(
-  status: Stripe.Subscription.Status
-): "active" | "canceled" | "past_due" | "unpaid" {
-  switch (status) {
-    case "active":
-      return "active"
-    case "past_due":
-      return "past_due"
-    case "unpaid":
-      return "unpaid"
-    default:
-      return "canceled"
-  }
-}
-
 function parseAmountInMajorUnits(amountInCents: number | null | undefined) {
   if (!amountInCents) {
     return 0
@@ -50,10 +34,7 @@ function parseAmountInMajorUnits(amountInCents: number | null | undefined) {
   return amountInCents / 100
 }
 
-async function isDuplicateEvent(
-  supabase: SupabaseClient<Database>,
-  event: Stripe.Event
-) {
+async function isDuplicateEvent(supabase: SupabaseClient<Database>, event: Stripe.Event) {
   const payload: TablesInsert<"webhook_events"> = {
     provider: "stripe",
     event_id: event.id,
@@ -106,22 +87,25 @@ async function upsertRentPayment(
     return
   }
 
-  const metadata = payment.metadata
-  const invoiceId =
-    metadata && typeof metadata === "object" && "invoice_id" in metadata
-      ? String((metadata as Record<string, unknown>).invoice_id)
-      : null
+  if (payment.stripe_subscription_id && payment.metadata) {
+    const invoiceId =
+      typeof payment.metadata === "object" &&
+      payment.metadata &&
+      "invoice_id" in payment.metadata
+        ? String((payment.metadata as Record<string, unknown>).invoice_id)
+        : null
 
-  if (invoiceId) {
-    const { data: existing } = await supabase
-      .from("rent_payments")
-      .select("id")
-      .contains("metadata", { invoice_id: invoiceId })
-      .maybeSingle()
+    if (invoiceId) {
+      const { data: existing } = await supabase
+        .from("rent_payments")
+        .select("id")
+        .contains("metadata", { invoice_id: invoiceId })
+        .maybeSingle()
 
-    if (existing?.id) {
-      await supabase.from("rent_payments").update(payment).eq("id", existing.id)
-      return
+      if (existing?.id) {
+        await supabase.from("rent_payments").update(payment).eq("id", existing.id)
+        return
+      }
     }
   }
 
@@ -225,6 +209,16 @@ async function handleCheckoutSessionCompleted(
   }
 }
 
+function normalizeSubscriptionStatus(
+  status: Stripe.Subscription.Status
+): TablesInsert<"subscriptions">["status"] {
+  if (status === "active" || status === "canceled" || status === "past_due" || status === "unpaid") {
+    return status
+  }
+
+  return "past_due"
+}
+
 async function handleInvoicePaymentSucceeded(
   supabase: SupabaseClient<Database>,
   invoice: Stripe.Invoice
@@ -280,18 +274,14 @@ async function handleInvoicePaymentSucceeded(
   await supabase
     .from("subscriptions")
     .update({
-      status: toSubscriptionStatus(subscription.status),
-      current_period_start: new Date(
-        subscription.current_period_start * 1000
-      ).toISOString(),
-      current_period_end: new Date(
-        subscription.current_period_end * 1000
-      ).toISOString(),
+      status: normalizeSubscriptionStatus(subscription.status),
+      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     })
     .eq("stripe_subscription_id", subscription.id)
 
   if (tenantId) {
-    await notifyTenantPayment(supabase, tenantId, amount, paymentData.description ?? null)
+    await notifyTenantPayment(supabase, tenantId, amount, subscriptionPayment.description ?? null)
   }
 }
 
@@ -413,12 +403,6 @@ export async function POST(req: Request) {
     logger.error("stripe_webhook_configuration_error", {
       reason: "missing_webhook_secret",
     })
-    incrementOperationalMetric("webhook_failures_total", {
-      source: "stripe_webhook",
-      provider: "stripe",
-      eventType: "unknown",
-      reason: "missing_webhook_secret",
-    })
 
     return jsonError("CONFIGURATION_ERROR", {
       message: "Stripe webhook secret is not configured",
@@ -426,6 +410,10 @@ export async function POST(req: Request) {
   }
 
   if (!signature) {
+    logger.error("stripe_webhook_configuration_error", {
+      reason: "missing_signature",
+    })
+
     return jsonError("REQUEST_VALIDATION_ERROR", {
       message: "Missing stripe-signature header",
     })
@@ -436,6 +424,7 @@ export async function POST(req: Request) {
     logger.error("stripe_webhook_configuration_error", {
       reason: "missing_supabase_admin_client",
     })
+
     return jsonError("CONFIGURATION_ERROR", {
       message: "Supabase client not configured",
     })
@@ -447,11 +436,17 @@ export async function POST(req: Request) {
 
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Invalid payload"
-    logger.error("stripe_webhook_processing_failed", {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid payload"
+    logger.error("stripe_webhook_signature_verification_failed", {
       reason: message,
       provider: "stripe",
+    })
+    incrementOperationalMetric("webhook_failures_total", {
+      source: "stripe_webhook",
+      provider: "stripe",
+      eventType: "unknown",
+      reason: "stripe_signature_verification_failed",
     })
 
     return jsonError("REQUEST_VALIDATION_ERROR", {
@@ -509,7 +504,9 @@ export async function POST(req: Request) {
         )
         break
       default:
-        logger.info("stripe_webhook_unhandled_event", { eventName: event.type })
+        logger.info("stripe_webhook_unhandled_event", {
+          eventName: event.type,
+        })
         break
     }
 
@@ -521,14 +518,16 @@ export async function POST(req: Request) {
     })
 
     return new Response("ok", { status: 200 })
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unexpected webhook processing error"
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unexpected webhook processing error"
 
     logger.error("stripe_webhook_processing_failed", {
       reason: message,
       provider: "stripe",
+      eventName: event.type,
+      stripeEventId: event.id,
     })
+
     incrementOperationalMetric("webhook_failures_total", {
       source: "stripe_webhook",
       provider: "stripe",
