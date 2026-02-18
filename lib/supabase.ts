@@ -341,12 +341,15 @@ export type Database = {
       meetings: SupabaseTable<{
         id: string
         user_id: string
+        property_id: string | null
+        unit_id: string | null
         start_time: string
         end_time: string
         google_event_id: string | null
+        google_event_link: string | null
         summary: string | null
         description: string | null
-        google_event_link: string | null
+        metadata: Json | null
         created_at: string | null
         updated_at: string | null
       }>
@@ -354,6 +357,8 @@ export type Database = {
         id: string
         user_id: string
         refresh_token: string | null
+        provider: string
+        metadata: Json | null
         created_at: string | null
         updated_at: string | null
       }>
