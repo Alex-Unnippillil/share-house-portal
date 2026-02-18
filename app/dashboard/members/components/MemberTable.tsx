@@ -1,4 +1,4 @@
-import Table from "@/components/ui/Table"
+import Table from "@/components/ui/table"
 
 import { getDashboardMembers } from "../data"
 import ListOfMembers from "./ListOfMembers"
