@@ -15,13 +15,17 @@ import {
   DashboardStatsSkeleton,
 } from "./components/skeletons"
 
-import InsightsPanel from "./components/insights-panel"
+import { OnboardingPromptCard } from "./components/onboarding-prompt-card"
 
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <Suspense fallback={<DashboardHeaderSkeleton />}>
         <DashboardWelcome />
+      </Suspense>
+
+      <Suspense fallback={<DashboardCardSkeleton />}>
+        <OnboardingPromptCard />
       </Suspense>
 
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">

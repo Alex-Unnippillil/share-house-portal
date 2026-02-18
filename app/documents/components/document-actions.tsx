@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DocumentWithLease } from '@/types/documents';
-import { signDocumentAction, createSigningRequestAction, getSigningUrlAction } from '../actions';
+import { signDocumentAction, createSigningRequestAction, getSigningUrlAction, getDocumentAccessUrlAction } from '../actions';
 import { DocumentViewerDialog } from './document-viewer-dialog';
 import { CreateSignatureDialog } from './create-signature-dialog';
 import { useDocumentPermissions } from '@/hooks/use-document-permissions';
@@ -27,8 +27,14 @@ export function DocumentActions({ document }: DocumentActionsProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const permissions = useDocumentPermissions();
 
-  const handleView = () => {
-    setShowViewer(true);
+  const handleView = async () => {
+    const accessResult = await getDocumentAccessUrlAction(document.id, 'view');
+    if (accessResult.success && accessResult.data?.url) {
+      setShowViewer(true);
+      return;
+    }
+
+    toast.error(accessResult.error || 'Failed to open document');
   };
 
   const handleSign = async () => {
@@ -62,23 +68,33 @@ export function DocumentActions({ document }: DocumentActionsProps) {
     setShowSignatureDialog(true);
   };
 
-  const handleDownload = () => {
-    if (document.file_url) {
-      window.open(document.file_url, '_blank');
+  const handleDownload = async () => {
+    const accessResult = await getDocumentAccessUrlAction(document.id, 'download');
+    if (accessResult.success && accessResult.data?.url) {
+      window.open(accessResult.data.url, '_blank', 'noopener,noreferrer');
+      return;
     }
+
+    toast.error(accessResult.error || 'Download unavailable');
   };
 
-  const handleShare = () => {
-    if (navigator.share && document.file_url) {
+  const handleShare = async () => {
+    const accessResult = await getDocumentAccessUrlAction(document.id, 'view');
+    if (!accessResult.success || !accessResult.data?.url) {
+      toast.error(accessResult.error || 'Share link unavailable');
+      return;
+    }
+
+    if (navigator.share) {
       navigator.share({
         title: document.title,
-        url: document.file_url,
+        url: accessResult.data.url,
       });
-    } else {
-      // Fallback: copy URL to clipboard
-      navigator.clipboard.writeText(document.file_url || '');
-      toast.success('Document URL copied to clipboard');
+      return;
     }
+
+    navigator.clipboard.writeText(accessResult.data.url);
+    toast.success('Secure document URL copied to clipboard');
   };
 
   // Permission checks

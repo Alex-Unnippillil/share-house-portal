@@ -52,7 +52,14 @@ export type Database = {
         updated_at: string | null
         title: string
         description: string | null
-        document_type: 'lease' | 'addendum' | 'insurance' | 'maintenance' | 'other'
+        document_type:
+          | 'lease'
+          | 'notice'
+          | 'account_file'
+          | 'addendum'
+          | 'insurance'
+          | 'maintenance'
+          | 'other'
         status: 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled'
         file_url: string | null
         documenso_envelope_id: string | null
@@ -93,6 +100,15 @@ export type Database = {
         action: string
         ip_address: string | null
         user_agent: string | null
+        metadata: Json | null
+      }>
+      audit_logs: SupabaseTable<{
+        id: string
+        created_at: string | null
+        actor_id: string | null
+        entity_type: string
+        entity_id: string | null
+        action: string
         metadata: Json | null
       }>
       leases: SupabaseTable<{
@@ -137,6 +153,18 @@ export type Database = {
         processed_at: string | null
         billing_period_start: string | null
         billing_period_end: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      webhook_events: SupabaseTable<{
+        id: string
+        provider: 'stripe'
+        event_id: string
+        event_type: string
+        status: 'processing' | 'processed' | 'failed'
+        payload: Json | null
+        error_message: string | null
+        processed_at: string | null
         created_at: string | null
         updated_at: string | null
       }>
