@@ -188,6 +188,8 @@ async function handleCheckoutSessionCompleted(
   const amount = parseAmountInMajorUnits(
     lineItem?.amount_total ?? fullSession.amount_total
   )
+  const paymentStatus = fullSession.payment_status ?? session.payment_status
+
   const paymentData: TablesInsert<"rent_payments"> = {
     user_id: tenantId || "00000000-0000-0000-0000-000000000000",
     stripe_payment_intent_id: paymentIntentId,
@@ -196,6 +198,7 @@ async function handleCheckoutSessionCompleted(
     amount,
     currency: (lineItem?.currency || fullSession.currency || "usd").toUpperCase(),
     description: lineItem?.description || "One-time rent payment",
+    status: paymentStatus === "paid" ? "succeeded" : "pending",
     status:
       (fullSession.payment_status ?? session.payment_status) === "paid"
         ? "succeeded"
@@ -207,6 +210,7 @@ async function handleCheckoutSessionCompleted(
     payment_method_type: "card",
     metadata: {
       session_id: fullSession.id,
+      payment_status: paymentStatus,
       payment_status: fullSession.payment_status ?? session.payment_status,
       line_item_price: lineItem?.price?.id,
     },
