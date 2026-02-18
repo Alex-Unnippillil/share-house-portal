@@ -1,14 +1,17 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
+import OnboardingProgress from "@/components/onboarding-progress"
+import SmartLink from "@/components/navigation/SmartLink"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import SmartLink from "@/components/navigation/SmartLink"
 import {
   saveEmergencyContact,
   saveRentShare,
@@ -32,9 +35,24 @@ type OnboardingClientProps = {
   }
 }
 
+type SaveState = "idle" | "saving" | "saved"
+
+const DRAFT_KEY = "onboarding-draft-v1"
+const TOTAL_STEPS = 6
+
+function getStepFromSearchParam(raw: string | null) {
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed)) return 1
+  return Math.min(Math.max(1, Math.floor(parsed)), TOTAL_STEPS)
+}
+
 export function OnboardingClient({ initialData }: OnboardingClientProps) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
   const [pending, startTransition] = useTransition()
-  const [message, setMessage] = useState<string>("")
+  const [stepSuccessMessage, setStepSuccessMessage] = useState("")
+  const [stepErrorMessage, setStepErrorMessage] = useState("")
 
   const [unitId, setUnitId] = useState(initialData.profile.unitId)
   const [rentShare, setRentShare] = useState(initialData.profile.rentShare?.toString() ?? "")
@@ -45,186 +63,326 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
   const [vehicleModel, setVehicleModel] = useState(initialData.profile.vehicleDetails?.model ?? "")
   const [vehicleColor, setVehicleColor] = useState(initialData.profile.vehicleDetails?.color ?? "")
   const [vehiclePlate, setVehiclePlate] = useState(initialData.profile.vehicleDetails?.licensePlate ?? "")
+  const [avatarUploaded, setAvatarUploaded] = useState(Boolean(initialData.profile.avatarSignedUrl))
+  const [documentCount, setDocumentCount] = useState(initialData.profile.personalDocuments.length)
 
-  const completion = initialData.profile.completion
+  const [saveState, setSaveState] = useState<SaveState>("idle")
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [resumedFromDraft, setResumedFromDraft] = useState(false)
+  const [reviewConfirmed, setReviewConfirmed] = useState(false)
 
-  const heading = useMemo(
-    () => (completion.isComplete ? "Onboarding completed" : "Finish your onboarding"),
-    [completion.isComplete],
-  )
+  const currentStep = getStepFromSearchParam(searchParams.get("step"))
 
-  function runAction(action: () => Promise<{ ok: boolean; message: string }>) {
+  useEffect(() => {
+    const rawDraft = window.localStorage.getItem(DRAFT_KEY)
+    if (!rawDraft) return
+
+    try {
+      const parsed = JSON.parse(rawDraft) as Record<string, string>
+      setUnitId(parsed.unitId ?? initialData.profile.unitId)
+      setRentShare(parsed.rentShare ?? initialData.profile.rentShare?.toString() ?? "")
+      setEmergencyName(parsed.emergencyName ?? initialData.profile.emergencyContact?.name ?? "")
+      setEmergencyPhone(parsed.emergencyPhone ?? initialData.profile.emergencyContact?.phone ?? "")
+      setEmergencyRelationship(parsed.emergencyRelationship ?? initialData.profile.emergencyContact?.relationship ?? "")
+      setVehicleMake(parsed.vehicleMake ?? initialData.profile.vehicleDetails?.make ?? "")
+      setVehicleModel(parsed.vehicleModel ?? initialData.profile.vehicleDetails?.model ?? "")
+      setVehicleColor(parsed.vehicleColor ?? initialData.profile.vehicleDetails?.color ?? "")
+      setVehiclePlate(parsed.vehiclePlate ?? initialData.profile.vehicleDetails?.licensePlate ?? "")
+      setResumedFromDraft(true)
+    } catch {
+      window.localStorage.removeItem(DRAFT_KEY)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSaveState("saving")
+      window.localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          unitId,
+          rentShare,
+          emergencyName,
+          emergencyPhone,
+          emergencyRelationship,
+          vehicleMake,
+          vehicleModel,
+          vehicleColor,
+          vehiclePlate,
+        }),
+      )
+      const now = new Date()
+      setLastSavedAt(now)
+      setSaveState("saved")
+    }, 700)
+
+    return () => window.clearTimeout(timeout)
+  }, [unitId, rentShare, emergencyName, emergencyPhone, emergencyRelationship, vehicleMake, vehicleModel, vehicleColor, vehiclePlate])
+
+  const relativeSavedLabel = useMemo(() => {
+    if (!lastSavedAt) return "Not saved yet"
+    const secondsAgo = Math.floor((Date.now() - lastSavedAt.getTime()) / 1000)
+    if (secondsAgo < 5) return "Saved just now"
+    if (secondsAgo < 60) return `Saved ${secondsAgo}s ago`
+    return `Saved ${Math.floor(secondsAgo / 60)}m ago`
+  }, [lastSavedAt])
+
+  function goToStep(step: number) {
+    router.replace(`/onboarding?step=${step}`, { scroll: true })
+  }
+
+  function validateStep(step: number): string | null {
+    if (step === 1 && !avatarUploaded) return "Upload an avatar before continuing."
+    if (step === 2 && !unitId.trim()) return "Unit assignment is required."
+    if (step === 3) {
+      const parsed = Number(rentShare)
+      if (!Number.isFinite(parsed) || parsed <= 0) return "Rent share must be a number greater than 0."
+    }
+    if (step === 4) {
+      if (!emergencyName.trim() || !emergencyPhone.trim() || !emergencyRelationship.trim()) {
+        return "All emergency contact fields are required."
+      }
+    }
+    if (step === 5) {
+      if (!vehicleMake.trim() || !vehicleModel.trim() || !vehicleColor.trim() || !vehiclePlate.trim()) {
+        return "All vehicle detail fields are required."
+      }
+    }
+    if (step === 6 && !reviewConfirmed) return "Please confirm all fields before completing onboarding."
+    return null
+  }
+
+  async function saveStep(step: number) {
+    if (step === 2) return saveUnitAssignment({ unitId })
+    if (step === 3) return saveRentShare({ rentShare: Number(rentShare) })
+    if (step === 4) return saveEmergencyContact({ name: emergencyName, phone: emergencyPhone, relationship: emergencyRelationship })
+    if (step === 5) {
+      return saveVehicleDetails({ make: vehicleMake, model: vehicleModel, color: vehicleColor, licensePlate: vehiclePlate })
+    }
+    return { ok: true, message: "Step complete." }
+  }
+
+  function handleNext() {
+    setStepErrorMessage("")
+    setStepSuccessMessage("")
+
+    const error = validateStep(currentStep)
+    if (error) {
+      setStepErrorMessage(error)
+      return
+    }
+
     startTransition(async () => {
-      const response = await action()
-      setMessage(response.message)
+      const response = await saveStep(currentStep)
+      if (!response.ok) {
+        setStepErrorMessage(response.message)
+        return
+      }
+
+      setStepSuccessMessage(currentStep === 6 ? "All information confirmed." : `${response.message} Step validated.`)
+      if (currentStep < TOTAL_STEPS) {
+        goToStep(currentStep + 1)
+      } else {
+        window.localStorage.removeItem(DRAFT_KEY)
+      }
     })
   }
 
+  const steps = [
+    { id: 1, label: "Profile", complete: avatarUploaded },
+    { id: 2, label: "Unit", complete: Boolean(unitId.trim()) },
+    { id: 3, label: "Rent", complete: Number(rentShare) > 0 },
+    { id: 4, label: "Emergency", complete: Boolean(emergencyName && emergencyPhone && emergencyRelationship) },
+    { id: 5, label: "Vehicle", complete: Boolean(vehicleMake && vehicleModel && vehicleColor && vehiclePlate) },
+    { id: 6, label: "Review", complete: reviewConfirmed },
+  ]
+
+  const completionPercent = Math.round((steps.filter((step) => step.complete).length / steps.length) * 100)
+
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 pb-10">
-      <Card>
-        <CardHeader className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-xl">{heading}</CardTitle>
-            <Badge variant={completion.isComplete ? "default" : "secondary"}>{completion.completionPercent}%</Badge>
+    <div className="mx-auto w-full max-w-5xl pb-12">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-xl">Finish your onboarding</CardTitle>
+                <Badge variant={completionPercent === 100 ? "default" : "secondary"}>{completionPercent}%</Badge>
+              </div>
+              <CardDescription>
+                Complete each step to unlock resident messaging, bookings, and payment automation.
+              </CardDescription>
+              <Progress value={completionPercent} />
+              <OnboardingProgress steps={steps} />
+            </CardHeader>
+          </Card>
+
+          {currentStep === 1 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Step 1 · Profile & assets</CardTitle>
+                <CardDescription>Upload your profile image and any supporting lease documents.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {initialData.profile.avatarSignedUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={initialData.profile.avatarSignedUrl} alt="Current avatar" className="size-16 rounded-full object-cover" />
+                ) : null}
+                <form
+                  className="space-y-2"
+                  action={(formData) => {
+                    formData.set("kind", "avatar")
+                    startTransition(async () => {
+                      const response = await uploadOnboardingAsset(formData)
+                      if (response.ok) {
+                        setAvatarUploaded(true)
+                        setStepSuccessMessage("Avatar uploaded successfully.")
+                        setStepErrorMessage("")
+                      } else {
+                        setStepErrorMessage(response.message)
+                      }
+                    })
+                  }}
+                >
+                  <Label htmlFor="avatar">Upload avatar</Label>
+                  <Input id="avatar" name="file" type="file" accept="image/*" required />
+                  <Button type="submit" size="sm" disabled={pending}>Upload avatar</Button>
+                </form>
+
+                <form
+                  className="space-y-2"
+                  action={(formData) => {
+                    formData.set("kind", "document")
+                    startTransition(async () => {
+                      const response = await uploadOnboardingAsset(formData)
+                      if (response.ok) {
+                        setDocumentCount((value) => value + 1)
+                        setStepSuccessMessage("Document uploaded successfully.")
+                        setStepErrorMessage("")
+                      } else {
+                        setStepErrorMessage(response.message)
+                      }
+                    })
+                  }}
+                >
+                  <Label htmlFor="document">Upload personal document</Label>
+                  <Input id="document" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                  <Button type="submit" size="sm" variant="outline" disabled={pending}>Upload document</Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {currentStep === 2 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Step 2 · Unit assignment</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Label htmlFor="unit-id">Unit ID</Label>
+                <Input id="unit-id" value={unitId} onChange={(event) => setUnitId(event.target.value)} placeholder="B-402" />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {currentStep === 3 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Step 3 · Rent share</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Label htmlFor="rent-share">Rent share (%)</Label>
+                <Input id="rent-share" inputMode="decimal" value={rentShare} onChange={(event) => setRentShare(event.target.value)} placeholder="25" />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {currentStep === 4 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Step 4 · Emergency contacts</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-3">
+                <Input value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
+                <Input value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number" />
+                <Input value={emergencyRelationship} onChange={(event) => setEmergencyRelationship(event.target.value)} placeholder="Relationship" />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {currentStep === 5 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Step 5 · Vehicle details</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-3">
+                <Input value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
+                <Input value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
+                <Input value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
+                <Input value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate" />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {currentStep === 6 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Final review</CardTitle>
+                <CardDescription>Confirm all submitted fields before completing onboarding.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <div className="grid gap-2 rounded-md border p-3">
+                  <p><span className="font-medium">Email:</span> {initialData.user.email}</p>
+                  <p><span className="font-medium">Unit:</span> {unitId || "Not provided"}</p>
+                  <p><span className="font-medium">Rent share:</span> {rentShare || "Not provided"}%</p>
+                  <p><span className="font-medium">Emergency contact:</span> {emergencyName || "-"} / {emergencyPhone || "-"} ({emergencyRelationship || "-"})</p>
+                  <p><span className="font-medium">Vehicle:</span> {vehicleMake || "-"} {vehicleModel || ""}, {vehicleColor || "-"}, {vehiclePlate || "-"}</p>
+                  <p><span className="font-medium">Documents uploaded:</span> {documentCount}</p>
+                </div>
+                <label className="flex items-start gap-2 text-sm">
+                  <Checkbox checked={reviewConfirmed} onCheckedChange={(checked) => setReviewConfirmed(Boolean(checked))} />
+                  <span>I confirm the above information is accurate and ready for submission.</span>
+                </label>
+                {reviewConfirmed ? (
+                  <SmartLink href="/dashboard" intent="navigation" className="inline-block text-sm text-primary underline">
+                    Continue to dashboard
+                  </SmartLink>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
+          <div className="flex items-center justify-between">
+            <Button variant="outline" disabled={currentStep === 1 || pending} onClick={() => goToStep(currentStep - 1)}>
+              Back
+            </Button>
+            <Button disabled={pending} onClick={handleNext}>
+              {currentStep === TOTAL_STEPS ? "Finish onboarding" : "Save and continue"}
+            </Button>
           </div>
-          <CardDescription>
-            Complete each section below so roommates and property managers can safely coordinate bookings, payments, and emergency info.
-          </CardDescription>
-          <Progress value={completion.completionPercent} />
-        </CardHeader>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Profile photo & personal documents</CardTitle>
-          <CardDescription>Uploads are stored in private Supabase buckets and are linked to your account only.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {initialData.profile.avatarSignedUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={initialData.profile.avatarSignedUrl} alt="Current avatar" className="size-16 rounded-full object-cover" />
-          ) : null}
-          <form
-            className="space-y-2"
-            action={(formData) => {
-              formData.set("kind", "avatar")
-              runAction(() => uploadOnboardingAsset(formData))
-            }}
-          >
-            <Label htmlFor="avatar">Upload avatar</Label>
-            <Input id="avatar" name="file" type="file" accept="image/*" required />
-            <Button type="submit" size="sm" disabled={pending}>Upload avatar</Button>
-          </form>
+          {stepErrorMessage ? <p className="text-sm text-destructive">{stepErrorMessage}</p> : null}
+          {stepSuccessMessage ? <p className="text-sm text-emerald-600 dark:text-emerald-400">{stepSuccessMessage}</p> : null}
+        </div>
 
-          <form
-            className="space-y-2"
-            action={(formData) => {
-              formData.set("kind", "document")
-              runAction(() => uploadOnboardingAsset(formData))
-            }}
-          >
-            <Label htmlFor="document">Upload personal document</Label>
-            <Input id="document" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
-            <Button type="submit" size="sm" variant="outline" disabled={pending}>Upload document</Button>
-          </form>
-
-          {initialData.profile.personalDocuments.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Recent uploads</p>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                {initialData.profile.personalDocuments.map((document) => (
-                  <li key={`${document.name}-${document.uploadedAt}`} className="flex items-center justify-between gap-2">
-                    <span className="truncate">{document.name}</span>
-                    {document.signedUrl ? (
-                      <SmartLink href={document.signedUrl} className="text-primary underline" intent="navigation">
-                        Open
-                      </SmartLink>
-                    ) : (
-                      <span>Unavailable</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Step 1 · Unit assignment</CardTitle>
-          <CardDescription>Use your lease unit identifier (for example: B-402).</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Label htmlFor="unit-id">Unit ID</Label>
-          <Input id="unit-id" value={unitId} onChange={(event) => setUnitId(event.target.value)} placeholder="B-402" />
-          <Button disabled={pending} onClick={() => runAction(() => saveUnitAssignment({ unitId }))}>Save unit assignment</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Step 2 · Rent share</CardTitle>
-          <CardDescription>Add your share as a percentage so payment reminders are accurate.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Label htmlFor="rent-share">Rent share (%)</Label>
-          <Input
-            id="rent-share"
-            inputMode="decimal"
-            value={rentShare}
-            onChange={(event) => setRentShare(event.target.value)}
-            placeholder="25"
-          />
-          <Button
-            disabled={pending}
-            onClick={() => runAction(() => saveRentShare({ rentShare: Number(rentShare) }))}
-          >
-            Save rent share
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Step 3 · Emergency contacts</CardTitle>
-          <CardDescription>This information is used for visitor incidents and urgent property updates.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <Input value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
-          <Input value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number" />
-          <Input
-            value={emergencyRelationship}
-            onChange={(event) => setEmergencyRelationship(event.target.value)}
-            placeholder="Relationship"
-          />
-          <Button
-            disabled={pending}
-            onClick={() =>
-              runAction(() =>
-                saveEmergencyContact({
-                  name: emergencyName,
-                  phone: emergencyPhone,
-                  relationship: emergencyRelationship,
-                }),
-              )
-            }
-          >
-            Save emergency contact
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Step 4 · Vehicle details</CardTitle>
-          <CardDescription>Needed for parking bookings and overnight visitor validation.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <Input value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
-          <Input value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
-          <Input value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
-          <Input value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate" />
-          <Button
-            disabled={pending}
-            onClick={() =>
-              runAction(() =>
-                saveVehicleDetails({
-                  make: vehicleMake,
-                  model: vehicleModel,
-                  color: vehicleColor,
-                  licensePlate: vehiclePlate,
-                }),
-              )
-            }
-          >
-            Save vehicle details
-          </Button>
-        </CardContent>
-      </Card>
-
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+        <aside className="sticky top-4 order-first rounded-lg border bg-card p-4 text-sm shadow-sm lg:order-none">
+          <p className="font-semibold">Progress summary</p>
+          <p className="mt-1 text-muted-foreground">Step {currentStep} of {TOTAL_STEPS}</p>
+          <ul className="mt-3 space-y-2 text-muted-foreground">
+            <li>Avatar uploaded: {avatarUploaded ? "Yes" : "No"}</li>
+            <li>Unit set: {unitId ? "Yes" : "No"}</li>
+            <li>Rent share set: {Number(rentShare) > 0 ? "Yes" : "No"}</li>
+            <li>Emergency contact set: {emergencyName && emergencyPhone && emergencyRelationship ? "Yes" : "No"}</li>
+            <li>Vehicle set: {vehicleMake && vehicleModel && vehicleColor && vehiclePlate ? "Yes" : "No"}</li>
+            <li>Documents uploaded: {documentCount}</li>
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {saveState === "saving" ? "Saving draft…" : relativeSavedLabel}
+          </p>
+          {resumedFromDraft ? <p className="mt-1 text-xs text-primary">Resumed from your last saved draft.</p> : null}
+        </aside>
+      </div>
     </div>
   )
 }

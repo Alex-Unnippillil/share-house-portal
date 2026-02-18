@@ -1,51 +1,77 @@
+"use client"
+
+import { useMemo } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
+
 import SmartLink from "@/components/navigation/SmartLink"
 
-export default function OnboardingProgress({ step = 1 }: { step?: number }) {
+type OnboardingProgressStep = {
+  id: number
+  label: string
+  complete?: boolean
+  locked?: boolean
+}
+
+const DEFAULT_STEPS: OnboardingProgressStep[] = [
+  { id: 1, label: "Profile" },
+  { id: 2, label: "Unit" },
+  { id: 3, label: "Rent" },
+  { id: 4, label: "Emergency" },
+  { id: 5, label: "Vehicle" },
+  { id: 6, label: "Review" },
+]
+
+function getActiveStep(raw: string | null, maxStep: number) {
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed)) return 1
+  return Math.min(Math.max(1, Math.floor(parsed)), maxStep)
+}
+
+export default function OnboardingProgress({ steps = DEFAULT_STEPS }: { steps?: OnboardingProgressStep[] }) {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const activeStep = useMemo(() => getActiveStep(searchParams.get("step"), steps.length), [searchParams, steps.length])
+
   return (
-    <div className="px-4 pb-8 pt-12">
-      <div className="mx-auto w-full max-w-md">
-        <div className="relative">
-          <div className="absolute left-0 top-1/2 -mt-px h-0.5 w-full bg-slate-200 dark:bg-slate-700" aria-hidden="true"></div>
-          <ul className="relative flex w-full justify-between">
-            <li>
+    <nav aria-label="Onboarding steps" className="w-full">
+      <ol className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        {steps.map((step) => {
+          const isCurrent = step.id === activeStep
+          const isComplete = Boolean(step.complete) || step.id < activeStep
+          const href = pathname?.startsWith("/onboarding") ? `${pathname}?step=${step.id}` : `/onboarding?step=${step.id}`
+
+          return (
+            <li key={step.id}>
               <SmartLink
-                className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold ${step >= 1 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}
-                href="/signup?=page1"
+                href={href}
                 intent="navigation"
+                aria-current={isCurrent ? "step" : undefined}
+                className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition sm:flex-col sm:items-start ${
+                  isCurrent
+                    ? "border-primary bg-primary/10 text-primary"
+                    : isComplete
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                      : "border-border text-muted-foreground"
+                } ${step.locked ? "pointer-events-none opacity-60" : ""}`}
               >
-                1
+                <span
+                  className={`inline-flex size-5 items-center justify-center rounded-full text-[11px] font-semibold ${
+                    isCurrent
+                      ? "bg-primary text-primary-foreground"
+                      : isComplete
+                        ? "bg-emerald-600 text-white"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {step.id}
+                </span>
+                <span className="truncate">{step.label}</span>
               </SmartLink>
             </li>
-            <li>
-              <SmartLink
-                className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold ${step >= 2 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}
-                href="/signup?=page2"
-                intent="navigation"
-              >
-                2
-              </SmartLink>
-            </li>
-            <li>
-              <SmartLink
-                className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold ${step >= 3 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}
-                href="/signup?=page3"
-                intent="navigation"
-              >
-                3
-              </SmartLink>
-            </li>
-            <li>
-              <SmartLink
-                className={`flex size-6 items-center justify-center rounded-full text-xs font-semibold ${step >= 4 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}
-                href="/signup?=page4"
-                intent="navigation"
-              >
-                4
-              </SmartLink>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
+          )
+        })}
+      </ol>
+    </nav>
   )
 }
