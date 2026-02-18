@@ -1,4 +1,11 @@
-export type DocumentType = 'lease' | 'addendum' | 'insurance' | 'maintenance' | 'other';
+export type DocumentType =
+  | 'lease'
+  | 'notice'
+  | 'account_file'
+  | 'addendum'
+  | 'insurance'
+  | 'maintenance'
+  | 'other';
 
 export type DocumentStatus = 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled';
 
@@ -25,6 +32,9 @@ export interface Document {
   signed_at?: string;
   version: number;
   parent_document_id?: string;
+  source?: string;
+  uploader_name?: string;
+  uploader_email?: string;
 }
 
 export interface DocumentSignature {
