@@ -43,8 +43,6 @@
     "playwright.config.ts",
     "e2e",
     "tests",
-    "**/*.test.ts",
-    "**/*.test.tsx",
     "vitest.config.ts"
   ]
 }
