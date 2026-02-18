@@ -17,6 +17,7 @@ describe('auth RBAC route helpers', () => {
   it('identifies authenticated routes correctly', () => {
     expect(requiresAuthentication('/dashboard')).toBe(true)
     expect(requiresAuthentication('/payments/history')).toBe(true)
+    expect(requiresAuthentication('/visitors')).toBe(true)
     expect(requiresAuthentication('/about')).toBe(false)
   })
 

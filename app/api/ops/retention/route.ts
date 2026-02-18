@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 
-import type { Database } from "@/lib/supabase"
 import { createStructuredLogger } from "@/lib/observability/logger"
+import type { Database } from "@/lib/supabase"
 
 function createSupabaseAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -43,29 +43,44 @@ export async function GET(req: Request) {
     logger.error("retention_job_configuration_error", {
       reason: "missing_supabase_admin_credentials",
     })
-    return Response.json({ error: "Supabase admin credentials are not configured" }, { status: 500 })
+    return Response.json(
+      { error: "Supabase admin credentials are not configured" },
+      { status: 500 }
+    )
   }
 
   const visitorRetentionDate = isoDaysAgo(180)
   const notificationRetentionDate = isoDaysAgo(90)
+  const auditRetentionDate = isoDaysAgo(730)
 
-  const [visitorDelete, notificationDelete] = await Promise.all([
-    supabase.from("visitor_logs").delete().lt("departure_date", visitorRetentionDate),
-    supabase.from("notifications").delete().lt("created_at", notificationRetentionDate),
+  const [visitorDelete, notificationDelete, auditDelete] = await Promise.all([
+    supabase
+      .from("visitor_logs")
+      .delete()
+      .lt("departure_date", visitorRetentionDate),
+    supabase
+      .from("notifications")
+      .delete()
+      .lt("created_at", notificationRetentionDate),
+    supabase.from("audit_logs").delete().lt("occurred_at", auditRetentionDate),
   ])
 
   logger.info("retention_job_completed", {
     visitorRetentionDate,
     notificationRetentionDate,
+    auditRetentionDate,
     visitorDeleteError: visitorDelete.error?.message,
     notificationDeleteError: notificationDelete.error?.message,
+    auditDeleteError: auditDelete.error?.message,
   })
 
   return Response.json({
-    ok: !visitorDelete.error && !notificationDelete.error,
+    ok: !visitorDelete.error && !notificationDelete.error && !auditDelete.error,
     visitorRetentionDate,
     notificationRetentionDate,
+    auditRetentionDate,
     visitorDeleteError: visitorDelete.error?.message ?? null,
     notificationDeleteError: notificationDelete.error?.message ?? null,
+    auditDeleteError: auditDelete.error?.message ?? null,
   })
 }

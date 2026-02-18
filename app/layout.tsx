@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
 import { Suspense } from "react"
 
 import { Analytics } from "@vercel/analytics/react"
@@ -10,7 +9,6 @@ import "./globals.css"
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { CookieButton } from "@/components/cookie-button"
-import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -19,7 +17,6 @@ import { fontSans } from "@/lib/font"
 import { cn } from "@/lib/utils"
 import { siteConfig } from "@/config/site"
 import { ReactQueryClientProvider } from "@/components/react-query-client-provider"
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
@@ -131,7 +128,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             disableTransitionOnChange
           >
              <div className="relative flex min-h-screen flex-col">
-              {/* <SiteHeader /> */}
+              <SiteHeader />
               <div className="flex-1">
                 <ErrorBoundary>
                   <Suspense fallback={<RouteSkeleton />}>

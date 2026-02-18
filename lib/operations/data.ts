@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { cache } from 'react'
+import { unstable_cache, unstable_noStore } from 'next/cache'
 
 type KpiModule = {
   id: 'payments' | 'maintenance' | 'bookings' | 'moderation'
@@ -55,6 +55,19 @@ export type VisitorRow = {
   check_out_date: string
 }
 
+export type PaginationOptions = {
+  page?: number
+  pageSize?: number
+}
+
+export type PaginatedResult<T> = {
+  rows: T[]
+  page: number
+  pageSize: number
+  totalRows: number
+  totalPages: number
+}
+
 const financeRows: FinanceRow[] = [
   { payment_id: 'pay_1001', tenant: 'Jordan Reed', unit: '3B', amount: 1260, status: 'succeeded', processed_at: '2025-02-01T09:10:00.000Z' },
   { payment_id: 'pay_1002', tenant: 'Avery Stone', unit: '2A', amount: 980, status: 'failed', processed_at: '2025-02-03T11:00:00.000Z' },
@@ -85,25 +98,78 @@ const visitorRows: VisitorRow[] = [
   { visitor_id: 'vis_503', guest_name: 'Mia Wong', host: 'Sam Lee', status: 'completed', check_in_date: '2025-02-01', check_out_date: '2025-02-03' },
 ]
 
-export const getOperationsKpis = cache(async (): Promise<KpiModule[]> => {
-  const successRate = Math.round((financeRows.filter((row) => row.status === 'succeeded').length / financeRows.length) * 100)
-  const openMaintenance = maintenanceRows.filter((row) => row.status !== 'completed').length
-  const bookingUtilization = Math.round((bookingRows.filter((row) => row.status === 'confirmed').length / bookingRows.length) * 100)
-  const unresolvedModeration = moderationRows.filter((row) => row.status === 'open').length
+function paginateRows<T>(rows: T[], options: PaginationOptions = {}): PaginatedResult<T> {
+  const pageSize = Number.isFinite(options.pageSize) ? Math.min(Math.max(options.pageSize ?? 20, 1), 100) : 20
+  const totalRows = rows.length
+  const totalPages = Math.max(Math.ceil(totalRows / pageSize), 1)
+  const page = Number.isFinite(options.page) ? Math.min(Math.max(options.page ?? 1, 1), totalPages) : 1
 
-  return [
-    { id: 'payments', title: 'Payment success', value: `${successRate}%`, helper: 'Successful rent payments this cycle', href: '/dashboard/operations/finance' },
-    { id: 'maintenance', title: 'Open maintenance', value: `${openMaintenance}`, helper: 'Requests still needing intervention', href: '/dashboard/operations/maintenance' },
-    { id: 'bookings', title: 'Booking utilization', value: `${bookingUtilization}%`, helper: 'Confirmed amenity usage ratio', href: '/dashboard/operations/bookings' },
-    { id: 'moderation', title: 'Unresolved moderation', value: `${unresolvedModeration}`, helper: 'Flagged posts pending review', href: '/dashboard/operations/moderation' },
-  ]
+  const startIndex = (page - 1) * pageSize
+  const endIndex = startIndex + pageSize
+
+  return {
+    rows: rows.slice(startIndex, endIndex),
+    page,
+    pageSize,
+    totalRows,
+    totalPages,
+  }
+}
+
+const getCachedOperationsKpis = unstable_cache(
+  async (): Promise<KpiModule[]> => {
+    const successRate = Math.round((financeRows.filter((row) => row.status === 'succeeded').length / financeRows.length) * 100)
+    const openMaintenance = maintenanceRows.filter((row) => row.status !== 'completed').length
+    const bookingUtilization = Math.round((bookingRows.filter((row) => row.status === 'confirmed').length / bookingRows.length) * 100)
+    const unresolvedModeration = moderationRows.filter((row) => row.status === 'open').length
+
+    return [
+      { id: 'payments', title: 'Payment success', value: `${successRate}%`, helper: 'Successful rent payments this cycle', href: '/dashboard/operations/finance' },
+      { id: 'maintenance', title: 'Open maintenance', value: `${openMaintenance}`, helper: 'Requests still needing intervention', href: '/dashboard/operations/maintenance' },
+      { id: 'bookings', title: 'Booking utilization', value: `${bookingUtilization}%`, helper: 'Confirmed amenity usage ratio', href: '/dashboard/operations/bookings' },
+      { id: 'moderation', title: 'Unresolved moderation', value: `${unresolvedModeration}`, helper: 'Flagged posts pending review', href: '/dashboard/operations/moderation' },
+    ]
+  },
+  ['operations-kpis'],
+  { revalidate: 300, tags: ['operations-kpis'] }
+)
+
+export const getOperationsKpis = async () => getCachedOperationsKpis()
+
+export async function getFinanceRows(options?: PaginationOptions) {
+  unstable_noStore()
+  return paginateRows(financeRows, options)
+}
+
+const getCachedMaintenanceRows = unstable_cache(async () => maintenanceRows, ['maintenance-rows'], {
+  revalidate: 300,
+  tags: ['maintenance-rows'],
+})
+const getCachedBookingRows = unstable_cache(async () => bookingRows, ['booking-rows'], {
+  revalidate: 120,
+  tags: ['booking-rows'],
+})
+const getCachedModerationRows = unstable_cache(async () => moderationRows, ['moderation-rows'], {
+  revalidate: 120,
+  tags: ['moderation-rows'],
+})
+const getCachedVisitorRows = unstable_cache(async () => visitorRows, ['visitor-rows'], {
+  revalidate: 300,
+  tags: ['visitor-rows'],
 })
 
-export const getFinanceRows = cache(async () => financeRows)
-export const getMaintenanceRows = cache(async () => maintenanceRows)
-export const getBookingRows = cache(async () => bookingRows)
-export const getModerationRows = cache(async () => moderationRows)
-export const getVisitorRows = cache(async () => visitorRows)
+export async function getMaintenanceRows(options?: PaginationOptions) {
+  return paginateRows(await getCachedMaintenanceRows(), options)
+}
+export async function getBookingRows(options?: PaginationOptions) {
+  return paginateRows(await getCachedBookingRows(), options)
+}
+export async function getModerationRows(options?: PaginationOptions) {
+  return paginateRows(await getCachedModerationRows(), options)
+}
+export async function getVisitorRows(options?: PaginationOptions) {
+  return paginateRows(await getCachedVisitorRows(), options)
+}
 
 export async function getGlobalSearchResults(query: string) {
   const q = query.trim().toLowerCase()
@@ -117,8 +183,12 @@ export async function getGlobalSearchResults(query: string) {
     }
   }
 
+  const allMaintenanceRows = await getCachedMaintenanceRows()
+  const allBookingRows = await getCachedBookingRows()
+  const allVisitorRows = await getCachedVisitorRows()
+
   const tenants = Array.from(
-    new Set([...financeRows.map((row) => row.tenant), ...visitorRows.map((row) => row.host)])
+    new Set([...financeRows.map((row) => row.tenant), ...allVisitorRows.map((row) => row.host)])
   )
     .filter((name) => name.toLowerCase().includes(q))
     .map((name) => ({ id: name.toLowerCase().replace(/\s+/g, '-'), name }))
@@ -126,14 +196,14 @@ export async function getGlobalSearchResults(query: string) {
   const units = Array.from(
     new Set([
       ...financeRows.map((row) => row.unit),
-      ...maintenanceRows.map((row) => row.unit),
-      ...bookingRows.map((row) => row.unit),
+      ...allMaintenanceRows.map((row) => row.unit),
+      ...allBookingRows.map((row) => row.unit),
     ])
   )
     .filter((unit) => unit.toLowerCase().includes(q))
     .map((unit) => ({ id: unit.toLowerCase(), unit }))
 
-  const requests = maintenanceRows
+  const requests = allMaintenanceRows
     .filter((row) => row.title.toLowerCase().includes(q) || row.request_id.toLowerCase().includes(q))
     .map((row) => ({ id: row.request_id, title: row.title, status: row.status }))
 
