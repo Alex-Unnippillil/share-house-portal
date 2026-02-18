@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { isLikelyTransientError, providerOutageMessage, retryWithBackoff } from '@/lib/resilience'
+import { RetryExhaustedError, isLikelyTransientError, providerOutageMessage, retryWithBackoff } from '@/lib/resilience'
 
 describe('resilience utilities', () => {
   it('retries transient failures and succeeds', async () => {
@@ -38,6 +38,22 @@ describe('resilience utilities', () => {
     ).rejects.toThrow('validation failed')
 
     expect(operation).toHaveBeenCalledTimes(1)
+  })
+
+
+  it('throws RetryExhaustedError when retries are exhausted', async () => {
+    const operation = vi.fn(async () => {
+      throw new Error('503 service unavailable')
+    })
+
+    await expect(
+      retryWithBackoff(operation, {
+        retries: 1,
+        initialDelayMs: 1,
+      })
+    ).rejects.toBeInstanceOf(RetryExhaustedError)
+
+    expect(operation).toHaveBeenCalledTimes(2)
   })
 
   it('provides provider-safe outage messages', () => {

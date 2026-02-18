@@ -12,6 +12,16 @@ export interface RetryResult<T> {
   attempts: number
 }
 
+export class RetryExhaustedError extends Error {
+  attempts: number
+
+  constructor(message: string, attempts: number, cause?: unknown) {
+    super(message, cause !== undefined ? { cause } : undefined)
+    this.name = "RetryExhaustedError"
+    this.attempts = attempts
+  }
+}
+
 export async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -41,6 +51,8 @@ export function isLikelyTransientError(error: unknown): boolean {
     message.includes("temporarily unavailable") ||
     message.includes("rate limit") ||
     message.includes("econnreset") ||
+    message.includes("econnrefused") ||
+    message.includes("enotfound") ||
     message.includes("429") ||
     message.includes("502") ||
     message.includes("503") ||
@@ -61,8 +73,13 @@ export async function retryWithBackoff<T>(
       const value = await operation()
       return { value, attempts: attempt }
     } catch (error) {
-      if (attempt > options.retries) {
-        throw error
+      const isLastAttempt = attempt > options.retries
+      if (isLastAttempt) {
+        throw new RetryExhaustedError(
+          error instanceof Error ? error.message : "Retry attempts exhausted",
+          attempt,
+          error
+        )
       }
 
       const retryable = options.shouldRetry
@@ -77,7 +94,7 @@ export async function retryWithBackoff<T>(
     }
   }
 
-  throw new Error("retryWithBackoff exhausted unexpectedly")
+  throw new RetryExhaustedError("retryWithBackoff exhausted unexpectedly", options.retries + 1)
 }
 
 export function providerOutageMessage(provider: "stripe" | "calcom" | "documenso") {

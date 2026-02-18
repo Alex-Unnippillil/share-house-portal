@@ -6,7 +6,7 @@ import { jsonError } from "@/lib/errors"
 import { sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
 import { createStructuredLogger } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
-import { retryWithBackoff, isLikelyTransientError } from "@/lib/resilience"
+import { RetryExhaustedError, retryWithBackoff, isLikelyTransientError } from "@/lib/resilience"
 import { getStripe } from "@/lib/stripe"
 import type { Database, Json, TablesInsert } from "@/lib/supabase"
 
@@ -529,6 +529,7 @@ export async function POST(req: Request) {
       "customer.subscription.deleted",
     ].includes(event.type)) {
       logger.info("stripe_webhook_unhandled_event", { eventName: event.type })
+      await markEventProcessed(supabase, event.id, "processed", { maxRetries })
     } else {
       const result = await retryWithBackoff(
         async () => {
@@ -557,12 +558,14 @@ export async function POST(req: Request) {
     return new Response("ok", { status: 200 })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unexpected webhook processing error"
+    const exhausted = err instanceof RetryExhaustedError
 
     logger.error("stripe_webhook_processing_failed", {
       reason: message,
       provider: "stripe",
       eventName: event.type,
       stripeEventId: event.id,
+      exhausted,
     })
 
     incrementOperationalMetric("webhook_failures_total", {
@@ -572,14 +575,27 @@ export async function POST(req: Request) {
       reason: message,
     })
 
-    await markEventProcessed(supabase, event.id, "dead_lettered", {
+    if (exhausted) {
+      await markEventProcessed(supabase, event.id, "dead_lettered", {
+        errorMessage: message,
+        retryCount: Math.max(err.attempts - 1, 0),
+        maxRetries: 3,
+      })
+
+      return jsonError("UPSTREAM_SERVICE_ERROR", {
+        message: "Stripe webhook processing exhausted retries and was moved to dead-letter.",
+        details: { eventId: event.id, eventType: event.type },
+      })
+    }
+
+    await markEventProcessed(supabase, event.id, "failed", {
       errorMessage: message,
-      retryCount: 3,
+      retryCount: 0,
       maxRetries: 3,
     })
 
-    return jsonError("UPSTREAM_SERVICE_ERROR", {
-      message: "Stripe webhook processing exhausted retries and was moved to dead-letter.",
+    return jsonError("INTERNAL_SERVER_ERROR", {
+      message,
       details: { eventId: event.id, eventType: event.type },
     })
   }
