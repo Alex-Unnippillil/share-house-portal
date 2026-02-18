@@ -16,7 +16,7 @@ export async function GET() {
   const role = await fetchMemberRole(supabase as any, user.id)
   if (role !== 'property_manager' && role !== 'admin') return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
-  const csv = toCsv(await getMaintenanceRows())
+  const csv = toCsv((await getMaintenanceRows({ page: 1, pageSize: 1000 })).rows)
   await writeAuditRecord({ action: 'operations.export.maintenance', actorId: user.id, actorRole: role, targetType: 'maintenance_export' })
 
   return new NextResponse(csv, {

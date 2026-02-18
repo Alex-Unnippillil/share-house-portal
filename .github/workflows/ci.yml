@@ -35,8 +35,15 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Metadata accessibility and validity checks
+        run: pnpm test:metadata
+
       - name: Unit and integration tests
         run: pnpm test
 
       - name: Production build
         run: pnpm build
+
+      - name: Performance budget contract
+        run: pnpm perf:ci
+

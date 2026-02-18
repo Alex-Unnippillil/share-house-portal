@@ -1,16 +1,24 @@
 import { createStructuredLogger } from "@/lib/observability/logger"
 
 export type OperationalMetricName =
+  | "payment_attempts_total"
+  | "payment_success_total"
   | "payment_failures_total"
   | "booking_conflicts_total"
   | "webhook_failures_total"
+  | "maintenance_sla_met_total"
+  | "maintenance_sla_breaches_total"
+  | "message_moderation_actions_total"
+  | "auth_failures_total"
 
 export interface MetricTags {
   source: string
   provider?: string
   eventType?: string
+  correlationId?: string
   tenantId?: string
   unitId?: string
+  severity?: "critical" | "high" | "medium" | "low"
   [key: string]: string | number | boolean | undefined
 }
 

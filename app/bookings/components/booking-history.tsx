@@ -1,51 +1,89 @@
-import { canCancelBooking } from "@/lib/bookings/policy"
-import { createClient } from "@/utils/supabase/server"
+'use client'
 
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
+import { canCancelBooking } from '@/lib/bookings/policy'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+type BookingHistoryRow = {
+  id: string
+  property_id: string
+  amenity_name: string
+  status: string
+  start_time: string
+  end_time: string
+}
 
 function formatRange(startTime: string, endTime: string) {
   const start = new Date(startTime)
   const end = new Date(endTime)
 
   return `${start.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  })} • ${start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} - ${end.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
+    month: 'short',
+    day: 'numeric',
+  })} • ${start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - ${end.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
   })}`
 }
 
-function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  if (status === "confirmed") return "default"
-  if (status === "pending") return "secondary"
-  if (status === "cancelled") return "destructive"
-  return "outline"
+function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (status === 'confirmed') return 'default'
+  if (status === 'pending') return 'secondary'
+  if (status === 'cancelled') return 'destructive'
+  return 'outline'
 }
 
-export async function BookingHistory() {
-  const supabase = createClient()
+export function BookingHistory() {
+  const [rows, setRows] = useState<BookingHistoryRow[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
 
-  const { data: bookings } = await supabase
-    .from("bookings")
-    .select("id, property_id, amenity_name, status, start_time, end_time")
-    .order("start_time", { ascending: false })
-    .limit(24)
+  const loadRows = useCallback(async (cursor?: string) => {
+    setIsLoading(true)
 
-  const tenantRows = (bookings ?? []).slice(0, 10)
-  const managerRows = bookings ?? []
+    try {
+      const response = await fetch(`/api/bookings/history?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`, {
+        cache: 'no-store',
+      })
+      const payload = await response.json()
 
-  const renderRows = (rows: typeof tenantRows, role: "tenant" | "manager") => {
-    if (rows.length === 0) {
+      if (!response.ok) {
+        throw new Error(payload.error ?? 'Unable to fetch booking history')
+      }
+
+      setRows((previous) => (cursor ? [...previous, ...payload.rows] : payload.rows))
+      setNextCursor(payload.nextCursor)
+      setHasLoaded(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadRows()
+  }, [loadRows])
+
+  const tenantRows = useMemo(() => rows.slice(0, 12), [rows])
+
+  const renderRows = (list: BookingHistoryRow[], role: 'tenant' | 'manager') => {
+    if (!hasLoaded && isLoading) {
+      return <p className="text-sm text-muted-foreground">Loading mirrored bookings…</p>
+    }
+
+    if (list.length === 0) {
       return <p className="text-sm text-muted-foreground">No mirrored bookings yet.</p>
     }
 
     return (
       <div className="space-y-3">
-        {rows.map((booking) => {
-          const cancellable = canCancelBooking(booking.start_time, role === "manager" ? 0 : 2)
+        {list.map((booking) => {
+          const cancellable = canCancelBooking(booking.start_time, role === 'manager' ? 0 : 2)
           return (
             <Card key={`${role}-${booking.id}`}>
               <CardHeader className="pb-2">
@@ -59,13 +97,19 @@ export async function BookingHistory() {
                 <p>Property: {booking.property_id}</p>
                 <p>
                   {cancellable
-                    ? "Cancellation allowed within current policy window."
-                    : "Cancellation locked because the start time is within the tenant policy window."}
+                    ? 'Cancellation allowed within current policy window.'
+                    : 'Cancellation locked because the start time is within the tenant policy window.'}
                 </p>
               </CardContent>
             </Card>
           )
         })}
+
+        {nextCursor ? (
+          <Button variant="outline" disabled={isLoading} onClick={() => void loadRows(nextCursor)}>
+            {isLoading ? 'Loading…' : 'Load more'}
+          </Button>
+        ) : null}
       </div>
     )
   }
@@ -77,8 +121,8 @@ export async function BookingHistory() {
         <TabsTrigger value="manager">Manager calendar</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="tenant">{renderRows(tenantRows, "tenant")}</TabsContent>
-      <TabsContent value="manager">{renderRows(managerRows, "manager")}</TabsContent>
+      <TabsContent value="tenant">{renderRows(tenantRows, 'tenant')}</TabsContent>
+      <TabsContent value="manager">{renderRows(rows, 'manager')}</TabsContent>
     </Tabs>
   )
 }

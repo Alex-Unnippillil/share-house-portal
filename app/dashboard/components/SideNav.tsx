@@ -10,7 +10,13 @@ export default function SideNav() {
 	);
 }
 
-export const SideBar = ({ className }: { className?: string }) => {
+export const SideBar = ({
+	className,
+	onNavigate,
+}: {
+	className?: string;
+	onNavigate?: () => void;
+}) => {
 	return (
 		<div className={className}>
 			<div
@@ -27,7 +33,7 @@ export const SideBar = ({ className }: { className?: string }) => {
 
 						<ThemeToggle />
 					</div>
-					<NavLinks />
+					<NavLinks onNavigate={onNavigate} />
 				</div>
 				<div className="">
 					<SignOut />

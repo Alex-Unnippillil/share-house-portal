@@ -5,11 +5,22 @@ export type LogSurface = "route_handler" | "server_action" | "webhook_processor"
 export interface LogContext {
   component?: string
   requestId?: string
+  correlationId?: string
+  lifecyclePhase?: "request.received" | "request.completed" | "webhook.received" | "webhook.processed" | "webhook.failed"
   actorId?: string
   tenantId?: string
   unitId?: string
   eventName?: string
   [key: string]: unknown
+}
+
+export function getCorrelationId(headers: Headers, fallbackRequestId?: string) {
+  return (
+    headers.get("x-correlation-id") ??
+    headers.get("x-request-id") ??
+    fallbackRequestId ??
+    crypto.randomUUID()
+  )
 }
 
 function getTimestamp() {
