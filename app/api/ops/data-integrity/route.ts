@@ -49,9 +49,9 @@ export async function GET(req: Request) {
     .from("visitor_logs")
     .select("*")
 
-  const invalidVisitorWindows = ((invalidVisitorQuery.data ?? []) as Array<Record<string, string | null>>).filter((entry) => {
-    const arrivalDate = entry.arrival_date
-    const departureDate = entry.departure_date
+  const invalidVisitorWindows = (invalidVisitorQuery.data ?? []).filter((entry) => {
+    const arrivalDate = entry.check_in_date
+    const departureDate = entry.check_out_date
     if (!arrivalDate || !departureDate) return false
     return new Date(arrivalDate).getTime() > new Date(departureDate).getTime()
   }).length

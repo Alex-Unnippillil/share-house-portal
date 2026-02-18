@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
 
     const normalizedMode = normalizeMode(mode)
     const baseUrl = getAppBaseUrl()
-    const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1
+    const safeQuantity =
+      Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1
 
     const safeMetadata = {
       ...(metadata && typeof metadata === "object" ? metadata : {}),
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       payment_mode: normalizedMode,
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig = {
       mode: normalizedMode,
       line_items: [
         {
@@ -59,7 +60,10 @@ export async function POST(req: NextRequest) {
           quantity: safeQuantity,
         },
       ],
-      customer: typeof customerId === "string" && customerId.length ? customerId : undefined,
+      customer:
+        typeof customerId === "string" && customerId.length
+          ? customerId
+          : undefined,
       success_url: `${baseUrl}/payments?status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/payments?status=cancelled`,
       metadata: safeMetadata,
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
             }
           : undefined,
       allow_promotion_codes: true,
-    })
+    }
 
     const session = await stripe.checkout.sessions.create(sessionConfig)
 
@@ -87,7 +91,6 @@ export async function POST(req: NextRequest) {
       stripeSessionId: session.id,
     })
 
-    return Response.json({ id: session.id, url: session.url })
     return Response.json({ id: session.id, url: session.url, mode: normalizedMode })
   } catch (error) {
     logger.error("stripe_checkout_session_failed", {
@@ -101,4 +104,3 @@ export async function POST(req: NextRequest) {
     return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
   }
 }
-

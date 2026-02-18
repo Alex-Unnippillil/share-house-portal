@@ -2,8 +2,6 @@
 
 import { useMemo, useState, useTransition } from "react"
 import type { FormEvent } from "react"
-import { Loader2 } from "lucide-react"
-import { track } from "@vercel/analytics"
 import { ExternalLink, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -15,18 +13,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-
-async function postOperationalMetric(metricName: string, tags: Record<string, unknown>) {
-  try {
-    await fetch("/api/ops/metrics", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ metricName, tags }),
-    })
-  } catch (error) {
-    console.error("Failed to post operational metric", error)
-  }
-}
 
 function formatDateTimeLocal(date: Date) {
   const pad = (value: number) => value.toString().padStart(2, "0")
@@ -47,8 +33,12 @@ function toIsoString(value: string | undefined) {
 }
 
 export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem }) {
-  const [startValue, setStartValue] = useState(() => formatDateTimeLocal(new Date(Date.now() + 60 * 60 * 1000)))
-  const [endValue, setEndValue] = useState(() => formatDateTimeLocal(new Date(Date.now() + 2 * 60 * 60 * 1000)))
+  const [startValue, setStartValue] = useState(() =>
+    formatDateTimeLocal(new Date(Date.now() + 60 * 60 * 1000))
+  )
+  const [endValue, setEndValue] = useState(() =>
+    formatDateTimeLocal(new Date(Date.now() + 2 * 60 * 60 * 1000))
+  )
   const [allowRecurring, setAllowRecurring] = useState(false)
   const [frequency, setFrequency] = useState<"daily" | "weekly">("weekly")
   const [occurrences, setOccurrences] = useState(2)
@@ -80,22 +70,6 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
     }
 
     startTransition(async () => {
-      const startedAt = performance.now()
-      try {
-        const { data, error } = await supabase.rpc("check_amenity_conflicts", {
-          p_amenity_id: amenity.id,
-          p_start_time: startIso,
-          p_end_time: endIso,
-        })
-
-        const duration = performance.now() - startedAt
-        setLastDuration(duration)
-        setLastCheckedAt(new Date())
-
-        const parsedConflicts = normaliseConflicts((data ?? {}) as RpcPayload)
-        const withinBudget = duration <= 20
-
-        track("booking_conflict_check", {
       setErrors([])
       setWarnings([])
 
@@ -124,28 +98,6 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
         conflicts?: unknown[]
       }
 
-        if (parsedConflicts.length > 0) {
-          track("booking_conflict_detected", {
-            amenityId: amenity.id,
-            conflictCount: parsedConflicts.length,
-          })
-          void postOperationalMetric("booking_conflicts_total", {
-            amenityId: amenity.id,
-            conflictCount: parsedConflicts.length,
-          })
-        }
-
-        if (error) {
-          console.error("Failed to run amenity conflict check", error)
-          track("booking_conflict_check_failed", { amenityId: amenity.id })
-          void postOperationalMetric("webhook_failures_total", {
-            source: "booking_conflict_check",
-            amenityId: amenity.id,
-          })
-          toast.error("Unable to verify conflicts. Please try again.")
-          setStatus("error")
-          return
-        }
       if (!response.ok || !payload.ok) {
         toast.error("Unable to validate booking right now")
         return
@@ -155,18 +107,6 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
       setErrors(payload.errors ?? [])
       setConflictCount(payload.conflicts?.length ?? 0)
 
-        if (parsedConflicts.length === 0) {
-          toast.success(`Slot for ${amenity.name} looks clear!`)
-        }
-      } catch (rpcError) {
-        console.error("Unexpected error during conflict check", rpcError)
-        track("booking_conflict_check_failed", { amenityId: amenity.id })
-        void postOperationalMetric("webhook_failures_total", {
-          source: "booking_conflict_check",
-          amenityId: amenity.id,
-        })
-        toast.error("Something went wrong while checking availability")
-        setStatus("error")
       if (!payload.allowed) {
         toast.error("Booking violates policy or conflicts with another reservation")
         return
@@ -225,7 +165,9 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
                   id={`${amenity.id}-frequency`}
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={frequency}
-                  onChange={(event) => setFrequency(event.target.value as "daily" | "weekly")}
+                  onChange={(event) =>
+                    setFrequency(event.target.value as "daily" | "weekly")
+                  }
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -250,7 +192,9 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <Badge variant="outline">max {amenity.durationMinutes} min</Badge>
           <Badge variant="outline">advance {amenity.maxAdvanceDays} days</Badge>
-          <Badge variant="outline">cancel ≥ {amenity.cancellationWindowHours}h before start</Badge>
+          <Badge variant="outline">
+            cancel ≥ {amenity.cancellationWindowHours}h before start
+          </Badge>
         </div>
 
         <div className="flex items-center justify-between">
