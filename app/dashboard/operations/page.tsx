@@ -23,7 +23,7 @@ export default async function OperationsDashboardPage() {
   ])
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-section">
       <header className="space-y-1">
         <h1 className="text-3xl font-semibold tracking-tight">Operations Command Center</h1>
         <p className="text-muted-foreground">Unified KPIs and drill-down workflows for finance, maintenance, bookings, and moderation.</p>

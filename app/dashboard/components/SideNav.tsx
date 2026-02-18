@@ -15,7 +15,7 @@ export const SideBar = ({ className }: { className?: string }) => {
 		<div className={className}>
 			<div
 				className={cn(
-					"flex size-full flex-col space-y-5 lg:w-96 lg:border-r lg:p-10 "
+					"flex size-full flex-col space-y-5 lg:w-72 lg:border-r lg:p-content-gutter xl:w-80"
 				)}
 			>
 				<div className="flex-1 space-y-5">

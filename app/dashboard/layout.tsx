@@ -16,20 +16,20 @@ export default async function Layout({ children }: { children: ReactNode }) {
 		return redirect("/auth");
 	}
 	return (
-		<div className="flex w-full ">
-			<div className="flex h-screen flex-col">
+		<div className="flex min-h-screen w-full bg-background">
+			<div className="flex min-h-screen flex-col bg-muted/20">
 				<SideNav />
 				<MobileSideNav />
 			</div>
 
-                        <div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
-                                <ToggleSidebar />
-                                <ErrorBoundary>
-                                        <Suspense fallback={<RouteSkeleton />}>
-                                                {children}
-                                        </Suspense>
-                                </ErrorBoundary>
-                        </div>
-                </div>
-        );
+			<main className="flex min-w-0 flex-1 flex-col gap-section bg-muted/30 p-content-gutter py-6 lg:py-8">
+				<ToggleSidebar />
+				<ErrorBoundary>
+					<Suspense fallback={<RouteSkeleton />}>
+						{children}
+					</Suspense>
+				</ErrorBoundary>
+			</main>
+		</div>
+	);
 }
