@@ -17,6 +17,26 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
 export type Database = {
   public: {
     Tables: {
+      bookings: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        property_id: string
+        amenity_id: string
+        amenity_name: string
+        tenant_id: string | null
+        status: 'pending' | 'confirmed' | 'cancelled'
+        start_time: string
+        end_time: string
+        source: 'calcom' | 'manual'
+        source_booking_id: string | null
+        source_event_type_id: string | null
+        source_payload: Json | null
+        recurrence_rule: Json | null
+        recurrence_id: string | null
+        cancelled_at: string | null
+        cancellation_reason: string | null
+      }>
       amenity_bookings: SupabaseTable<{
         id: string
         amenity_id: string

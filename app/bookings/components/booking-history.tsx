@@ -1,27 +1,84 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { canCancelBooking } from "@/lib/bookings/policy"
+import { createClient } from "@/utils/supabase/server"
 
-export function BookingHistory() {
-  // Placeholder history list
-  const items = [
-    { id: '1', title: 'Kitchen', when: 'Yesterday 6–8pm' },
-    { id: '2', title: 'TV Room', when: 'Last Sat 7–10pm' },
-  ];
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {items.map((x) => (
-        <Card key={x.id}>
-          <CardHeader>
-            <CardTitle className="text-base">{x.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">{x.when}</div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+function formatRange(startTime: string, endTime: string) {
+  const start = new Date(startTime)
+  const end = new Date(endTime)
+
+  return `${start.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  })} • ${start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} - ${end.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  })}`
 }
 
+function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  if (status === "confirmed") return "default"
+  if (status === "pending") return "secondary"
+  if (status === "cancelled") return "destructive"
+  return "outline"
+}
 
+export async function BookingHistory() {
+  const supabase = createClient()
 
+  const { data: bookings } = await supabase
+    .from("bookings")
+    .select("id, property_id, amenity_name, status, start_time, end_time")
+    .order("start_time", { ascending: false })
+    .limit(24)
+
+  const tenantRows = (bookings ?? []).slice(0, 10)
+  const managerRows = bookings ?? []
+
+  const renderRows = (rows: typeof tenantRows, role: "tenant" | "manager") => {
+    if (rows.length === 0) {
+      return <p className="text-sm text-muted-foreground">No mirrored bookings yet.</p>
+    }
+
+    return (
+      <div className="space-y-3">
+        {rows.map((booking) => {
+          const cancellable = canCancelBooking(booking.start_time, role === "manager" ? 0 : 2)
+          return (
+            <Card key={`${role}-${booking.id}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <span>{booking.amenity_name}</span>
+                  <Badge variant={statusVariant(booking.status)}>{booking.status}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm text-muted-foreground">
+                <p>{formatRange(booking.start_time, booking.end_time)}</p>
+                <p>Property: {booking.property_id}</p>
+                <p>
+                  {cancellable
+                    ? "Cancellation allowed within current policy window."
+                    : "Cancellation locked because the start time is within the tenant policy window."}
+                </p>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+    )
+  }
+
+  return (
+    <Tabs defaultValue="tenant" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="tenant">Tenant calendar</TabsTrigger>
+        <TabsTrigger value="manager">Manager calendar</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="tenant">{renderRows(tenantRows, "tenant")}</TabsContent>
+      <TabsContent value="manager">{renderRows(managerRows, "manager")}</TabsContent>
+    </Tabs>
+  )
+}
