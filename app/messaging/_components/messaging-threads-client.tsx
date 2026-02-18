@@ -36,6 +36,7 @@ type MessagingThreadsClientProps = {
 
 export function MessagingThreadsClient({ initialData }: MessagingThreadsClientProps) {
   const [data, setData] = useState(initialData)
+  const [selectedThreadId, setSelectedThreadId] = useState(initialData.activeThread?.id ?? initialData.threadList[0]?.id ?? null)
 
   const supabase = useMemo(
     () =>
@@ -233,10 +234,20 @@ export function MessagingThreadsClient({ initialData }: MessagingThreadsClientPr
     }
   }, [data.currentUser?.unitId, handleMessageChange, handleThreadChange, supabase])
 
+
   const { currentUser, threadFilters, threadList, activeThread, threadPosts, attachmentSummary, pollSnapshots } = data
+
+  const realtimeAnnouncement = threadPosts[0]
+    ? `Newest message in ${activeThread?.title ?? "thread"} from ${threadPosts[0].author.name}`
+    : activeThread
+      ? `Viewing ${activeThread.title}`
+      : "No thread selected"
 
   return (
     <>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {realtimeAnnouncement}
+      </p>
       <div className="grid gap-6 lg:grid-cols-[320px,1fr] xl:grid-cols-[320px,1fr]">
         <div className="space-y-6">
           <Card>
@@ -259,7 +270,14 @@ export function MessagingThreadsClient({ initialData }: MessagingThreadsClientPr
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {threadList.length === 0 ? <p className="text-sm text-muted-foreground">No threads yet. Start the first conversation.</p> : threadList.map((thread) => <ThreadListCard key={thread.id} thread={thread} />)}
+              {threadList.length === 0 ? <p className="text-sm text-muted-foreground">No threads yet. Start the first conversation.</p> : threadList.map((thread) => (
+                <ThreadListCard
+                  key={thread.id}
+                  thread={thread}
+                  isActive={thread.id === selectedThreadId}
+                  onSelect={() => setSelectedThreadId(thread.id)}
+                />
+              ))}
             </CardContent>
           </Card>
 
@@ -404,11 +422,18 @@ export function MessagingThreadsClient({ initialData }: MessagingThreadsClientPr
 
 type ThreadListCardProps = {
   thread: ThreadListItem
+  isActive: boolean
+  onSelect: () => void
 }
 
-function ThreadListCard({ thread }: ThreadListCardProps) {
+function ThreadListCard({ thread, isActive, onSelect }: ThreadListCardProps) {
   return (
-    <div className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4 transition hover:border-primary/50 hover:bg-background">
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={isActive}
+      className={cn("w-full space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4 text-left transition hover:border-primary/50 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", isActive && "border-primary bg-background")}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -422,7 +447,7 @@ function ThreadListCard({ thread }: ThreadListCardProps) {
         </div>
         <span className="text-xs text-muted-foreground">{thread.lastMessageAt}</span>
       </div>
-    </div>
+    </button>
   )
 }
 

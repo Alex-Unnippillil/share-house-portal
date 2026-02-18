@@ -41,6 +41,7 @@ export function UploadDocumentDialog() {
     expires_at: '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [statusMessage, setStatusMessage] = useState('');
   const router = useRouter();
   const permissions = useDocumentPermissions();
 
@@ -64,16 +65,19 @@ export function UploadDocumentDialog() {
 
       if (!allowedTypes.includes(selectedFile.type)) {
         toast.error('Please select a valid file type (PDF, Word, or image)');
+        setStatusMessage('Invalid file type selected');
         return;
       }
 
       // Validate file size (10MB max)
       if (selectedFile.size > 10 * 1024 * 1024) {
         toast.error('File size must be less than 10MB');
+        setStatusMessage('File size exceeds 10MB limit');
         return;
       }
 
       setFile(selectedFile);
+      setStatusMessage(`${selectedFile.name} selected for upload`);
     }
   };
 
@@ -91,6 +95,7 @@ export function UploadDocumentDialog() {
     }
 
     setLoading(true);
+    setStatusMessage('Uploading document');
     try {
       const submitData = new FormData();
       submitData.append('file', file);
@@ -107,6 +112,7 @@ export function UploadDocumentDialog() {
 
       if (result.success) {
         toast.success('Document uploaded successfully');
+        setStatusMessage('Document uploaded successfully');
         setOpen(false);
         setFormData({
           title: '',
@@ -121,10 +127,12 @@ export function UploadDocumentDialog() {
         router.refresh();
       } else {
         toast.error(result.error || 'Failed to upload document');
+        setStatusMessage('Document upload failed');
       }
     } catch (error) {
       console.error('Error uploading document:', error);
       toast.error('An unexpected error occurred');
+      setStatusMessage('Unexpected error during upload');
     } finally {
       setLoading(false);
     }
@@ -147,6 +155,9 @@ export function UploadDocumentDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {statusMessage}
+          </p>
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="file">Document File</Label>
@@ -158,7 +169,7 @@ export function UploadDocumentDialog() {
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
                 className="hidden"
               />
-              <label htmlFor="file" className="cursor-pointer">
+              <label htmlFor="file" className="cursor-pointer" aria-describedby="document-file-types">
                 <FileText className="mx-auto mb-2 size-12 text-muted-foreground" />
                 <div className="text-sm text-muted-foreground">
                   {file ? (
@@ -167,7 +178,7 @@ export function UploadDocumentDialog() {
                     <>
                       Click to select a file or drag and drop
                       <br />
-                      <span className="text-xs">PDF, Word, or image files up to 10MB</span>
+                      <span id="document-file-types" className="text-xs">PDF, Word, or image files up to 10MB</span>
                     </>
                   )}
                 </div>
