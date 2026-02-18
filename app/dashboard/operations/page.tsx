@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { requirePrivilegedAccess } from '@/lib/authz'
 import { writeAuditRecord } from '@/lib/audit'
 import { getBookingRows, getFinanceRows, getMaintenanceRows, getModerationRows, getOperationsKpis } from '@/lib/operations/data'
+import { getDependencyHealth } from '@/lib/operations/dependency-health'
 
 export default async function OperationsDashboardPage() {
   const { user, role } = await requirePrivilegedAccess()
@@ -14,12 +15,13 @@ export default async function OperationsDashboardPage() {
     targetType: 'operations_dashboard',
   })
 
-  const [kpis, financeRows, maintenanceRows, bookingRows, moderationRows] = await Promise.all([
+  const [kpis, financeRows, maintenanceRows, bookingRows, moderationRows, dependencies] = await Promise.all([
     getOperationsKpis(),
-    getFinanceRows({ page: 1, pageSize: 100 }),
-    getMaintenanceRows({ page: 1, pageSize: 100 }),
-    getBookingRows({ page: 1, pageSize: 100 }),
-    getModerationRows({ page: 1, pageSize: 100 }),
+    getFinanceRows(),
+    getMaintenanceRows(),
+    getBookingRows(),
+    getModerationRows(),
+    getDependencyHealth(),
   ])
 
   return (
@@ -43,6 +45,35 @@ export default async function OperationsDashboardPage() {
             </Card>
           </Link>
         ))}
+      </section>
+
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Dependency readiness</CardTitle>
+            <CardDescription>Health snapshot for Supabase, Stripe, Cal.com, and Documenso dependencies.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
+            {dependencies.map((dependency) => (
+              <div key={dependency.name} className="rounded-md border p-3">
+                <p className="font-medium capitalize">{dependency.name}</p>
+                <p
+                  className={
+                    dependency.status === 'healthy'
+                      ? 'text-emerald-600'
+                      : dependency.status === 'degraded'
+                        ? 'text-amber-600'
+                        : 'text-red-600'
+                  }
+                >
+                  {dependency.status}
+                </p>
+                <p className="text-muted-foreground">{dependency.message}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
