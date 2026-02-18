@@ -281,7 +281,7 @@ async function handleInvoicePaymentSucceeded(
     .eq("stripe_subscription_id", subscription.id)
 
   if (tenantId) {
-    await notifyTenantPayment(supabase, tenantId, amount, subscriptionPayment.description ?? null)
+    await notifyTenantPayment(supabase, tenantId, amount, paymentData.description ?? null)
   }
 }
 
@@ -335,7 +335,7 @@ async function handleSubscriptionCreated(
     stripe_subscription_id: subscription.id,
     stripe_customer_id:
       typeof subscription.customer === "string" ? subscription.customer : null,
-    status: toSubscriptionStatus(subscription.status),
+    status: normalizeSubscriptionStatus(subscription.status),
     current_period_start: subscription.current_period_start
       ? new Date(subscription.current_period_start * 1000).toISOString()
       : null,
@@ -359,7 +359,7 @@ async function handleSubscriptionUpdated(
   await supabase
     .from("subscriptions")
     .update({
-      status: toSubscriptionStatus(subscription.status),
+      status: normalizeSubscriptionStatus(subscription.status),
       current_period_start: subscription.current_period_start
         ? new Date(subscription.current_period_start * 1000).toISOString()
         : null,
