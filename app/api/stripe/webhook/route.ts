@@ -70,7 +70,6 @@ async function markEventProcessed(
       error_message: errorMessage,
       processed_at: new Date().toISOString(),
     })
-    .eq("provider", "stripe")
     .eq("event_id", eventId)
 }
 
@@ -146,7 +145,7 @@ async function notifyTenantPayment(
 
     await sendInAppNotification({
       userId: tenantId,
-      title: "Payment update",
+      title: "Payment Successful",
       message: `Your payment of ${readableAmount} is now recorded in your receipts.`,
       type: "success",
       actionUrl: "/payments",
@@ -189,7 +188,10 @@ async function handleCheckoutSessionCompleted(
     amount,
     currency: (lineItem?.currency || fullSession.currency || "usd").toUpperCase(),
     description: lineItem?.description || "One-time rent payment",
-    status: fullSession.payment_status === "paid" ? "succeeded" : "pending",
+    status:
+      (fullSession.payment_status ?? session.payment_status) === "paid"
+        ? "succeeded"
+        : "pending",
     processed_at: new Date().toISOString(),
     receipt_url: null,
     tenant_id: tenantId,
@@ -197,7 +199,7 @@ async function handleCheckoutSessionCompleted(
     payment_method_type: "card",
     metadata: {
       session_id: fullSession.id,
-      payment_status: fullSession.payment_status,
+      payment_status: fullSession.payment_status ?? session.payment_status,
       line_item_price: lineItem?.price?.id,
     },
   }
