@@ -16,10 +16,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:a11y": "playwright test e2e/tenant-manager-journeys.spec.ts -g \"keyboard|screen-reader\"",
     "test:perf": "pnpm css:purge",
-    "perf:api": "node scripts/profile-api-latency.mjs",
-    "perf:budget": "node scripts/check-performance-budgets.mjs",
-    "perf:ci": "pnpm perf:budget",
-    "perf:routes": "node scripts/profile-critical-routes.mjs"
+    "test:metadata": "vitest run tests/metadata/metadata-validity.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
