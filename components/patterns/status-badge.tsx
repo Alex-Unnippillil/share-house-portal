@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 
-type StatusDomain = "payment" | "booking" | "maintenance"
+type StatusDomain = "payment" | "booking" | "maintenance" | "notification"
 
 type StatusStyles = {
   label: string
@@ -72,6 +72,28 @@ const statusTokens: Record<StatusDomain, Record<string, StatusStyles>> = {
       label: "Resolved",
       className:
         "bg-maintenance-resolved/15 text-maintenance-resolved border-maintenance-resolved/30",
+    },
+  },
+  notification: {
+    info: {
+      label: "Info",
+      className:
+        "bg-notification-info/15 text-notification-info border-notification-info/30",
+    },
+    success: {
+      label: "Success",
+      className:
+        "bg-notification-success/15 text-notification-success border-notification-success/30",
+    },
+    warning: {
+      label: "Warning",
+      className:
+        "bg-notification-warning/15 text-notification-warning border-notification-warning/30",
+    },
+    error: {
+      label: "Error",
+      className:
+        "bg-notification-error/15 text-notification-error border-notification-error/30",
     },
   },
 }

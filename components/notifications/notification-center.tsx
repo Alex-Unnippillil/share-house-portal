@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/patterns/status-badge";
 
 interface Notification {
   id: string;
@@ -149,19 +150,6 @@ export function NotificationCenter() {
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'border-green-200 bg-green-100 text-green-800';
-      case 'warning':
-        return 'border-yellow-200 bg-yellow-100 text-yellow-800';
-      case 'error':
-        return 'border-red-200 bg-red-100 text-red-800';
-      default:
-        return 'border-blue-200 bg-blue-100 text-blue-800';
-    }
-  };
-
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -250,12 +238,11 @@ export function NotificationCenter() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center gap-2">
-                              <Badge
-                                variant="outline"
-                                className={cn("text-xs", getTypeColor(notification.type))}
-                              >
-                                {notification.type}
-                              </Badge>
+                              <StatusBadge
+                                domain="notification"
+                                status={notification.type}
+                                className="text-xs"
+                              />
                               <span className="text-xs text-muted-foreground">
                                 {formatTime(notification.created_at)}
                               </span>

@@ -36,6 +36,8 @@ module.exports = {
         payment: designTokens.colors.payment,
         booking: designTokens.colors.booking,
         maintenance: designTokens.colors.maintenance,
+        notification: designTokens.colors.notification,
+        sidebar: designTokens.colors.sidebar,
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
