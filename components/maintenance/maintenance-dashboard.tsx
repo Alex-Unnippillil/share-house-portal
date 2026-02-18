@@ -319,8 +319,17 @@ export function MaintenanceDashboard() {
     [createNotification, loadData, pushTimelineEvent, supabase, toast]
   );
 
+  const dashboardAnnouncement = saving
+    ? "Saving maintenance triage updates"
+    : loading
+      ? "Loading maintenance requests"
+      : `${filteredManagerRequests.length} manager requests visible`;
+
   return (
     <Tabs defaultValue="tenant" className="space-y-6">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {dashboardAnnouncement}
+      </p>
       <TabsList>
         <TabsTrigger value="tenant">Tenant view</TabsTrigger>
         {isManager ? <TabsTrigger value="manager">Manager triage</TabsTrigger> : null}
@@ -392,10 +401,15 @@ export function MaintenanceDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
-              <Input placeholder="Search title or description" value={search} onChange={(event) => setSearch(event.target.value)} />
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-search">Search queue</Label>
+                <Input id="maintenance-search" placeholder="Search title or description" value={search} onChange={(event) => setSearch(event.target.value)} />
+              </div>
 
-              <Select value={propertyFilter} onValueChange={setPropertyFilter}>
-                <SelectTrigger>
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-property">Property</Label>
+                <Select value={propertyFilter} onValueChange={setPropertyFilter}>
+                <SelectTrigger id="maintenance-property">
                   <SelectValue placeholder="Property" />
                 </SelectTrigger>
                 <SelectContent>
@@ -407,9 +421,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-unit">Unit</Label>
               <Select value={unitFilter} onValueChange={setUnitFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-unit">
                   <SelectValue placeholder="Unit" />
                 </SelectTrigger>
                 <SelectContent>
@@ -421,9 +438,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-status">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-status">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -435,9 +455,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-assignee">Assignee</Label>
               <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-assignee">
                   <SelectValue placeholder="Assignee" />
                 </SelectTrigger>
                 <SelectContent>
@@ -449,9 +472,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-aging">Aging bucket</Label>
               <Select value={agingFilter} onValueChange={setAgingFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-aging">
                   <SelectValue placeholder="Aging bucket" />
                 </SelectTrigger>
                 <SelectContent>
@@ -463,6 +489,7 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
             </CardContent>
           </Card>
 
