@@ -15,18 +15,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 
-async function postOperationalMetric(metricName: string, tags: Record<string, unknown>) {
-  try {
-    await fetch("/api/ops/metrics", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ metricName, tags }),
-    })
-  } catch (error) {
-    console.error("Failed to post operational metric", error)
-  }
-}
-
 function formatDateTimeLocal(date: Date) {
   const pad = (value: number) => value.toString().padStart(2, "0")
   const year = date.getFullYear()
@@ -209,7 +197,9 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
                   id={`${amenity.id}-frequency`}
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={frequency}
-                  onChange={(event) => setFrequency(event.target.value as "daily" | "weekly")}
+                  onChange={(event) =>
+                    setFrequency(event.target.value as "daily" | "weekly")
+                  }
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -234,7 +224,9 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <Badge variant="outline">max {amenity.durationMinutes} min</Badge>
           <Badge variant="outline">advance {amenity.maxAdvanceDays} days</Badge>
-          <Badge variant="outline">cancel ≥ {amenity.cancellationWindowHours}h before start</Badge>
+          <Badge variant="outline">
+            cancel ≥ {amenity.cancellationWindowHours}h before start
+          </Badge>
         </div>
 
         <div className="flex items-center justify-between">

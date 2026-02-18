@@ -1,4 +1,4 @@
-import type { Database, TablesInsert } from "@/lib/supabase"
+import type { Database, Json, TablesInsert } from "@/lib/supabase"
 
 export const CALCOM_HANDLED_EVENTS = new Set([
   "BOOKING_CREATED",
