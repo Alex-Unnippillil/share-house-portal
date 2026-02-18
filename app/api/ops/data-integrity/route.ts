@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 
-import type { Database } from "@/lib/supabase"
+import type { Database, Tables } from "@/lib/supabase"
 import { createStructuredLogger } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
 
@@ -49,12 +49,14 @@ export async function GET(req: Request) {
     .from("visitor_logs")
     .select("*")
 
-  const invalidVisitorWindows = ((invalidVisitorQuery.data ?? []) as Array<Record<string, string | null>>).filter((entry) => {
-    const arrivalDate = entry.arrival_date
-    const departureDate = entry.departure_date
-    if (!arrivalDate || !departureDate) return false
-    return new Date(arrivalDate).getTime() > new Date(departureDate).getTime()
-  }).length
+  const invalidVisitorWindows = (invalidVisitorQuery.data ?? []).filter(
+    (entry: Tables<"visitor_logs">) => {
+      const arrivalDate = entry.check_in_date
+      const departureDate = entry.check_out_date
+      if (!arrivalDate || !departureDate) return false
+      return new Date(arrivalDate).getTime() > new Date(departureDate).getTime()
+    }
+  ).length
 
   const danglingPaymentQuery = await supabase
     .from("rent_payments")

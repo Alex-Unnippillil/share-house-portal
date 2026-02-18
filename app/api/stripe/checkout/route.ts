@@ -78,16 +78,13 @@ export async function POST(req: NextRequest) {
       allow_promotion_codes: true,
     })
 
-    const session = await stripe.checkout.sessions.create(sessionConfig)
-
     logger.info("stripe_checkout_session_created", {
       eventName: "checkout.session.created",
       priceId,
-      mode: sessionConfig.mode,
+      mode: normalizedMode,
       stripeSessionId: session.id,
     })
 
-    return Response.json({ id: session.id, url: session.url })
     return Response.json({ id: session.id, url: session.url, mode: normalizedMode })
   } catch (error) {
     logger.error("stripe_checkout_session_failed", {
@@ -101,4 +98,3 @@ export async function POST(req: NextRequest) {
     return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
   }
 }
-
