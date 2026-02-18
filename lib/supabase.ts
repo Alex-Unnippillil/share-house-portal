@@ -331,6 +331,17 @@ export type Database = {
         error_message: string | null
         metadata: Json | null
       }>
+      audit_logs: SupabaseTable<{
+        id: string
+        actor_id: string | null
+        event_type: string
+        property_id: string | null
+        unit_id: string | null
+        thread_id: string | null
+        message_id: string | null
+        metadata: Json | null
+        created_at: string | null
+      }>
       meetings: SupabaseTable<{
         id: string
         user_id: string
@@ -393,6 +404,15 @@ export type Database = {
         reactions: Json | null
         pinned: boolean | null
         owner_name: string | null
+        unit_id: string | null
+        property_id: string | null
+        thread_type: string | null
+        scheduled_for: string | null
+        announcement_visible_from: string | null
+        announcement_visible_until: string | null
+        locked: boolean | null
+        flagged_at: string | null
+        deleted_at: string | null
         created_at: string | null
         updated_at: string | null
       }>
