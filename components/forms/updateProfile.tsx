@@ -55,10 +55,10 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 // This can come from your database or API. See contact page for working example using Supabase postgres DB and server actions
 const defaultValues: Partial<ProfileFormValues> = {
-  bio: "MVP Boilerplate and RBAC ready admin dashboard built with NextJS, Supabase, Tanstack React Query & Table, Zod, Shadcn-UI, and more.",
+  bio: "Roommate in Unit C-210 coordinating rent, bookings, and guest notices.",
   urls: [
-    { value: "https://roomsily.app" },
-    { value: "http://twitter.com/r_mourey_jr" },
+    { value: "https://portal.example/emergency-contact" },
+    { value: "https://portal.example/vehicle-registration" },
   ],
 }
 
@@ -164,10 +164,10 @@ export function ProfileForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className={cn(index !== 0 && "sr-only")}>
-                    URLs
+                    Household details
                   </FormLabel>
                   <FormDescription className={cn(index !== 0 && "sr-only")}>
-                    Add links to your website, blog, or social media profiles.
+                    Add emergency contact, vehicle, or communication preference details for roommates and property managers.
                   </FormDescription>
                   <FormControl>
                     <Input {...field} />
@@ -184,7 +184,7 @@ export function ProfileForm() {
             className="mt-2"
             onClick={() => append({ value: "" })}
           >
-            Add URL
+            Add household detail
           </Button>
         </div>
         <Button type="submit">Update profile</Button>

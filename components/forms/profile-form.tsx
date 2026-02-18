@@ -55,10 +55,10 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 // This can come from your database or API.
 const defaultValues: Partial<ProfileFormValues> = {
-  bio: "I own a computer.",
+  bio: "Tenant in Unit B-402 coordinating chores and shared amenities.",
   urls: [
-    { value: "https://shadcn.com" },
-    { value: "http://twitter.com/shadcn" },
+    { value: "https://portal.example/emergency-contact" },
+    { value: "https://portal.example/communication-preferences" },
   ],
 }
 
@@ -163,11 +163,9 @@ export function ProfileForm() {
               name={`urls.${index}.value`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className={cn(index !== 0 && "sr-only")}>
-                    URLs
-                  </FormLabel>
+                  <FormLabel className={cn(index !== 0 && "sr-only")}>Household details</FormLabel>
                   <FormDescription className={cn(index !== 0 && "sr-only")}>
-                    Add links to your website, blog, or social media profiles.
+                    Add emergency contact, vehicle, or communication preference details for roommates and property managers.
                   </FormDescription>
                   <FormControl>
                     <Input {...field} />
@@ -184,7 +182,7 @@ export function ProfileForm() {
             className="mt-2"
             onClick={() => append({ value: "" })}
           >
-            Add URL
+            Add household detail
           </Button>
         </div>
         <Button type="submit">Update profile</Button>

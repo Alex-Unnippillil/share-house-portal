@@ -69,7 +69,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
             <Badge variant={completion.isComplete ? "default" : "secondary"}>{completion.completionPercent}%</Badge>
           </div>
           <CardDescription>
-            Complete each section below so roommates and property managers can safely coordinate bookings, payments, and emergency info.
+            Complete each section so tenants, roommates, and property managers can coordinate payments, visitor requests, maintenance access, and emergency response.
           </CardDescription>
           <Progress value={completion.completionPercent} aria-label="Onboarding completion progress" />
         </CardHeader>
@@ -77,8 +77,8 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Profile photo & personal documents</CardTitle>
-          <CardDescription>Uploads are stored in private Supabase buckets and are linked to your account only.</CardDescription>
+          <CardTitle className="text-lg">Profile photo & resident documents</CardTitle>
+          <CardDescription>Uploads stay in private storage and are used for lease verification, compliance records, and account recovery.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {initialData.profile.avatarSignedUrl ? (
@@ -104,7 +104,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
               runAction(() => uploadOnboardingAsset(formData))
             }}
           >
-            <Label htmlFor="document">Upload personal document</Label>
+            <Label htmlFor="document">Upload resident document</Label>
             <Input id="document" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
             <Button type="submit" size="sm" variant="outline" disabled={pending}>Upload document</Button>
           </form>
@@ -146,7 +146,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Step 2 · Rent share</CardTitle>
-          <CardDescription>Add your share as a percentage so payment reminders are accurate.</CardDescription>
+          <CardDescription>Add your share as a percentage so recurring Stripe rent reminders and receipts stay accurate.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Label htmlFor="rent-share">Rent share (%)</Label>
@@ -169,19 +169,16 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Step 3 · Emergency contacts</CardTitle>
-          <CardDescription>This information is used for visitor incidents and urgent property updates.</CardDescription>
+          <CardDescription>Required for urgent incidents, overnight visitor policy exceptions, and after-hours property escalation.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <Label htmlFor="emergency-name">Contact name</Label>
-          <Input id="emergency-name" value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
-          <Label htmlFor="emergency-phone">Phone number</Label>
-          <Input id="emergency-phone" value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number" />
-          <Label htmlFor="emergency-relationship">Relationship</Label>
+          <Input value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
+          <Input value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number (call/text)" />
           <Input
             id="emergency-relationship"
             value={emergencyRelationship}
             onChange={(event) => setEmergencyRelationship(event.target.value)}
-            placeholder="Relationship"
+            placeholder="Relationship to tenant/roommate"
           />
           <Button
             disabled={pending}
@@ -203,17 +200,13 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Step 4 · Vehicle details</CardTitle>
-          <CardDescription>Needed for parking bookings and overnight visitor validation.</CardDescription>
+          <CardDescription>Used for parking reservations and to validate guest vehicles under overnight visitor limits.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <Label htmlFor="vehicle-make">Vehicle make</Label>
-          <Input id="vehicle-make" value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
-          <Label htmlFor="vehicle-model">Vehicle model</Label>
-          <Input id="vehicle-model" value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
-          <Label htmlFor="vehicle-color">Vehicle color</Label>
-          <Input id="vehicle-color" value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
-          <Label htmlFor="vehicle-plate">License plate</Label>
-          <Input id="vehicle-plate" value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate" />
+          <Input value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
+          <Input value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
+          <Input value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
+          <Input value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate (required for parking)" />
           <Button
             disabled={pending}
             onClick={() =>

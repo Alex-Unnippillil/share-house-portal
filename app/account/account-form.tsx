@@ -97,11 +97,10 @@ export function AccountForm() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Your name" {...field} />
+                <Input placeholder="Tenant or roommate full name" {...field} />
               </FormControl>
               <FormDescription>
-                This is the name that will be displayed on your profile and in
-                emails.
+                This name appears in roommate messages, visitor logs, and property manager notifications.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -145,7 +144,7 @@ export function AccountForm() {
                 </PopoverContent>
               </Popover>
               <FormDescription>
-                Your date of birth is used to calculate your age.
+                We use this for profile verification and resident policy records when required.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -206,7 +205,7 @@ export function AccountForm() {
                 </PopoverContent>
               </Popover>
               <FormDescription>
-                This is the language that will be used in the dashboard.
+                Choose the language used across tenant, roommate, and property manager workflows.
               </FormDescription>
               <FormMessage />
             </FormItem>
