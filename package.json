@@ -63,7 +63,6 @@
     "googleapis": "^148.0.0",
     "lucide-react": "0.302.0",
     "next": "14.2.35",
-    "next-compose-plugins": "^2.2.1",
     "next-themes": "^0.2.1",
     "prettier": "^2.8.8",
     "react": "^18.3.1",

@@ -1,10 +1,8 @@
 import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
-
-import SmartLink from "@/components/navigation/SmartLink"
-
 import { redirect } from "next/navigation"
+import { readUserSession } from "@/utils/actions"
 import {
   BellRing,
   CalendarClock,
@@ -18,9 +16,10 @@ import {
   Wallet,
 } from "lucide-react"
 
-import { readUserSession } from "@/utils/actions"
 import { siteConfig } from "@/config/site"
+import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -28,8 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import SmartLink from "@/components/navigation/SmartLink"
 
 const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
   ssr: false,
@@ -179,22 +177,26 @@ const workflowSteps = [
   {
     step: "1",
     title: "Invite roommates & assign units",
-    description: "Sync your roster into Supabase and map rent shares in minutes.",
+    description:
+      "Sync your roster into Supabase and map rent shares in minutes.",
   },
   {
     step: "2",
     title: "Connect Stripe, Cal.com, Documenso",
-    description: "Authorize each integration once to unlock autopay, bookings, and eSignatures.",
+    description:
+      "Authorize each integration once to unlock autopay, bookings, and eSignatures.",
   },
   {
     step: "3",
     title: "Launch household rituals",
-    description: "Turn on autopay, publish amenity schedules, and open the roommate feed.",
+    description:
+      "Turn on autopay, publish amenity schedules, and open the roommate feed.",
   },
   {
     step: "4",
     title: "Monitor & iterate together",
-    description: "Use shared insights to adjust rent splits, policies, and maintenance priorities.",
+    description:
+      "Use shared insights to adjust rent splits, policies, and maintenance priorities.",
   },
 ]
 
@@ -214,19 +216,21 @@ export default async function IndexPage() {
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
             <div className="space-y-10 text-center lg:text-left">
               <div className="flex justify-center lg:justify-start">
-                <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 text-primary">
+                <Badge
+                  variant="outline"
+                  className="rounded-full border-primary/30 bg-primary/10 text-primary"
+                >
                   Tenant portal crafted for shared homes
                 </Badge>
               </div>
               <div className="space-y-6">
-                <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+                <h1 className="text-display-xl text-balance">
                   Modern operations for every roommate and property manager
                 </h1>
-                <p className="mx-auto max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
-
-                  Roomsily brings autopay, bookings, documents, and updates into an intuitive workspace that keeps households
-                  aligned without the group-chat chaos.
-
+                <p className="mx-auto max-w-2xl text-body-lg text-muted-foreground lg:mx-0">
+                  Roomsily brings autopay, bookings, documents, and updates into
+                  an intuitive workspace that keeps households aligned without
+                  the group-chat chaos.
                 </p>
               </div>
               <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
@@ -259,9 +263,13 @@ export default async function IndexPage() {
                       <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                         <item.icon className="size-5" aria-hidden="true" />
                       </span>
-                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {item.title}
+                      </p>
                     </div>
-                    <p className="mt-3 text-sm text-muted-foreground">{item.description}</p>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      {item.description}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -293,7 +301,9 @@ export default async function IndexPage() {
                   className="w-full object-contain"
                 />
                 <div className="absolute bottom-6 left-6 flex flex-col gap-3 rounded-2xl border border-white/20 bg-background/90 p-4 text-left shadow-lg shadow-primary/10">
-                  <p className="text-sm font-semibold text-foreground">Tonight&rsquo;s schedule</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Tonight&rsquo;s schedule
+                  </p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <CalendarClock className="size-4 text-primary" />
                     <span>Kitchen reserved · 6–8pm</span>
@@ -316,8 +326,12 @@ export default async function IndexPage() {
                   <metric.icon className="size-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="text-3xl font-semibold text-foreground">{metric.value}</p>
-                  <p className="text-sm text-muted-foreground">{metric.label}</p>
+                  <p className="text-3xl font-semibold text-foreground">
+                    {metric.value}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {metric.label}
+                  </p>
                 </div>
               </div>
             ))}
@@ -327,11 +341,12 @@ export default async function IndexPage() {
 
       <section className="container mx-auto px-4 py-20 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="text-display-lg text-balance">
             Shared-house workflows in one tenant portal
           </h2>
           <p className="mt-4 text-muted-foreground">
-            From rent to repairs, Roomsily keeps every roommate aligned with clear automations and actionable insights.
+            From rent to repairs, Roomsily keeps every roommate aligned with
+            clear automations and actionable insights.
           </p>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -344,11 +359,16 @@ export default async function IndexPage() {
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <feature.icon className="size-5" aria-hidden="true" />
                 </div>
-                <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
+                <CardTitle className="text-heading-sm">
+                  {feature.title}
+                </CardTitle>
                 <CardDescription>{feature.description}</CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">
-                <Link href={feature.href} className="text-sm font-medium text-primary hover:underline">
+                <Link
+                  href={feature.href}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
                   <span>{feature.ctaLabel}</span>
                 </Link>
               </CardContent>
@@ -360,9 +380,12 @@ export default async function IndexPage() {
       <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Designed for the people using it</h2>
+            <h2 className="text-display-lg text-balance">
+              Designed for the people using it
+            </h2>
             <p className="mt-4 text-muted-foreground">
-              Whether you’re paying rent or overseeing dozens of units, Roomsily gives every role the clarity they need.
+              Whether you’re paying rent or overseeing dozens of units, Roomsily
+              gives every role the clarity they need.
             </p>
           </div>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
@@ -373,17 +396,27 @@ export default async function IndexPage() {
               >
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
                 <CardHeader className="relative space-y-4">
-                  <Badge variant="secondary" className="w-fit rounded-full bg-primary/10 text-primary">
+                  <Badge
+                    variant="secondary"
+                    className="w-fit rounded-full bg-primary/10 text-primary"
+                  >
                     {persona.badge}
                   </Badge>
-                  <CardTitle className="text-2xl font-semibold">{persona.title}</CardTitle>
-                  <CardDescription className="text-base">{persona.description}</CardDescription>
+                  <CardTitle className="text-heading-md">
+                    {persona.title}
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    {persona.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="relative">
                   <ul className="space-y-3 text-sm text-muted-foreground">
                     {persona.points.map((point) => (
                       <li key={point} className="flex items-start gap-3">
-                        <span className="mt-1 size-2 rounded-full bg-primary" aria-hidden="true" />
+                        <span
+                          className="mt-1 size-2 rounded-full bg-primary"
+                          aria-hidden="true"
+                        />
                         <span>{point}</span>
                       </li>
                     ))}
@@ -399,24 +432,35 @@ export default async function IndexPage() {
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
             <div className="space-y-6">
-              <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+              <h2 className="text-display-lg text-balance">
                 Visualize your household operating system
               </h2>
               <p className="text-muted-foreground">
-                The Roomsily network links Stripe, Supabase, Cal.com, and Documenso so payments, bookings, documents, and updates move together without copy-paste work.
+                The Roomsily network links Stripe, Supabase, Cal.com, and
+                Documenso so payments, bookings, documents, and updates move
+                together without copy-paste work.
               </p>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="mt-1 size-2 rounded-full bg-primary" />
-                  <span>Orbit between features to see how roommate actions sync across integrations in real time.</span>
+                  <span>
+                    Orbit between features to see how roommate actions sync
+                    across integrations in real time.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-1 size-2 rounded-full bg-primary" />
-                  <span>Spot automation opportunities from autopay to amenity approvals without leaving the tenant view.</span>
+                  <span>
+                    Spot automation opportunities from autopay to amenity
+                    approvals without leaving the tenant view.
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-1 size-2 rounded-full bg-primary" />
-                  <span>Share the visualization during onboarding to align roommates and property managers instantly.</span>
+                  <span>
+                    Share the visualization during onboarding to align roommates
+                    and property managers instantly.
+                  </span>
                 </li>
               </ul>
               <div className="flex flex-wrap gap-3 pt-2">
@@ -431,7 +475,10 @@ export default async function IndexPage() {
                 </Link>
                 <Link
                   href={siteConfig.links.signup}
-                  className={cn(buttonVariants({ size: "sm" }), "bg-primary text-primary-foreground hover:bg-primary/90")}
+                  className={cn(
+                    buttonVariants({ size: "sm" }),
+                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                  )}
                 >
                   <span>Start onboarding</span>
                 </Link>
@@ -448,10 +495,17 @@ export default async function IndexPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             {integrationHighlights.map((highlight) => (
-              <Card key={highlight.title} className="h-full border-border/70 bg-background/95 shadow-sm">
+              <Card
+                key={highlight.title}
+                className="h-full border-border/70 bg-background/95 shadow-sm"
+              >
                 <CardHeader className="space-y-4">
-                  <CardTitle className="text-2xl font-semibold">{highlight.title}</CardTitle>
-                  <CardDescription className="text-base">{highlight.description}</CardDescription>
+                  <CardTitle className="text-heading-md">
+                    {highlight.title}
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    {highlight.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <ul className="space-y-3 text-sm text-muted-foreground">
@@ -481,11 +535,12 @@ export default async function IndexPage() {
 
       <section className="container mx-auto px-4 py-20 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="text-display-lg text-balance">
             How households move into Roomsily
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Guided onboarding and contextual tips remove the friction from getting every roommate connected.
+            Guided onboarding and contextual tips remove the friction from
+            getting every roommate connected.
           </p>
         </div>
         <ol className="relative mt-12 grid gap-6 md:grid-cols-4">
@@ -497,8 +552,10 @@ export default async function IndexPage() {
               <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                 {item.step}
               </span>
-              <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
-              <p className="text-sm text-muted-foreground">{item.description}</p>
+              <h3 className="text-heading-sm text-foreground">{item.title}</h3>
+              <p className="text-sm text-muted-foreground">
+                {item.description}
+              </p>
               {index < workflowSteps.length - 1 && (
                 <span
                   className="absolute right-[-18px] top-1/2 hidden h-px w-10 -translate-y-1/2 bg-border md:block"
@@ -515,14 +572,12 @@ export default async function IndexPage() {
           <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
             <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
               <div className="max-w-xl space-y-4">
-                <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                <h3 className="text-display-lg text-balance">
                   Ready to centre your shared household around clarity?
                 </h3>
-                <p className="text-base text-muted-foreground">
-
-                  Launch Roomsily with guided onboarding and give every roommate one place to handle payments, bookings, and
-                  documents.
-
+                <p className="text-body-md text-muted-foreground">
+                  Launch Roomsily with guided onboarding and give every roommate
+                  one place to handle payments, bookings, and documents.
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">

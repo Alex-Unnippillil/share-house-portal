@@ -1,24 +1,29 @@
-import SmartLink from "@/components/navigation/SmartLink"
 import { siteConfig } from "@/config/site"
 import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
+import SmartLink from "@/components/navigation/SmartLink"
 
 export function SiteFooter() {
   return (
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-        <SmartLink className="ml-0 inline-flex" href="/" intent="navigation">
-          <span className="flex items-center gap-2">
-            <Icons.logo className="size-6" />
-            <div className="flex flex-col leading-tight">
-              <span className="inline-block font-semibold">{siteConfig.name}</span>
-              <span className="text-xs font-medium text-muted-foreground">www.roomsily</span>
-            </div>
-          </span>
-        </SmartLink>
+          <SmartLink className="ml-0 inline-flex" href="/" intent="navigation">
+            <span className="flex items-center gap-2">
+              <Icons.logo className="size-6" />
+              <div className="flex flex-col leading-tight">
+                <span className="inline-block font-semibold">
+                  {siteConfig.name}
+                </span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  www.roomsily
+                </span>
+              </div>
+            </span>
+          </SmartLink>
           <p className="text-sm text-muted-foreground">
-            Manage rent, roommates, and shared amenities from a single, secure Roomsily HQ.
+            Manage rent, roommates, and shared amenities from a single, secure
+            Roomsily HQ.
           </p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-12 sm:grid-cols-3">
@@ -91,6 +96,24 @@ export function SiteFooter() {
                   intent="navigation"
                 >
                   Terms of Service
+                </SmartLink>
+              </li>
+              <li>
+                <SmartLink
+                  href="/data-retention"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
+                  Data Retention
+                </SmartLink>
+              </li>
+              <li>
+                <SmartLink
+                  href="/acceptable-use"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                  intent="navigation"
+                >
+                  Acceptable Use
                 </SmartLink>
               </li>
             </ul>

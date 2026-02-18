@@ -40,3 +40,7 @@ jobs:
 
       - name: Production build
         run: pnpm build
+
+      - name: Performance budget contract
+        run: pnpm perf:ci
+
