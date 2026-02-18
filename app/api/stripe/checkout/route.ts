@@ -95,12 +95,17 @@ export async function POST(req: NextRequest) {
       eventName: "checkout.session.created",
       priceId,
       mode: normalizedMode,
-      stripeSessionId: session.id,
+      stripeSessionId: checkoutSession.id,
       lifecyclePhase: "request.completed",
     })
 
     return Response.json(
-      { id: session.id, url: session.url, mode: normalizedMode, correlationId },
+      {
+        id: checkoutSession.id,
+        url: checkoutSession.url,
+        mode: normalizedMode,
+        correlationId,
+      },
       { headers: { "x-correlation-id": correlationId } }
     )
   } catch (error) {

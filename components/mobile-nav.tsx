@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 import SmartLink, { SmartLinkProps } from "@/components/navigation/SmartLink"
 import { Icons } from "@/components/icons"
@@ -29,12 +29,6 @@ function isActiveRoute(pathname: string, href: string) {
 
 export function MobileNav({ appName, isAuthenticated, items }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
-  const navRole = isAuthenticated ? "tenant" : "public"
-  const mainNavItems = getNavigationItems("public", {
-    role: navRole,
-    includeDisabled: true,
-  })
-
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -111,7 +105,6 @@ interface MobileLinkProps extends SmartLinkProps {
 }
 
 function MobileLink({ href, onOpenChange, className, children, ...props }: MobileLinkProps) {
-  const router = useRouter()
   const pathname = usePathname()
 
   return (

@@ -6,7 +6,7 @@ import { jsonError } from "@/lib/errors"
 import { sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
 import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
-import { RetryExhaustedError, retryWithBackoff, isLikelyTransientError } from "@/lib/resilience"
+import { isLikelyTransientError, RetryExhaustedError, retryWithBackoff } from "@/lib/resilience"
 import { getStripe } from "@/lib/stripe"
 import type { Database, Json, TablesInsert } from "@/lib/supabase"
 
@@ -88,17 +88,13 @@ async function upsertRentPayment(
   const isOneTime = Boolean(payment.stripe_payment_intent_id)
 
   if (isOneTime && payment.stripe_payment_intent_id) {
-    await supabase
-      .from("rent_payments")
-      .upsert(payment, { onConflict: "stripe_payment_intent_id" })
+    await supabase.from("rent_payments").upsert(payment, { onConflict: "stripe_payment_intent_id" })
     return
   }
 
   if (payment.stripe_subscription_id && payment.metadata) {
     const invoiceId =
-      typeof payment.metadata === "object" &&
-      payment.metadata &&
-      "invoice_id" in payment.metadata
+      typeof payment.metadata === "object" && payment.metadata && "invoice_id" in payment.metadata
         ? String((payment.metadata as Record<string, unknown>).invoice_id)
         : null
 
@@ -126,11 +122,7 @@ async function notifyTenantPayment(
   description: string | null
 ) {
   try {
-    const { data: tenantProfile } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", tenantId)
-      .single()
+    const { data: tenantProfile } = await supabase.from("profiles").select("full_name, email").eq("id", tenantId).single()
 
     if (!tenantProfile?.email) {
       return
@@ -184,25 +176,17 @@ async function handleCheckoutSessionCompleted(
 
   const tenantId = fullSession.metadata?.tenant_id
   const unitId = fullSession.metadata?.unit_id
-
-  const amount = parseAmountInMajorUnits(
-    lineItem?.amount_total ?? fullSession.amount_total
-  )
   const paymentStatus = fullSession.payment_status ?? session.payment_status
+  const amount = parseAmountInMajorUnits(lineItem?.amount_total ?? fullSession.amount_total)
 
   const paymentData: TablesInsert<"rent_payments"> = {
     user_id: tenantId || "00000000-0000-0000-0000-000000000000",
     stripe_payment_intent_id: paymentIntentId,
-    stripe_customer_id:
-      typeof fullSession.customer === "string" ? fullSession.customer : null,
+    stripe_customer_id: typeof fullSession.customer === "string" ? fullSession.customer : null,
     amount,
     currency: (lineItem?.currency || fullSession.currency || "usd").toUpperCase(),
     description: lineItem?.description || "One-time rent payment",
     status: paymentStatus === "paid" ? "succeeded" : "pending",
-    status:
-      (fullSession.payment_status ?? session.payment_status) === "paid"
-        ? "succeeded"
-        : "pending",
     processed_at: new Date().toISOString(),
     receipt_url: null,
     tenant_id: tenantId,
@@ -211,7 +195,6 @@ async function handleCheckoutSessionCompleted(
     metadata: {
       session_id: fullSession.id,
       payment_status: paymentStatus,
-      payment_status: fullSession.payment_status ?? session.payment_status,
       line_item_price: lineItem?.price?.id,
     },
   }
@@ -237,10 +220,7 @@ async function handleInvoicePaymentSucceeded(
   supabase: SupabaseClient<Database>,
   invoice: Stripe.Invoice
 ) {
-  const subscriptionId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription?.id
+  const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id
 
   if (!subscriptionId) {
     return
@@ -267,14 +247,10 @@ async function handleInvoicePaymentSucceeded(
     unit_id: unitId,
     payment_method_type: "card",
     billing_period_start: subscription.current_period_start
-      ? new Date(subscription.current_period_start * 1000)
-          .toISOString()
-          .split("T")[0]
+      ? new Date(subscription.current_period_start * 1000).toISOString().split("T")[0]
       : null,
     billing_period_end: subscription.current_period_end
-      ? new Date(subscription.current_period_end * 1000)
-          .toISOString()
-          .split("T")[0]
+      ? new Date(subscription.current_period_end * 1000).toISOString().split("T")[0]
       : null,
     metadata: {
       invoice_id: invoice.id,
@@ -303,10 +279,7 @@ async function handleInvoicePaymentFailed(
   supabase: SupabaseClient<Database>,
   invoice: Stripe.Invoice
 ) {
-  const subscriptionId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription?.id
+  const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id
 
   if (!subscriptionId) {
     return
@@ -344,11 +317,11 @@ async function handleSubscriptionCreated(
   subscription: Stripe.Subscription
 ) {
   const tenantId = subscription.metadata?.tenant_id
+
   await supabase.from("subscriptions").upsert({
     user_id: tenantId || "00000000-0000-0000-0000-000000000000",
     stripe_subscription_id: subscription.id,
-    stripe_customer_id:
-      typeof subscription.customer === "string" ? subscription.customer : null,
+    stripe_customer_id: typeof subscription.customer === "string" ? subscription.customer : null,
     status: normalizeSubscriptionStatus(subscription.status),
     current_period_start: subscription.current_period_start
       ? new Date(subscription.current_period_start * 1000).toISOString()
@@ -359,9 +332,7 @@ async function handleSubscriptionCreated(
     cancel_at_period_end: subscription.cancel_at_period_end,
     amount: parseAmountInMajorUnits(subscription.items.data[0]?.price?.unit_amount ?? 0),
     currency: (subscription.currency || "usd").toUpperCase(),
-    interval: (subscription.items.data[0]?.price.recurring?.interval || "month") as
-      | "month"
-      | "year",
+    interval: (subscription.items.data[0]?.price.recurring?.interval || "month") as "month" | "year",
     metadata: subscription.metadata,
   })
 }
@@ -402,12 +373,7 @@ async function handleSubscriptionDeleted(
     .eq("stripe_subscription_id", subscription.id)
 }
 
-
-function recordStripePaymentMetric(
-  outcome: "success" | "failure",
-  eventType: string,
-  correlationId: string
-) {
+function recordStripePaymentMetric(outcome: "success" | "failure", eventType: string, correlationId: string) {
   incrementOperationalMetric("payment_attempts_total", {
     source: "stripe_webhook",
     provider: "stripe",
@@ -432,48 +398,41 @@ function recordStripePaymentMetric(
     correlationId,
     severity: "critical",
   })
+}
+
 async function processStripeEvent(supabase: SupabaseClient<Database>, event: Stripe.Event) {
   switch (event.type) {
     case "checkout.session.completed":
-      await handleCheckoutSessionCompleted(
-        supabase,
-        event.data.object as Stripe.Checkout.Session
-      )
+      await handleCheckoutSessionCompleted(supabase, event.data.object as Stripe.Checkout.Session)
       break
     case "invoice.payment_succeeded":
-      await handleInvoicePaymentSucceeded(
-        supabase,
-        event.data.object as Stripe.Invoice
-      )
+      await handleInvoicePaymentSucceeded(supabase, event.data.object as Stripe.Invoice)
       break
     case "invoice.payment_failed":
-      await handleInvoicePaymentFailed(
-        supabase,
-        event.data.object as Stripe.Invoice
-      )
+      await handleInvoicePaymentFailed(supabase, event.data.object as Stripe.Invoice)
       break
     case "customer.subscription.created":
-      await handleSubscriptionCreated(
-        supabase,
-        event.data.object as Stripe.Subscription
-      )
+      await handleSubscriptionCreated(supabase, event.data.object as Stripe.Subscription)
       break
     case "customer.subscription.updated":
-      await handleSubscriptionUpdated(
-        supabase,
-        event.data.object as Stripe.Subscription
-      )
+      await handleSubscriptionUpdated(supabase, event.data.object as Stripe.Subscription)
       break
     case "customer.subscription.deleted":
-      await handleSubscriptionDeleted(
-        supabase,
-        event.data.object as Stripe.Subscription
-      )
+      await handleSubscriptionDeleted(supabase, event.data.object as Stripe.Subscription)
       break
     default:
       break
   }
 }
+
+const HANDLED_EVENTS = new Set([
+  "checkout.session.completed",
+  "invoice.payment_succeeded",
+  "invoice.payment_failed",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+])
 
 export async function POST(req: Request) {
   const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
@@ -531,10 +490,12 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid payload"
+
     logger.error("stripe_webhook_signature_verification_failed", {
       reason: message,
       provider: "stripe",
     })
+
     incrementOperationalMetric("webhook_failures_total", {
       source: "stripe_webhook",
       provider: "stripe",
@@ -562,61 +523,9 @@ export async function POST(req: Request) {
       lifecyclePhase: "webhook.received",
     })
 
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(
-          supabase,
-          event.data.object as Stripe.Checkout.Session
-        )
-        recordStripePaymentMetric("success", event.type, correlationId)
-        break
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(
-          supabase,
-          event.data.object as Stripe.Invoice
-        )
-        recordStripePaymentMetric("success", event.type, correlationId)
-        break
-      case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(
-          supabase,
-          event.data.object as Stripe.Invoice
-        )
-        recordStripePaymentMetric("failure", event.type, correlationId)
-        break
-      case "customer.subscription.created":
-        await handleSubscriptionCreated(
-          supabase,
-          event.data.object as Stripe.Subscription
-        )
-        break
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(
-          supabase,
-          event.data.object as Stripe.Subscription
-        )
-        break
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(
-          supabase,
-          event.data.object as Stripe.Subscription
-        )
-        break
-      default:
-        logger.info("stripe_webhook_unhandled_event", {
-          eventName: event.type,
-        })
-        break
     const maxRetries = 3
 
-    if (![
-      "checkout.session.completed",
-      "invoice.payment_succeeded",
-      "invoice.payment_failed",
-      "customer.subscription.created",
-      "customer.subscription.updated",
-      "customer.subscription.deleted",
-    ].includes(event.type)) {
+    if (!HANDLED_EVENTS.has(event.type)) {
       logger.info("stripe_webhook_unhandled_event", { eventName: event.type })
       await markEventProcessed(supabase, event.id, "processed", { maxRetries })
     } else {
@@ -632,6 +541,14 @@ export async function POST(req: Request) {
           shouldRetry: (error) => isLikelyTransientError(error),
         }
       )
+
+      if (event.type === "checkout.session.completed" || event.type === "invoice.payment_succeeded") {
+        recordStripePaymentMetric("success", event.type, correlationId)
+      }
+
+      if (event.type === "invoice.payment_failed") {
+        recordStripePaymentMetric("failure", event.type, correlationId)
+      }
 
       await markEventProcessed(supabase, event.id, "processed", {
         retryCount: Math.max(result.attempts - 1, 0),
