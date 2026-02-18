@@ -26,10 +26,12 @@ import { describeAutopayStatus } from "@/lib/payments/status"
 
 import {
   loadCatchUpBalances,
+  loadReconciliationDashboardData,
   loadReceiptHistory,
   loadRoommateLedgers,
 } from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
+import { ReconciliationDashboardCard } from "./_components/reconciliation-dashboard-card"
 
 
 const paymentHighlights = [
@@ -80,9 +82,10 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
-  const [catchUpBalances, receiptHistory] = await Promise.all([
+  const [catchUpBalances, receiptHistory, reconciliationData] = await Promise.all([
     loadCatchUpBalances(),
     loadReceiptHistory(),
+    loadReconciliationDashboardData(),
 
   ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
@@ -254,6 +257,9 @@ export default async function PaymentsPage() {
         <RoommateLedgerSection />
       </Suspense>
       <ReceiptHistoryCard receipts={receiptHistory} />
+      {reconciliationData.canManagePayments ? (
+        <ReconciliationDashboardCard failedPayments={reconciliationData.failedPayments} />
+      ) : null}
 
     </div>
   )
