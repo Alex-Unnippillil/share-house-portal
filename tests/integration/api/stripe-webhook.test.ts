@@ -62,29 +62,16 @@ describe("POST /api/stripe/webhook", () => {
     })
   })
 
-  it("rejects requests when webhook secret is not configured", async () => {
-    delete process.env.STRIPE_WEBHOOK_SECRET
-
-    const { POST } = await import("@/app/api/stripe/webhook/route")
-    const response = await POST(new Request("http://localhost/api/stripe/webhook", { method: "POST" }))
-
-    expect(response.status).toBe(500)
-    await expect(response.json()).resolves.toMatchObject({
-      error: {
-        code: "CONFIGURATION_ERROR",
-      },
-    })
-  })
-
-  it("persists checkout payments and dispatches notifications", async () => {
+  function createSupabaseMock() {
     const insert = vi.fn().mockResolvedValue({ data: null, error: null })
-    const upsert = vi.fn().mockResolvedValue({ data: null, error: null })
-    const rentPaymentsEq = vi.fn().mockResolvedValue({ data: null, error: null })
-    const webhookUpdateEqChain = buildEqChain({ data: null, error: null })
     const single = vi.fn().mockResolvedValue({
       data: { full_name: "Taylor Tenant", email: "tenant@example.com" },
       error: null,
     })
+
+    const updateEqEventId = vi.fn().mockResolvedValue({ data: null, error: null })
+    const updateEqProvider = vi.fn(() => ({ eq: updateEqEventId }))
+    const update = vi.fn(() => ({ eq: updateEqProvider }))
 
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
@@ -113,11 +100,38 @@ describe("POST /api/stripe/webhook", () => {
 
       return {
         insert,
-        update: vi.fn(() => ({ eq: rentPaymentsEq })),
+        update,
+        select: vi.fn(() => ({ contains: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })) })),
+        upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
       }
     })
 
     createClient.mockReturnValue({ from })
+
+    return {
+      insert,
+      update,
+      updateEqProvider,
+      updateEqEventId,
+    }
+  }
+
+  it("rejects requests when webhook secret is not configured", async () => {
+    delete process.env.STRIPE_WEBHOOK_SECRET
+
+    const { POST } = await import("@/app/api/stripe/webhook/route")
+    const response = await POST(new Request("http://localhost/api/stripe/webhook", { method: "POST" }))
+
+    expect(response.status).toBe(500)
+    await expect(response.json()).resolves.toMatchObject({
+      error: {
+        code: "CONFIGURATION_ERROR",
+      },
+    })
+  })
+
+  it("persists checkout payments and dispatches notifications", async () => {
+    const { insert } = createSupabaseMock()
 
     constructEvent.mockReturnValue({
       id: "evt_123",
@@ -136,6 +150,8 @@ describe("POST /api/stripe/webhook", () => {
     retrieveCheckoutSession.mockResolvedValue({
       id: "cs_test_123",
       mode: "payment",
+      payment_status: "paid",
+      customer: "cus_123",
       metadata: { tenant_id: "tenant-1", unit_id: "unit-1" },
       payment_intent: "pi_123",
       line_items: {
@@ -227,7 +243,32 @@ describe("POST /api/stripe/webhook", () => {
       expect.objectContaining({
         provider: "stripe",
         event_id: "evt_payment_failed",
+        userId: "tenant-1",
+        title: "Payment update",
       })
     )
+  })
+
+  it("marks unhandled events as processed", async () => {
+    const { updateEqProvider, updateEqEventId } = createSupabaseMock()
+
+    constructEvent.mockReturnValue({
+      id: "evt_unhandled",
+      type: "payment_method.attached",
+      data: { object: {} },
+    })
+
+    const { POST } = await import("@/app/api/stripe/webhook/route")
+
+    const response = await POST(
+      new Request("http://localhost/api/stripe/webhook", {
+        method: "POST",
+        body: JSON.stringify({ id: "evt_unhandled" }),
+      })
+    )
+
+    expect(response.status).toBe(200)
+    expect(updateEqProvider).toHaveBeenCalledWith("provider", "stripe")
+    expect(updateEqEventId).toHaveBeenCalledWith("event_id", "evt_unhandled")
   })
 })

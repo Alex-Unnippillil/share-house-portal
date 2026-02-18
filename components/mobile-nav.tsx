@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import SmartLink, { SmartLinkProps } from "@/components/navigation/SmartLink"
-import { useRouter } from "next/navigation"
 
-import { docsConfig } from "@/config/docs"
+import SmartLink, { SmartLinkProps } from "@/components/navigation/SmartLink"
+
+import { getNavigationItems } from "@/config/navigation"
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -19,6 +19,11 @@ interface MobileNavProps {
 
 export function MobileNav({ isAuthenticated }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
+  const navRole = isAuthenticated ? "tenant" : "public"
+  const mainNavItems = getNavigationItems("public", {
+    role: navRole,
+    includeDisabled: true,
+  })
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -41,11 +46,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
       </div>
 
       <SheetContent side="left" className="pr-0">
-        <MobileLink
-          href="/"
-          className="inline-flex"
-          onOpenChange={setOpen}
-        >
+        <MobileLink href="/" className="inline-flex" onOpenChange={setOpen}>
           <span className="flex items-center">
             <Icons.logo className="mr-1 size-6" />
             <span className="font-bold">{siteConfig.name}</span>
@@ -95,48 +96,16 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
         </div>
         <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
           <div className="flex flex-col space-y-3">
-            {docsConfig.mainNav?.map(
-              (item) =>
-                item.href && (
-                  <MobileLink
-                    key={item.href}
-                    href={item.href}
-                    onOpenChange={setOpen}
-                  >
-                    {item.title}
-                  </MobileLink>
-                )
-            )}
-          </div>
-          <div className="flex flex-col space-y-2">
-            {docsConfig.sidebarNav.map((item, index) => (
-              <div key={index} className="flex flex-col space-y-3 pt-6">
-                <h4 className="font-medium">{item.title}</h4>
-                {item?.items?.length &&
-                  item.items.map((item) => (
-                    <React.Fragment key={item.href}>
-                      {!item.disabled &&
-                        (item.href ? (
-                          <MobileLink
-                            href={item.href}
-                            onOpenChange={setOpen}
-                            className="text-muted-foreground"
-                          >
-                            <span className="flex items-center">
-                              <span>{item.title}</span>
-                              {item.label && (
-                                <span className="ml-2 rounded-md bg-[#adfa1d] px-1.5 py-0.5 text-xs leading-none text-[#000000] no-underline group-hover:no-underline">
-                                  {item.label}
-                                </span>
-                              )}
-                            </span>
-                          </MobileLink>
-                        ) : (
-                          item.title
-                        ))}
-                    </React.Fragment>
-                  ))}
-              </div>
+            {mainNavItems.map((item) => (
+              <MobileLink
+                key={item.id}
+                href={item.href}
+                onOpenChange={setOpen}
+                className={cn(item.disabled && "pointer-events-none opacity-60")}
+                aria-disabled={item.disabled}
+              >
+                {item.title}
+              </MobileLink>
             ))}
           </div>
         </ScrollArea>
@@ -147,8 +116,6 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
 
 interface MobileLinkProps extends SmartLinkProps {
   onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
-  className?: string
 }
 
 function MobileLink({
@@ -158,16 +125,13 @@ function MobileLink({
   children,
   ...props
 }: MobileLinkProps) {
-  const router = useRouter()
   return (
     <SmartLink
       href={href}
       onClick={() => {
-        router.push(href.toString())
         onOpenChange?.(false)
       }}
       className={cn(className)}
-      intent="navigation"
       {...props}
     >
       {children}

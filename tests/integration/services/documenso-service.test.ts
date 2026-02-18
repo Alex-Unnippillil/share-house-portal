@@ -73,7 +73,7 @@ describe("Documenso signing workflow payloads", () => {
     })
 
     expect(response.success).toBe(false)
-    expect(response.error).toContain("Documenso upload failed")
+    expect(response.error).toContain("temporarily unavailable")
   })
 
   it("surfaces contract drift when signing URL payload omits signingUrl", async () => {

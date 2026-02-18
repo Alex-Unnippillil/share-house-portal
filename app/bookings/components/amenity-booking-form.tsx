@@ -61,6 +61,28 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
   const [conflictCount, setConflictCount] = useState<number | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  const bookingAnnouncement = useMemo(() => {
+    if (isPending) {
+      return "Validating booking availability"
+    }
+
+    if (errors.length > 0) {
+      return `Booking validation failed with ${errors.length} error${errors.length === 1 ? "" : "s"}`
+    }
+
+    if (warnings.length > 0) {
+      return `Booking validation completed with ${warnings.length} warning${warnings.length === 1 ? "" : "s"}`
+    }
+
+    if (conflictCount !== null) {
+      return conflictCount === 0
+        ? "No booking conflicts detected"
+        : `${conflictCount} booking conflicts detected`
+    }
+
+    return ""
+  }, [conflictCount, errors.length, isPending, warnings.length])
+
   const embedUrl = useMemo(() => {
     const url = new URL(buildCalEmbedUrl(amenity))
     if (startValue) {
@@ -164,6 +186,9 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
   return (
     <div className="space-y-4">
       <form className="space-y-4" onSubmit={handleSubmit}>
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {bookingAnnouncement}
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor={`${amenity.id}-start`}>Start time</Label>
@@ -264,7 +289,8 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
         </div>
 
         {errors.length > 0 && (
-          <ul className="space-y-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <ul className="space-y-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+            <li className="font-medium">Validation blocked. Fix the following items:</li>
             {errors.map((error) => (
               <li key={error}>{error}</li>
             ))}
@@ -272,7 +298,8 @@ export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem })
         )}
 
         {warnings.length > 0 && (
-          <ul className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <ul className="space-y-2 rounded-md border border-amber-500 bg-amber-50 p-3 text-sm text-amber-950" role="status" aria-live="polite">
+            <li className="font-medium">Validation warnings to review:</li>
             {warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
