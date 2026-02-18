@@ -19,7 +19,7 @@ export interface CalcomWebhookPayload {
     endTime?: string
     metadata?: Record<string, unknown>
     recurringEventId?: string
-    recurrence?: Record<string, unknown>
+    recurrence?: Json
     cancellationReason?: string
   }
 }
