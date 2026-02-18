@@ -3,6 +3,7 @@ import { NextRequest } from "next/server"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import { createStructuredLogger } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
+import { providerOutageMessage } from "@/lib/resilience"
 import { getAppBaseUrl, getStripe } from "@/lib/stripe"
 
 const allowedPaymentModes = new Set(["payment", "subscription"])
@@ -101,6 +102,9 @@ export async function POST(req: NextRequest) {
       provider: "stripe",
     })
 
-    return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
+    return jsonErrorFromUnknown(
+      new Error(providerOutageMessage("stripe")),
+      "UPSTREAM_SERVICE_ERROR"
+    )
   }
 }

@@ -1,3 +1,4 @@
+import { providerOutageMessage, retryWithBackoff } from '@/lib/resilience';
 import { DocumentSigningRequest, DocumentSigningResponse } from '@/types/documents';
 
 const DOCUMENSO_BASE_URL = process.env.DOCUMENSO_BASE_URL || 'https://app.documenso.com';
@@ -74,13 +75,13 @@ class DocumensoService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${this.baseUrl}/api/v1/documents/upload`, {
+    const { value: response } = await retryWithBackoff(async () => fetch(`${this.baseUrl}/api/v1/documents/upload`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: formData,
-    });
+    }), { retries: 2, initialDelayMs: 300, jitter: true });
 
     if (!response.ok) {
       const error = await response.text();
@@ -96,11 +97,11 @@ class DocumensoService {
   async createDocumentSigningEnvelope(
     request: DocumensoCreateDocumentRequest
   ): Promise<DocumensoCreateDocumentResponse> {
-    const response = await fetch(`${this.baseUrl}/api/v1/documents`, {
+    const { value: response } = await retryWithBackoff(async () => fetch(`${this.baseUrl}/api/v1/documents`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
-    });
+    }), { retries: 2, initialDelayMs: 300, jitter: true });
 
     if (!response.ok) {
       const error = await response.text();
@@ -264,7 +265,7 @@ export async function createLeaseSigningRequest(
     console.error('Error creating lease signing request:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: providerOutageMessage('documenso'),
     };
   }
 }

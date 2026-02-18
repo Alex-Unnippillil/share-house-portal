@@ -1,3 +1,5 @@
+import { providerOutageMessage, retryWithBackoff } from "@/lib/resilience"
+
 interface CalComCreateBookingRequest {
   start: string;
   end: string;
@@ -44,12 +46,12 @@ class CalComService {
       : `${this.baseUrl}/api/v1/event-types`;
 
     try {
-      const response = await fetch(endpoint, {
+      const { value: response } = await retryWithBackoff(async () => fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-      });
+      }), { retries: 2, initialDelayMs: 250, jitter: true });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch event types: ${response.statusText}`);
@@ -71,7 +73,7 @@ class CalComService {
     bookingData: CalComCreateBookingRequest
   ): Promise<CalComBookingResponse> {
     try {
-      const response = await fetch(
+      const { value: response } = await retryWithBackoff(async () => fetch(
         `${this.baseUrl}/api/v1/bookings`,
         {
           method: 'POST',
@@ -89,7 +91,7 @@ class CalComService {
             location: bookingData.location,
           }),
         }
-      );
+      ), { retries: 2, initialDelayMs: 350, jitter: true });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -109,7 +111,7 @@ class CalComService {
       console.error('Error creating Cal.com booking:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create booking',
+        error: providerOutageMessage('calcom'),
       };
     }
   }
