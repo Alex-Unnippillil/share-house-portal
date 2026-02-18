@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import Link from "next/link"
 import { format, parseISO } from "date-fns"
 import { CheckCircle2 } from "lucide-react"
 
@@ -15,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import {
   PageContainer,
   PageDescription,
@@ -125,6 +127,19 @@ export default async function PaymentsPage() {
   )
 
   return (
+    <div className="container max-w-5xl space-y-10 py-12">
+      <header className="space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Payments
+          </h1>
+          <p className="text-base text-muted-foreground sm:text-lg">
+            Manage rent, deposits, and roommate contributions with
+            Stripe-powered autopay and real-time status updates.
+          </p>
+        </div>
+        <Separator />
+      </header>
     <PageContainer className="max-w-5xl space-y-stack-lg">
       <PageHeader>
         <PageTitle>Payments</PageTitle>
@@ -282,6 +297,51 @@ export default async function PaymentsPage() {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle>Payment consent and policy help</CardTitle>
+              <CardDescription>
+                Review disclosures before enabling autopay, bank linking, or
+                manager reconciliation exports.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                <Link href="/terms" className="underline">
+                  Terms of Service
+                </Link>{" "}
+                covers payment authorizations and role-based responsibilities
+                for tenants and managers.
+              </p>
+              <p>
+                <Link href="/privacy" className="underline">
+                  Privacy Policy
+                </Link>{" "}
+                explains payment, notification, and optional bank-link data
+                handling.
+              </p>
+              <p>
+                <Link href="/data-retention" className="underline">
+                  Data Retention Policy
+                </Link>{" "}
+                documents retention windows for receipts, notifications, and
+                audit evidence.
+                <span className="font-medium text-foreground">
+                  Pending settlement:
+                </span>{" "}
+                ACH transfers can remain pending for 3–5 business days before
+                final settlement.
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  Failed settlement:
+                </span>{" "}
+                If a debit returns (for example NSF or closed account), autopay
+                is paused and the roommate must relink a bank account or pay
+                manually.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Pay with Stripe</CardTitle>
               <CardDescription>
                 Create a quick checkout or open Billing Portal
@@ -303,6 +363,7 @@ export default async function PaymentsPage() {
           failedPayments={reconciliationData.failedPayments}
         />
       ) : null}
+    </div>
     </PageContainer>
   )
 }
