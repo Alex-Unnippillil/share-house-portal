@@ -64,7 +64,7 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
 
         toast({
           title: "Profile updated",
-          description: "We saved your latest contact details.",
+          description: "We saved your tenant profile details for roommate and property manager workflows.",
         })
       } catch (error) {
         console.error("Failed to update profile", error)
@@ -134,13 +134,13 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             htmlFor="username"
           >
-            Username
+            Roommate handle
           </label>
           <Input
             id="username"
             value={profileState.username}
             onChange={handleChange("username")}
-            placeholder="jordy"
+            placeholder="jordan-b"
           />
         </div>
         <div className="flex flex-col">
@@ -148,16 +148,19 @@ export default function AccountForm({ user, profile }: AccountFormProps) {
             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             htmlFor="website"
           >
-            Website
+            Communication preferences
           </label>
           <Input
             id="website"
-            type="url"
+            type="text"
             value={profileState.website}
             onChange={handleChange("website")}
-            placeholder="https://sharehouse.example"
+            placeholder="SMS for urgent issues, in-app for routine updates"
           />
         </div>
+        <p className="-mt-2 text-sm text-muted-foreground">
+          Include emergency contact routing, parking updates, or quiet-hour communication preferences.
+        </p>
         <button
           className={buttonVariants({ variant: "outline" })}
           disabled={isSaving}

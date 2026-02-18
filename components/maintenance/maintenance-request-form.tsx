@@ -217,7 +217,7 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
             <FormItem>
               <FormLabel>Description *</FormLabel>
               <FormControl>
-                <Textarea className="min-h-[110px]" placeholder="Describe symptoms, impact, and when this started." {...field} />
+                <Textarea className="min-h-[110px]" placeholder="Describe symptoms, impact, and when this started. Include any safety risks for roommates or visitors." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -336,6 +336,7 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
           render={({ field }) => (
             <FormItem>
               <FormLabel>Preferred access times *</FormLabel>
+              <p className="text-xs text-muted-foreground">Provide windows when maintenance can enter the unit and note if a roommate must be present.</p>
               <FormControl>
                 <Textarea placeholder="Weekdays after 6pm, Saturdays 9am-1pm, call before arrival." {...field} />
               </FormControl>
@@ -370,6 +371,8 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
         </div>
 
         <p className="text-xs text-muted-foreground">Current SLA target: first manager response within {selectedSlaHours} hours.</p>
+
+        <p className="text-xs text-muted-foreground">Maintenance requests are for repairs and safety issues only. Use visitor booking for guest stays and document upload for lease/compliance files.</p>
 
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Submitting…" : "Submit maintenance request"}
