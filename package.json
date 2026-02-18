@@ -14,8 +14,18 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:a11y": "playwright test e2e/tenant-manager-journeys.spec.ts -g \"keyboard|screen-reader\"",
-    "test:perf": "pnpm css:purge"
+    "test:a11y": "playwright test e2e/responsive-breakpoints.spec.ts -g \"navigation|landmarks\"",
+    "test:perf": "pnpm css:purge",
+    "test:e2e:ci": "playwright test --reporter=list,json",
+    "test:e2e:suite:onboarding": "playwright test e2e/onboarding.spec.ts",
+    "test:e2e:suite:payments": "playwright test e2e/payments.spec.ts",
+    "test:e2e:suite:maintenance": "playwright test e2e/maintenance.spec.ts",
+    "test:e2e:suite:bookings": "playwright test e2e/bookings.spec.ts",
+    "test:e2e:suite:documents": "playwright test e2e/documents.spec.ts",
+    "test:e2e:suite:messaging": "playwright test e2e/messaging.spec.ts",
+    "test:e2e:suite:visitors": "playwright test e2e/visitors.spec.ts",
+    "test:e2e:suite:security": "playwright test e2e/security-webhooks.spec.ts",
+    "test:e2e:thresholds": "node scripts/check-e2e-thresholds.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
