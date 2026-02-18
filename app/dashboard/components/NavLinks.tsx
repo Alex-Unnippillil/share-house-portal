@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase-browser";
 import { fetchMemberRole } from "@/lib/data/members";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
-export default function NavLinks() {
+export default function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 	const pathname = usePathname();
 	const [role, setRole] = useState<string | null>(null);
 
@@ -60,9 +60,7 @@ export default function NavLinks() {
 				const Icon = link.Icon;
 				return (
                                         <SmartLink
-                                                onClick={() =>
-                                                        document.getElementById("sidebar-close")?.click()
-                                                }
+                                                onClick={onNavigate}
                                                 href={link.href}
                                                 key={index}
                                                 className={cn(
