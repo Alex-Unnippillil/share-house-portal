@@ -4,47 +4,32 @@ import { describe, expect, it, vi } from "vitest"
 
 import OnboardingProgress from "@/components/onboarding-progress"
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/onboarding",
+  useSearchParams: () => new URLSearchParams("step=3"),
+}))
+
 vi.mock("@/components/navigation/SmartLink", () => ({
-  default: ({ href, className, children }: { href: string; className?: string; children: string }) => (
-    <a href={href} className={className}>
+  default: ({ href, className, children, ...props }: { href: string; className?: string; children: string }) => (
+    <a href={href} className={className} {...props}>
       {children}
     </a>
   ),
 }))
 
 describe("OnboardingProgress", () => {
-  it("highlights completed and active steps", () => {
-    render(<OnboardingProgress step={3} />)
+  it("highlights current onboarding step based on route query", () => {
+    render(<OnboardingProgress />)
 
-    const step1 = screen.getByRole("link", { name: "1" })
-    const step2 = screen.getByRole("link", { name: "2" })
-    const step3 = screen.getByRole("link", { name: "3" })
-    const step4 = screen.getByRole("link", { name: "4" })
-
-    expect(step1).toHaveClass("bg-slate-800")
-    expect(step2).toHaveClass("bg-slate-800")
-    expect(step3).toHaveClass("bg-slate-800")
-    expect(step4).toHaveClass("bg-slate-100")
+    const currentStep = screen.getByRole("link", { name: /3rent/i })
+    expect(currentStep).toHaveAttribute("aria-current", "step")
+    expect(currentStep).toHaveClass("border-primary")
   })
 
-  it("keeps all onboarding links accessible", () => {
-    render(<OnboardingProgress step={1} />)
+  it("creates onboarding step links tied to /onboarding route", () => {
+    render(<OnboardingProgress />)
 
-    expect(screen.getByRole("link", { name: "1" })).toHaveAttribute(
-      "href",
-      "/signup?=page1"
-    )
-    expect(screen.getByRole("link", { name: "2" })).toHaveAttribute(
-      "href",
-      "/signup?=page2"
-    )
-    expect(screen.getByRole("link", { name: "3" })).toHaveAttribute(
-      "href",
-      "/signup?=page3"
-    )
-    expect(screen.getByRole("link", { name: "4" })).toHaveAttribute(
-      "href",
-      "/signup?=page4"
-    )
+    expect(screen.getByRole("link", { name: /1profile/i })).toHaveAttribute("href", "/onboarding?step=1")
+    expect(screen.getByRole("link", { name: /6review/i })).toHaveAttribute("href", "/onboarding?step=6")
   })
 })
