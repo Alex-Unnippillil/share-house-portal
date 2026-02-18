@@ -247,16 +247,46 @@ export type Database = {
         guest_email: string
         guest_phone: string | null
         host_id: string
+        host_roommate_id: string | null
+        unit_id: string | null
         check_in_date: string
         check_out_date: string
         purpose: string
+        reason: string
         emergency_contact: string | null
         special_notes: string | null
+        requires_manager_approval: boolean
+        approval_status: 'pending' | 'approved' | 'rejected'
+        decision_notes: string | null
+        policy_snapshot: Json | null
+        policy_violations: Json | null
+        consecutive_nights: number | null
         status: 'pending' | 'approved' | 'rejected' | 'completed'
         approved_by: string | null
         approved_at: string | null
+        last_action_by: string | null
+        last_action_at: string | null
         created_at: string | null
         updated_at: string | null
+      }>
+      visitor_unit_policies: SupabaseTable<{
+        id: string
+        unit_id: string
+        max_consecutive_nights: number
+        requires_manager_approval: boolean
+        blackout_windows: Json | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      visitor_log_audit_entries: SupabaseTable<{
+        id: string
+        visitor_log_id: string
+        actor_id: string | null
+        action: string
+        notes: string | null
+        metadata: Json | null
+        created_at: string | null
       }>
       notifications: SupabaseTable<{
         id: string

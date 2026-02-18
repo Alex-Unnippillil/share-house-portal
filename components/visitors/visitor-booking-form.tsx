@@ -1,49 +1,54 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
-import { useToast } from "@/components/ui/use-toast";
-import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
+import { useEffect, useMemo, useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { format } from "date-fns"
+import { CalendarIcon } from "lucide-react"
 
-const visitorBookingSchema = z.object({
-  guestName: z.string().min(2, "Guest name must be at least 2 characters"),
-  guestEmail: z.string().email("Please enter a valid email address"),
-  guestPhone: z.string().optional(),
-  checkInDate: z.date({
-    required_error: "Check-in date is required",
-  }),
-  checkOutDate: z.date({
-    required_error: "Check-out date is required",
-  }),
-  purpose: z.string().min(10, "Please provide more details about the visit"),
-  emergencyContact: z.string().optional(),
-  specialNotes: z.string().optional(),
-});
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
+import useSupabaseBrowser from "@/utils/supabase-browser"
 
-type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>;
+const visitorBookingSchema = z
+  .object({
+    guestName: z.string().min(2, "Guest name must be at least 2 characters"),
+    guestEmail: z.string().email("Please enter a valid email address"),
+    guestPhone: z.string().optional(),
+    hostRoommateId: z.string().uuid("Select the host roommate"),
+    arrivalDate: z.date({ required_error: "Arrival date is required" }),
+    departureDate: z.date({ required_error: "Departure date is required" }),
+    reason: z.string().min(10, "Please provide at least 10 characters"),
+    emergencyContact: z.string().optional(),
+    specialNotes: z.string().optional(),
+  })
+  .refine((value) => value.departureDate > value.arrivalDate, {
+    message: "Departure must be after arrival",
+    path: ["departureDate"],
+  })
+
+type VisitorBookingFormData = z.infer<typeof visitorBookingSchema>
+
+type UnitMember = {
+  id: string
+  full_name: string | null
+  email: string | null
+  role: string | null
+}
 
 export function VisitorBookingForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { notifyVisitorBooking } = useNotifications();
-  const { toast } = useToast();
-  const supabase = createClient();
-  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+  const supabase = useSupabaseBrowser()
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [unitMembers, setUnitMembers] = useState<UnitMember[]>([])
 
   const form = useForm<VisitorBookingFormData>({
     resolver: zodResolver(visitorBookingSchema),
@@ -51,111 +56,112 @@ export function VisitorBookingForm() {
       guestName: "",
       guestEmail: "",
       guestPhone: "",
-      purpose: "",
+      hostRoommateId: "",
+      reason: "",
       emergencyContact: "",
       specialNotes: "",
     },
-  });
+  })
+
+  useEffect(() => {
+    async function loadMembers() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("unit_id")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      if (!profile?.unit_id) return
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, role")
+        .eq("unit_id", profile.unit_id)
+        .in("role", ["tenant", "roommate"])
+
+      const members = (data ?? []) as UnitMember[]
+      setUnitMembers(members)
+      if (members[0]) {
+        form.setValue("hostRoommateId", members[0].id)
+      }
+    }
+
+    void loadMembers()
+  }, [form, supabase])
+
+  const hostOptions = useMemo(
+    () =>
+      unitMembers.map((member) => ({
+        id: member.id,
+        label: member.full_name ?? member.email ?? "Unknown roommate",
+      })),
+    [unitMembers]
+  )
 
   const onSubmit = async (data: VisitorBookingFormData) => {
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const response = await fetch("/api/visitors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guestName: data.guestName,
+          guestEmail: data.guestEmail,
+          guestPhone: data.guestPhone,
+          hostRoommateId: data.hostRoommateId,
+          arrivalDate: data.arrivalDate.toISOString(),
+          departureDate: data.departureDate.toISOString(),
+          reason: data.reason,
+          emergencyContact: data.emergencyContact,
+          specialNotes: data.specialNotes,
+        }),
+      })
 
-      // Get user profile
-      const profile = await fetchMemberProfile(typedSupabase, user.id);
-
-      if (!profile) throw new Error("Profile not found");
-
-      if (!profile.unit_id) {
-        throw new Error("User is not assigned to a unit");
+      const payload = (await response.json()) as {
+        error?: { message?: string; details?: { violations?: string[] } }
       }
 
-      const unitMembers = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        excludeUserId: user.id,
-      });
+      if (!response.ok) {
+        const violations = payload.error?.details?.violations ?? []
+        const reason = violations.length > 0 ? violations.join(" • ") : payload.error?.message
 
-      const roommates = unitMembers.filter(
-        member => member.role === 'tenant' || member.role === 'roommate'
-      );
-      const propertyManager = unitMembers.find(member => member.role === 'property_manager');
-
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
+        throw new Error(reason ?? "Failed to submit visitor request")
       }
-
-      // Create visitor booking record
-      const { data: booking, error: bookingError } = await (supabase as any)
-        .from('visitor_logs')
-        .insert({
-          guest_name: data.guestName,
-          guest_email: data.guestEmail,
-          guest_phone: data.guestPhone,
-          host_id: user.id,
-          check_in_date: data.checkInDate.toISOString(),
-          check_out_date: data.checkOutDate.toISOString(),
-          purpose: data.purpose,
-          emergency_contact: data.emergencyContact,
-          special_notes: data.specialNotes,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (bookingError) throw bookingError;
-
-      // Send notifications
-      await notifyVisitorBooking({
-        guestName: data.guestName,
-        hostName: profile.full_name || user.email || 'Unknown',
-        checkInDate: format(data.checkInDate, 'MMM dd, yyyy'),
-        checkOutDate: format(data.checkOutDate, 'MMM dd, yyyy'),
-        purpose: data.purpose,
-        roommates: roommates.map(r => ({
-          id: r.id,
-          email: r.email || '',
-          name: r.full_name || r.email || 'Unknown',
-        })),
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
-        },
-      });
 
       toast({
-        title: "Visitor booking submitted",
-        description: "Your visitor booking has been submitted and notifications sent.",
-      });
-
-      form.reset();
+        title: "Visitor request submitted",
+        description: "Roommates and managers were notified.",
+      })
+      form.reset()
     } catch (error) {
-      console.error('Error submitting visitor booking:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit visitor booking",
+        title: "Unable to submit",
+        description: error instanceof Error ? error.message : "Request failed",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="guestName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Guest Name *</FormLabel>
+                <FormLabel>Guest full name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter guest's full name" {...field} />
+                  <Input placeholder="Jordan Smith" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -167,10 +173,107 @@ export function VisitorBookingForm() {
             name="guestEmail"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Guest Email *</FormLabel>
+                <FormLabel>Guest email *</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="guest@example.com" {...field} />
+                  <Input placeholder="guest@example.com" type="email" {...field} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="guestPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Guest phone</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1 555 123 4567" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="hostRoommateId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Host roommate *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select host roommate" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {hostOptions.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="arrivalDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Arrival *</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn("justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                      >
+                        <CalendarIcon className="mr-2 size-4" />
+                        {field.value ? format(field.value, "PPP") : "Pick arrival date"}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="departureDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Departure *</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn("justify-start text-left font-normal", !field.value && "text-muted-foreground")}
+                      >
+                        <CalendarIcon className="mr-2 size-4" />
+                        {field.value ? format(field.value, "PPP") : "Pick departure date"}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -179,12 +282,16 @@ export function VisitorBookingForm() {
 
         <FormField
           control={form.control}
-          name="guestPhone"
+          name="reason"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Guest Phone (Optional)</FormLabel>
+              <FormLabel>Reason for stay *</FormLabel>
               <FormControl>
-                <Input placeholder="+1 (555) 123-4567" {...field} />
+                <Textarea
+                  placeholder="Why is the guest staying overnight? Include context for roommates and manager review."
+                  className="min-h-[90px]"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -194,41 +301,13 @@ export function VisitorBookingForm() {
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
-            name="checkInDate"
+            name="emergencyContact"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Check-in Date *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto size-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+              <FormItem>
+                <FormLabel>Emergency contact</FormLabel>
+                <FormControl>
+                  <Input placeholder="Name + phone" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -236,101 +315,23 @@ export function VisitorBookingForm() {
 
           <FormField
             control={form.control}
-            name="checkOutDate"
+            name="specialNotes"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Check-out Date *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto size-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+              <FormItem>
+                <FormLabel>Special notes</FormLabel>
+                <FormControl>
+                  <Input placeholder="Allergies, accessibility, etc." {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="purpose"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Purpose of Visit *</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Please describe the purpose of the visit and any special requirements..."
-                  className="min-h-[80px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="emergencyContact"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Emergency Contact (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="Name and phone number of emergency contact" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="specialNotes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Special Notes (Optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Any additional notes or requirements..."
-                  className="min-h-[60px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Submitting..." : "Submit Visitor Booking"}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Submit visitor request"}
         </Button>
       </form>
     </Form>
-  );
+  )
 }
