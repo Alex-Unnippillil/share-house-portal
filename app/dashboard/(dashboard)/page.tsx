@@ -8,6 +8,7 @@ import { DashboardMetrics } from "./components/dashboard-metrics"
 import { DashboardQuickActions } from "./components/dashboard-quick-actions"
 import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
 import { MaintenanceOverviewCard } from "./components/maintenance-overview-card"
+import { FloorplanViewerCard } from "./components/floorplan-viewer-card"
 import {
   DashboardBoardSkeleton,
   DashboardCardSkeleton,
@@ -56,6 +57,10 @@ export default function DashboardPage() {
 
           <Suspense fallback={<DashboardBoardSkeleton />}>
             <RoommateBoardCard />
+          </Suspense>
+
+          <Suspense fallback={<DashboardCardSkeleton />}>
+            <FloorplanViewerCard />
           </Suspense>
         </div>
 
