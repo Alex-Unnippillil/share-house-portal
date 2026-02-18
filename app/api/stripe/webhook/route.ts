@@ -4,7 +4,7 @@ import type Stripe from "stripe"
 
 import { jsonError } from "@/lib/errors"
 import { sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
-import { createStructuredLogger } from "@/lib/observability/logger"
+import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
 import { RetryExhaustedError, retryWithBackoff, isLikelyTransientError } from "@/lib/resilience"
 import { getStripe } from "@/lib/stripe"
@@ -399,6 +399,35 @@ async function handleSubscriptionDeleted(
 }
 
 
+function recordStripePaymentMetric(
+  outcome: "success" | "failure",
+  eventType: string,
+  correlationId: string
+) {
+  incrementOperationalMetric("payment_attempts_total", {
+    source: "stripe_webhook",
+    provider: "stripe",
+    eventType,
+    correlationId,
+  })
+
+  if (outcome === "success") {
+    incrementOperationalMetric("payment_success_total", {
+      source: "stripe_webhook",
+      provider: "stripe",
+      eventType,
+      correlationId,
+    })
+    return
+  }
+
+  incrementOperationalMetric("payment_failures_total", {
+    source: "stripe_webhook",
+    provider: "stripe",
+    eventType,
+    correlationId,
+    severity: "critical",
+  })
 async function processStripeEvent(supabase: SupabaseClient<Database>, event: Stripe.Event) {
   switch (event.type) {
     case "checkout.session.completed":
@@ -444,9 +473,15 @@ async function processStripeEvent(supabase: SupabaseClient<Database>, event: Str
 
 export async function POST(req: Request) {
   const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
+  const correlationId = getCorrelationId(req.headers, requestId)
   const logger = createStructuredLogger("webhook_processor", {
     component: "stripe_webhook",
     requestId,
+    correlationId,
+  })
+
+  logger.info("stripe_webhook_request_received", {
+    lifecyclePhase: "webhook.received",
   })
 
   const stripe = getStripe()
@@ -501,6 +536,8 @@ export async function POST(req: Request) {
       provider: "stripe",
       eventType: "unknown",
       reason: "stripe_signature_verification_failed",
+      correlationId,
+      severity: "critical",
     })
 
     return jsonError("REQUEST_VALIDATION_ERROR", {
@@ -518,8 +555,54 @@ export async function POST(req: Request) {
     logger.info("stripe_webhook_received", {
       eventName: event.type,
       stripeEventId: event.id,
+      lifecyclePhase: "webhook.received",
     })
 
+    switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutSessionCompleted(
+          supabase,
+          event.data.object as Stripe.Checkout.Session
+        )
+        recordStripePaymentMetric("success", event.type, correlationId)
+        break
+      case "invoice.payment_succeeded":
+        await handleInvoicePaymentSucceeded(
+          supabase,
+          event.data.object as Stripe.Invoice
+        )
+        recordStripePaymentMetric("success", event.type, correlationId)
+        break
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(
+          supabase,
+          event.data.object as Stripe.Invoice
+        )
+        recordStripePaymentMetric("failure", event.type, correlationId)
+        break
+      case "customer.subscription.created":
+        await handleSubscriptionCreated(
+          supabase,
+          event.data.object as Stripe.Subscription
+        )
+        break
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(
+          supabase,
+          event.data.object as Stripe.Subscription
+        )
+        break
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(
+          supabase,
+          event.data.object as Stripe.Subscription
+        )
+        break
+      default:
+        logger.info("stripe_webhook_unhandled_event", {
+          eventName: event.type,
+        })
+        break
     const maxRetries = 3
 
     if (![
@@ -555,9 +638,13 @@ export async function POST(req: Request) {
     logger.info("stripe_webhook_processed", {
       eventName: event.type,
       stripeEventId: event.id,
+      lifecyclePhase: "webhook.processed",
     })
 
-    return new Response("ok", { status: 200 })
+    return new Response("ok", {
+      status: 200,
+      headers: { "x-correlation-id": correlationId },
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unexpected webhook processing error"
     const exhausted = err instanceof RetryExhaustedError
@@ -567,6 +654,7 @@ export async function POST(req: Request) {
       provider: "stripe",
       eventName: event.type,
       stripeEventId: event.id,
+      lifecyclePhase: "webhook.failed",
       exhausted,
     })
 
@@ -575,6 +663,8 @@ export async function POST(req: Request) {
       provider: "stripe",
       eventType: event.type,
       reason: message,
+      correlationId,
+      severity: "critical",
     })
 
     if (exhausted) {

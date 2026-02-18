@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
-import { createStructuredLogger } from "@/lib/observability/logger"
+import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
 import { providerOutageMessage } from "@/lib/resilience"
 import { getAppBaseUrl, getStripe } from "@/lib/stripe"
@@ -18,9 +18,15 @@ function normalizeMode(mode: unknown): "payment" | "subscription" {
 
 export async function POST(req: NextRequest) {
   const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
+  const correlationId = getCorrelationId(req.headers, requestId)
   const logger = createStructuredLogger("route_handler", {
     component: "stripe_checkout_route",
     requestId,
+    correlationId,
+  })
+
+  logger.info("stripe_checkout_request_received", {
+    lifecyclePhase: "request.received",
   })
 
   try {
@@ -89,10 +95,14 @@ export async function POST(req: NextRequest) {
       eventName: "checkout.session.created",
       priceId,
       mode: normalizedMode,
-      stripeSessionId: checkoutSession.id,
+      stripeSessionId: session.id,
+      lifecyclePhase: "request.completed",
     })
 
-    return Response.json({ id: checkoutSession.id, url: checkoutSession.url, mode: normalizedMode })
+    return Response.json(
+      { id: session.id, url: session.url, mode: normalizedMode, correlationId },
+      { headers: { "x-correlation-id": correlationId } }
+    )
   } catch (error) {
     logger.error("stripe_checkout_session_failed", {
       reason: error instanceof Error ? error.message : "unknown",
@@ -100,6 +110,8 @@ export async function POST(req: NextRequest) {
     incrementOperationalMetric("payment_failures_total", {
       source: "stripe_checkout_route",
       provider: "stripe",
+      correlationId,
+      severity: "high",
     })
 
     return jsonErrorFromUnknown(
