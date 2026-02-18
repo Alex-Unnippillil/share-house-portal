@@ -17,6 +17,17 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
 export type Database = {
   public: {
     Tables: {
+      audit_logs: SupabaseTable<{
+        id: string
+        action: string
+        actor_id: string
+        actor_role: string | null
+        target_type: string
+        target_id: string | null
+        metadata: Json | null
+        occurred_at: string
+        created_at: string | null
+      }>
       amenity_bookings: SupabaseTable<{
         id: string
         amenity_id: string
