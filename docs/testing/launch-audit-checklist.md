@@ -31,3 +31,5 @@ pnpm test:unit
 - [ ] Playwright tenant/manager journey checks pass in staging.
 - [ ] Any staging-only accessibility findings captured and triaged.
 - [ ] CSS payload remains within current budget.
+
+For operations readiness (rollout phases, onboarding, support workflows, and post-launch retrospectives), use `docs/operations/launch-and-hypercare-playbook.md`.
