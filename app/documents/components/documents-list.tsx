@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FlowStateCard } from "@/components/feedback/flow-state";
+import { SemanticStatusBadge } from "@/components/status/semantic-status-badge";
 import { Button } from "@/components/ui/button";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
@@ -44,26 +46,27 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   }, [filter]);
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      draft: 'secondary',
-      pending_signature: 'outline',
-      signed: 'default',
-      expired: 'destructive',
-      cancelled: 'secondary',
+    const labels = {
+      draft: "Draft",
+      pending_signature: "Pending Signature",
+      signed: "Signed",
+      expired: "Expired",
+      cancelled: "Cancelled",
     } as const;
 
-    const labels = {
-      draft: 'Draft',
-      pending_signature: 'Pending Signature',
-      signed: 'Signed',
-      expired: 'Expired',
-      cancelled: 'Cancelled',
-    };
+    const semanticStatus = {
+      draft: "neutral",
+      pending_signature: "in-progress",
+      signed: "success",
+      expired: "error",
+      cancelled: "warning",
+    } as const;
 
     return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
+      <SemanticStatusBadge
+        status={semanticStatus[status as keyof typeof semanticStatus] ?? "neutral"}
+        label={labels[status as keyof typeof labels] || status}
+      />
     );
   };
 
@@ -90,35 +93,30 @@ export function DocumentsList({ filter }: DocumentsListProps) {
 
   if (error) {
     return (
-      <Card className="p-6">
-        <div className="text-center">
-          <p className="mb-2 text-destructive">Error loading documents</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.reload()}
-          >
+      <FlowStateCard
+        variant="error"
+        title="Unable to load documents"
+        description={error}
+        action={
+          <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
-        </div>
-      </Card>
+        }
+      />
     );
   }
 
   if (documents.length === 0) {
     return (
-      <Card className="p-12">
-        <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(filter).length > 0
-              ? "No documents match your current filters."
-              : "Get started by uploading your first document."}
-          </p>
-        </div>
-      </Card>
+      <FlowStateCard
+        variant="empty"
+        title="No documents found"
+        description={
+          Object.keys(filter).length > 0
+            ? "No documents match your current filters."
+            : "Get started by uploading your first document."
+        }
+      />
     );
   }
 

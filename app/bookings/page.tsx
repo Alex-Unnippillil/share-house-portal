@@ -10,8 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FlowStateCard } from "@/components/feedback/flow-state"
+import { PageShell } from "@/components/layout/page-shell"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
@@ -21,31 +22,19 @@ const amenitiesByProperty = groupAmenitiesByProperty()
 
 export default function BookingsPage() {
   return (
-    <div className="container max-w-7xl space-y-8 py-8">
-      <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Amenity Bookings</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Browse amenity catalogs by property and book directly inside Cal.com embeds. Bookings are mirrored to Supabase for policy checks, conflict detection, and role-based calendars.
-          </p>
-        </div>
-        <Separator />
-      </header>
+    <PageShell
+      title="Amenity Bookings"
+      description="Browse amenity catalogs by property and book directly inside Cal.com embeds. Bookings are mirrored to Supabase for policy checks, conflict detection, and role-based calendars."
+      maxWidthClassName="max-w-7xl"
+    >
 
       <Suspense
         fallback={
-          <div className="grid gap-4 md:grid-cols-3">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-4 w-3/4 rounded bg-muted"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-1/2 rounded bg-muted"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <FlowStateCard
+            variant="loading"
+            title="Loading booking analytics"
+            description="We're pulling utilization, conflict, and upcoming reservation snapshots for this property."
+          />
         }
       >
         <BookingStats />
@@ -139,6 +128,6 @@ export default function BookingsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageShell>
   )
 }

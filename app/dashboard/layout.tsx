@@ -10,26 +10,25 @@ import SideNav from "./components/SideNav"
 import ToggleSidebar from "./components/ToggleSidebar"
 
 export default async function Layout({ children }: { children: ReactNode }) {
-	const { data: userSession } = await readUserSession();
+  const { data: userSession } = await readUserSession()
 
-	if (!userSession.session) {
-		return redirect("/auth");
-	}
-	return (
-		<div className="flex w-full ">
-			<div className="flex h-screen flex-col">
-				<SideNav />
-				<MobileSideNav />
-			</div>
+  if (!userSession.session) {
+    return redirect("/auth")
+  }
 
-                        <div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
-                                <ToggleSidebar />
-                                <ErrorBoundary>
-                                        <Suspense fallback={<RouteSkeleton />}>
-                                                {children}
-                                        </Suspense>
-                                </ErrorBoundary>
-                        </div>
-                </div>
-        );
+  return (
+    <div className="flex min-h-screen w-full bg-muted/20">
+      <div className="flex h-screen flex-col">
+        <SideNav />
+        <MobileSideNav />
+      </div>
+
+      <main className="w-full space-y-4 px-4 pb-8 pt-4 sm:flex-1 sm:px-8 sm:pt-6 lg:px-10">
+        <ToggleSidebar />
+        <ErrorBoundary>
+          <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
+        </ErrorBoundary>
+      </main>
+    </div>
+  )
 }

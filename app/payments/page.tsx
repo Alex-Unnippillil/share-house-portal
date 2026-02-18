@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import { PaymentStatusFeed } from "./_components/payment-status-feed"
@@ -32,6 +31,7 @@ import {
 } from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 import { ReconciliationDashboardCard } from "./_components/reconciliation-dashboard-card"
+import { PageShell } from "@/components/layout/page-shell"
 
 
 const paymentHighlights = [
@@ -121,16 +121,12 @@ export default async function PaymentsPage() {
   )
 
   return (
-    <div className="container max-w-5xl space-y-10 py-12">
-      <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Payments</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Manage rent, deposits, and roommate contributions with Stripe-powered autopay and real-time status updates.
-          </p>
-        </div>
-        <Separator />
-      </header>
+    <PageShell
+      title="Payments"
+      description="Manage rent, deposits, and roommate contributions with Stripe-powered autopay and real-time status updates."
+      maxWidthClassName="max-w-5xl"
+      className="space-y-10 py-10"
+    >
       <div className="grid gap-6 md:grid-cols-2">
         {paymentHighlights.map((item) => (
           <Card key={item.title} className="h-full">
@@ -277,7 +273,7 @@ export default async function PaymentsPage() {
         <ReconciliationDashboardCard failedPayments={reconciliationData.failedPayments} />
       ) : null}
 
-    </div>
+    </PageShell>
   )
 }
 

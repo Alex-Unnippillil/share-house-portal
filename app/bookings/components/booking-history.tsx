@@ -1,7 +1,8 @@
 import { canCancelBooking } from "@/lib/bookings/policy"
 import { createClient } from "@/utils/supabase/server"
 
-import { Badge } from "@/components/ui/badge"
+import { FlowStateCard } from "@/components/feedback/flow-state"
+import { SemanticStatusBadge } from "@/components/status/semantic-status-badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -18,11 +19,11 @@ function formatRange(startTime: string, endTime: string) {
   })}`
 }
 
-function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  if (status === "confirmed") return "default"
-  if (status === "pending") return "secondary"
-  if (status === "cancelled") return "destructive"
-  return "outline"
+function statusTone(status: string): "success" | "neutral" | "error" | "warning" {
+  if (status === "confirmed") return "success"
+  if (status === "pending") return "neutral"
+  if (status === "cancelled") return "error"
+  return "warning"
 }
 
 export async function BookingHistory() {
@@ -39,7 +40,13 @@ export async function BookingHistory() {
 
   const renderRows = (rows: typeof tenantRows, role: "tenant" | "manager") => {
     if (rows.length === 0) {
-      return <p className="text-sm text-muted-foreground">No mirrored bookings yet.</p>
+      return (
+        <FlowStateCard
+          variant="empty"
+          title="No booking activity yet"
+          description="Once bookings are mirrored from Cal.com, this calendar will show status, cancellation policy, and property context."
+        />
+      )
     }
 
     return (
@@ -51,7 +58,7 @@ export async function BookingHistory() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center justify-between text-base">
                   <span>{booking.amenity_name}</span>
-                  <Badge variant={statusVariant(booking.status)}>{booking.status}</Badge>
+                  <SemanticStatusBadge status={statusTone(booking.status)} label={booking.status} />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-muted-foreground">

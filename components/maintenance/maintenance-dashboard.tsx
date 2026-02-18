@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
-import { Badge } from "@/components/ui/badge";
+import { FlowStateCard } from "@/components/feedback/flow-state";
+import { SemanticStatusBadge } from "@/components/status/semantic-status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,23 @@ type UpdateWithActor = MaintenanceUpdateRow & {
 
 const statusOptions = ["pending", "in_progress", "completed", "cancelled"] as const;
 const priorityOptions = ["low", "normal", "high", "urgent"] as const;
+
+function formatLabel(value: string) {
+  return value.replace(/_/g, " ")
+}
+
+function requestStatusTone(status: string): "success" | "in-progress" | "error" | "neutral" {
+  if (status === "completed") return "success"
+  if (status === "in_progress") return "in-progress"
+  if (status === "cancelled") return "error"
+  return "neutral"
+}
+
+function priorityTone(priority: string): "error" | "warning" | "neutral" {
+  if (priority === "urgent") return "error"
+  if (priority === "high") return "warning"
+  return "neutral"
+}
 
 function getSlaBucket(createdAt: string | null) {
   if (!createdAt) return "unknown";
@@ -345,9 +363,19 @@ export function MaintenanceDashboard() {
             <CardDescription>Track progress and SLA state for each open request.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {loading ? <p className="text-sm text-muted-foreground">Loading requests…</p> : null}
+            {loading ? (
+              <FlowStateCard
+                variant="loading"
+                title="Loading maintenance timeline"
+                description="Fetching your active requests, SLA status, and latest updates."
+              />
+            ) : null}
             {!loading && !visibleTenantRequests.length ? (
-              <p className="text-sm text-muted-foreground">No maintenance requests yet.</p>
+              <FlowStateCard
+                variant="empty"
+                title="No maintenance requests yet"
+                description="Submit your first request with access notes so managers can triage quickly."
+              />
             ) : null}
 
             {visibleTenantRequests.map((request) => {
@@ -358,9 +386,12 @@ export function MaintenanceDashboard() {
                 <div key={request.id} className="rounded-lg border p-4">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
                     <p className="font-medium">{request.title}</p>
-                    <Badge variant="outline">{request.status.replace("_", " ")}</Badge>
-                    <Badge variant="secondary">{request.priority}</Badge>
-                    <Badge variant={sla.tone}>{sla.label}</Badge>
+                    <SemanticStatusBadge status={requestStatusTone(request.status)} label={formatLabel(request.status)} />
+                    <SemanticStatusBadge status={priorityTone(request.priority)} label={request.priority} />
+                    <SemanticStatusBadge
+                      status={sla.tone === "destructive" ? "error" : sla.tone === "outline" ? "warning" : "neutral"}
+                      label={sla.label}
+                    />
                   </div>
                   <div className="space-y-2">
                     {requestTimeline.length ? (
@@ -482,9 +513,9 @@ export function MaintenanceDashboard() {
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium">{request.title}</p>
-                      <Badge variant="outline">{request.status.replace("_", " ")}</Badge>
-                      <Badge variant="secondary">{request.priority}</Badge>
-                      <Badge variant="outline">{getSlaBucket(request.created_at)}</Badge>
+                      <SemanticStatusBadge status={requestStatusTone(request.status)} label={formatLabel(request.status)} />
+                      <SemanticStatusBadge status={priorityTone(request.priority)} label={request.priority} />
+                      <SemanticStatusBadge status="warning" label={getSlaBucket(request.created_at)} />
                     </div>
                     <p className="text-sm text-muted-foreground">{request.property_label ?? "Property n/a"} • {request.unit_label ?? "Unit n/a"}</p>
                   </button>
@@ -499,7 +530,11 @@ export function MaintenanceDashboard() {
               </CardHeader>
               <CardContent>
                 {!selectedRequest ? (
-                  <p className="text-sm text-muted-foreground">Select a request to begin triage.</p>
+                  <FlowStateCard
+                    variant="empty"
+                    title="No request selected"
+                    description="Pick a queue item to assign ownership, adjust status, and log an update."
+                  />
                 ) : (
                   <ManagerEditor
                     request={selectedRequest}
