@@ -199,18 +199,47 @@ export type Database = {
         title: string
         description: string
         priority: 'low' | 'normal' | 'high' | 'urgent'
+        severity: 'low' | 'medium' | 'high' | 'critical'
         status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
         category: string | null
         location: string | null
+        property_label: string | null
+        unit_label: string | null
+        preferred_access_times: Json | null
         requested_by: string
         assigned_to: string | null
         unit_id: string | null
+        sla_due_at: string | null
+        acknowledged_at: string | null
+        resolved_at: string | null
         created_at: string | null
         updated_at: string | null
         completed_at: string | null
         notes: string | null
         attachments: Json | null
         metadata: Json | null
+      }>
+      maintenance_request_updates: SupabaseTable<{
+        id: string
+        request_id: string
+        event_type:
+          | 'submitted'
+          | 'acknowledged'
+          | 'assigned'
+          | 'priority_changed'
+          | 'status_changed'
+          | 'comment'
+          | 'resolved'
+          | 'reopened'
+        previous_status: string | null
+        next_status: string | null
+        previous_priority: string | null
+        next_priority: string | null
+        actor_id: string | null
+        assignee_id: string | null
+        message: string | null
+        metadata: Json | null
+        created_at: string | null
       }>
       visitor_logs: SupabaseTable<{
         id: string
