@@ -32,4 +32,22 @@ describe("OnboardingProgress", () => {
     expect(screen.getByRole("link", { name: /1profile/i })).toHaveAttribute("href", "/onboarding?step=1")
     expect(screen.getByRole("link", { name: /6review/i })).toHaveAttribute("href", "/onboarding?step=6")
   })
+
+  it("marks locked steps as aria-disabled", () => {
+    render(
+      <OnboardingProgress
+        steps={[
+          { id: 1, label: "Profile", complete: true },
+          { id: 2, label: "Unit", complete: true },
+          { id: 3, label: "Rent" },
+          { id: 4, label: "Emergency", locked: true },
+          { id: 5, label: "Vehicle", locked: true },
+          { id: 6, label: "Review", locked: true },
+        ]}
+      />,
+    )
+
+    expect(screen.getByRole("link", { name: /4emergency/i })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("link", { name: /5vehicle/i })).toHaveAttribute("aria-disabled", "true")
+  })
 })

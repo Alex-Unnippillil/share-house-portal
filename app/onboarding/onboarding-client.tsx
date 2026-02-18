@@ -1,5 +1,6 @@
 "use client"
 
+import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useMemo, useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -37,6 +38,13 @@ type OnboardingClientProps = {
 
 type SaveState = "idle" | "saving" | "saved"
 
+type StepStatus = {
+  id: number
+  label: string
+  complete: boolean
+  locked?: boolean
+}
+
 const DRAFT_KEY = "onboarding-draft-v1"
 const TOTAL_STEPS = 6
 
@@ -44,6 +52,13 @@ function getStepFromSearchParam(raw: string | null) {
   const parsed = Number(raw)
   if (!Number.isFinite(parsed)) return 1
   return Math.min(Math.max(1, Math.floor(parsed)), TOTAL_STEPS)
+}
+
+const panelMotion = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: { duration: 0.2, ease: "easeOut" },
 }
 
 export function OnboardingClient({ initialData }: OnboardingClientProps) {
@@ -68,6 +83,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
 
   const [saveState, setSaveState] = useState<SaveState>("idle")
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [, setSaveTick] = useState(0)
   const [resumedFromDraft, setResumedFromDraft] = useState(false)
   const [reviewConfirmed, setReviewConfirmed] = useState(false)
 
@@ -112,21 +128,67 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
           vehiclePlate,
         }),
       )
-      const now = new Date()
-      setLastSavedAt(now)
+      setLastSavedAt(new Date())
       setSaveState("saved")
     }, 700)
 
     return () => window.clearTimeout(timeout)
   }, [unitId, rentShare, emergencyName, emergencyPhone, emergencyRelationship, vehicleMake, vehicleModel, vehicleColor, vehiclePlate])
 
-  const relativeSavedLabel = useMemo(() => {
+  useEffect(() => {
+    const interval = window.setInterval(() => setSaveTick((value) => value + 1), 1000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  const steps: StepStatus[] = useMemo(
+    () => [
+      { id: 1, label: "Profile", complete: avatarUploaded },
+      { id: 2, label: "Unit", complete: Boolean(unitId.trim()) },
+      { id: 3, label: "Rent", complete: Number(rentShare) > 0 },
+      { id: 4, label: "Emergency", complete: Boolean(emergencyName && emergencyPhone && emergencyRelationship) },
+      { id: 5, label: "Vehicle", complete: Boolean(vehicleMake && vehicleModel && vehicleColor && vehiclePlate) },
+      { id: 6, label: "Review", complete: reviewConfirmed },
+    ],
+    [
+      avatarUploaded,
+      unitId,
+      rentShare,
+      emergencyName,
+      emergencyPhone,
+      emergencyRelationship,
+      vehicleMake,
+      vehicleModel,
+      vehicleColor,
+      vehiclePlate,
+      reviewConfirmed,
+    ],
+  )
+
+  const furthestAvailableStep = useMemo(() => {
+    const firstIncomplete = steps.find((step) => !step.complete)
+    if (!firstIncomplete) return TOTAL_STEPS
+    return firstIncomplete.id
+  }, [steps])
+
+  const gatedSteps = useMemo(
+    () => steps.map((step) => ({ ...step, locked: step.id > furthestAvailableStep + 1 })),
+    [furthestAvailableStep, steps],
+  )
+
+  useEffect(() => {
+    if (currentStep > furthestAvailableStep + 1) {
+      router.replace(`/onboarding?step=${furthestAvailableStep + 1}`)
+      setStepErrorMessage("Please complete earlier steps before jumping ahead.")
+    }
+  }, [currentStep, furthestAvailableStep, router])
+
+  const relativeSavedLabel = (() => {
     if (!lastSavedAt) return "Not saved yet"
     const secondsAgo = Math.floor((Date.now() - lastSavedAt.getTime()) / 1000)
     if (secondsAgo < 5) return "Saved just now"
     if (secondsAgo < 60) return `Saved ${secondsAgo}s ago`
     return `Saved ${Math.floor(secondsAgo / 60)}m ago`
-  }, [lastSavedAt])
+  })()
 
   function goToStep(step: number) {
     router.replace(`/onboarding?step=${step}`, { scroll: true })
@@ -180,7 +242,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
         return
       }
 
-      setStepSuccessMessage(currentStep === 6 ? "All information confirmed." : `${response.message} Step validated.`)
+      setStepSuccessMessage(currentStep === 6 ? "All information confirmed. Onboarding complete." : `${response.message} Step validated.`)
       if (currentStep < TOTAL_STEPS) {
         goToStep(currentStep + 1)
       } else {
@@ -188,15 +250,6 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
       }
     })
   }
-
-  const steps = [
-    { id: 1, label: "Profile", complete: avatarUploaded },
-    { id: 2, label: "Unit", complete: Boolean(unitId.trim()) },
-    { id: 3, label: "Rent", complete: Number(rentShare) > 0 },
-    { id: 4, label: "Emergency", complete: Boolean(emergencyName && emergencyPhone && emergencyRelationship) },
-    { id: 5, label: "Vehicle", complete: Boolean(vehicleMake && vehicleModel && vehicleColor && vehiclePlate) },
-    { id: 6, label: "Review", complete: reviewConfirmed },
-  ]
 
   const completionPercent = Math.round((steps.filter((step) => step.complete).length / steps.length) * 100)
 
@@ -214,144 +267,170 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
                 Complete each step to unlock resident messaging, bookings, and payment automation.
               </CardDescription>
               <Progress value={completionPercent} />
-              <OnboardingProgress steps={steps} />
+              <OnboardingProgress steps={gatedSteps} />
             </CardHeader>
           </Card>
 
-          {currentStep === 1 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Step 1 · Profile & assets</CardTitle>
-                <CardDescription>Upload your profile image and any supporting lease documents.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {initialData.profile.avatarSignedUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={initialData.profile.avatarSignedUrl} alt="Current avatar" className="size-16 rounded-full object-cover" />
-                ) : null}
-                <form
-                  className="space-y-2"
-                  action={(formData) => {
-                    formData.set("kind", "avatar")
-                    startTransition(async () => {
-                      const response = await uploadOnboardingAsset(formData)
-                      if (response.ok) {
-                        setAvatarUploaded(true)
-                        setStepSuccessMessage("Avatar uploaded successfully.")
-                        setStepErrorMessage("")
-                      } else {
-                        setStepErrorMessage(response.message)
-                      }
-                    })
-                  }}
-                >
-                  <Label htmlFor="avatar">Upload avatar</Label>
-                  <Input id="avatar" name="file" type="file" accept="image/*" required />
-                  <Button type="submit" size="sm" disabled={pending}>Upload avatar</Button>
-                </form>
+          <AnimatePresence initial={false} mode="wait">
+            {currentStep === 1 ? (
+              <motion.div key="step-1" {...panelMotion}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Step 1 · Profile & assets</CardTitle>
+                    <CardDescription>Upload your profile image and supporting lease documents.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {initialData.profile.avatarSignedUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={initialData.profile.avatarSignedUrl} alt="Current avatar" className="size-16 rounded-full object-cover" />
+                    ) : null}
+                    <form
+                      className="space-y-2"
+                      action={(formData) => {
+                        formData.set("kind", "avatar")
+                        startTransition(async () => {
+                          const response = await uploadOnboardingAsset(formData)
+                          if (response.ok) {
+                            setAvatarUploaded(true)
+                            setStepSuccessMessage("Avatar uploaded successfully.")
+                            setStepErrorMessage("")
+                            return
+                          }
 
-                <form
-                  className="space-y-2"
-                  action={(formData) => {
-                    formData.set("kind", "document")
-                    startTransition(async () => {
-                      const response = await uploadOnboardingAsset(formData)
-                      if (response.ok) {
-                        setDocumentCount((value) => value + 1)
-                        setStepSuccessMessage("Document uploaded successfully.")
-                        setStepErrorMessage("")
-                      } else {
-                        setStepErrorMessage(response.message)
-                      }
-                    })
-                  }}
-                >
-                  <Label htmlFor="document">Upload personal document</Label>
-                  <Input id="document" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
-                  <Button type="submit" size="sm" variant="outline" disabled={pending}>Upload document</Button>
-                </form>
-              </CardContent>
-            </Card>
-          ) : null}
+                          setStepErrorMessage(response.message)
+                        })
+                      }}
+                    >
+                      <Label htmlFor="avatar">Upload avatar</Label>
+                      <Input id="avatar" name="file" type="file" accept="image/*" required />
+                      <Button type="submit" size="sm" disabled={pending}>Upload avatar</Button>
+                    </form>
 
-          {currentStep === 2 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Step 2 · Unit assignment</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Label htmlFor="unit-id">Unit ID</Label>
-                <Input id="unit-id" value={unitId} onChange={(event) => setUnitId(event.target.value)} placeholder="B-402" />
-              </CardContent>
-            </Card>
-          ) : null}
+                    <form
+                      className="space-y-2"
+                      action={(formData) => {
+                        formData.set("kind", "document")
+                        startTransition(async () => {
+                          const response = await uploadOnboardingAsset(formData)
+                          if (response.ok) {
+                            setDocumentCount((value) => value + 1)
+                            setStepSuccessMessage("Document uploaded successfully.")
+                            setStepErrorMessage("")
+                            return
+                          }
 
-          {currentStep === 3 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Step 3 · Rent share</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Label htmlFor="rent-share">Rent share (%)</Label>
-                <Input id="rent-share" inputMode="decimal" value={rentShare} onChange={(event) => setRentShare(event.target.value)} placeholder="25" />
-              </CardContent>
-            </Card>
-          ) : null}
+                          setStepErrorMessage(response.message)
+                        })
+                      }}
+                    >
+                      <Label htmlFor="document">Upload personal document</Label>
+                      <Input id="document" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                      <Button type="submit" size="sm" variant="outline" disabled={pending}>Upload document</Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : null}
 
-          {currentStep === 4 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Step 4 · Emergency contacts</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <Input value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
-                <Input value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number" />
-                <Input value={emergencyRelationship} onChange={(event) => setEmergencyRelationship(event.target.value)} placeholder="Relationship" />
-              </CardContent>
-            </Card>
-          ) : null}
+            {currentStep === 2 ? (
+              <motion.div key="step-2" {...panelMotion}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Step 2 · Unit assignment</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Label htmlFor="unit-id">Unit ID</Label>
+                    <Input id="unit-id" value={unitId} onChange={(event) => setUnitId(event.target.value)} placeholder="B-402" />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : null}
 
-          {currentStep === 5 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Step 5 · Vehicle details</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <Input value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
-                <Input value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
-                <Input value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
-                <Input value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate" />
-              </CardContent>
-            </Card>
-          ) : null}
+            {currentStep === 3 ? (
+              <motion.div key="step-3" {...panelMotion}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Step 3 · Rent share</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Label htmlFor="rent-share">Rent share (%)</Label>
+                    <Input
+                      id="rent-share"
+                      inputMode="decimal"
+                      value={rentShare}
+                      onChange={(event) => setRentShare(event.target.value)}
+                      placeholder="25"
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : null}
 
-          {currentStep === 6 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Final review</CardTitle>
-                <CardDescription>Confirm all submitted fields before completing onboarding.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <div className="grid gap-2 rounded-md border p-3">
-                  <p><span className="font-medium">Email:</span> {initialData.user.email}</p>
-                  <p><span className="font-medium">Unit:</span> {unitId || "Not provided"}</p>
-                  <p><span className="font-medium">Rent share:</span> {rentShare || "Not provided"}%</p>
-                  <p><span className="font-medium">Emergency contact:</span> {emergencyName || "-"} / {emergencyPhone || "-"} ({emergencyRelationship || "-"})</p>
-                  <p><span className="font-medium">Vehicle:</span> {vehicleMake || "-"} {vehicleModel || ""}, {vehicleColor || "-"}, {vehiclePlate || "-"}</p>
-                  <p><span className="font-medium">Documents uploaded:</span> {documentCount}</p>
-                </div>
-                <label className="flex items-start gap-2 text-sm">
-                  <Checkbox checked={reviewConfirmed} onCheckedChange={(checked) => setReviewConfirmed(Boolean(checked))} />
-                  <span>I confirm the above information is accurate and ready for submission.</span>
-                </label>
-                {reviewConfirmed ? (
-                  <SmartLink href="/dashboard" intent="navigation" className="inline-block text-sm text-primary underline">
-                    Continue to dashboard
-                  </SmartLink>
-                ) : null}
-              </CardContent>
-            </Card>
-          ) : null}
+            {currentStep === 4 ? (
+              <motion.div key="step-4" {...panelMotion}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Step 4 · Emergency contacts</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-3">
+                    <Input value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
+                    <Input value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number" />
+                    <Input
+                      value={emergencyRelationship}
+                      onChange={(event) => setEmergencyRelationship(event.target.value)}
+                      placeholder="Relationship"
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : null}
+
+            {currentStep === 5 ? (
+              <motion.div key="step-5" {...panelMotion}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Step 5 · Vehicle details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-3">
+                    <Input value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
+                    <Input value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
+                    <Input value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
+                    <Input value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate" />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : null}
+
+            {currentStep === 6 ? (
+              <motion.div key="step-6" {...panelMotion}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Final review</CardTitle>
+                    <CardDescription>Confirm all submitted fields before completing onboarding.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm">
+                    <div className="grid gap-2 rounded-md border p-3">
+                      <p><span className="font-medium">Email:</span> {initialData.user.email}</p>
+                      <p><span className="font-medium">Unit:</span> {unitId || "Not provided"}</p>
+                      <p><span className="font-medium">Rent share:</span> {rentShare || "Not provided"}%</p>
+                      <p><span className="font-medium">Emergency contact:</span> {emergencyName || "-"} / {emergencyPhone || "-"} ({emergencyRelationship || "-"})</p>
+                      <p><span className="font-medium">Vehicle:</span> {vehicleMake || "-"} {vehicleModel || ""}, {vehicleColor || "-"}, {vehiclePlate || "-"}</p>
+                      <p><span className="font-medium">Documents uploaded:</span> {documentCount}</p>
+                    </div>
+                    <label className="flex items-start gap-2 text-sm">
+                      <Checkbox checked={reviewConfirmed} onCheckedChange={(checked) => setReviewConfirmed(Boolean(checked))} />
+                      <span>I confirm the above information is accurate and ready for submission.</span>
+                    </label>
+                    {reviewConfirmed ? (
+                      <SmartLink href="/dashboard" intent="navigation" className="inline-block text-sm text-primary underline">
+                        Continue to dashboard
+                      </SmartLink>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
           <div className="flex items-center justify-between">
             <Button variant="outline" disabled={currentStep === 1 || pending} onClick={() => goToStep(currentStep - 1)}>
@@ -362,8 +441,32 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
             </Button>
           </div>
 
-          {stepErrorMessage ? <p className="text-sm text-destructive">{stepErrorMessage}</p> : null}
-          {stepSuccessMessage ? <p className="text-sm text-emerald-600 dark:text-emerald-400">{stepSuccessMessage}</p> : null}
+          <AnimatePresence initial={false}>
+            {stepErrorMessage ? (
+              <motion.p
+                key="step-error"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="text-sm text-destructive"
+              >
+                {stepErrorMessage}
+              </motion.p>
+            ) : null}
+          </AnimatePresence>
+          <AnimatePresence initial={false}>
+            {stepSuccessMessage ? (
+              <motion.p
+                key="step-success"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="text-sm text-emerald-600 dark:text-emerald-400"
+              >
+                {stepSuccessMessage}
+              </motion.p>
+            ) : null}
+          </AnimatePresence>
         </div>
 
         <aside className="sticky top-4 order-first rounded-lg border bg-card p-4 text-sm shadow-sm lg:order-none">
@@ -377,9 +480,13 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
             <li>Vehicle set: {vehicleMake && vehicleModel && vehicleColor && vehiclePlate ? "Yes" : "No"}</li>
             <li>Documents uploaded: {documentCount}</li>
           </ul>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <motion.p
+            className="mt-3 text-xs text-muted-foreground"
+            animate={saveState === "saving" ? { opacity: [0.4, 1, 0.4] } : { opacity: 1 }}
+            transition={saveState === "saving" ? { repeat: Infinity, duration: 0.9 } : { duration: 0.2 }}
+          >
             {saveState === "saving" ? "Saving draft…" : relativeSavedLabel}
-          </p>
+          </motion.p>
           {resumedFromDraft ? <p className="mt-1 text-xs text-primary">Resumed from your last saved draft.</p> : null}
         </aside>
       </div>

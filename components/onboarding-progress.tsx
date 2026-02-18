@@ -1,5 +1,6 @@
 "use client"
 
+import { motion } from "framer-motion"
 import { useMemo } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
@@ -47,7 +48,8 @@ export default function OnboardingProgress({ steps = DEFAULT_STEPS }: { steps?: 
                 href={href}
                 intent="navigation"
                 aria-current={isCurrent ? "step" : undefined}
-                className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition sm:flex-col sm:items-start ${
+                aria-disabled={step.locked ? "true" : undefined}
+                className={`relative flex items-center gap-2 overflow-hidden rounded-md border px-2 py-1.5 text-xs transition sm:flex-col sm:items-start ${
                   isCurrent
                     ? "border-primary bg-primary/10 text-primary"
                     : isComplete
@@ -55,8 +57,15 @@ export default function OnboardingProgress({ steps = DEFAULT_STEPS }: { steps?: 
                       : "border-border text-muted-foreground"
                 } ${step.locked ? "pointer-events-none opacity-60" : ""}`}
               >
+                {isCurrent ? (
+                  <motion.span
+                    layoutId="active-onboarding-step"
+                    className="absolute inset-0 rounded-md bg-primary/5"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                ) : null}
                 <span
-                  className={`inline-flex size-5 items-center justify-center rounded-full text-[11px] font-semibold ${
+                  className={`relative inline-flex size-5 items-center justify-center rounded-full text-[11px] font-semibold ${
                     isCurrent
                       ? "bg-primary text-primary-foreground"
                       : isComplete
@@ -66,7 +75,7 @@ export default function OnboardingProgress({ steps = DEFAULT_STEPS }: { steps?: 
                 >
                   {step.id}
                 </span>
-                <span className="truncate">{step.label}</span>
+                <span className="relative truncate">{step.label}</span>
               </SmartLink>
             </li>
           )
