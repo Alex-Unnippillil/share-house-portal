@@ -1,8 +1,13 @@
 import { Suspense } from "react"
-
 import { format, parseISO } from "date-fns"
 import { CheckCircle2 } from "lucide-react"
 
+import {
+  calculateOutstanding,
+  getNextOutstandingCharge,
+} from "@/lib/payments/catch-up"
+import { formatCurrency } from "@/lib/payments/currency"
+import { describeAutopayStatus } from "@/lib/payments/status"
 import {
   Card,
   CardContent,
@@ -10,29 +15,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { StripeActions } from "./_components/stripe-actions"
-import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
-import { PaymentStatusFeed } from "./_components/payment-status-feed"
-import { ContributionSummaryCard } from "./_components/contribution-summary-card"
-import { RoommateLedger } from "./_components/roommate-ledger"
-import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
 import {
-  calculateOutstanding,
-  getNextOutstandingCharge,
-} from "@/lib/payments/catch-up"
-import { formatCurrency } from "@/lib/payments/currency"
-import { describeAutopayStatus } from "@/lib/payments/status"
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageSection,
+  PageTitle,
+} from "@/components/ui/page-layout"
 
-import {
-  loadCatchUpBalances,
-  loadReconciliationDashboardData,
-  loadReceiptHistory,
-  loadRoommateLedgers,
-} from "./loaders"
+import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
+import { ContributionSummaryCard } from "./_components/contribution-summary-card"
+import { PaymentStatusFeed } from "./_components/payment-status-feed"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 import { ReconciliationDashboardCard } from "./_components/reconciliation-dashboard-card"
-
+import { RoommateLedger } from "./_components/roommate-ledger"
+import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
+import { StripeActions } from "./_components/stripe-actions"
+import {
+  loadCatchUpBalances,
+  loadReceiptHistory,
+  loadReconciliationDashboardData,
+  loadRoommateLedgers,
+} from "./loaders"
 
 const paymentHighlights = [
   {
@@ -82,12 +86,12 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
-  const [catchUpBalances, receiptHistory, reconciliationData] = await Promise.all([
-    loadCatchUpBalances(),
-    loadReceiptHistory(),
-    loadReconciliationDashboardData(),
-
-  ])
+  const [catchUpBalances, receiptHistory, reconciliationData] =
+    await Promise.all([
+      loadCatchUpBalances(),
+      loadReceiptHistory(),
+      loadReconciliationDashboardData(),
+    ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
     const nextCharge = getNextOutstandingCharge(balance.charges)
@@ -96,17 +100,17 @@ export default async function PaymentsPage() {
 
   const totalOutstanding = outstandingSummaries.reduce(
     (sum, item) => sum + item.outstanding,
-    0,
+    0
   )
 
   const activeAutopays = catchUpBalances.filter(
-    (balance) => balance.autopayStatus === "active",
+    (balance) => balance.autopayStatus === "active"
   ).length
   const pausedAutopays = catchUpBalances.filter(
-    (balance) => balance.autopayStatus === "paused",
+    (balance) => balance.autopayStatus === "paused"
   ).length
   const disabledAutopays = catchUpBalances.filter(
-    (balance) => balance.autopayStatus === "disabled",
+    (balance) => balance.autopayStatus === "disabled"
   ).length
 
   const autopCoveragePercentage =
@@ -117,20 +121,18 @@ export default async function PaymentsPage() {
   const defaultCurrency = catchUpBalances[0]?.currency ?? "USD"
 
   const roommateSummaries = [...outstandingSummaries].sort(
-    (a, b) => b.outstanding - a.outstanding,
+    (a, b) => b.outstanding - a.outstanding
   )
 
   return (
-    <div className="container max-w-5xl space-y-10 py-12">
-      <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Payments</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Manage rent, deposits, and roommate contributions with Stripe-powered autopay and real-time status updates.
-          </p>
-        </div>
-        <Separator />
-      </header>
+    <PageContainer className="max-w-5xl space-y-stack-lg">
+      <PageHeader>
+        <PageTitle>Payments</PageTitle>
+        <PageDescription>
+          Manage rent, deposits, and roommate contributions with Stripe-powered
+          autopay and real-time status updates.
+        </PageDescription>
+      </PageHeader>
       <div className="grid gap-6 md:grid-cols-2">
         {paymentHighlights.map((item) => (
           <Card key={item.title} className="h-full">
@@ -151,13 +153,14 @@ export default async function PaymentsPage() {
           </Card>
         ))}
       </div>
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <PageSection className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Catch-up snapshot</CardTitle>
               <CardDescription>
-                Monitor outstanding balances and autopay coverage across the unit.
+                Monitor outstanding balances and autopay coverage across the
+                unit.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -212,14 +215,21 @@ export default async function PaymentsPage() {
                   className="flex flex-wrap items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4"
                 >
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">{balance.roommateName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {balance.unitLabel} · {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
+                    <p className="text-sm font-medium">
+                      {balance.roommateName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrency(
+                      {balance.unitLabel} ·{" "}
+                      {describeAutopayStatus(
+                        balance.autopayStatus,
+                        balance.autopayDay
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Last payment {formatFullDate(balance.lastPaymentDate)} ·{" "}
+                      {formatCurrency(
                         balance.lastPaymentAmount,
-                        balance.currency,
+                        balance.currency
                       )}
                     </p>
                   </div>
@@ -229,10 +239,13 @@ export default async function PaymentsPage() {
                     </p>
                     {nextCharge ? (
                       <p className="text-xs text-muted-foreground">
-                        Next: {nextCharge.description} due {format(parseISO(nextCharge.dueDate), "MMM d")}
+                        Next: {nextCharge.description} due{" "}
+                        {format(parseISO(nextCharge.dueDate), "MMM d")}
                       </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No outstanding charges</p>
+                      <p className="text-xs text-muted-foreground">
+                        No outstanding charges
+                      </p>
                     )}
                   </div>
                 </div>
@@ -245,22 +258,34 @@ export default async function PaymentsPage() {
             <CardHeader>
               <CardTitle>ACH settlement states</CardTitle>
               <CardDescription>
-                Understand how ACH processing affects autopay and when follow-up may be required.
+                Understand how ACH processing affects autopay and when follow-up
+                may be required.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <p>
-                <span className="font-medium text-foreground">Pending settlement:</span> ACH transfers can remain pending for 3–5 business days before final settlement.
+                <span className="font-medium text-foreground">
+                  Pending settlement:
+                </span>{" "}
+                ACH transfers can remain pending for 3–5 business days before
+                final settlement.
               </p>
               <p>
-                <span className="font-medium text-foreground">Failed settlement:</span> If a debit returns (for example NSF or closed account), autopay is paused and the roommate must relink a bank account or pay manually.
+                <span className="font-medium text-foreground">
+                  Failed settlement:
+                </span>{" "}
+                If a debit returns (for example NSF or closed account), autopay
+                is paused and the roommate must relink a bank account or pay
+                manually.
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
               <CardTitle>Pay with Stripe</CardTitle>
-              <CardDescription>Create a quick checkout or open Billing Portal</CardDescription>
+              <CardDescription>
+                Create a quick checkout or open Billing Portal
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <StripeActions />
@@ -268,16 +293,17 @@ export default async function PaymentsPage() {
           </Card>
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
-      </section>
+      </PageSection>
       <Suspense fallback={<RoommateLedgerSkeleton />}>
         <RoommateLedgerSection />
       </Suspense>
       <ReceiptHistoryCard receipts={receiptHistory} />
       {reconciliationData.canManagePayments ? (
-        <ReconciliationDashboardCard failedPayments={reconciliationData.failedPayments} />
+        <ReconciliationDashboardCard
+          failedPayments={reconciliationData.failedPayments}
+        />
       ) : null}
-
-    </div>
+    </PageContainer>
   )
 }
 
