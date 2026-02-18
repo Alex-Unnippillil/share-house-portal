@@ -237,39 +237,15 @@ Include:
 
 ---
 
-## 5) Launch checklist + post-launch retrospective template
+## 5) Launch checklist location + post-launch retrospective template
 
-### Launch execution checklist
+### Launch checklist status (deprecated in this file)
 
-#### T-7 to T-3 days
+The launch execution checklist previously maintained in this playbook has been **deprecated** and moved to the canonical checklist:
 
-- [ ] Finalize rollout wave roster and designated support owners.
-- [ ] Confirm production environment variables, webhook secrets, and feature flags.
-- [ ] Validate monitoring dashboards and alert routing.
-- [ ] Complete property-manager onboarding sessions and certification checks.
-- [ ] Run go-live simulation for payment, document, and booking issue scenarios.
+- `docs/testing/launch-audit-checklist.md`
 
-#### T-2 to T-0 days
-
-- [ ] Run release candidate smoke tests in staging and production canary.
-- [ ] Confirm support staffing schedule and escalation coverage.
-- [ ] Publish tenant communication (what's new, known limits, how to get help).
-- [ ] Freeze non-essential deployments.
-- [ ] Secure final go/no-go approval from rollout committee.
-
-#### Launch day
-
-- [ ] Enable features for target cohort.
-- [ ] Monitor real-time dashboards for first 2 hours (war-room mode).
-- [ ] Review inbound support hourly and apply escalation rules.
-- [ ] Publish end-of-day launch status summary.
-
-#### Days 1-30 (hypercare)
-
-- [ ] Maintain daily standup + triage cadence.
-- [ ] Track SLA adherence and CSAT.
-- [ ] Ship prioritized fixes with visible release notes.
-- [ ] Conduct week-2 and week-4 health reviews.
+Use that document for all current and future launch tasks, dependencies, priority tiers, and evidence/sign-off requirements.
 
 ### Post-launch retrospective template
 
