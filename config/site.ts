@@ -1,4 +1,4 @@
-import { getMainNavigationItems } from "@/config/navigation"
+import { publicNav, roleNavigation } from "@/config/navigation"
 
 export type SiteConfig = typeof siteConfig
 
@@ -6,7 +6,7 @@ export const siteConfig = {
   name: "Roomsily",
   description:
     "www.roomsily is the modern co-living HQ for effortless rent, amenities, and roommate communication.",
-  mainNav: getMainNavigationItems("public"),
+  mainNav: [...publicNav, ...roleNavigation.tenant.primaryNav],
   links: {
     login: "/auth",
     signup: "/onboarding",

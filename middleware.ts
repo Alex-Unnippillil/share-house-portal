@@ -79,7 +79,7 @@ export async function middleware(request: NextRequest) {
 
   if (!user && requiresAuthentication(pathname)) {
     const signInUrl = request.nextUrl.clone()
-    signInUrl.pathname = '/auth/signin'
+    signInUrl.pathname = '/auth'
     signInUrl.searchParams.set('redirectTo', pathname)
 
     return NextResponse.redirect(signInUrl)
