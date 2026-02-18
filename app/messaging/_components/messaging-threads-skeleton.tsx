@@ -50,7 +50,7 @@ export function MessagingThreadsSkeleton() {
                       {Array.from({ length: 3 }).map((__, pillIndex) => (
                         <span
                           key={pillIndex}
-                          className="h-6 w-6 animate-pulse rounded-full bg-muted/60"
+                          className="size-6 animate-pulse rounded-full bg-muted/60"
                         />
                       ))}
                     </div>
@@ -114,7 +114,7 @@ export function MessagingThreadsSkeleton() {
               <div key={index} className="space-y-4">
                 <article className="space-y-4 rounded-lg border border-border/60 bg-background/90 p-4" aria-hidden>
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 animate-pulse rounded-full bg-muted/60" />
+                    <div className="size-10 animate-pulse rounded-full bg-muted/60" />
                     <div className="space-y-2">
                       <div className="h-4 w-32 animate-pulse rounded bg-muted" />
                       <div className="h-3 w-28 animate-pulse rounded bg-muted/60" />
@@ -168,7 +168,7 @@ export function MessagingThreadsSkeleton() {
                 className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3"
                 aria-hidden
               >
-                <div className="h-8 w-8 animate-pulse rounded-full bg-muted/60" />
+                <div className="size-8 animate-pulse rounded-full bg-muted/60" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 w-40 animate-pulse rounded bg-muted" />
                   <div className="h-3 w-48 animate-pulse rounded bg-muted/60" />
