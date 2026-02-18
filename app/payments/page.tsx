@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { StripeActions } from "./_components/stripe-actions"
 import {
   PageContainer,
   PageDescription,
@@ -37,6 +38,10 @@ import {
   loadReconciliationDashboardData,
   loadRoommateLedgers,
 } from "./loaders"
+import { ReceiptHistoryCard } from "./_components/receipt-history-card"
+import { ReconciliationDashboardCard } from "./_components/reconciliation-dashboard-card"
+import { PageShell } from "@/components/layout/page-shell"
+
 
 const paymentHighlights = [
   {
@@ -125,6 +130,12 @@ export default async function PaymentsPage() {
   )
 
   return (
+    <PageShell
+      title="Payments"
+      description="Manage rent, deposits, and roommate contributions with Stripe-powered autopay and real-time status updates."
+      maxWidthClassName="max-w-5xl"
+      className="space-y-10 py-10"
+    >
     <PageContainer className="max-w-5xl space-y-stack-lg">
       <PageHeader>
         <PageTitle>Payments</PageTitle>
@@ -303,6 +314,8 @@ export default async function PaymentsPage() {
           failedPayments={reconciliationData.failedPayments}
         />
       ) : null}
+
+    </PageShell>
     </PageContainer>
   )
 }

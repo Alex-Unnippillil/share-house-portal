@@ -22,6 +22,8 @@ import {
   SectionTitle,
 } from "@/components/ui/page-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FlowStateCard } from "@/components/feedback/flow-state"
+import { PageShell } from "@/components/layout/page-shell"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
@@ -31,6 +33,11 @@ const amenitiesByProperty = groupAmenitiesByProperty()
 
 export default function BookingsPage() {
   return (
+    <PageShell
+      title="Amenity Bookings"
+      description="Browse amenity catalogs by property and book directly inside Cal.com embeds. Bookings are mirrored to Supabase for policy checks, conflict detection, and role-based calendars."
+      maxWidthClassName="max-w-7xl"
+    >
     <PageContainer>
       <PageHeader>
         <PageTitle>Amenity Bookings</PageTitle>
@@ -43,18 +50,11 @@ export default function BookingsPage() {
 
       <Suspense
         fallback={
-          <div className="grid gap-4 md:grid-cols-3">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-4 w-3/4 rounded bg-muted"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-1/2 rounded bg-muted"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <FlowStateCard
+            variant="loading"
+            title="Loading booking analytics"
+            description="We're pulling utilization, conflict, and upcoming reservation snapshots for this property."
+          />
         }
       >
         <BookingStats />
@@ -163,6 +163,7 @@ export default function BookingsPage() {
           </CardContent>
         </Card>
       </div>
+    </PageShell>
     </PageContainer>
   )
 }

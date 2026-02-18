@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 
+import { PageShell } from "@/components/layout/page-shell"
 import {
   PageContainer,
   PageDescription,
@@ -12,6 +13,11 @@ import { MessagingThreadsSkeleton } from "./_components/messaging-threads-skelet
 
 export default function MessagingPage() {
   return (
+    <PageShell
+      title="Messaging"
+      description="Organize roommate discussions by topic, capture reactions, and close the loop on decisions with polls and shared attachments."
+      maxWidthClassName="max-w-6xl"
+    >
     <PageContainer className="max-w-6xl">
       <PageHeader>
         <PageTitle>Messaging</PageTitle>
@@ -24,6 +30,7 @@ export default function MessagingPage() {
       <Suspense fallback={<MessagingThreadsSkeleton />}>
         <MessagingThreadsShell />
       </Suspense>
+    </PageShell>
     </PageContainer>
   )
 }

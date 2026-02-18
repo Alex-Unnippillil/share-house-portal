@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { FileText, Users, Clock, Upload } from "lucide-react"
+import { FlowStateCard } from "@/components/feedback/flow-state"
+import { PageShell } from "@/components/layout/page-shell"
 import { UploadDocumentDialog } from "./components/upload-document-dialog"
 import { DocumentsStats } from "./components/documents-stats"
 import { DocumentsWorkspace } from "./components/documents-workspace"
@@ -9,41 +10,36 @@ import { TenantHistoryTimelines } from "./components/tenant-history-timelines"
 
 export default function DocumentsPage() {
   return (
-    <div className="container max-w-7xl space-y-8 py-8">
-      <header className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
-            <p className="text-base text-muted-foreground sm:text-lg">
-              Manage leases, notices, and account files with secure access, version history, and audit tracking.
-            </p>
-          </div>
-          <UploadDocumentDialog />
-        </div>
-        <Separator />
-      </header>
+    <PageShell
+      title="Documents"
+      description="Manage leases, notices, and account files with secure access, version history, and audit tracking."
+      maxWidthClassName="max-w-7xl"
+      action={<UploadDocumentDialog />}
+    >
 
-      <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-1/2 rounded bg-muted"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>}>
+      <Suspense
+        fallback={
+          <FlowStateCard
+            variant="loading"
+            title="Loading document metrics"
+            description="We are syncing lease health, signature completion, and audit activity."
+          />
+        }
+      >
         <DocumentsStats />
       </Suspense>
 
       <DocumentsWorkspace />
 
-      <Suspense fallback={<div className="grid gap-6 lg:grid-cols-2">
-        <Card className="h-64 animate-pulse" />
-        <Card className="h-64 animate-pulse" />
-      </div>}>
+      <Suspense
+        fallback={
+          <FlowStateCard
+            variant="loading"
+            title="Building tenant timeline"
+            description="Gathering signature history and payment-linked milestones for each lease."
+          />
+        }
+      >
         <TenantHistoryTimelines />
       </Suspense>
 
@@ -104,6 +100,6 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }
