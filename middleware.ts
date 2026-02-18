@@ -3,7 +3,24 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import {
+  isPublicRoute,
+  isRouteAllowedForRole,
+  requiresAuthentication,
+  resolveSessionRole,
+} from '@/lib/auth-rbac'
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    })
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -56,20 +73,37 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user && requiresAuthentication(pathname)) {
+    const signInUrl = request.nextUrl.clone()
+    signInUrl.pathname = '/auth/signin'
+    signInUrl.searchParams.set('redirectTo', pathname)
+
+    return NextResponse.redirect(signInUrl)
+  }
+
+  if (!user) {
+    return response
+  }
+
+  const role = await resolveSessionRole(supabase, user)
+
+  if (!isRouteAllowedForRole(pathname, role)) {
+    const deniedUrl = request.nextUrl.clone()
+    deniedUrl.pathname = '/dashboard'
+    deniedUrl.searchParams.set('denied', '1')
+
+    return NextResponse.redirect(deniedUrl)
+  }
 
   return response
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
     {
       source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
       missing: [
