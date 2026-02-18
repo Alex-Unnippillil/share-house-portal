@@ -65,7 +65,8 @@ export function toBookingInsert(payload: CalcomWebhookPayload): TablesInsert<"bo
     source_event_type_id: booking.eventTypeId ? String(booking.eventTypeId) : null,
     source_payload: payload as unknown as Database["public"]["Tables"]["bookings"]["Row"]["source_payload"],
     recurrence_id: booking.recurringEventId ?? null,
-    recurrence_rule: (booking.recurrence ?? null) as Json | null,
+    recurrence_rule:
+      (booking.recurrence ?? null) as Database["public"]["Tables"]["bookings"]["Row"]["recurrence_rule"],
     cancelled_at: eventName === "BOOKING_CANCELLED" ? new Date().toISOString() : null,
     cancellation_reason: booking.cancellationReason ?? null,
   }
