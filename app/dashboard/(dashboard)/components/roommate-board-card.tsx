@@ -1,25 +1,29 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getRoommateUpdates } from "../data"
-import { Badge } from "@/components/ui/badge"
-import SmartLink from "@/components/navigation/SmartLink"
 import { MessageSquare } from "lucide-react"
 
-const topicCopy: Record<"maintenance" | "announcement" | "logistics", { label: string; variant: "outline" | "secondary" | "default" }>
-  = {
-    maintenance: {
-      label: "Maintenance",
-      variant: "outline",
-    },
-    announcement: {
-      label: "Announcement",
-      variant: "secondary",
-    },
-    logistics: {
-      label: "Logistics",
-      variant: "default",
-    },
-  }
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import SmartLink from "@/components/navigation/SmartLink"
+
+import { getRoommateUpdates } from "../data"
+
+const topicCopy: Record<
+  "maintenance" | "announcement" | "logistics",
+  { label: string; variant: "outline" | "secondary" | "default" }
+> = {
+  maintenance: {
+    label: "Maintenance",
+    variant: "outline",
+  },
+  announcement: {
+    label: "Announcement",
+    variant: "secondary",
+  },
+  logistics: {
+    label: "Logistics",
+    variant: "default",
+  },
+}
 
 function formatRelativeTime(timestamp: string) {
   const now = new Date()
@@ -71,15 +75,23 @@ export async function RoommateBoardCard() {
                     <span>{update.author}</span>
                     <Badge variant={variant}>{label}</Badge>
                   </div>
-                  <span className="text-xs text-muted-foreground">{formatRelativeTime(update.timestamp)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatRelativeTime(update.timestamp)}
+                  </span>
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{update.message}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {update.message}
+                </p>
               </li>
             )
           })}
         </ul>
 
-        <SmartLink href="/messaging" className="inline-flex" intent="navigation">
+        <SmartLink
+          href="/messaging"
+          className="inline-flex"
+          intent="navigation"
+        >
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
             Open message board
           </Button>

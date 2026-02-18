@@ -1,40 +1,41 @@
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import React, { ReactNode } from "react"
 
-import React, { ReactNode } from "react";
-import MemberForm from "./TodoForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+import MemberForm from "./TodoForm"
 
 export default function DailogForm({
-	Trigger,
-	id,
-	title,
-	form,
+  Trigger,
+  id,
+  title,
+  form,
 }: {
-	title: string;
-	Trigger: ReactNode;
-	id: string;
-	form: ReactNode;
+  title: string
+  Trigger: ReactNode
+  id: string
+  form: ReactNode
 }) {
-	return (
-		<Dialog>
-			<DialogTrigger asChild id={id}>
-				{Trigger}
-			</DialogTrigger>
-			<DialogContent className="my-5 sm:max-w-[425px]">
-				<DialogHeader>
-					<DialogTitle>{title}</DialogTitle>
-					<DialogDescription>
-						Make changes to your profile here. Click save when
-					</DialogDescription>
-				</DialogHeader>
-				{form}
-			</DialogContent>
-		</Dialog>
-	);
+  return (
+    <Dialog>
+      <DialogTrigger asChild id={id}>
+        {Trigger}
+      </DialogTrigger>
+      <DialogContent className="my-5 sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here. Click save when
+          </DialogDescription>
+        </DialogHeader>
+        {form}
+      </DialogContent>
+    </Dialog>
+  )
 }

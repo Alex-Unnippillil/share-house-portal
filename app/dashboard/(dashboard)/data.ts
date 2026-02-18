@@ -1,5 +1,4 @@
 import "server-only"
-
 import { cache } from "react"
 
 type WelcomeMessage = {
@@ -203,7 +202,8 @@ async function fetchRoommateUpdates(): Promise<RoommateUpdate[]> {
     {
       id: "1",
       author: "Jordan",
-      message: "Wi-Fi was down earlier — rebooted the router and it’s stable again.",
+      message:
+        "Wi-Fi was down earlier — rebooted the router and it’s stable again.",
       timestamp: new Date(now.getTime() - 1000 * 60 * 45).toISOString(),
       topic: "maintenance",
     },

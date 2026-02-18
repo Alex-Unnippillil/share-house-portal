@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import SmartLink from "@/components/navigation/SmartLink"
+
 import { getWelcomeMessage } from "../data"
 
 export async function DashboardWelcome() {
@@ -14,7 +15,9 @@ export async function DashboardWelcome() {
         <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {message.title}
         </h1>
-        <p className="text-sm text-muted-foreground sm:text-base">{message.subtitle}</p>
+        <p className="text-sm text-muted-foreground sm:text-base">
+          {message.subtitle}
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

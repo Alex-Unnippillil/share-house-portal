@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { track } from "@vercel/analytics/react"
 
+import { cn } from "@/lib/utils"
 import {
   Card,
   CardContent,
@@ -12,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
 
 function LoadingState({ label }: { label: string }) {
   return (
@@ -43,7 +43,8 @@ const SECTION_CONFIG = [
   {
     value: "visualization",
     label: "3D Floorplan",
-    description: "Interactive holographic preview of the shared household layout.",
+    description:
+      "Interactive holographic preview of the shared household layout.",
     loaderLabel: "Warming up 3D preview…",
     Component: FeaturePrism,
   },
@@ -56,7 +57,9 @@ type Surface = "tabs" | "accordion"
 export default function InsightsPanel() {
   const [activeTab, setActiveTab] = useState<SectionKey>("analytics")
   const [openSection, setOpenSection] = useState<SectionKey | null>("analytics")
-  const [loadedSections, setLoadedSections] = useState<Record<SectionKey, boolean>>({
+  const [loadedSections, setLoadedSections] = useState<
+    Record<SectionKey, boolean>
+  >({
     analytics: true,
     visualization: false,
   })
@@ -111,24 +114,41 @@ export default function InsightsPanel() {
   return (
     <Card className="border-border/70">
       <CardHeader>
-        <CardTitle className="text-2xl font-semibold">Progressive insights</CardTitle>
+        <CardTitle className="text-2xl font-semibold">
+          Progressive insights
+        </CardTitle>
         <CardDescription>
-          Analytics charts and 3D previews only mount after a tenant opts to explore them.
+          Analytics charts and 3D previews only mount after a tenant opts to
+          explore them.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="hidden md:block">
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+          <Tabs
+            value={activeTab}
+            onValueChange={handleTabChange}
+            className="space-y-4"
+          >
             <TabsList>
               {SECTION_CONFIG.map((section) => (
-                <TabsTrigger key={section.value} value={section.value} className="text-sm font-medium">
+                <TabsTrigger
+                  key={section.value}
+                  value={section.value}
+                  className="text-sm font-medium"
+                >
                   {section.label}
                 </TabsTrigger>
               ))}
             </TabsList>
             {SECTION_CONFIG.map((section) => (
-              <TabsContent key={section.value} value={section.value} className="space-y-4">
-                <p className="text-sm text-muted-foreground">{section.description}</p>
+              <TabsContent
+                key={section.value}
+                value={section.value}
+                className="space-y-4"
+              >
+                <p className="text-sm text-muted-foreground">
+                  {section.description}
+                </p>
                 {loadedSections[section.value] ? (
                   <section.Component />
                 ) : (
@@ -155,7 +175,9 @@ export default function InsightsPanel() {
                   aria-expanded={isOpen}
                 >
                   <span>{section.label}</span>
-                  <span className="text-xs text-muted-foreground">{isOpen ? "Hide" : "Reveal"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {isOpen ? "Hide" : "Reveal"}
+                  </span>
                 </button>
                 <div
                   className={cn(

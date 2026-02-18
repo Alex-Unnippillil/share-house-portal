@@ -1,8 +1,10 @@
-import SmartLink from "@/components/navigation/SmartLink"
+import { ArrowUpRight } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import SmartLink from "@/components/navigation/SmartLink"
+
 import { getQuickActions } from "../data"
-import { ArrowUpRight } from "lucide-react"
 
 export async function DashboardQuickActions() {
   const actions = await getQuickActions()
@@ -23,10 +25,18 @@ export async function DashboardQuickActions() {
           >
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-foreground">{action.label}</p>
-                <p className="text-xs text-muted-foreground">{action.description}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {action.label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {action.description}
+                </p>
               </div>
-              <SmartLink href={action.href} className="shrink-0" intent="navigation">
+              <SmartLink
+                href={action.href}
+                className="shrink-0"
+                intent="navigation"
+              >
                 <Button variant="ghost" size="icon" className="size-8">
                   <ArrowUpRight className="size-4" />
                   <span className="sr-only">{`Go to ${action.label}`}</span>
