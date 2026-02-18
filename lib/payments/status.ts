@@ -126,3 +126,25 @@ export function deriveAutopayStatusFromStripeStatus(
 
   return currentStatus
 }
+
+
+export function getAchSettlementMessage(
+  stripeStatus: string,
+  isAchPayment: boolean,
+): string | null {
+  if (!isAchPayment) {
+    return null
+  }
+
+  const normalized = stripeStatus.toLowerCase()
+
+  if (normalized === "pending") {
+    return "ACH settlement in progress (typically 3–5 business days)."
+  }
+
+  if (normalized === "failed") {
+    return "ACH settlement failed. Autopay is paused until a new bank account is linked."
+  }
+
+  return null
+}

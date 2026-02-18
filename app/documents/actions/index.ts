@@ -12,8 +12,6 @@ import {
   Document,
   DocumentWithLease,
   DocumentListFilters,
-  DocumentUploadRequest,
-  DocumentSigningRequest,
   DocumentStats
 } from '@/types/documents';
 
@@ -21,11 +19,14 @@ import {
 const documentUploadSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  document_type: z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other']),
+  document_type: z.enum(['lease', 'notice', 'account_file', 'addendum', 'insurance', 'maintenance', 'other']),
   tenant_id: z.string().uuid().optional(),
   unit_id: z.string().optional(),
   requires_signature: z.boolean().default(false),
   expires_at: z.string().datetime().optional(),
+  source: z.string().min(1).max(64).default('tenant_portal'),
+  parent_document_id: z.string().uuid().optional(),
+  version_notes: z.string().max(300).optional(),
 });
 
 const documentSigningSchema = z.object({
@@ -38,7 +39,7 @@ const documentSigningSchema = z.object({
 
 const documentListFiltersSchema = z.object({
   status: z.array(z.enum(['draft', 'pending_signature', 'signed', 'expired', 'cancelled'])).optional(),
-  type: z.array(z.enum(['lease', 'addendum', 'insurance', 'maintenance', 'other'])).optional(),
+  type: z.array(z.enum(['lease', 'notice', 'account_file', 'addendum', 'insurance', 'maintenance', 'other'])).optional(),
   tenant_id: z.string().uuid().optional(),
   unit_id: z.string().optional(),
   date_from: z.string().datetime().optional(),
@@ -51,6 +52,30 @@ interface ActionResult<T = any> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+
+async function logAuditEvent(
+  supabase: ReturnType<typeof createClient>,
+  {
+    userId,
+    documentId,
+    action,
+    metadata,
+  }: {
+    userId: string;
+    documentId?: string;
+    action: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  await (supabase as any).from('audit_logs').insert({
+    actor_id: userId,
+    entity_type: 'document',
+    entity_id: documentId ?? null,
+    action,
+    metadata: metadata ?? {},
+  });
 }
 
 // Get documents with optional filters
@@ -139,6 +164,9 @@ export async function uploadDocumentAction(
       unit_id: formData.get('unit_id'),
       requires_signature: formData.get('requires_signature') === 'true',
       expires_at: formData.get('expires_at'),
+      source: formData.get('source') || 'tenant_portal',
+      parent_document_id: formData.get('parent_document_id') || undefined,
+      version_notes: formData.get('version_notes') || undefined,
     };
 
     const validationResult = documentUploadSchema.safeParse(rawData);
@@ -166,10 +194,16 @@ export async function uploadDocumentAction(
       return { success: false, error: 'Failed to upload file.' };
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('documents')
-      .getPublicUrl(filePath);
+    let nextVersion = 1;
+    if (validatedData.parent_document_id) {
+      const { data: parentVersion } = await (supabase as any)
+        .from('documents')
+        .select('version')
+        .eq('id', validatedData.parent_document_id)
+        .single();
+
+      nextVersion = (parentVersion?.version || 1) + 1;
+    }
 
     // Create document record
     const { data: document, error: dbError } = await (supabase as any)
@@ -178,12 +212,24 @@ export async function uploadDocumentAction(
         title: validatedData.title,
         description: validatedData.description,
         document_type: validatedData.document_type,
-        file_url: publicUrl,
+        file_url: filePath,
         tenant_id: validatedData.tenant_id,
         unit_id: validatedData.unit_id,
         requires_signature: validatedData.requires_signature,
         expires_at: validatedData.expires_at,
         created_by: user.id,
+        parent_document_id: validatedData.parent_document_id,
+        version: nextVersion,
+        metadata: {
+          source: validatedData.source,
+          uploader_id: user.id,
+          uploader_email: user.email,
+          storage_path: filePath,
+          original_file_name: file.name,
+          file_size_bytes: file.size,
+          content_type: file.type,
+          version_notes: validatedData.version_notes,
+        },
       })
       .select()
       .single();
@@ -199,7 +245,18 @@ export async function uploadDocumentAction(
     await (supabase as any).rpc('log_document_access', {
       p_document_id: document.id,
       p_action: 'upload',
-      p_metadata: { file_name: file.name, file_size: file.size }
+      p_metadata: { file_name: file.name, file_size: file.size, source: validatedData.source }
+    });
+
+    await logAuditEvent(supabase, {
+      userId: user.id,
+      documentId: document.id,
+      action: 'document.uploaded',
+      metadata: {
+        source: validatedData.source,
+        version: nextVersion,
+        original_file_name: file.name,
+      },
     });
 
     revalidatePath('/documents');
@@ -516,6 +573,84 @@ export async function getSigningUrlAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An unexpected error occurred.'
+    };
+  }
+}
+
+
+// Resolve a short-lived signed URL for document view/download and log audit events
+export async function getDocumentAccessUrlAction(
+  documentId: string,
+  action: 'view' | 'download' = 'view'
+): Promise<ActionResult<{ url: string }>> {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to access documents.' };
+    }
+
+    let role: Awaited<ReturnType<typeof fetchMemberRole>>;
+    try {
+      role = await fetchMemberRole(typedSupabase, user.id);
+    } catch (roleError) {
+      console.error('Error resolving member role for document access:', roleError);
+      return { success: false, error: 'Failed to authorize document access.' };
+    }
+
+    let query = supabase
+      .from('documents')
+      .select('id, file_url, tenant_id, created_by, metadata')
+      .eq('id', documentId);
+
+    if (role !== 'property_manager' && role !== 'admin') {
+      query = query.or(`tenant_id.eq.${user.id},created_by.eq.${user.id}`);
+    }
+
+    const { data: document, error: documentError } = await query.single();
+
+    if (documentError || !document?.file_url) {
+      return { success: false, error: 'Document file is not available.' };
+    }
+
+    const metadata = (document.metadata ?? {}) as Record<string, unknown>;
+    const storagePath =
+      typeof metadata.storage_path === 'string' && metadata.storage_path.length > 0
+        ? metadata.storage_path
+        : document.file_url;
+
+    const { data: signed, error: signedError } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(storagePath, 60 * 10, {
+        download: action === 'download' ? true : undefined,
+      });
+
+    if (signedError || !signed?.signedUrl) {
+      return { success: false, error: 'Failed to create secure access URL.' };
+    }
+
+    await supabase.rpc('log_document_access', {
+      p_document_id: documentId,
+      p_action: action,
+      p_metadata: { source: 'signed_url' },
+    });
+
+    await logAuditEvent(supabase, {
+      userId: user.id,
+      documentId,
+      action: action === 'download' ? 'document.downloaded' : 'document.viewed',
+      metadata: { source: 'signed_url' },
+    });
+
+    return { success: true, data: { url: signed.signedUrl } };
+  } catch (error) {
+    console.error('Unexpected error in getDocumentAccessUrlAction:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred.',
     };
   }
 }

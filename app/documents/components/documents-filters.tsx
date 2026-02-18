@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { DocumentListFilters, DocumentStatus, DocumentType } from '@/types/documents';
-import { Filter, X } from 'lucide-react';
+import { CalendarRange, Filter, X } from 'lucide-react';
 
 interface DocumentsFiltersProps {
   onFiltersChange?: (filters: DocumentListFilters) => void;
@@ -31,6 +32,8 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
 
   const typeOptions: { value: DocumentType; label: string }[] = [
     { value: 'lease', label: 'Lease' },
+    { value: 'notice', label: 'Notice' },
+    { value: 'account_file', label: 'Account File' },
     { value: 'addendum', label: 'Addendum' },
     { value: 'insurance', label: 'Insurance' },
     { value: 'maintenance', label: 'Maintenance' },
@@ -66,6 +69,13 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
     });
   };
 
+  const updateDateFilter = (key: 'date_from' | 'date_to', value: string) => {
+    updateFilters({
+      ...filters,
+      [key]: value ? new Date(value).toISOString() : undefined,
+    });
+  };
+
   const clearFilters = () => {
     setFilters({});
     onFiltersChange?.({});
@@ -80,8 +90,7 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
     (filters.date_to ? 1 : 0);
 
   return (
-    <div className="flex items-center space-x-2">
-      {/* Status Filter */}
+    <div className="flex flex-wrap items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
@@ -109,7 +118,6 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Type Filter */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
@@ -136,7 +144,21 @@ export function DocumentsFilters({ onFiltersChange }: DocumentsFiltersProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Clear Filters */}
+      <div className="flex items-center gap-2 rounded-md border px-2 py-1">
+        <CalendarRange className="size-4 text-muted-foreground" />
+        <Input
+          type="date"
+          className="h-8 w-[138px] border-0 p-0"
+          onChange={(event) => updateDateFilter('date_from', event.target.value)}
+        />
+        <span className="text-xs text-muted-foreground">to</span>
+        <Input
+          type="date"
+          className="h-8 w-[138px] border-0 p-0"
+          onChange={(event) => updateDateFilter('date_to', event.target.value)}
+        />
+      </div>
+
       {activeFilterCount > 0 && (
         <Button
           variant="ghost"

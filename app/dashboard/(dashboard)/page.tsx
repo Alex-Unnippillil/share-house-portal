@@ -8,6 +8,7 @@ import { DashboardMetrics } from "./components/dashboard-metrics"
 import { DashboardQuickActions } from "./components/dashboard-quick-actions"
 import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
 import { MaintenanceOverviewCard } from "./components/maintenance-overview-card"
+import { FloorplanViewerCard } from "./components/floorplan-viewer-card"
 import {
   DashboardBoardSkeleton,
   DashboardCardSkeleton,
@@ -15,13 +16,17 @@ import {
   DashboardStatsSkeleton,
 } from "./components/skeletons"
 
-import InsightsPanel from "./components/insights-panel"
+import { OnboardingPromptCard } from "./components/onboarding-prompt-card"
 
 export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <Suspense fallback={<DashboardHeaderSkeleton />}>
         <DashboardWelcome />
+      </Suspense>
+
+      <Suspense fallback={<DashboardCardSkeleton />}>
+        <OnboardingPromptCard />
       </Suspense>
 
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
@@ -52,6 +57,10 @@ export default function DashboardPage() {
 
           <Suspense fallback={<DashboardBoardSkeleton />}>
             <RoommateBoardCard />
+          </Suspense>
+
+          <Suspense fallback={<DashboardCardSkeleton />}>
+            <FloorplanViewerCard />
           </Suspense>
         </div>
 

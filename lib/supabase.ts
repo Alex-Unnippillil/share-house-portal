@@ -27,6 +27,25 @@ export type Database = {
         metadata: Json | null
         occurred_at: string
         created_at: string | null
+      bookings: SupabaseTable<{
+        id: string
+        created_at: string | null
+        updated_at: string | null
+        property_id: string
+        amenity_id: string
+        amenity_name: string
+        tenant_id: string | null
+        status: 'pending' | 'confirmed' | 'cancelled'
+        start_time: string
+        end_time: string
+        source: 'calcom' | 'manual'
+        source_booking_id: string | null
+        source_event_type_id: string | null
+        source_payload: Json | null
+        recurrence_rule: Json | null
+        recurrence_id: string | null
+        cancelled_at: string | null
+        cancellation_reason: string | null
       }>
       amenity_bookings: SupabaseTable<{
         id: string
@@ -63,7 +82,14 @@ export type Database = {
         updated_at: string | null
         title: string
         description: string | null
-        document_type: 'lease' | 'addendum' | 'insurance' | 'maintenance' | 'other'
+        document_type:
+          | 'lease'
+          | 'notice'
+          | 'account_file'
+          | 'addendum'
+          | 'insurance'
+          | 'maintenance'
+          | 'other'
         status: 'draft' | 'pending_signature' | 'signed' | 'expired' | 'cancelled'
         file_url: string | null
         documenso_envelope_id: string | null
@@ -104,6 +130,15 @@ export type Database = {
         action: string
         ip_address: string | null
         user_agent: string | null
+        metadata: Json | null
+      }>
+      audit_logs: SupabaseTable<{
+        id: string
+        created_at: string | null
+        actor_id: string | null
+        entity_type: string
+        entity_id: string | null
+        action: string
         metadata: Json | null
       }>
       leases: SupabaseTable<{
@@ -151,6 +186,18 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      webhook_events: SupabaseTable<{
+        id: string
+        provider: 'stripe'
+        event_id: string
+        event_type: string
+        status: 'processing' | 'processed' | 'failed'
+        payload: Json | null
+        error_message: string | null
+        processed_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       subscriptions: SupabaseTable<{
         id: string
         user_id: string
@@ -182,12 +229,19 @@ export type Database = {
         title: string
         description: string
         priority: 'low' | 'normal' | 'high' | 'urgent'
+        severity: 'low' | 'medium' | 'high' | 'critical'
         status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
         category: string | null
         location: string | null
+        property_label: string | null
+        unit_label: string | null
+        preferred_access_times: Json | null
         requested_by: string
         assigned_to: string | null
         unit_id: string | null
+        sla_due_at: string | null
+        acknowledged_at: string | null
+        resolved_at: string | null
         created_at: string | null
         updated_at: string | null
         completed_at: string | null
@@ -195,22 +249,74 @@ export type Database = {
         attachments: Json | null
         metadata: Json | null
       }>
+      maintenance_request_updates: SupabaseTable<{
+        id: string
+        request_id: string
+        event_type:
+          | 'submitted'
+          | 'acknowledged'
+          | 'assigned'
+          | 'priority_changed'
+          | 'status_changed'
+          | 'comment'
+          | 'resolved'
+          | 'reopened'
+        previous_status: string | null
+        next_status: string | null
+        previous_priority: string | null
+        next_priority: string | null
+        actor_id: string | null
+        assignee_id: string | null
+        message: string | null
+        metadata: Json | null
+        created_at: string | null
+      }>
       visitor_logs: SupabaseTable<{
         id: string
         guest_name: string
         guest_email: string
         guest_phone: string | null
         host_id: string
+        host_roommate_id: string | null
+        unit_id: string | null
         check_in_date: string
         check_out_date: string
         purpose: string
+        reason: string
         emergency_contact: string | null
         special_notes: string | null
+        requires_manager_approval: boolean
+        approval_status: 'pending' | 'approved' | 'rejected'
+        decision_notes: string | null
+        policy_snapshot: Json | null
+        policy_violations: Json | null
+        consecutive_nights: number | null
         status: 'pending' | 'approved' | 'rejected' | 'completed'
         approved_by: string | null
         approved_at: string | null
+        last_action_by: string | null
+        last_action_at: string | null
         created_at: string | null
         updated_at: string | null
+      }>
+      visitor_unit_policies: SupabaseTable<{
+        id: string
+        unit_id: string
+        max_consecutive_nights: number
+        requires_manager_approval: boolean
+        blackout_windows: Json | null
+        metadata: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }>
+      visitor_log_audit_entries: SupabaseTable<{
+        id: string
+        visitor_log_id: string
+        actor_id: string | null
+        action: string
+        notes: string | null
+        metadata: Json | null
+        created_at: string | null
       }>
       notifications: SupabaseTable<{
         id: string
@@ -234,6 +340,17 @@ export type Database = {
         sent_at: string | null
         error_message: string | null
         metadata: Json | null
+      }>
+      audit_logs: SupabaseTable<{
+        id: string
+        actor_id: string | null
+        event_type: string
+        property_id: string | null
+        unit_id: string | null
+        thread_id: string | null
+        message_id: string | null
+        metadata: Json | null
+        created_at: string | null
       }>
       meetings: SupabaseTable<{
         id: string
@@ -269,6 +386,44 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      floorplans: SupabaseTable<{
+        id: string
+        property_id: string | null
+        unit_id: string | null
+        storage_path: string
+        original_file_name: string | null
+        uploaded_by: string | null
+        uploaded_at: string
+        current_version: number
+        metadata: Json | null
+      }>
+      floorplan_annotations: SupabaseTable<{
+        id: string
+        floorplan_id: string
+        marker_type: 'room' | 'storage' | 'chore'
+        label: string
+        note: string | null
+        x_position: number
+        y_position: number
+        visibility_scope: 'all_roommates' | 'selected_roommates' | 'private'
+        visible_to_user_ids: string[]
+        version: number
+        created_by: string
+        updated_by: string
+        created_at: string
+        updated_at: string
+        archived_at: string | null
+      }>
+      floorplan_annotation_versions: SupabaseTable<{
+        id: string
+        annotation_id: string
+        floorplan_id: string
+        version: number
+        action: 'created' | 'updated' | 'deleted' | 'rollback'
+        snapshot: Json
+        changed_by: string | null
+        changed_at: string
+      }>
       messages: SupabaseTable<{
         id: string
         thread_id: string
@@ -297,6 +452,15 @@ export type Database = {
         reactions: Json | null
         pinned: boolean | null
         owner_name: string | null
+        unit_id: string | null
+        property_id: string | null
+        thread_type: string | null
+        scheduled_for: string | null
+        announcement_visible_from: string | null
+        announcement_visible_until: string | null
+        locked: boolean | null
+        flagged_at: string | null
+        deleted_at: string | null
         created_at: string | null
         updated_at: string | null
       }>

@@ -9,7 +9,7 @@ import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
 import { DocumentsListSkeleton } from './documents-list-skeleton';
 import { formatDistanceToNow } from 'date-fns';
-import { FileText, Users, Calendar, Eye } from 'lucide-react';
+import { FileText, Users, Calendar, Eye, Bell, Receipt } from 'lucide-react';
 
 interface DocumentsListProps {
   filter: DocumentListFilters;
@@ -71,6 +71,10 @@ export function DocumentsList({ filter }: DocumentsListProps) {
     switch (type) {
       case 'lease':
         return <FileText className="size-4" />;
+      case 'notice':
+        return <Bell className="size-4" />;
+      case 'account_file':
+        return <Receipt className="size-4" />;
       case 'addendum':
         return <FileText className="size-4" />;
       case 'insurance':

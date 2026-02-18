@@ -1,53 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useNotifications } from "@/hooks/use-notifications";
-import { createClient } from "@/utils/supabase-browser";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchMemberProfile, fetchMembersByUnit } from "@/lib/data/members";
+import { createClient } from "@/utils/supabase-browser";
 import type { TypedSupabaseClient } from "@/utils/typed-supabase-client";
 
 const maintenanceRequestSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
+  category: z.string().min(1, "Category is required"),
+  severity: z.enum(["low", "medium", "high", "critical"]),
   priority: z.enum(["low", "normal", "high", "urgent"]),
-  category: z.string().optional(),
+  preferredAccessTimes: z.string().min(5, "Please describe preferred access windows"),
   location: z.string().optional(),
+  propertyLabel: z.string().optional(),
+  unitLabel: z.string().optional(),
 });
 
 type MaintenanceRequestFormData = z.infer<typeof maintenanceRequestSchema>;
 
-const categories = [
-  "Plumbing",
-  "Electrical",
-  "HVAC",
-  "Appliance",
-  "Structural",
-  "Pest Control",
-  "Cleaning",
-  "Security",
-  "Other"
+interface MaintenanceRequestFormProps {
+  onSubmitted?: () => Promise<void> | void;
+}
+
+const categories = ["Plumbing", "Electrical", "HVAC", "Appliance", "Structural", "Pest Control", "Cleaning", "Security", "Other"];
+
+const severities: Array<{ value: MaintenanceRequestFormData["severity"]; label: string; slaHours: number }> = [
+  { value: "low", label: "Low", slaHours: 120 },
+  { value: "medium", label: "Medium", slaHours: 72 },
+  { value: "high", label: "High", slaHours: 24 },
+  { value: "critical", label: "Critical", slaHours: 8 },
 ];
 
 const priorities = [
-  { value: "low", label: "Low - Nice to have" },
-  { value: "normal", label: "Normal - Standard priority" },
-  { value: "high", label: "High - Needs attention soon" },
-  { value: "urgent", label: "Urgent - Emergency fix needed" },
-];
+  { value: "low", label: "Low" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+] as const;
 
-export function MaintenanceRequestForm() {
+export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { notifyMaintenanceRequest } = useNotifications();
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const { toast } = useToast();
   const supabase = createClient();
   const typedSupabase = supabase as unknown as TypedSupabaseClient;
@@ -58,75 +61,128 @@ export function MaintenanceRequestForm() {
       title: "",
       description: "",
       priority: "normal",
+      severity: "medium",
       category: "",
       location: "",
+      preferredAccessTimes: "Weekdays 9:00 AM - 1:00 PM",
+      propertyLabel: "",
+      unitLabel: "",
     },
   });
+
+  const selectedSeverity = form.watch("severity");
+
+  const selectedSlaHours = useMemo(
+    () => severities.find((entry) => entry.value === selectedSeverity)?.slaHours ?? 72,
+    [selectedSeverity]
+  );
+
+  const uploadAttachments = async (requestId: string) => {
+    if (!attachmentFiles.length) return [];
+
+    const uploads = await Promise.all(
+      attachmentFiles.map(async (file) => {
+        const path = `${requestId}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from("maintenance-attachments").upload(path, file, {
+          upsert: false,
+          contentType: file.type,
+        });
+        if (error) throw error;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("maintenance-attachments").getPublicUrl(path);
+
+        return {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          path,
+          url: publicUrl,
+        };
+      })
+    );
+
+    return uploads;
+  };
 
   const onSubmit = async (data: MaintenanceRequestFormData) => {
     setIsSubmitting(true);
 
     try {
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get user profile
       const profile = await fetchMemberProfile(typedSupabase, user.id);
+      if (!profile?.unit_id) throw new Error("You must be assigned to a unit before submitting a request.");
 
-      if (!profile) throw new Error("Profile not found");
+      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, { roles: ["property_manager", "admin"] });
 
-      if (!profile.unit_id) {
-        throw new Error("User is not assigned to a unit");
-      }
-
-      const [propertyManager] = await fetchMembersByUnit(typedSupabase, profile.unit_id, {
-        roles: ['property_manager'],
-      });
-
-      if (!propertyManager) {
-        throw new Error("Property manager not found for this unit");
-      }
-
-      // Create maintenance request record
       const { data: request, error: requestError } = await (supabase as any)
-        .from('maintenance_requests')
+        .from("maintenance_requests")
         .insert({
           title: data.title,
           description: data.description,
           priority: data.priority,
-          category: data.category || null,
+          severity: data.severity,
+          category: data.category,
           location: data.location || null,
           requested_by: user.id,
           unit_id: profile.unit_id,
-          status: 'pending',
+          property_label: data.propertyLabel || null,
+          unit_label: data.unitLabel || null,
+          preferred_access_times: [data.preferredAccessTimes],
+          status: "pending",
+          sla_due_at: new Date(Date.now() + selectedSlaHours * 60 * 60 * 1000).toISOString(),
         })
         .select()
         .single();
 
       if (requestError) throw requestError;
 
-      // Send notifications
-      await notifyMaintenanceRequest({
-        requesterName: profile.full_name || user.email || 'Unknown',
-        title: data.title,
-        description: data.description,
-        priority: data.priority,
-        propertyManager: {
-          id: propertyManager.id,
-          email: propertyManager.email || '',
-          name: propertyManager.full_name || propertyManager.email || 'Unknown',
+      const attachments = await uploadAttachments(request.id);
+      if (attachments.length) {
+        const { error: attachmentError } = await (supabase as any)
+          .from("maintenance_requests")
+          .update({ attachments })
+          .eq("id", request.id);
+
+        if (attachmentError) throw attachmentError;
+      }
+
+      await (supabase as any).from("maintenance_request_updates").insert({
+        request_id: request.id,
+        event_type: "submitted",
+        actor_id: user.id,
+        message: `Request submitted with ${data.severity} severity and ${data.priority} priority.`,
+        metadata: {
+          preferredAccessTimes: data.preferredAccessTimes,
+          attachmentCount: attachmentFiles.length,
         },
       });
 
+      if (propertyManager?.id) {
+        await (supabase as any).from("notifications").insert({
+          user_id: propertyManager.id,
+          title: "New maintenance request submitted",
+          message: `${profile.full_name || user.email || "A tenant"} submitted ${data.title}.`,
+          type: "warning",
+          metadata: { requestId: request.id, severity: data.severity },
+        });
+      }
+
       toast({
         title: "Maintenance request submitted",
-        description: "Your maintenance request has been submitted and notifications sent.",
+        description: "Your request has been logged with timeline tracking and SLA targets.",
       });
 
       form.reset();
+      setAttachmentFiles([]);
+      await onSubmitted?.();
     } catch (error) {
-      console.error('Error submitting maintenance request:', error);
+      console.error("Error submitting maintenance request:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit maintenance request",
@@ -145,7 +201,7 @@ export function MaintenanceRequestForm() {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Issue Title *</FormLabel>
+              <FormLabel>Issue title *</FormLabel>
               <FormControl>
                 <Input placeholder="Brief description of the issue" {...field} />
               </FormControl>
@@ -159,52 +215,23 @@ export function MaintenanceRequestForm() {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Detailed Description *</FormLabel>
+              <FormLabel>Description *</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Please provide detailed information about the issue, including when it started, what you've observed, and any steps you've taken..."
-                  className="min-h-[100px]"
-                  {...field}
-                />
+                <Textarea className="min-h-[110px]" placeholder="Describe symptoms, impact, and when this started." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="priority"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Priority Level *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority level" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority.value} value={priority.value}>
-                        {priority.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+        <div className="grid gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel>Category *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -222,24 +249,130 @@ export function MaintenanceRequestForm() {
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="severity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Severity *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Severity" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {severities.map((severity) => (
+                      <SelectItem key={severity.value} value={severity.value}>
+                        {severity.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="priority"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Priority *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {priorities.map((priority) => (
+                      <SelectItem key={priority.value} value={priority.value}>
+                        {priority.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="propertyLabel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Property (optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Lakeside Residences" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="unitLabel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Unit (optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Unit B-204" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <FormField
           control={form.control}
-          name="location"
+          name="preferredAccessTimes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location (Optional)</FormLabel>
+              <FormLabel>Preferred access times *</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Kitchen, Bedroom 1, Common Area" {...field} />
+                <Textarea placeholder="Weekdays after 6pm, Saturdays 9am-1pm, call before arrival." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location (optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Kitchen sink, Bedroom 2, hallway AC vent" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="space-y-2">
+          <FormLabel>Media attachments</FormLabel>
+          <Input
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            onChange={(event) => setAttachmentFiles(Array.from(event.target.files ?? []))}
+          />
+          <p className="text-xs text-muted-foreground">{attachmentFiles.length} file(s) selected</p>
+        </div>
+
+        <p className="text-xs text-muted-foreground">Current SLA target: first manager response within {selectedSlaHours} hours.</p>
+
         <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Submitting..." : "Submit Maintenance Request"}
+          {isSubmitting ? "Submitting…" : "Submit maintenance request"}
         </Button>
       </form>
     </Form>

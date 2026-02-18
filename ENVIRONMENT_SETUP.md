@@ -1,5 +1,8 @@
 # Roomsily - Environment Setup Guide
 
+> Canonical reference: [`docs/engineering/environment-contract.md`](docs/engineering/environment-contract.md).
+> This guide is a troubleshooting companion for local setup.
+
 Based on your terminal errors, you're missing several API keys and configurations. Here's what you need to set up:
 
 ## 🚨 **CRITICAL MISSING CONFIGURATIONS**

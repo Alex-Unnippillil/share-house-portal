@@ -50,35 +50,14 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 
 ### Prerequisites
 - Node.js 18+
-- npm/yarn/pnpm
+- pnpm 10+
 - Supabase account
 - Stripe account
 - Vercel account (for deployment)
 
 ### Environment Setup
 
-Create a `.env.local` file in the project root:
-
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL="your_supabase_project_url"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
-SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
-SUPABASE_JWT_SECRET="your_jwt_secret"
-
-# Stripe
-STRIPE_SECRET_KEY="your_stripe_secret_key"
-STRIPE_WEBHOOK_SECRET="your_webhook_secret"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-
-# Document Management (Optional)
-DOCUMENSO_API_KEY="your_documenso_api_key"
-DOCUMENSO_BASE_URL="your_documenso_instance_url"
-
-# Calendar (Optional)
-CALCOM_API_KEY="your_calcom_api_key"
-CALCOM_BASE_URL="your_calcom_instance_url"
-```
+See the full multi-environment contract in [`docs/engineering/environment-contract.md`](docs/engineering/environment-contract.md). For local development, copy the required values into `.env.local`.
 
 ### Database Setup
 
@@ -93,10 +72,10 @@ supabase db push
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
@@ -109,11 +88,14 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ### Deployment
 
-Deploy to Vercel with the following environment variables configured in your Vercel dashboard:
+Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](docs/engineering/vercel-deployment-runbook.md) and configure variables according to [`docs/engineering/environment-contract.md`](docs/engineering/environment-contract.md).
 
-- All Supabase environment variables
-- Stripe keys (use live keys for production)
-- Document and calendar service URLs/keys
+
+## CI & Branch Protection
+
+- GitHub Actions uses pnpm for install/lint/typecheck/test/build gates.
+- `main` should be protected with required checks and no direct pushes.
+- See [`docs/engineering/branch-protection.md`](docs/engineering/branch-protection.md) for policy details.
 
 ## Operations & Reliability
 
