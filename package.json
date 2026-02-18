@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:a11y": "playwright test e2e/tenant-manager-journeys.spec.ts -g \"keyboard|screen-reader\"",
-    "test:perf": "pnpm css:purge"
+    "test:perf": "pnpm css:purge",
+    "route:check": "node scripts/check-route-governance.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

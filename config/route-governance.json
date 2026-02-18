@@ -1,0 +1,41 @@
+{
+  "productionPublicExact": [
+    "/",
+    "/auth",
+    "/onboarding",
+    "/privacy",
+    "/terms",
+    "/confirmation",
+    "/signout"
+  ],
+  "productionPublicPrefixes": [
+    "/auth"
+  ],
+  "productionAuthenticatedPrefixes": [
+    "/dashboard",
+    "/payments",
+    "/documents",
+    "/bookings",
+    "/messaging",
+    "/maintenance",
+    "/schedule",
+    "/account",
+    "/visitors",
+    "/chores",
+    "/supplies"
+  ],
+  "internalToolingPrefixes": [
+    "/design-system",
+    "/auth-server-action",
+    "/about",
+    "/contact",
+    "/private",
+    "/error"
+  ],
+  "demoArtifactPrefixes": [
+    "/mdx",
+    "/dashboard/todo",
+    "/countries",
+    "/ssrcountries"
+  ]
+}

@@ -9,9 +9,30 @@ import {
   requiresAuthentication,
   resolveSessionRole,
 } from '@/lib/auth-rbac'
+import {
+  isDemoArtifactRoute,
+  isInternalRoutesEnabled,
+  isInternalToolingRoute,
+} from '@/lib/route-governance'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  if (isDemoArtifactRoute(pathname)) {
+    const notFoundUrl = request.nextUrl.clone()
+    notFoundUrl.pathname = '/auth'
+    notFoundUrl.searchParams.set('blocked', '1')
+
+    return NextResponse.redirect(notFoundUrl)
+  }
+
+  if (isInternalToolingRoute(pathname) && !isInternalRoutesEnabled()) {
+    const notFoundUrl = request.nextUrl.clone()
+    notFoundUrl.pathname = '/auth'
+    notFoundUrl.searchParams.set('internal', '1')
+
+    return NextResponse.redirect(notFoundUrl)
+  }
 
   if (isPublicRoute(pathname)) {
     return NextResponse.next({
