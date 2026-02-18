@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:a11y": "playwright test e2e/tenant-manager-journeys.spec.ts -g \"keyboard|screen-reader\"",
-    "test:perf": "pnpm css:purge"
+    "test:perf": "pnpm css:purge",
+    "check:component-files": "node scripts/check-component-filenames.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -62,7 +63,6 @@
     "googleapis": "^148.0.0",
     "lucide-react": "0.302.0",
     "next": "14.2.35",
-    "next-compose-plugins": "^2.2.1",
     "next-themes": "^0.2.1",
     "prettier": "^2.8.8",
     "react": "^18.3.1",

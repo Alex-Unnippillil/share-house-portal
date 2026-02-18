@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 
-const withPlugins = require("next-compose-plugins")
 const withMDX = require('@next/mdx')()
 // Temporarily disable PWA to fix build issue
 // const withPWA = require("@ducanh2912/next-pwa").default({

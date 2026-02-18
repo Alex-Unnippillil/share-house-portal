@@ -26,14 +26,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate component filenames
+        run: pnpm check:component-files
+
       - name: Lint
         run: pnpm lint
 
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Metadata accessibility and validity checks
+        run: pnpm test:metadata
+
       - name: Unit and integration tests
         run: pnpm test
 
       - name: Production build
         run: pnpm build
+
+      - name: Performance budget contract
+        run: pnpm perf:ci
+

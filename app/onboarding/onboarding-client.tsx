@@ -71,7 +71,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
           <CardDescription>
             Complete each section so tenants, roommates, and property managers can coordinate payments, visitor requests, maintenance access, and emergency response.
           </CardDescription>
-          <Progress value={completion.completionPercent} />
+          <Progress value={completion.completionPercent} aria-label="Onboarding completion progress" />
         </CardHeader>
       </Card>
 
@@ -175,6 +175,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
           <Input value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
           <Input value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number (call/text)" />
           <Input
+            id="emergency-relationship"
             value={emergencyRelationship}
             onChange={(event) => setEmergencyRelationship(event.target.value)}
             placeholder="Relationship to tenant/roommate"
@@ -224,6 +225,9 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
         </CardContent>
       </Card>
 
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {pending ? "Saving onboarding details" : message}
+      </p>
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
     </div>
   )

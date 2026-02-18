@@ -51,6 +51,7 @@ const priorities = [
 export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [statusMessage, setStatusMessage] = useState("");
   const { toast } = useToast();
   const supabase = createClient();
   const typedSupabase = supabase as unknown as TypedSupabaseClient;
@@ -108,6 +109,7 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
 
   const onSubmit = async (data: MaintenanceRequestFormData) => {
     setIsSubmitting(true);
+    setStatusMessage("Submitting maintenance request");
 
     try {
       const {
@@ -177,6 +179,7 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
         title: "Maintenance request submitted",
         description: "Your request has been logged with timeline tracking and SLA targets.",
       });
+      setStatusMessage("Maintenance request submitted successfully");
 
       form.reset();
       setAttachmentFiles([]);
@@ -188,6 +191,7 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
         description: error instanceof Error ? error.message : "Failed to submit maintenance request",
         variant: "destructive",
       });
+      setStatusMessage("Unable to submit maintenance request");
     } finally {
       setIsSubmitting(false);
     }
@@ -196,6 +200,9 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {statusMessage}
+        </p>
         <FormField
           control={form.control}
           name="title"
@@ -360,14 +367,15 @@ export function MaintenanceRequestForm({ onSubmitted }: MaintenanceRequestFormPr
         />
 
         <div className="space-y-2">
-          <FormLabel>Media attachments</FormLabel>
+          <FormLabel htmlFor="maintenance-attachments">Media attachments</FormLabel>
           <Input
+            id="maintenance-attachments"
             type="file"
             accept="image/*,video/*"
             multiple
             onChange={(event) => setAttachmentFiles(Array.from(event.target.files ?? []))}
           />
-          <p className="text-xs text-muted-foreground">{attachmentFiles.length} file(s) selected</p>
+          <p className="text-xs text-muted-foreground" role="status" aria-live="polite">{attachmentFiles.length} file(s) selected</p>
         </div>
 
         <p className="text-xs text-muted-foreground">Current SLA target: first manager response within {selectedSlaHours} hours.</p>

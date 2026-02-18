@@ -15,6 +15,7 @@ const AUTHENTICATED_ROUTE_PREFIXES = [
   '/bookings',
   '/messaging',
   '/maintenance',
+  '/visitors',
   '/schedule',
   '/account',
   '/private',
