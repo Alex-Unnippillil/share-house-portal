@@ -20,7 +20,7 @@ import { OnboardingPromptCard } from "./components/onboarding-prompt-card"
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-section">
       <Suspense fallback={<DashboardHeaderSkeleton />}>
         <DashboardWelcome />
       </Suspense>

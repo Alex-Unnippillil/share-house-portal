@@ -12,9 +12,9 @@ export default function Members() {
         const streamingEnabled = isFeatureEnabled("streamingDashboards")
 
         return (
-                <div className="w-full space-y-5 overflow-y-auto px-3">
+                <div className="flex w-full flex-col gap-section">
                         <h1 className="text-3xl font-bold">Members</h1>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                                 <SearchMembers />
                                 <CreateMember />
                         </div>

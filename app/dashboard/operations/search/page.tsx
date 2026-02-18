@@ -23,13 +23,13 @@ export default async function OperationsGlobalSearchPage({
   const results = await getGlobalSearchResults(query)
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-section">
       <div>
         <h1 className="text-2xl font-semibold">Global search</h1>
         <p className="text-sm text-muted-foreground">Search tenants, units, requests, payments, and documents from one place.</p>
       </div>
 
-      <form className="flex gap-2" action="/dashboard/operations/search" method="get">
+      <form className="flex flex-col gap-2 sm:flex-row" action="/dashboard/operations/search" method="get">
         <input
           type="search"
           name="q"

@@ -13,8 +13,8 @@ export default async function MaintenanceOperationsPage() {
   const rows = await getMaintenanceRows()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-section">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Maintenance drill-down</h1>
           <p className="text-sm text-muted-foreground">Prioritize open requests and dispatch assignments.</p>

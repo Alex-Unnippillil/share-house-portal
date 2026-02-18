@@ -11,7 +11,7 @@ export default async function ModerationOperationsPage() {
   const rows = await getModerationRows()
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-section">
       <div>
         <h1 className="text-2xl font-semibold">Moderation drill-down</h1>
         <p className="text-sm text-muted-foreground">Review unresolved threads and enforce community policies.</p>
