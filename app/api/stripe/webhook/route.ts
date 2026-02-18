@@ -2,11 +2,8 @@ import { headers } from "next/headers"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import type Stripe from "stripe"
 
-import {
-  sendEmailNotification,
-  sendInAppNotification,
-} from "@/lib/notifications"
 import { jsonError } from "@/lib/errors"
+import { sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
 import { createStructuredLogger } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
 import { getStripe } from "@/lib/stripe"
@@ -29,48 +26,22 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   })
 }
 
-export async function POST(req: Request) {
-  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
-  const logger = createStructuredLogger("webhook_processor", {
-    component: "stripe_webhook",
-    requestId,
-  })
 
-  const stripe = getStripe()
-  const signature = (await headers()).get("stripe-signature")
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-
-  if (!webhookSecret) {
-    logger.error("stripe_webhook_configuration_error", {
-      reason: "missing_webhook_secret",
-    })
-    incrementOperationalMetric("webhook_failures_total", {
-      source: "stripe_webhook",
-      provider: "stripe",
-      eventType: "unknown",
-      reason: "missing_webhook_secret",
-    })
-
-    return jsonError("CONFIGURATION_ERROR", {
-      message: "Stripe webhook secret is not configured",
-    })
+function toSubscriptionStatus(
+  status: Stripe.Subscription.Status
+): "active" | "canceled" | "past_due" | "unpaid" {
+  switch (status) {
+    case "active":
+      return "active"
+    case "past_due":
+      return "past_due"
+    case "unpaid":
+      return "unpaid"
+    default:
+      return "canceled"
   }
+}
 
-  const supabase = createSupabaseAdminClient()
-  if (!supabase) {
-    logger.error("stripe_webhook_configuration_error", {
-      reason: "missing_supabase_admin_client",
-    })
-    incrementOperationalMetric("webhook_failures_total", {
-      source: "stripe_webhook",
-      provider: "stripe",
-      eventType: "unknown",
-      reason: "missing_supabase_admin_client",
-    })
-
-    return jsonError("CONFIGURATION_ERROR", {
-      message: "Supabase client not configured",
-    })
 function parseAmountInMajorUnits(amountInCents: number | null | undefined) {
   if (!amountInCents) {
     return 0
@@ -98,59 +69,6 @@ async function isDuplicateEvent(
     return false
   }
 
-    logger.info("stripe_webhook_received", {
-      eventName: event.type,
-      stripeEventId: event.id,
-    })
-
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(supabase, event.data.object)
-        break
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(supabase, event.data.object)
-        break
-      case "customer.subscription.created":
-        await handleSubscriptionCreated(supabase, event.data.object)
-        break
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(supabase, event.data.object)
-        break
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(supabase, event.data.object)
-        break
-      default:
-        logger.info("stripe_webhook_unhandled_event", {
-          eventName: event.type,
-        })
-        break
-    }
-
-    logger.info("stripe_webhook_processed", {
-      eventName: event.type,
-      stripeEventId: event.id,
-    })
-
-    return new Response("ok", { status: 200 })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid payload"
-    logger.error("stripe_webhook_processing_failed", {
-      reason: message,
-      provider: "stripe",
-    })
-    incrementOperationalMetric("webhook_failures_total", {
-      source: "stripe_webhook",
-      provider: "stripe",
-      eventType: "unknown",
-      reason: message,
-    })
-    const lowerMessage = message.toLowerCase()
-    if (lowerMessage.includes("signature")) {
-      return jsonError("REQUEST_VALIDATION_ERROR", {
-        message,
-        details: { reason: "stripe_signature_verification_failed" },
-      })
-    }
   if (error.code === "23505") {
     return true
   }
@@ -185,31 +103,29 @@ async function upsertRentPayment(
     await supabase
       .from("rent_payments")
       .upsert(payment, { onConflict: "stripe_payment_intent_id" })
-  } else if (payment.stripe_subscription_id && payment.metadata) {
-    const invoiceId =
-      typeof payment.metadata === "object" &&
-      payment.metadata &&
-      "invoice_id" in payment.metadata
-        ? String((payment.metadata as Record<string, unknown>).invoice_id)
-        : null
-
-    if (invoiceId) {
-      const { data: existing } = await supabase
-        .from("rent_payments")
-        .select("id")
-        .contains("metadata", { invoice_id: invoiceId })
-        .maybeSingle()
-
-      if (existing?.id) {
-        await supabase.from("rent_payments").update(payment).eq("id", existing.id)
-        return
-      }
-    }
-
-    await supabase.from("rent_payments").insert(payment)
-  } else {
-    await supabase.from("rent_payments").insert(payment)
+    return
   }
+
+  const metadata = payment.metadata
+  const invoiceId =
+    metadata && typeof metadata === "object" && "invoice_id" in metadata
+      ? String((metadata as Record<string, unknown>).invoice_id)
+      : null
+
+  if (invoiceId) {
+    const { data: existing } = await supabase
+      .from("rent_payments")
+      .select("id")
+      .contains("metadata", { invoice_id: invoiceId })
+      .maybeSingle()
+
+    if (existing?.id) {
+      await supabase.from("rent_payments").update(payment).eq("id", existing.id)
+      return
+    }
+  }
+
+  await supabase.from("rent_payments").insert(payment)
 }
 
 async function notifyTenantPayment(
@@ -278,11 +194,14 @@ async function handleCheckoutSessionCompleted(
   const tenantId = fullSession.metadata?.tenant_id
   const unitId = fullSession.metadata?.unit_id
 
-  const amount = parseAmountInMajorUnits(lineItem?.amount_total ?? fullSession.amount_total)
+  const amount = parseAmountInMajorUnits(
+    lineItem?.amount_total ?? fullSession.amount_total
+  )
   const paymentData: TablesInsert<"rent_payments"> = {
     user_id: tenantId || "00000000-0000-0000-0000-000000000000",
     stripe_payment_intent_id: paymentIntentId,
-    stripe_customer_id: typeof fullSession.customer === "string" ? fullSession.customer : null,
+    stripe_customer_id:
+      typeof fullSession.customer === "string" ? fullSession.customer : null,
     amount,
     currency: (lineItem?.currency || fullSession.currency || "usd").toUpperCase(),
     description: lineItem?.description || "One-time rent payment",
@@ -302,12 +221,7 @@ async function handleCheckoutSessionCompleted(
   await upsertRentPayment(supabase, paymentData)
 
   if (tenantId && paymentData.status === "succeeded") {
-    await notifyTenantPayment(
-      supabase,
-      tenantId,
-      amount,
-      paymentData.description ?? null
-    )
+    await notifyTenantPayment(supabase, tenantId, amount, paymentData.description ?? null)
   }
 }
 
@@ -316,7 +230,9 @@ async function handleInvoicePaymentSucceeded(
   invoice: Stripe.Invoice
 ) {
   const subscriptionId =
-    typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id
+    typeof invoice.subscription === "string"
+      ? invoice.subscription
+      : invoice.subscription?.id
 
   if (!subscriptionId) {
     return
@@ -329,7 +245,7 @@ async function handleInvoicePaymentSucceeded(
   const unitId = subscription.metadata?.unit_id
   const amount = parseAmountInMajorUnits(invoice.amount_paid)
 
-  const subscriptionPayment: TablesInsert<"rent_payments"> = {
+  const paymentData: TablesInsert<"rent_payments"> = {
     user_id: tenantId || "00000000-0000-0000-0000-000000000000",
     stripe_customer_id: typeof invoice.customer === "string" ? invoice.customer : null,
     stripe_subscription_id: subscription.id,
@@ -343,11 +259,15 @@ async function handleInvoicePaymentSucceeded(
     unit_id: unitId,
     payment_method_type: "card",
     billing_period_start: subscription.current_period_start
-      ? new Date(subscription.current_period_start * 1000).toISOString().split("T")[0]
-      : undefined,
+      ? new Date(subscription.current_period_start * 1000)
+          .toISOString()
+          .split("T")[0]
+      : null,
     billing_period_end: subscription.current_period_end
-      ? new Date(subscription.current_period_end * 1000).toISOString().split("T")[0]
-      : undefined,
+      ? new Date(subscription.current_period_end * 1000)
+          .toISOString()
+          .split("T")[0]
+      : null,
     metadata: {
       invoice_id: invoice.id,
       subscription_id: subscription.id,
@@ -355,19 +275,23 @@ async function handleInvoicePaymentSucceeded(
     },
   }
 
-  await upsertRentPayment(supabase, subscriptionPayment)
+  await upsertRentPayment(supabase, paymentData)
 
   await supabase
     .from("subscriptions")
     .update({
-      status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      status: toSubscriptionStatus(subscription.status),
+      current_period_start: new Date(
+        subscription.current_period_start * 1000
+      ).toISOString(),
+      current_period_end: new Date(
+        subscription.current_period_end * 1000
+      ).toISOString(),
     })
     .eq("stripe_subscription_id", subscription.id)
 
   if (tenantId) {
-    await notifyTenantPayment(supabase, tenantId, amount, subscriptionPayment.description)
+    await notifyTenantPayment(supabase, tenantId, amount, paymentData.description ?? null)
   }
 }
 
@@ -376,7 +300,9 @@ async function handleInvoicePaymentFailed(
   invoice: Stripe.Invoice
 ) {
   const subscriptionId =
-    typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id
+    typeof invoice.subscription === "string"
+      ? invoice.subscription
+      : invoice.subscription?.id
 
   if (!subscriptionId) {
     return
@@ -409,12 +335,91 @@ async function handleInvoicePaymentFailed(
   await upsertRentPayment(supabase, failedPayment)
 }
 
+async function handleSubscriptionCreated(
+  supabase: SupabaseClient<Database>,
+  subscription: Stripe.Subscription
+) {
+  const tenantId = subscription.metadata?.tenant_id
+  await supabase.from("subscriptions").upsert({
+    user_id: tenantId || "00000000-0000-0000-0000-000000000000",
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id:
+      typeof subscription.customer === "string" ? subscription.customer : null,
+    status: toSubscriptionStatus(subscription.status),
+    current_period_start: subscription.current_period_start
+      ? new Date(subscription.current_period_start * 1000).toISOString()
+      : null,
+    current_period_end: subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null,
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    amount: parseAmountInMajorUnits(subscription.items.data[0]?.price?.unit_amount ?? 0),
+    currency: (subscription.currency || "usd").toUpperCase(),
+    interval: (subscription.items.data[0]?.price.recurring?.interval || "month") as
+      | "month"
+      | "year",
+    metadata: subscription.metadata,
+  })
+}
+
+async function handleSubscriptionUpdated(
+  supabase: SupabaseClient<Database>,
+  subscription: Stripe.Subscription
+) {
+  await supabase
+    .from("subscriptions")
+    .update({
+      status: toSubscriptionStatus(subscription.status),
+      current_period_start: subscription.current_period_start
+        ? new Date(subscription.current_period_start * 1000).toISOString()
+        : null,
+      current_period_end: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null,
+      cancel_at_period_end: subscription.cancel_at_period_end,
+      metadata: subscription.metadata,
+    })
+    .eq("stripe_subscription_id", subscription.id)
+}
+
+async function handleSubscriptionDeleted(
+  supabase: SupabaseClient<Database>,
+  subscription: Stripe.Subscription
+) {
+  await supabase
+    .from("subscriptions")
+    .update({
+      status: "canceled",
+      current_period_end: subscription.ended_at
+        ? new Date(subscription.ended_at * 1000).toISOString()
+        : new Date().toISOString(),
+      metadata: subscription.metadata,
+    })
+    .eq("stripe_subscription_id", subscription.id)
+}
+
 export async function POST(req: Request) {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
+  const logger = createStructuredLogger("webhook_processor", {
+    component: "stripe_webhook",
+    requestId,
+  })
+
   const stripe = getStripe()
   const signature = (await headers()).get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
+    logger.error("stripe_webhook_configuration_error", {
+      reason: "missing_webhook_secret",
+    })
+    incrementOperationalMetric("webhook_failures_total", {
+      source: "stripe_webhook",
+      provider: "stripe",
+      eventType: "unknown",
+      reason: "missing_webhook_secret",
+    })
+
     return jsonError("CONFIGURATION_ERROR", {
       message: "Stripe webhook secret is not configured",
     })
@@ -428,6 +433,9 @@ export async function POST(req: Request) {
 
   const supabase = createSupabaseAdminClient()
   if (!supabase) {
+    logger.error("stripe_webhook_configuration_error", {
+      reason: "missing_supabase_admin_client",
+    })
     return jsonError("CONFIGURATION_ERROR", {
       message: "Supabase client not configured",
     })
@@ -439,9 +447,12 @@ export async function POST(req: Request) {
 
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid payload"
-    console.error("Webhook signature verification failed:", message)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid payload"
+    logger.error("stripe_webhook_processing_failed", {
+      reason: message,
+      provider: "stripe",
+    })
 
     return jsonError("REQUEST_VALIDATION_ERROR", {
       message,
@@ -451,32 +462,79 @@ export async function POST(req: Request) {
 
   try {
     const duplicate = await isDuplicateEvent(supabase, event)
-
     if (duplicate) {
       return new Response("ok", { status: 200 })
     }
 
+    logger.info("stripe_webhook_received", {
+      eventName: event.type,
+      stripeEventId: event.id,
+    })
+
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(supabase, event.data.object as Stripe.Checkout.Session)
+        await handleCheckoutSessionCompleted(
+          supabase,
+          event.data.object as Stripe.Checkout.Session
+        )
         break
       case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(supabase, event.data.object as Stripe.Invoice)
+        await handleInvoicePaymentSucceeded(
+          supabase,
+          event.data.object as Stripe.Invoice
+        )
         break
       case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(supabase, event.data.object as Stripe.Invoice)
+        await handleInvoicePaymentFailed(
+          supabase,
+          event.data.object as Stripe.Invoice
+        )
+        break
+      case "customer.subscription.created":
+        await handleSubscriptionCreated(
+          supabase,
+          event.data.object as Stripe.Subscription
+        )
+        break
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(
+          supabase,
+          event.data.object as Stripe.Subscription
+        )
+        break
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(
+          supabase,
+          event.data.object as Stripe.Subscription
+        )
         break
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        logger.info("stripe_webhook_unhandled_event", { eventName: event.type })
         break
     }
 
     await markEventProcessed(supabase, event.id, "processed")
 
+    logger.info("stripe_webhook_processed", {
+      eventName: event.type,
+      stripeEventId: event.id,
+    })
+
     return new Response("ok", { status: 200 })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unexpected webhook processing error"
-    console.error("Webhook processing error:", message)
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unexpected webhook processing error"
+
+    logger.error("stripe_webhook_processing_failed", {
+      reason: message,
+      provider: "stripe",
+    })
+    incrementOperationalMetric("webhook_failures_total", {
+      source: "stripe_webhook",
+      provider: "stripe",
+      eventType: event.type,
+      reason: message,
+    })
 
     await markEventProcessed(supabase, event.id, "failed", message)
 
