@@ -1,43 +1,35 @@
 # Data Retention Policy
 
-_Last Updated: February 18, 2026_
+_Last updated: February 18, 2026_
 
-This policy explains how long Roomsily retains key records used across tenant and manager portals.
+This policy defines how long key operational records are retained in Roomsily and how scheduled cleanup is applied.
 
-## 1. Purpose
+## Retention schedule
 
-We retain data only for operational continuity, legal compliance, dispute handling, and security oversight. Retention windows may be extended when litigation holds, legal requests, or unresolved investigations apply.
+| Data type                                  | Baseline retention window  | Current handling                                           |
+| ------------------------------------------ | -------------------------- | ---------------------------------------------------------- |
+| Visitor logs                               | 180 days                   | Older visitor records are eligible for scheduled deletion. |
+| Notifications                              | 90 days                    | Older notifications are eligible for scheduled deletion.   |
+| Audit logs (including export audit events) | 730 days (24 months)       | Older audit records are eligible for scheduled deletion.   |
+| Payment and document evidence              | Contractual / legal period | Retained according to legal and operational obligations.   |
 
-## 2. Retention commitments
+## 1) Why retention exists
 
-| Data category                               | Typical retention                      | Notes                                                                         |
-| ------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------- |
-| Visitor logs                                | 180 days minimum                       | May be retained longer where local housing/security rules require it.         |
-| Notification events                         | 90 days minimum                        | Supports delivery troubleshooting and operational audits.                     |
-| Audit logs (admin/manager actions, exports) | 24 months minimum                      | Supports compliance verification, incident response, and access reviews.      |
-| Export activity records                     | 24 months minimum                      | Tracks who exported regulated operational data and when.                      |
-| Payment events and receipts                 | Per contractual/legal accounting rules | Usually tied to financial recordkeeping periods in applicable jurisdictions.  |
-| Document metadata and signature events      | Per lease/legal requirements           | Lease and signature evidence retained for enforceability and dispute defense. |
+Retention supports:
 
-## 3. Deletion and minimization
+- resident and manager operational continuity,
+- policy and security investigations,
+- dispute handling,
+- legal and regulatory obligations.
 
-- Scheduled retention jobs remove expired data categories where no hold applies.
-- Storage is minimized to required operational and legal fields.
-- Sensitive fields are tokenized or masked when full values are unnecessary.
+## 2) Export traceability and compliance
 
-## 4. Audit log export capability
+Authorized operational exports (finance, maintenance, bookings, visitors) are audit logged to preserve who exported data and when.
 
-Authorized managers/admins can export operational datasets (including visitor logs) and the associated export actions are audit logged.
+## 3) Region-specific requirements
 
-This ensures compliance commitments include both:
+These are baseline platform windows. Where local law requires different retention periods, legal holds, or additional notices, property teams must apply region-appropriate process controls.
 
-- **Retention** of oversight evidence, and
-- **Traceability** of who accessed/exported regulated records.
+## 4) Exceptions
 
-## 5. Region-specific handling
-
-Retention periods in this policy are baseline defaults. If local law requires stricter retention, shorter limits, or additional notice obligations, property-specific configuration and procedures must be applied.
-
-## 6. Requests and exceptions
-
-Data-subject requests, legal holds, and regulator requests may override standard deletion timelines. Requests should flow through property management and designated support/compliance channels.
+Data may be preserved beyond standard windows for litigation holds, active investigations, regulator requests, or unresolved disputes.

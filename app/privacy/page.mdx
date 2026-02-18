@@ -1,100 +1,72 @@
 # Privacy Policy
 
-_Last Updated: February 18, 2026_
+_Last updated: February 18, 2026_
 
-This Privacy Policy describes how Roomsily collects, uses, shares, and retains personal data when tenants, roommates, property managers, and admins use the Roomsily portal.
+This Privacy Policy explains how Roomsily collects, uses, shares, and retains personal information in tenant and manager workflows.
 
-## 1. Data controller context
+## At a glance
 
-Roomsily provides software infrastructure for properties. Depending on your region and contract structure, your property manager/landlord may act as the primary controller for tenancy records, while Roomsily operates as a processor/service provider for platform operations.
+- We process data to operate housing workflows (payments, documents, bookings, messaging, and visitor logs).
+- We use service providers such as Supabase, Stripe, Cal.com, Documenso, and (optionally) Plaid.
+- We do not sell personal data.
+- Retention windows and operational deletion jobs are described in our [Data Retention Policy](/data-retention).
 
-## 2. Information we collect
+## 1) Data we collect
 
-### Account and profile data
+- **Account and profile data:** name, email, role, unit, rent-share, and related tenancy details.
+- **Payment metadata:** customer/payment identifiers, statuses, receipts, and reconciliation events.
+- **Document metadata:** versions, envelope/signature state, and access events.
+- **Booking and visitor records:** requests, approvals/rejections, and policy-evaluation outcomes.
+- **Security/operations data:** authentication events, audit records, and service diagnostics.
 
-- Name, email, role, unit assignment, rent share, emergency contacts, and optional vehicle details.
-
-### Financial and payment data
-
-- Stripe customer/payment identifiers, payment status events, receipts, and reconciliation metadata.
-- For optional ACH flows, tokenized bank-linking metadata (for example institution name and masked account details).
-
-### Documents and signature data
-
-- Uploaded files, lease versions, signature workflow identifiers, and access logs.
-
-### Bookings, visitors, and communications
-
-- Amenity bookings, visitor-log submissions, approvals/rejections, and in-app message/notification records.
-
-### Security and telemetry
-
-- Authentication events, IP/session metadata, audit records, and service diagnostics.
-
-## 3. How we use data
+## 2) Why we process data
 
 We process data to:
 
-- deliver tenant and manager workflows,
-- enforce policy rules (for example visitor-night limits and booking conflicts),
-- process payments and maintain receipts/reconciliation,
-- send operational and compliance notifications,
-- protect accounts, investigate misuse, and satisfy legal obligations.
+1. provide and secure core services,
+2. enforce tenancy and platform policy workflows,
+3. support billing, receipts, and reconciliation,
+4. meet legal, security, and recordkeeping obligations.
 
-## 4. Consent disclosures and legal bases
+## 3) Legal bases and consent
 
-Depending on location, our legal bases may include contract performance, legitimate interests, legal obligations, and consent.
+Depending on region, legal bases may include contract performance, legitimate interests, legal obligations, and consent.
 
-- **Payments:** consent and contractual necessity for processing rent and related payment events.
-- **Documents:** contractual/legal necessity for lease administration and compliance logging.
-- **Notifications:** operational necessity for service-critical updates; consent or preference-based controls for optional communications.
-- **Optional bank linking:** explicit opt-in consent before ACH account linking.
+- **Payments:** contract performance and user-initiated authorization.
+- **Documents:** contractual/legal necessity for lease and compliance operations.
+- **Notifications:** service necessity for critical events; optional preferences when available.
+- **Optional bank linking:** explicit opt-in consent before account linking.
 
-You may withdraw optional consents (for example bank-linking usage) where technically and legally available, but required tenancy/payment processing may continue under contract or legal obligations.
+## 4) Service providers and sharing
 
-## 5. Sharing and subprocessors
+We share data only as needed to operate the service and comply with law:
 
-We do not sell personal data. We share data with service providers strictly to deliver the Service, including:
+- Supabase (data, auth, storage, realtime)
+- Stripe (payments)
+- Cal.com (amenity scheduling)
+- Documenso (document workflows)
+- Plaid (optional bank linking)
 
-- **Supabase** (database/auth/storage/realtime)
-- **Stripe** (payments)
-- **Cal.com** (amenity scheduling)
-- **Documenso** (document workflows)
-- **Plaid** (optional bank linking where enabled)
+We may also disclose data when required by legal process or to protect users and platform security.
 
-We may also disclose data when required by law, legal process, or safety/security investigations.
+## 5) Retention and deletion
 
-## 6. International transfers
+Retention targets differ by data type. For currently enforced operational windows and audit/export commitments, see [Data Retention Policy](/data-retention).
 
-Data may be processed in regions outside your residence. Where required, we use contractual and organizational safeguards for cross-border transfers.
+Certain records may be retained longer when legal holds, disputes, fraud reviews, or statutory requirements apply.
 
-## 7. Retention schedule overview
+## 6) Regional compliance
 
-Detailed retention commitments appear in our [Data Retention Policy](/data-retention). In summary:
+Regional requirements can vary for notice, retention, and housing operations. Property managers are responsible for configuring policy behavior that aligns with local law.
 
-- visitor logs are retained per policy/legal schedule,
-- notifications are retained for operational windows,
-- audit logs and export records are retained for oversight and compliance,
-- documents and payment records are retained according to contractual/legal requirements.
+## 7) Your rights
 
-## 8. Your rights
+Subject to local law, you may request access, correction, deletion, portability, or objection/restriction. Submit requests through your property support or designated compliance channel.
 
-Subject to local law, you may have rights to access, correction, deletion, restriction, portability, and objection. Tenants should submit requests through property support channels; managers/admins should use designated operations workflows.
+## 8) Security practices
 
-## 9. Security
+Roomsily applies role-based access controls, encrypted transport, authenticated access, and auditable operations for privileged workflows.
 
-Roomsily uses layered security controls, including authenticated access, role-based authorization, encryption in transit, and auditable administrative actions.
+## 9) Policy updates
 
-## 10. Region-specific requirements
-
-Local requirements may differ for retention periods, notice obligations, and visitor-log handling.
-
-Property managers are responsible for configuring policy settings and operational practices for their jurisdiction. Roomsily provides enforcement controls, audit trails, and exports to support compliance execution.
-
-## 11. Children
-
-The Service is intended for housing operations and is not directed to children under 13.
-
-## 12. Changes
-
-We may update this policy as features, legal requirements, or integrations evolve. Material changes will be communicated through in-app notices or other reasonable channels.
+We may update this policy as products, integrations, or legal obligations evolve. Material changes will be communicated through in-app notices or equivalent channels.
