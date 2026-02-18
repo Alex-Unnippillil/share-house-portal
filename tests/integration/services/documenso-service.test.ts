@@ -75,4 +75,49 @@ describe("Documenso signing workflow payloads", () => {
     expect(response.success).toBe(false)
     expect(response.error).toContain("Documenso upload failed")
   })
+
+  it("surfaces contract drift when signing URL payload omits signingUrl", async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "upload-1", documentDataId: "doc-data-1" }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "env-2",
+            title: "lease-2027",
+            status: "pending",
+            recipients: [
+              {
+                id: "recipient-2",
+                email: "roommate@example.com",
+                role: "SIGNER",
+                token: "token-2",
+                status: "pending",
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { url: "https://documenso.test/sign/recipient-2" } }), {
+          status: 200,
+        })
+      ) as typeof fetch
+
+    const file = new File(["lease"], "lease.pdf", { type: "application/pdf" })
+
+    const response = await createLeaseSigningRequest({
+      document_id: "lease-2027",
+      file,
+      tenantEmails: ["roommate@example.com"],
+    })
+
+    expect(response.success).toBe(false)
+    expect(response.error).toContain("missing signingUrl")
+  })
 })

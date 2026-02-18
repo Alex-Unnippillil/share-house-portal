@@ -66,4 +66,34 @@ describe("Cal.com booking integration payloads", () => {
     expect(result.success).toBe(false)
     expect(result.error).toContain("No booking slot available for PlayStation")
   })
+
+  it("fails safely when Cal.com changes eventTypes payload shape", async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              event_types: [{ id: 22, title: "Kitchen Shared", hidden: false }],
+            },
+          }),
+          { status: 200 }
+        )
+      ) as typeof fetch
+
+    const result = await createAmenityBooking({
+      amenityType: "Kitchen",
+      startTime: "2026-06-01T10:00:00.000Z",
+      endTime: "2026-06-01T11:00:00.000Z",
+      userEmail: "tenant@example.com",
+      userName: "Ava Tenant",
+    })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        success: false,
+      })
+    )
+    expect(result.error).toContain("No booking slot available for Kitchen")
+  })
 })

@@ -145,6 +145,11 @@ class DocumensoService {
     }
 
     const data = await response.json();
+
+    if (!data?.signingUrl || typeof data.signingUrl !== "string") {
+      throw new Error("Documenso signing URL response missing signingUrl");
+    }
+
     return data.signingUrl;
   }
 

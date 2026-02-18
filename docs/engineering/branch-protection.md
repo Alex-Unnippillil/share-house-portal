@@ -8,10 +8,14 @@ The `main` branch is protected and must remain deployable at all times.
 - **Dismiss stale approvals** when new commits are pushed.
 - **Require conversation resolution** before merge.
 - **Require linear history** (no merge commits) where repository settings allow it.
+- **Release candidate freeze**: `release/rc-*` branches are hotfix-only during QA windows.
 
 ## Required Status Checks
-The following checks should be marked as required in GitHub branch protection:
-- `CI / Lint, typecheck, test, and build`
+The following checks should be marked as required in GitHub branch protection and treated as blocking:
+- `CI / Lint + Typecheck`
+- `CI / Unit + Integration`
+- `CI / E2E Regression`
+- `CI / Production Build`
 - `css-size / Purge & audit CSS bundle`
 
 If Lighthouse runs on preview deployments for a PR, treat failures as blocking even when not configured as a required check.
