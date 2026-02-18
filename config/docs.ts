@@ -1,5 +1,4 @@
-import { getMainNavigationItems } from "@/config/navigation"
-import { MainNavItem, SidebarNavItem } from "types/nav"
+import type { MainNavItem, SidebarNavItem } from "@/types/nav"
 
 import { docsSidebarNav, roleNavigation } from "@/config/navigation"
 

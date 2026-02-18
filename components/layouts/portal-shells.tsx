@@ -36,7 +36,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
   const pathname = usePathname()
   const navItems = roleNavigation[role].primaryNav.map((item) => ({
     href: item.href ?? "/",
-    label: item.title,
+    title: item.title,
   }))
 
   return (
@@ -45,15 +45,14 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
         <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">Navigation</p>
         <ul className="space-y-stack-sm">
           {navItems.map((item) => (
-            <li key={item.id}>
+            <li key={`${item.href}-${item.title}`}>
               <Link
                 className={cn(
                   "block rounded-md px-3 py-2 text-body-sm transition",
                   isActiveRoute(pathname, item.href) ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-muted"
                 )}
                 href={item.href}
-                aria-disabled={item.disabled}
-              >
+                >
                 {item.title}
               </Link>
             </li>
@@ -74,15 +73,14 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
             </SheetHeader>
             <ul className="mt-stack-lg space-y-stack-sm">
               {navItems.map((item) => (
-                <li key={item.id}>
+                <li key={`${item.href}-${item.title}`}>
                   <Link
                     className={cn(
                       "block rounded-md px-3 py-2 text-body-sm",
                       isActiveRoute(pathname, item.href) ? "bg-primary/10 text-foreground" : "hover:bg-muted"
                     )}
                     href={item.href}
-                    aria-disabled={item.disabled}
-                  >
+                    >
                     {item.title}
                   </Link>
                 </li>

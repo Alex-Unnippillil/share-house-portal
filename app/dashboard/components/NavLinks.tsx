@@ -1,73 +1,50 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
 import { CrumpledPaperIcon, PersonIcon } from "@radix-ui/react-icons"
 import { usePathname } from "next/navigation"
 
 import SmartLink from "@/components/navigation/SmartLink"
-import {
-  getNavigationItems,
-  resolveNavTreeForRole,
-  type NavigationItem,
-} from "@/config/navigation"
-import type { AppRole } from "@/lib/auth-rbac"
-import { fetchMemberRole } from "@/lib/data/members"
+import { getRoleNavigation, type PortalRole } from "@/config/navigation"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/utils/supabase-browser"
-import type { TypedSupabaseClient } from "@/utils/typed-supabase-client"
 
-const iconByNavId = {
-  members: PersonIcon,
-} as const
-
-function resolveIcon(item: NavigationItem) {
-  return iconByNavId[item.id as keyof typeof iconByNavId] ?? CrumpledPaperIcon
+type NavLinksProps = {
+  onNavigate?: () => void
+  role?: PortalRole | null
 }
 
-export default function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
-	const pathname = usePathname();
-	const [role, setRole] = useState<string | null>(null);
+const iconByHref = {
+  "/dashboard/members": PersonIcon,
+} as const
 
-  const links = useMemo(() => {
-    const tree = resolveNavTreeForRole(role)
-    const navRole: AppRole = role ?? "tenant"
-
-    return getNavigationItems(tree, {
-      role: navRole,
-      includeDisabled: true,
-    })
-  }, [role])
+export default function NavLinks({ onNavigate, role }: NavLinksProps) {
+  const pathname = usePathname()
+  const navigation = getRoleNavigation(role)
 
   return (
-    <div className="space-y-5">
-      {links.map((link) => {
-        const Icon = resolveIcon(link)
+    <div className="space-y-2">
+      {navigation.primaryNav.filter((link) => Boolean(link.href)).map((link) => {
+        const href = link.href as string
+        const Icon = iconByHref[href as keyof typeof iconByHref] ?? CrumpledPaperIcon
+        const isActive = pathname === href || pathname.startsWith(`${href}/`)
 
-	return (
-		<div className="space-y-5">
-			{links.map((link, index) => {
-				const Icon = link.Icon;
-				return (
-                                        <SmartLink
-                                                onClick={onNavigate}
-                                                href={link.href}
-                                                key={index}
-                                                className={cn(
-                                                        "flex items-center gap-2 rounded-sm p-2",
-                                                        {
-                                                                " bg-gray-500 dark:bg-gray-700 text-white ":
-                                                                        pathname === link.href,
-                                                        }
-                                                )}
-                                                intent="navigation"
-                                        >
-                                                <span className="flex items-center gap-2">
-                                                        <Icon />
-                                                        <span>{link.text}</span>
-                                                </span>
-                                        </SmartLink>
-                                );
-                        })}
-                </div>
-        );
+        return (
+          <SmartLink
+            key={href}
+            onClick={onNavigate}
+            href={href}
+            intent="navigation"
+            className={cn(
+              "flex items-center gap-2 rounded-sm p-2 transition-colors",
+              isActive ? "bg-gray-500 text-white dark:bg-gray-700" : "hover:bg-muted"
+            )}
+          >
+            <span className="flex items-center gap-2">
+              <Icon />
+              <span>{link.title}</span>
+            </span>
+          </SmartLink>
+        )
+      })}
+    </div>
+  )
 }
