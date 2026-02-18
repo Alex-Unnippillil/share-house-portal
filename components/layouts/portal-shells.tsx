@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { motion, useReducedMotion } from "framer-motion"
 import { Menu } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -41,6 +43,24 @@ function ResponsiveNav({
   title: string
   navItems: PortalNavItem[]
 }) {
+  const pathname = usePathname()
+
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === href || pathname.startsWith(`${href}/`)
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
+  const itemClassName = (active: boolean) =>
+    cn(
+      "relative block rounded-md px-3 py-2 text-body-sm transition-colors",
+      active
+        ? "bg-primary/10 text-primary"
+        : "text-foreground hover:bg-muted"
+    )
+
   return (
     <>
       <nav className="hidden w-72 shrink-0 border-r bg-muted/20 p-content-gutter lg:block">
@@ -51,9 +71,17 @@ function ResponsiveNav({
           {navItems.map((item) => (
             <li key={item.href}>
               <Link
-                className="block rounded-md px-3 py-2 text-body-sm text-foreground transition hover:bg-muted"
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={itemClassName(isActive(item.href))}
                 href={item.href}
               >
+                {isActive(item.href) ? (
+                  <motion.span
+                    layoutId="portal-shell-active-nav"
+                    className="absolute inset-0 -z-10 rounded-md border border-primary/20 bg-primary/10"
+                    transition={{ type: "spring", stiffness: 360, damping: 30 }}
+                  />
+                ) : null}
                 {item.label}
               </Link>
             </li>
@@ -76,7 +104,8 @@ function ResponsiveNav({
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
-                    className="block rounded-md px-3 py-2 text-body-sm hover:bg-muted"
+                    aria-current={isActive(item.href) ? "page" : undefined}
+                    className={itemClassName(isActive(item.href))}
                     href={item.href}
                   >
                     {item.label}
@@ -98,6 +127,8 @@ function PortalShell({
   navItems,
   children,
 }: PortalShellProps) {
+  const reduceMotion = useReducedMotion()
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b p-content-gutter">
@@ -119,9 +150,21 @@ function PortalShell({
       <div className="flex min-h-[calc(100vh-108px)] flex-col lg:flex-row">
         <ResponsiveNav title={title} navItems={navItems} />
         <main className="flex-1 p-content-gutter">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-section">
+          <motion.div
+            className="mx-auto flex w-full max-w-6xl flex-col gap-section"
+            initial={reduceMotion ? undefined : { opacity: 0, y: 8 }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={
+              reduceMotion
+                ? undefined
+                : {
+                    duration: 0.22,
+                    ease: "easeOut",
+                  }
+            }
+          >
             {children}
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>
