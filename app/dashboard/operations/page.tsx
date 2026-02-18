@@ -83,10 +83,10 @@ export default async function OperationsDashboardPage() {
             <CardDescription>Live queue counts and direct drill-down links.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>Finance exceptions: {financeRows.filter((row) => row.status !== 'succeeded').length}</p>
-            <p>Open maintenance: {maintenanceRows.filter((row) => row.status !== 'completed').length}</p>
-            <p>Pending bookings: {bookingRows.filter((row) => row.status === 'pending').length}</p>
-            <p>Unresolved moderation: {moderationRows.filter((row) => row.status === 'open').length}</p>
+            <p>Finance exceptions: {financeRows.rows.filter((row) => row.status !== 'succeeded').length}</p>
+            <p>Open maintenance: {maintenanceRows.rows.filter((row) => row.status !== 'completed').length}</p>
+            <p>Pending bookings: {bookingRows.rows.filter((row) => row.status === 'pending').length}</p>
+            <p>Unresolved moderation: {moderationRows.rows.filter((row) => row.status === 'open').length}</p>
           </CardContent>
         </Card>
 
