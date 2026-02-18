@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import SmartLink, { SmartLinkProps } from "@/components/navigation/SmartLink"
-import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 import { docsConfig } from "@/config/docs"
 import { siteConfig } from "@/config/site"
@@ -19,13 +19,14 @@ interface MobileNavProps {
 
 export function MobileNav({ isAuthenticated }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
+  const pathname = usePathname()
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
           variant="ghost"
-          className="mr-0 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+          className="mr-0 px-0 text-base hover:bg-transparent md:hidden"
         >
           <Icons.menu className="size-6" />
           <span className="sr-only">Toggle Menu</span>
@@ -45,18 +46,26 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
           href="/"
           className="inline-flex"
           onOpenChange={setOpen}
+          isActive={pathname === "/"}
         >
           <span className="flex items-center">
             <Icons.logo className="mr-1 size-6" />
             <span className="font-bold">{siteConfig.name}</span>
           </span>
         </MobileLink>
-        <div className="px-6 py-4">
+        <nav aria-labelledby="mobile-auth-actions-heading" className="px-6 py-4">
+          <h2
+            id="mobile-auth-actions-heading"
+            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Account actions
+          </h2>
           {isAuthenticated ? (
-            <div className="flex flex-col gap-2">
+            <div className="mt-3 flex flex-col gap-2">
               <MobileLink
                 href="/dashboard"
                 onOpenChange={setOpen}
+                isActive={pathname === "/dashboard"}
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "sm" }),
                   "justify-center"
@@ -72,10 +81,11 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
               />
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="mt-3 flex flex-col gap-2">
               <MobileLink
                 href="/auth"
                 onOpenChange={setOpen}
+                isActive={pathname === "/auth"}
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "sm" }),
                   "justify-center"
@@ -86,15 +96,22 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
               <MobileLink
                 href="/onboarding"
                 onOpenChange={setOpen}
+                isActive={pathname === "/onboarding"}
                 className={cn(buttonVariants({ size: "sm" }), "justify-center")}
               >
                 Sign up
               </MobileLink>
             </div>
           )}
-        </div>
+        </nav>
         <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
-          <div className="flex flex-col space-y-3">
+          <nav aria-labelledby="mobile-primary-links-heading" className="flex flex-col space-y-3">
+            <h2
+              id="mobile-primary-links-heading"
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              Main navigation
+            </h2>
             {docsConfig.mainNav?.map(
               (item) =>
                 item.href && (
@@ -102,15 +119,22 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                     key={item.href}
                     href={item.href}
                     onOpenChange={setOpen}
+                    isActive={isMobileRouteActive(pathname, item.href)}
                   >
                     {item.title}
                   </MobileLink>
                 )
             )}
-          </div>
-          <div className="flex flex-col space-y-2">
+          </nav>
+          <nav aria-labelledby="mobile-resource-links-heading" className="flex flex-col space-y-2">
+            <h2
+              id="mobile-resource-links-heading"
+              className="pt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              Resource links
+            </h2>
             {docsConfig.sidebarNav.map((item, index) => (
-              <div key={index} className="flex flex-col space-y-3 pt-6">
+              <div key={index} className="flex flex-col space-y-3 pt-4">
                 <h4 className="font-medium">{item.title}</h4>
                 {item?.items?.length &&
                   item.items.map((item) => (
@@ -121,6 +145,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                             href={item.href}
                             onOpenChange={setOpen}
                             className="text-muted-foreground"
+                            isActive={isMobileRouteActive(pathname, item.href)}
                           >
                             <span className="flex items-center">
                               <span>{item.title}</span>
@@ -138,7 +163,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
                   ))}
               </div>
             ))}
-          </div>
+          </nav>
         </ScrollArea>
       </SheetContent>
     </Sheet>
@@ -147,6 +172,7 @@ export function MobileNav({ isAuthenticated }: MobileNavProps) {
 
 interface MobileLinkProps extends SmartLinkProps {
   onOpenChange?: (open: boolean) => void
+  isActive?: boolean
   children: React.ReactNode
   className?: string
 }
@@ -154,23 +180,35 @@ interface MobileLinkProps extends SmartLinkProps {
 function MobileLink({
   href,
   onOpenChange,
+  isActive = false,
   className,
   children,
   ...props
 }: MobileLinkProps) {
-  const router = useRouter()
   return (
     <SmartLink
       href={href}
       onClick={() => {
-        router.push(href.toString())
         onOpenChange?.(false)
       }}
-      className={cn(className)}
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "inline-flex w-fit rounded-md px-2 py-1 text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        isActive && "bg-accent font-medium text-accent-foreground",
+        className
+      )}
       intent="navigation"
       {...props}
     >
       {children}
     </SmartLink>
   )
+}
+
+function isMobileRouteActive(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/"
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
