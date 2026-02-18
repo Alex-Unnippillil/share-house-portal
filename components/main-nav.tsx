@@ -1,18 +1,19 @@
 import * as React from "react"
 import SmartLink from "@/components/navigation/SmartLink"
 
-import { NavItem } from "@/types/nav"
 import { siteConfig } from "@/config/site"
+import { getNavigationItems } from "@/config/navigation"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
 
-interface MainNavProps {
-  items?: NavItem[]
-}
+export function MainNav() {
+  const items = getNavigationItems("public", {
+    role: "public",
+    includeDisabled: true,
+  })
 
-export function MainNav({ items }: MainNavProps) {
   return (
-        <div className="mr-2 hidden gap-4 md:flex md:gap-8">
+    <div className="mr-2 hidden gap-4 md:flex md:gap-8">
       <SmartLink href="/" className="inline-flex" intent="navigation">
         <span className="flex items-center gap-2">
           <Icons.logo className="size-6 text-primary" />
@@ -22,24 +23,22 @@ export function MainNav({ items }: MainNavProps) {
           </div>
         </span>
       </SmartLink>
-      {items?.length ? (
+      {items.length ? (
         <nav className="flex gap-6">
-          {items?.map(
-            (item, index) =>
-              item.href && (
-                <SmartLink
-                  key={index}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center text-sm font-medium text-muted-foreground",
-                    item.disabled && "cursor-not-allowed opacity-80"
-                  )}
-                  intent="navigation"
-                >
-                  {item.title}
-                </SmartLink>
-              )
-          )}
+          {items.map((item) => (
+            <SmartLink
+              key={item.id}
+              href={item.href}
+              className={cn(
+                "flex items-center text-sm font-medium text-muted-foreground",
+                item.disabled && "pointer-events-none cursor-not-allowed opacity-80"
+              )}
+              intent="navigation"
+              aria-disabled={item.disabled}
+            >
+              {item.title}
+            </SmartLink>
+          ))}
         </nav>
       ) : null}
     </div>

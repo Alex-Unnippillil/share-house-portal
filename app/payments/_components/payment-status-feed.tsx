@@ -125,6 +125,16 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
 
   const [events, setEvents] = useState<PaymentFeedEvent[]>(baseEvents)
 
+  const latestEventAnnouncement = useMemo(() => {
+    const latest = events[0]
+    if (!latest) {
+      return "No payment events yet"
+    }
+
+    return `${latest.roommateName}: ${latest.description ?? getFeedStatusLabel(latest.stripeStatus === "history" ? "completed" : latest.stripeStatus, latest.isAutopay)}`
+  }, [events])
+
+
   useEffect(() => {
     setRoommateStatuses(initialStatuses)
   }, [initialStatuses])
@@ -258,6 +268,9 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {latestEventAnnouncement}
+        </p>
         <div className="space-y-3">
           {roommateStatuses.map((status) => {
             const lastPaymentLabel = (() => {
@@ -324,8 +337,8 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
                       <div className="text-right">
                         <Badge variant={getFeedBadgeVariant(event.stripeStatus)}>
                           {event.stripeStatus === "history"
-                            ? "history"
-                            : event.stripeStatus}
+                            ? "History snapshot"
+                            : `${event.stripeStatus}${event.isAutopay ? " · autopay" : " · manual"}` }
                         </Badge>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {formatCurrency(event.amount, event.currency)}

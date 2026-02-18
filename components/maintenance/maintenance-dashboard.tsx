@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { FlowStateCard } from "@/components/feedback/flow-state";
@@ -50,6 +51,9 @@ function priorityTone(priority: string): "error" | "warning" | "neutral" {
   if (priority === "high") return "warning"
   return "neutral"
 }
+const ManagerEditor = dynamic(() => import("@/components/maintenance/manager-editor").then((mod) => mod.ManagerEditor), {
+  loading: () => <p className="text-sm text-muted-foreground">Loading manager controls…</p>,
+});
 
 function getSlaBucket(createdAt: string | null) {
   if (!createdAt) return "unknown";
@@ -125,8 +129,9 @@ export function MaintenanceDashboard() {
       const isManager = memberProfile.role === "property_manager" || memberProfile.role === "admin";
       const requestQuery = (supabase as any)
         .from("maintenance_requests")
-        .select("*, requester:profiles!maintenance_requests_requested_by_fkey(id, email, full_name)")
-        .order("created_at", { ascending: false });
+        .select("id, title, description, status, priority, requested_by, assigned_to, property_label, unit_label, created_at, sla_due_at, acknowledged_at, resolved_at, completed_at, requester:profiles!maintenance_requests_requested_by_fkey(id, email, full_name)")
+        .order("created_at", { ascending: false })
+        .limit(120);
 
       const { data: requestData, error: requestError } = isManager
         ? await requestQuery
@@ -143,9 +148,10 @@ export function MaintenanceDashboard() {
       } else {
         const { data: updatesData, error: updatesError } = await (supabase as any)
           .from("maintenance_request_updates")
-          .select("*, actor:profiles!maintenance_request_updates_actor_id_fkey(id, email, full_name), assignee:profiles!maintenance_request_updates_assignee_id_fkey(id, email, full_name)")
+          .select("id, request_id, event_type, previous_status, next_status, previous_priority, next_priority, assignee_id, message, created_at, actor:profiles!maintenance_request_updates_actor_id_fkey(id, email, full_name), assignee:profiles!maintenance_request_updates_assignee_id_fkey(id, email, full_name)")
           .in("request_id", requestIds)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(300);
 
         if (updatesError) throw updatesError;
         setUpdates((updatesData ?? []) as UpdateWithActor[]);
@@ -156,7 +162,8 @@ export function MaintenanceDashboard() {
           .from("profiles")
           .select("id, full_name, email")
           .in("role", ["property_manager", "admin"])
-          .order("full_name", { ascending: true });
+          .order("full_name", { ascending: true })
+          .limit(100);
 
         if (managerError) throw managerError;
         setManagers((managerData ?? []) as Pick<ProfileRow, "id" | "full_name" | "email">[]);
@@ -337,8 +344,17 @@ export function MaintenanceDashboard() {
     [createNotification, loadData, pushTimelineEvent, supabase, toast]
   );
 
+  const dashboardAnnouncement = saving
+    ? "Saving maintenance triage updates"
+    : loading
+      ? "Loading maintenance requests"
+      : `${filteredManagerRequests.length} manager requests visible`;
+
   return (
     <Tabs defaultValue="tenant" className="space-y-6">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {dashboardAnnouncement}
+      </p>
       <TabsList>
         <TabsTrigger value="tenant">Tenant view</TabsTrigger>
         {isManager ? <TabsTrigger value="manager">Manager triage</TabsTrigger> : null}
@@ -423,10 +439,15 @@ export function MaintenanceDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
-              <Input placeholder="Search title or description" value={search} onChange={(event) => setSearch(event.target.value)} />
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-search">Search queue</Label>
+                <Input id="maintenance-search" placeholder="Search title or description" value={search} onChange={(event) => setSearch(event.target.value)} />
+              </div>
 
-              <Select value={propertyFilter} onValueChange={setPropertyFilter}>
-                <SelectTrigger>
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-property">Property</Label>
+                <Select value={propertyFilter} onValueChange={setPropertyFilter}>
+                <SelectTrigger id="maintenance-property">
                   <SelectValue placeholder="Property" />
                 </SelectTrigger>
                 <SelectContent>
@@ -438,9 +459,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-unit">Unit</Label>
               <Select value={unitFilter} onValueChange={setUnitFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-unit">
                   <SelectValue placeholder="Unit" />
                 </SelectTrigger>
                 <SelectContent>
@@ -452,9 +476,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-status">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-status">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -466,9 +493,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-assignee">Assignee</Label>
               <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-assignee">
                   <SelectValue placeholder="Assignee" />
                 </SelectTrigger>
                 <SelectContent>
@@ -480,9 +510,12 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-aging">Aging bucket</Label>
               <Select value={agingFilter} onValueChange={setAgingFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="maintenance-aging">
                   <SelectValue placeholder="Aging bucket" />
                 </SelectTrigger>
                 <SelectContent>
@@ -494,6 +527,7 @@ export function MaintenanceDashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
             </CardContent>
           </Card>
 
@@ -550,130 +584,5 @@ export function MaintenanceDashboard() {
         </TabsContent>
       ) : null}
     </Tabs>
-  );
-}
-
-function ManagerEditor({
-  request,
-  managers,
-  updates,
-  disabled,
-  onSave,
-}: {
-  request: RequestWithRequester;
-  managers: Pick<ProfileRow, "id" | "full_name" | "email">[];
-  updates: UpdateWithActor[];
-  disabled: boolean;
-  onSave: (changes: Partial<MaintenanceRequestRow>, comment?: string) => Promise<void>;
-}) {
-  const [status, setStatus] = useState(request.status);
-  const [priority, setPriority] = useState(request.priority);
-  const [assignee, setAssignee] = useState(request.assigned_to ?? "unassigned");
-  const [comment, setComment] = useState("");
-
-  useEffect(() => {
-    setStatus(request.status);
-    setPriority(request.priority);
-    setAssignee(request.assigned_to ?? "unassigned");
-    setComment("");
-  }, [request]);
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <p className="font-medium">{request.title}</p>
-        <p className="text-sm text-muted-foreground">{request.description}</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {value.replace("_", " ")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Priority</Label>
-          <Select value={priority} onValueChange={(value) => setPriority(value as typeof priority)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {priorityOptions.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Assign to</Label>
-        <Select value={assignee} onValueChange={setAssignee}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="unassigned">Unassigned</SelectItem>
-            {managers.map((manager) => (
-              <SelectItem key={manager.id} value={manager.id}>
-                {manager.full_name ?? manager.email ?? "Unknown"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Manager note</Label>
-        <Textarea
-          placeholder="Add timeline update, vendor note, or next action."
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-        />
-      </div>
-
-      <Button
-        disabled={disabled}
-        onClick={() =>
-          onSave(
-            {
-              status,
-              priority,
-              assigned_to: assignee === "unassigned" ? null : assignee,
-              acknowledged_at: status !== "pending" ? new Date().toISOString() : null,
-              resolved_at: status === "completed" ? new Date().toISOString() : null,
-              completed_at: status === "completed" ? new Date().toISOString() : null,
-            },
-            comment || undefined
-          )
-        }
-      >
-        {disabled ? "Saving…" : "Save triage changes"}
-      </Button>
-
-      <div className="space-y-2 pt-2">
-        <p className="text-sm font-medium">Recent timeline events</p>
-        {updates.slice(0, 6).map((event) => (
-          <div key={event.id} className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{event.event_type.replace("_", " ")}</span>
-            {event.message ? ` — ${event.message}` : ""}
-            {event.actor?.full_name ? ` by ${event.actor.full_name}` : ""}
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }

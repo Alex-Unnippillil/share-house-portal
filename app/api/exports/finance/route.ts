@@ -20,7 +20,7 @@ export async function GET() {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   }
 
-  const csv = toCsv(await getFinanceRows())
+  const csv = toCsv((await getFinanceRows({ page: 1, pageSize: 1000 })).rows)
   await writeAuditRecord({ action: 'operations.export.finance', actorId: user.id, actorRole: role, targetType: 'finance_export' })
 
   return new NextResponse(csv, {

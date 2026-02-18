@@ -40,6 +40,7 @@ module.exports = {
             { metric: 'speed-index', threshold: 3400 },
             { metric: 'total-blocking-time', threshold: 200 },
             { metric: 'cumulative-layout-shift', threshold: 0.1 },
+            { metric: 'interaction-to-next-paint', threshold: 200 },
           ],
         },
       ],
@@ -56,6 +57,7 @@ module.exports = {
         'speed-index': ['error', { maxNumericValue: 3400, aggregationMethod: 'median' }],
         'total-blocking-time': ['error', { maxNumericValue: 200, aggregationMethod: 'median' }],
         'cumulative-layout-shift': ['error', { maxNumericValue: 0.1, aggregationMethod: 'median' }],
+        'interaction-to-next-paint': ['error', { maxNumericValue: 200, aggregationMethod: 'median' }],
       },
     },
     upload: {

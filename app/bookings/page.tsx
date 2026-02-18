@@ -1,8 +1,10 @@
 import { Suspense } from "react"
 import { Calendar, ShieldAlert, Tv } from "lucide-react"
 
-import { AMENITY_ICON_MAP, groupAmenitiesByProperty } from "@/lib/bookings/amenity-catalog"
-
+import {
+  AMENITY_ICON_MAP,
+  groupAmenitiesByProperty,
+} from "@/lib/bookings/amenity-catalog"
 import {
   Card,
   CardContent,
@@ -10,6 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageSection,
+  PageTitle,
+  SectionDescription,
+  SectionTitle,
+} from "@/components/ui/page-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FlowStateCard } from "@/components/feedback/flow-state"
 import { PageShell } from "@/components/layout/page-shell"
@@ -27,6 +38,15 @@ export default function BookingsPage() {
       description="Browse amenity catalogs by property and book directly inside Cal.com embeds. Bookings are mirrored to Supabase for policy checks, conflict detection, and role-based calendars."
       maxWidthClassName="max-w-7xl"
     >
+    <PageContainer>
+      <PageHeader>
+        <PageTitle>Amenity Bookings</PageTitle>
+        <PageDescription>
+          Browse amenity catalogs by property and book directly inside Cal.com
+          embeds. Bookings are mirrored to Supabase for policy checks, conflict
+          detection, and role-based calendars.
+        </PageDescription>
+      </PageHeader>
 
       <Suspense
         fallback={
@@ -47,37 +67,49 @@ export default function BookingsPage() {
         </TabsList>
 
         <TabsContent value="book" className="space-y-6">
-          {Object.entries(amenitiesByProperty).map(([propertyName, amenities]) => (
-            <section key={propertyName} className="space-y-4">
-              <div>
-                <h2 className="text-xl font-semibold">{propertyName}</h2>
-                <p className="text-sm text-muted-foreground">Embedded Cal.com schedules scoped to this property&apos;s amenities.</p>
-              </div>
+          {Object.entries(amenitiesByProperty).map(
+            ([propertyName, amenities]) => (
+              <PageSection key={propertyName}>
+                <div>
+                  <SectionTitle>{propertyName}</SectionTitle>
+                  <SectionDescription>
+                    Embedded Cal.com schedules scoped to this property&apos;s
+                    amenities.
+                  </SectionDescription>
+                </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                {amenities.map((amenity) => {
-                  const Icon = AMENITY_ICON_MAP[amenity.iconName]
+                <div className="grid gap-6 md:grid-cols-2">
+                  {amenities.map((amenity) => {
+                    const Icon = AMENITY_ICON_MAP[amenity.iconName]
 
-                  return (
-                    <Card key={amenity.id} className="transition-shadow hover:shadow-md">
-                      <CardHeader>
-                        <div className="flex items-center space-x-3">
-                          <Icon className="size-6 text-primary" />
-                          <div>
-                            <CardTitle className="text-lg">{amenity.amenityName}</CardTitle>
-                            <CardDescription>{amenity.amenityDescription}</CardDescription>
+                    return (
+                      <Card
+                        key={amenity.id}
+                        className="transition-shadow hover:shadow-md"
+                      >
+                        <CardHeader>
+                          <div className="flex items-center space-x-3">
+                            <Icon className="size-6 text-primary" />
+                            <div>
+                              <CardTitle className="text-lg">
+                                {amenity.amenityName}
+                              </CardTitle>
+                              <CardDescription>
+                                {amenity.amenityDescription}
+                              </CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <AmenityBookingForm amenity={amenity} />
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            </section>
-          ))}
+                        </CardHeader>
+                        <CardContent>
+                          <AmenityBookingForm amenity={amenity} />
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </PageSection>
+            )
+          )}
         </TabsContent>
 
         <TabsContent value="history" className="space-y-6">
@@ -90,12 +122,13 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Calendar className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Cal.com webhooks</CardTitle>
+              <CardTitle className="text-body-sm">Cal.com webhooks</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-xs">
-              Booking create, reschedule, and cancellation events sync into the `bookings` mirror table.
+            <CardDescription className="text-label-sm">
+              Booking create, reschedule, and cancellation events sync into the
+              `bookings` mirror table.
             </CardDescription>
           </CardContent>
         </Card>
@@ -104,12 +137,13 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Tv className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Conflict detection</CardTitle>
+              <CardTitle className="text-body-sm">Conflict detection</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-xs">
-              Policy guardrails validate recurring reservations and check overlap before tenants submit bookings.
+            <CardDescription className="text-label-sm">
+              Policy guardrails validate recurring reservations and check
+              overlap before tenants submit bookings.
             </CardDescription>
           </CardContent>
         </Card>
@@ -118,16 +152,18 @@ export default function BookingsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <ShieldAlert className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Cancellation rules</CardTitle>
+              <CardTitle className="text-body-sm">Cancellation rules</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-xs">
-              Tenant and manager calendars display booking status plus cancellation eligibility by policy window.
+            <CardDescription className="text-label-sm">
+              Tenant and manager calendars display booking status plus
+              cancellation eligibility by policy window.
             </CardDescription>
           </CardContent>
         </Card>
       </div>
     </PageShell>
+    </PageContainer>
   )
 }
