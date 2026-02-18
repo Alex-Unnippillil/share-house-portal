@@ -98,3 +98,16 @@ END;
 $$;
 
 ROLLBACK;
+
+-- Schema sanity checks for scheduling + OAuth token persistence.
+DO $$
+BEGIN
+  IF to_regclass('public.meetings') IS NULL THEN
+    RAISE EXCEPTION 'Expected public.meetings table to exist';
+  END IF;
+
+  IF to_regclass('public.user_tokens') IS NULL THEN
+    RAISE EXCEPTION 'Expected public.user_tokens table to exist';
+  END IF;
+END;
+$$;
