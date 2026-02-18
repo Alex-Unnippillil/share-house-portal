@@ -32,6 +32,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Route governance
+        run: pnpm route:check
+
       - name: Unit and integration tests
         run: pnpm test
 

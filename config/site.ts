@@ -3,48 +3,19 @@ export type SiteConfig = typeof siteConfig
 export const siteConfig = {
   name: "Roomsily",
   description:
-    "www.roomsily is the modern co-living HQ for effortless rent, amenities, and roommate communication.",
+    "Roomsily is the tenant portal for shared-house rent, bookings, documents, and roommate coordination.",
   mainNav: [
-    {
-      title: "Home",
-      href: "/",
-    },
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-    },
-    {
-      title: "Payments",
-      href: "/payments",
-    },
-    {
-      title: "Documents",
-      href: "/documents",
-    },
-    {
-      title: "Messaging",
-      href: "/messaging",
-    },
-    {
-      title: "Visitors",
-      href: "/visitors",
-    },
-    {
-      title: "Maintenance",
-      href: "/maintenance",
-    },
-    {
-      title: "Account",
-      href: "/account",
-    },
-    {
-      title: "Contact",
-      href: "/contact",
-    },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Payments", href: "/payments" },
+    { title: "Bookings", href: "/bookings" },
+    { title: "Documents", href: "/documents" },
+    { title: "Messaging", href: "/messaging" },
+    { title: "Maintenance", href: "/maintenance" },
+    { title: "Visitors", href: "/visitors" },
+    { title: "Account", href: "/account" },
   ],
   links: {
     login: "/auth",
     signup: "/onboarding",
-    contact: "/contact",
   },
 }

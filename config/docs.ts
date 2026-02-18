@@ -7,38 +7,18 @@ interface DocsConfig {
 
 export const docsConfig: DocsConfig = {
   mainNav: [
-    {
-      title: "Home",
-      href: "/",
-    },
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-    },
-    {
-      title: "Payments",
-      href: "/payments",
-    },
-    {
-      title: "Documents",
-      href: "/documents",
-    },
-    {
-      title: "Messaging",
-      href: "/messaging",
-    },
-    {
-      title: "Account",
-      href: "/account",
-    },
-    {
-      title: "Contact",
-      href: "/contact",
-    },
+    { title: "Dashboard", href: "/dashboard" },
+    { title: "Payments", href: "/payments" },
+    { title: "Bookings", href: "/bookings" },
+    { title: "Documents", href: "/documents" },
+    { title: "Messaging", href: "/messaging" },
+    { title: "Maintenance", href: "/maintenance" },
+    { title: "Visitors", href: "/visitors" },
+    { title: "Account", href: "/account" },
   ],
   sidebarNav: [
     {
-      title: "Tools",
+      title: "Account",
       items: [
         {
           title: "Sign Out",

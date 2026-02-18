@@ -1,24 +1,10 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 
 import type { Database } from '@/lib/supabase'
+import { isGovernedAuthenticatedRoute, isGovernedPublicRoute } from '@/lib/route-governance'
 
 export const APP_ROLES = ['tenant', 'roommate', 'property_manager', 'admin', 'user'] as const
 export type AppRole = (typeof APP_ROLES)[number]
-
-export const PUBLIC_ROUTE_PREFIXES = ['/auth', '/about', '/contact', '/error']
-export const PUBLIC_EXACT_ROUTES = ['/', '/favicon.ico']
-
-const AUTHENTICATED_ROUTE_PREFIXES = [
-  '/dashboard',
-  '/payments',
-  '/documents',
-  '/bookings',
-  '/messaging',
-  '/maintenance',
-  '/schedule',
-  '/account',
-  '/private',
-]
 
 const ROLE_ROUTE_RULES: Array<{ prefix: string; allowed: AppRole[] }> = [
   { prefix: '/dashboard/members', allowed: ['property_manager', 'admin'] },
@@ -64,17 +50,15 @@ export async function resolveSessionRole(
 }
 
 export function isPublicRoute(pathname: string): boolean {
-  if (PUBLIC_EXACT_ROUTES.includes(pathname)) {
+  if (pathname === '/favicon.ico') {
     return true
   }
 
-  return PUBLIC_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+  return isGovernedPublicRoute(pathname)
 }
 
 export function requiresAuthentication(pathname: string): boolean {
-  return AUTHENTICATED_ROUTE_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  )
+  return isGovernedAuthenticatedRoute(pathname)
 }
 
 export function isRouteAllowedForRole(pathname: string, role: AppRole | null): boolean {
