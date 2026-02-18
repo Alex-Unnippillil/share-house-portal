@@ -32,6 +32,24 @@ body {}
     --input: 214 32% 91%;
     --ring: 222 47% 11%;
     --radius: 0.375rem;
+    --payment-paid: 142 71% 45%;
+    --payment-pending: 24 94% 44%;
+    --payment-failed: 0 74% 42%;
+    --payment-refunded: 221 83% 53%;
+    --booking-confirmed: 199 96% 33%;
+    --booking-pending: 31 92% 35%;
+    --booking-conflict: 0 74% 42%;
+    --booking-cancelled: 220 9% 46%;
+    --maintenance-open: 263 80% 56%;
+    --maintenance-inProgress: 174 84% 28%;
+    --maintenance-blocked: 0 74% 42%;
+    --maintenance-resolved: 142 71% 29%;
+    --notification-info: 217 91% 60%;
+    --notification-success: 142 71% 45%;
+    --notification-warning: 31 92% 45%;
+    --notification-error: 0 74% 42%;
+    --sidebar-active: 222 47% 11%;
+    --sidebar-active-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -54,6 +72,24 @@ body {}
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 210 40% 98%;
+    --payment-paid: 142 69% 58%;
+    --payment-pending: 35 92% 65%;
+    --payment-failed: 0 84% 70%;
+    --payment-refunded: 217 91% 70%;
+    --booking-confirmed: 199 89% 62%;
+    --booking-pending: 35 92% 65%;
+    --booking-conflict: 0 84% 70%;
+    --booking-cancelled: 220 14% 72%;
+    --maintenance-open: 263 86% 70%;
+    --maintenance-inProgress: 172 66% 55%;
+    --maintenance-blocked: 0 84% 70%;
+    --maintenance-resolved: 142 69% 58%;
+    --notification-info: 213 94% 68%;
+    --notification-success: 142 69% 58%;
+    --notification-warning: 35 92% 65%;
+    --notification-error: 0 84% 70%;
+    --sidebar-active: 210 40% 98%;
+    --sidebar-active-foreground: 222 47% 11%;
   }
 }
 

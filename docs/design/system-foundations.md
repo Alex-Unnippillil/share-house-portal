@@ -119,3 +119,13 @@ Each shell provides:
 - Component: `components/patterns/activity-timeline.tsx`
 - Designed for activity feeds (message updates, booking events, maintenance progress).
 - Data shape is simple (`id`, `title`, `timestamp`, optional `description` + `meta`) to keep feature integration lightweight.
+
+## 6) Lint-style state color checklist
+
+Before shipping a product surface, verify all stateful colors pass this checklist:
+
+- [ ] No hardcoded Tailwind palette utilities for state (`text-red-*`, `bg-green-*`, `border-yellow-*`, etc.) in feature components.
+- [ ] Status visuals use semantic primitives (`StatusBadge`, shadcn `Badge` variants, or token-backed classes).
+- [ ] Notification severities map to tokenized colors (`notification.info|success|warning|error`).
+- [ ] Sidebar active states use shared token mappings (`sidebar.active`, `sidebar.active-foreground`).
+- [ ] Dark and light mode both rely on `hsl(var(--...))` tokens rather than duplicated ad hoc classes.
