@@ -9,11 +9,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { roleNavigation, type PortalRole } from "@/config/navigation"
 import { cn } from "@/lib/utils"
 
-export type PortalNavItem = {
-  href: string
-  label: string
-}
-
 type PortalShellProps = {
   role: PortalRole
   title: string
@@ -50,15 +45,16 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
         <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">Navigation</p>
         <ul className="space-y-stack-sm">
           {navItems.map((item) => (
-            <li key={item.href}>
+            <li key={item.id}>
               <Link
                 className={cn(
                   "block rounded-md px-3 py-2 text-body-sm transition",
                   isActiveRoute(pathname, item.href) ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-muted"
                 )}
                 href={item.href}
+                aria-disabled={item.disabled}
               >
-                {item.label}
+                {item.title}
               </Link>
             </li>
           ))}
@@ -78,15 +74,16 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
             </SheetHeader>
             <ul className="mt-stack-lg space-y-stack-sm">
               {navItems.map((item) => (
-                <li key={item.href}>
+                <li key={item.id}>
                   <Link
                     className={cn(
                       "block rounded-md px-3 py-2 text-body-sm",
                       isActiveRoute(pathname, item.href) ? "bg-primary/10 text-foreground" : "hover:bg-muted"
                     )}
                     href={item.href}
+                    aria-disabled={item.disabled}
                   >
-                    {item.label}
+                    {item.title}
                   </Link>
                 </li>
               ))}

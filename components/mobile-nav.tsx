@@ -29,6 +29,11 @@ function isActiveRoute(pathname: string, href: string) {
 
 export function MobileNav({ appName, isAuthenticated, items }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
+  const navRole = isAuthenticated ? "tenant" : "public"
+  const mainNavItems = getNavigationItems("public", {
+    role: navRole,
+    includeDisabled: true,
+  })
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -103,8 +108,6 @@ export function MobileNav({ appName, isAuthenticated, items }: MobileNavProps) {
 
 interface MobileLinkProps extends SmartLinkProps {
   onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
-  className?: string
 }
 
 function MobileLink({ href, onOpenChange, className, children, ...props }: MobileLinkProps) {
@@ -115,7 +118,6 @@ function MobileLink({ href, onOpenChange, className, children, ...props }: Mobil
     <SmartLink
       href={href}
       onClick={() => {
-        router.push(href.toString())
         onOpenChange?.(false)
       }}
       className={cn(

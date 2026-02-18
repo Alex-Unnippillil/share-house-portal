@@ -71,7 +71,7 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
           <CardDescription>
             Complete each section below so roommates and property managers can safely coordinate bookings, payments, and emergency info.
           </CardDescription>
-          <Progress value={completion.completionPercent} />
+          <Progress value={completion.completionPercent} aria-label="Onboarding completion progress" />
         </CardHeader>
       </Card>
 
@@ -172,9 +172,13 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
           <CardDescription>This information is used for visitor incidents and urgent property updates.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <Input value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
-          <Input value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number" />
+          <Label htmlFor="emergency-name">Contact name</Label>
+          <Input id="emergency-name" value={emergencyName} onChange={(event) => setEmergencyName(event.target.value)} placeholder="Contact name" />
+          <Label htmlFor="emergency-phone">Phone number</Label>
+          <Input id="emergency-phone" value={emergencyPhone} onChange={(event) => setEmergencyPhone(event.target.value)} placeholder="Phone number" />
+          <Label htmlFor="emergency-relationship">Relationship</Label>
           <Input
+            id="emergency-relationship"
             value={emergencyRelationship}
             onChange={(event) => setEmergencyRelationship(event.target.value)}
             placeholder="Relationship"
@@ -202,10 +206,14 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
           <CardDescription>Needed for parking bookings and overnight visitor validation.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <Input value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
-          <Input value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
-          <Input value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
-          <Input value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate" />
+          <Label htmlFor="vehicle-make">Vehicle make</Label>
+          <Input id="vehicle-make" value={vehicleMake} onChange={(event) => setVehicleMake(event.target.value)} placeholder="Make" />
+          <Label htmlFor="vehicle-model">Vehicle model</Label>
+          <Input id="vehicle-model" value={vehicleModel} onChange={(event) => setVehicleModel(event.target.value)} placeholder="Model" />
+          <Label htmlFor="vehicle-color">Vehicle color</Label>
+          <Input id="vehicle-color" value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)} placeholder="Color" />
+          <Label htmlFor="vehicle-plate">License plate</Label>
+          <Input id="vehicle-plate" value={vehiclePlate} onChange={(event) => setVehiclePlate(event.target.value)} placeholder="License plate" />
           <Button
             disabled={pending}
             onClick={() =>
@@ -224,6 +232,9 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
         </CardContent>
       </Card>
 
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {pending ? "Saving onboarding details" : message}
+      </p>
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
     </div>
   )

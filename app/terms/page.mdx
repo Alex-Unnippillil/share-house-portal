@@ -1,93 +1,75 @@
 # Terms of Service
 
-*Last Updated: [Current Date]*
+_Last updated: February 18, 2026_
 
-Welcome to Roomsily ("we," "us," or "our"). These Terms of Service ("Terms") govern your use of our web application and services. By accessing or using Roomsily, you agree to be bound by these Terms.
+Roomsily provides software for shared-housing operations. These Terms apply to tenant, roommate, property manager, and admin use of the Roomsily portal.
 
-## 1. Description of Service
+## At a glance
 
-Roomsily is a web application designed to help roommates and property managers efficiently manage shared living arrangements, including rent payments, amenity bookings, document sharing, and communication.
+- Role-based access controls define what each user can view or change.
+- Payments are processed by Stripe, and optional ACH linking may use Plaid.
+- Documents, approvals, and key operational actions are audit logged.
+- Visitor requests are policy-checked before approval workflows run.
 
-## 2. User Accounts
+## 1) Who can use Roomsily
 
-### 2.1 Account Creation
-To use Roomsily, you must create an account with a valid email address. You are responsible for maintaining the confidentiality of your account credentials.
+You must be authorized by your property, provide accurate information, and keep your account credentials secure. You may only use features and data your role permits.
 
-### 2.2 User Roles
-- **Tenants**: Primary account holders responsible for rent payments
-- **Roommates**: Additional household members with shared access
-- **Property Managers**: Administrative users managing multiple properties
-- **Admins**: System administrators with full access
+## 2) Role responsibilities
 
-## 3. Payment Services
+- **Tenants and roommates** are responsible for accurate profile, payment, booking, and visitor information.
+- **Property managers** are responsible for policy configuration and lawful operations for their region.
+- **Admins** are responsible for platform oversight and controlled operational exports.
 
-### 3.1 Stripe Integration
-We use Stripe for payment processing. All payment information is handled securely by Stripe and is not stored on our servers.
+## 3) Payment terms and consent
 
-### 3.2 Rent Payments
-Users can set up recurring rent payments through our platform. Late fees and payment terms are determined by individual lease agreements.
+By initiating checkout, enabling autopay, or linking a bank account, you authorize the requested payment flow and related processing.
 
-### 3.3 Refunds
-Refund policies are determined by the property manager or landlord. We facilitate refund processing but do not determine refund eligibility.
+- Stripe handles card and billing workflows.
+- Optional ACH bank linking uses tokenized flows (no raw account credentials stored by Roomsily).
+- Payment receipts and status events are retained for tenant and manager reconciliation.
 
-## 4. Data Privacy
+## 4) Documents and e-signature flows
 
-### 4.1 Personal Information
-We collect personal information necessary to provide our services, including names, email addresses, payment information, and property details.
+Roomsily supports document upload, retrieval, and third-party signing workflows (for example Documenso integrations). You are responsible for reviewing agreement content before signing.
 
-### 4.2 Data Usage
-Your data is used to:
-- Process payments and maintain billing records
-- Facilitate communication between roommates and property managers
-- Provide booking and scheduling services
-- Maintain security and prevent fraud
+Document actions (view/download/sign/export where applicable) may be logged for legal and compliance traceability.
 
-### 4.3 Data Security
-We implement industry-standard security measures to protect your data. However, no internet transmission is completely secure.
+## 5) Notifications and operational messages
 
-## 5. User Conduct
+You consent to service-critical notices, such as payment failures, booking conflicts, moderation actions, and visitor approvals/rejections. Non-critical messaging preferences may be configurable when supported.
 
-You agree not to:
-- Use the service for any illegal purposes
-- Attempt to gain unauthorized access to other users' accounts
-- Upload malicious code or disrupt service operations
-- Harass, threaten, or abuse other users
-- Violate any applicable laws or regulations
+## 6) Visitor policy enforcement
 
-## 6. Content and Intellectual Property
+Visitor requests are checked against configured policy constraints, including maximum consecutive nights, blackout windows, overlap rules, and approval requirements.
 
-### 6.1 User Content
-You retain ownership of content you upload to Roomsily (documents, messages, etc.). By uploading content, you grant us a license to store and display it as necessary to provide our services.
+Repeated misuse, inaccurate submissions, or attempts to bypass policy checks may result in restrictions or suspension.
 
-### 6.2 Service Content
-All Roomsily branding, software, and documentation are our intellectual property.
+## 7) Acceptable use
 
-## 7. Service Availability
+You must not:
 
-We strive to maintain high service availability but cannot guarantee uninterrupted access. We may perform maintenance or updates that temporarily limit access.
+- use the service for unlawful, abusive, discriminatory, or fraudulent purposes,
+- attempt unauthorized access or data extraction,
+- upload malicious code or tamper with records,
+- misuse exports or audit logs outside authorized housing operations.
 
-## 8. Termination
+See the [Acceptable Use Policy](/acceptable-use) for details.
 
-We reserve the right to terminate or suspend your account for violations of these Terms. You may also terminate your account at any time.
+## 8) Retention, audit, and exports
 
-## 9. Disclaimers
+Operational data is retained under our [Data Retention Policy](/data-retention) and applicable law. Authorized roles may export supported datasets, and export activity is logged.
 
-### 9.1 No Warranty
-Roomsily is provided "as is" without warranties of any kind.
+## 9) Regional compliance and legal scope
 
-### 9.2 Limitation of Liability
-We are not liable for any indirect, incidental, or consequential damages arising from your use of our service.
+Property managers must align policy settings and operational practices with local tenancy, privacy, and recordkeeping obligations.
 
-## 10. Governing Law
+Roomsily provides configurable controls and audit tooling but does not provide legal advice.
 
-These Terms are governed by the laws of [Your Jurisdiction]. Any disputes will be resolved in the courts of [Your Jurisdiction].
+## 10) Changes, suspension, and termination
 
-## 11. Changes to Terms
+We may update features, policies, and integrations over time. We may suspend or terminate access for policy violations, security risks, or legal obligations.
 
-We may update these Terms at any time. We will notify users of significant changes via email or through the application.
+## 11) Contact
 
-## 12. Contact Information
-
-If you have questions about these Terms, please contact us at [your contact email].
-
-By using Roomsily, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+For account or legal-policy questions, contact your property management team first, then your configured Roomsily support channel.

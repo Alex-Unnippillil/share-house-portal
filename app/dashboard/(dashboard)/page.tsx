@@ -1,26 +1,27 @@
 import { Suspense } from "react"
 
-import { DashboardWelcome } from "./components/dashboard-welcome"
-import { NextRentCard } from "./components/next-rent-card"
-import { RecentDocumentsCard } from "./components/recent-documents-card"
-import { RoommateBoardCard } from "./components/roommate-board-card"
+import { PageSection } from "@/components/ui/page-layout"
+
 import { DashboardMetrics } from "./components/dashboard-metrics"
 import { DashboardQuickActions } from "./components/dashboard-quick-actions"
-import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
-import { MaintenanceOverviewCard } from "./components/maintenance-overview-card"
+import { DashboardWelcome } from "./components/dashboard-welcome"
 import { FloorplanViewerCard } from "./components/floorplan-viewer-card"
+import { MaintenanceOverviewCard } from "./components/maintenance-overview-card"
+import { NextRentCard } from "./components/next-rent-card"
+import { OnboardingPromptCard } from "./components/onboarding-prompt-card"
+import { RecentDocumentsCard } from "./components/recent-documents-card"
+import { RoommateBoardCard } from "./components/roommate-board-card"
 import {
   DashboardBoardSkeleton,
   DashboardCardSkeleton,
   DashboardHeaderSkeleton,
   DashboardStatsSkeleton,
 } from "./components/skeletons"
-
-import { OnboardingPromptCard } from "./components/onboarding-prompt-card"
+import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-section">
       <Suspense fallback={<DashboardHeaderSkeleton />}>
         <DashboardWelcome />
       </Suspense>
@@ -29,7 +30,7 @@ export default function DashboardPage() {
         <OnboardingPromptCard />
       </Suspense>
 
-      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+      <PageSection className="grid gap-card-gap xl:grid-cols-[2fr_1fr]">
         <Suspense fallback={<DashboardStatsSkeleton />}>
           <DashboardMetrics />
         </Suspense>
@@ -42,11 +43,11 @@ export default function DashboardPage() {
         >
           <DashboardQuickActions />
         </Suspense>
-      </div>
+      </PageSection>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <div className="space-y-4 xl:col-span-2">
-          <div className="grid gap-4 md:grid-cols-2">
+      <PageSection className="grid gap-card-gap xl:grid-cols-3">
+        <div className="space-y-card-gap xl:col-span-2">
+          <div className="grid gap-card-gap md:grid-cols-2">
             <Suspense fallback={<DashboardCardSkeleton />}>
               <NextRentCard />
             </Suspense>
@@ -64,8 +65,7 @@ export default function DashboardPage() {
           </Suspense>
         </div>
 
-
-        <div className="space-y-4">
+        <div className="space-y-card-gap">
           <Suspense fallback={<DashboardCardSkeleton />}>
             <UpcomingBookingsCard />
           </Suspense>
@@ -73,7 +73,7 @@ export default function DashboardPage() {
             <MaintenanceOverviewCard />
           </Suspense>
         </div>
-      </div>
+      </PageSection>
     </div>
   )
 }

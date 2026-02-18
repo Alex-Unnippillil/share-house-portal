@@ -1,7 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+import { createClient } from "@/utils/supabase/server"
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { ManagerVisitorOversight } from "@/components/visitors/manager-visitor-oversight"
 import { VisitorBookingForm } from "@/components/visitors/visitor-booking-form"
-import { createClient } from "@/utils/supabase/server"
 
 const visitorHighlights = [
   {
@@ -36,15 +44,19 @@ export default async function VisitorsPage() {
       .eq("id", user.id)
       .maybeSingle()
 
-    isManager = profile?.role === "property_manager" || profile?.role === "admin"
+    isManager =
+      profile?.role === "property_manager" || profile?.role === "admin"
   }
 
   return (
     <div className="container max-w-6xl space-y-8 py-12">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Overnight Visitor Requests</h1>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Overnight Visitor Requests
+        </h1>
         <p className="text-base text-muted-foreground sm:text-lg">
-          Register guests, enforce unit policy constraints, and keep roommates and managers informed.
+          Register guests, enforce unit policy constraints, and keep roommates
+          and managers informed.
         </p>
       </header>
 
@@ -53,7 +65,8 @@ export default async function VisitorsPage() {
           <CardHeader>
             <CardTitle>Register a visitor</CardTitle>
             <CardDescription>
-              Capture guest details, arrival/departure, host roommate, and reason for stay.
+              Capture guest details, arrival/departure, host roommate, and
+              reason for stay.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -72,6 +85,38 @@ export default async function VisitorsPage() {
           ))}
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Visitor policy and regional compliance</CardTitle>
+          <CardDescription>
+            Visitor requests are automatically evaluated against nights,
+            blackout windows, and overlap rules before approval routing.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            Regional occupancy, safety, and recordkeeping obligations vary.
+            Managers should align unit policy settings and approval practices
+            with local regulations.
+          </p>
+          <p>
+            Review{" "}
+            <Link href="/terms" className="underline">
+              Terms
+            </Link>
+            ,{" "}
+            <Link href="/privacy" className="underline">
+              Privacy
+            </Link>
+            , and{" "}
+            <Link href="/data-retention" className="underline">
+              Data Retention
+            </Link>{" "}
+            for enforcement and recordkeeping commitments.
+          </p>
+        </CardContent>
+      </Card>
 
       {isManager ? <ManagerVisitorOversight /> : null}
     </div>
