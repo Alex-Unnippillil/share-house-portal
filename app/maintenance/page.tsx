@@ -1,3 +1,4 @@
+import { getCurrentUserRole } from "@/lib/current-user-role"
 import {
   Card,
   CardContent,
@@ -7,7 +8,6 @@ import {
 } from "@/components/ui/card"
 import { PortalPageBlueprint } from "@/components/layouts/portal-page-blueprint"
 import { MaintenanceDashboard } from "@/components/maintenance/maintenance-dashboard"
-import { getCurrentUserRole } from "@/lib/current-user-role"
 
 export default async function MaintenancePage() {
   const role = await getCurrentUserRole()
@@ -22,11 +22,14 @@ export default async function MaintenancePage() {
           {
             label: "Workflow",
             value: "Shared timeline",
-            helperText: "Status and assignee changes are logged as request updates",
+            helperText:
+              "Status and assignee changes are logged as request updates",
           },
           {
             label: "Coverage",
-            value: isManager ? "Portfolio-wide queue" : "Your submitted requests",
+            value: isManager
+              ? "Portfolio-wide queue"
+              : "Your submitted requests",
             helperText: isManager
               ? "Filter by property, unit, aging, and assignee"
               : "Track completion windows and manager responses",
@@ -38,7 +41,9 @@ export default async function MaintenancePage() {
           },
         ]}
         primaryActionTitle={
-          isManager ? "Triage and assign maintenance work" : "Report a maintenance issue"
+          isManager
+            ? "Triage and assign maintenance work"
+            : "Report a maintenance issue"
         }
         primaryActionDescription={
           isManager
@@ -47,8 +52,14 @@ export default async function MaintenancePage() {
         }
         primaryCta={
           isManager
-            ? { label: "Open maintenance queue", href: "#maintenance-dashboard" }
-            : { label: "Create maintenance request", href: "#maintenance-dashboard" }
+            ? {
+                label: "Open maintenance queue",
+                href: "#maintenance-dashboard",
+              }
+            : {
+                label: "Create maintenance request",
+                href: "#maintenance-dashboard",
+              }
         }
         fallbackCta={
           isManager
@@ -69,16 +80,23 @@ export default async function MaintenancePage() {
         ]}
       />
 
-      <Card id="workflow-notes">
+      <Card id="workflow-notes" className="transition-opacity duration-300">
         <CardHeader>
           <CardTitle>Workflow notes</CardTitle>
           <CardDescription>
-            Reference guidance is intentionally compact so the request queue remains the focal action area.
+            Reference guidance is intentionally compact so the request queue
+            remains the focal action area.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>Include access availability and issue severity for faster assignment.</p>
-          <p>Managers can adjust status and assignee while the full timeline remains auditable.</p>
+          <p>
+            Include access availability and issue severity for faster
+            assignment.
+          </p>
+          <p>
+            Managers can adjust status and assignee while the full timeline
+            remains auditable.
+          </p>
         </CardContent>
       </Card>
 

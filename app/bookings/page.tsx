@@ -1,8 +1,10 @@
 import { Suspense } from "react"
 
-import { AMENITY_ICON_MAP, groupAmenitiesByProperty } from "@/lib/bookings/amenity-catalog"
+import {
+  AMENITY_ICON_MAP,
+  groupAmenitiesByProperty,
+} from "@/lib/bookings/amenity-catalog"
 import { getCurrentUserRole } from "@/lib/current-user-role"
-
 import {
   Card,
   CardContent,
@@ -10,8 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { PortalPageBlueprint } from "@/components/layouts/portal-page-blueprint"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PortalPageBlueprint } from "@/components/layouts/portal-page-blueprint"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
 import { BookingHistory } from "./components/booking-history"
@@ -84,7 +86,7 @@ export default async function BookingsPage() {
         ]}
       />
 
-      <section id="booking-stats">
+      <section id="booking-stats" className="transition-opacity duration-300">
         <Suspense
           fallback={
             <div className="grid gap-4 md:grid-cols-3">
@@ -112,39 +114,52 @@ export default async function BookingsPage() {
         </TabsList>
 
         <TabsContent id="amenity-catalog" value="book" className="space-y-6">
-          {Object.entries(amenitiesByProperty).map(([propertyName, amenities]) => (
-            <section key={propertyName} className="space-y-4 border-t pt-6 first:border-none first:pt-0">
-              <div>
-                <h2 className="text-xl font-semibold">{propertyName}</h2>
-                <p className="text-sm text-muted-foreground">
-                  Embedded Cal.com schedules scoped to this property&apos;s amenities.
-                </p>
-              </div>
+          {Object.entries(amenitiesByProperty).map(
+            ([propertyName, amenities]) => (
+              <section
+                key={propertyName}
+                className="space-y-4 border-t pt-6 first:border-none first:pt-0"
+              >
+                <div>
+                  <h2 className="text-xl font-semibold">{propertyName}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Embedded Cal.com schedules scoped to this property&apos;s
+                    amenities.
+                  </p>
+                </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                {amenities.map((amenity) => {
-                  const Icon = AMENITY_ICON_MAP[amenity.iconName]
+                <div className="grid gap-6 md:grid-cols-2">
+                  {amenities.map((amenity) => {
+                    const Icon = AMENITY_ICON_MAP[amenity.iconName]
 
-                  return (
-                    <Card key={amenity.id} className="transition-shadow hover:shadow-md">
-                      <CardHeader>
-                        <div className="flex items-center space-x-3">
-                          <Icon className="size-6 text-primary" />
-                          <div>
-                            <CardTitle className="text-lg">{amenity.amenityName}</CardTitle>
-                            <CardDescription>{amenity.amenityDescription}</CardDescription>
+                    return (
+                      <Card
+                        key={amenity.id}
+                        className="transition-shadow hover:shadow-md"
+                      >
+                        <CardHeader>
+                          <div className="flex items-center space-x-3">
+                            <Icon className="size-6 text-primary" />
+                            <div>
+                              <CardTitle className="text-lg">
+                                {amenity.amenityName}
+                              </CardTitle>
+                              <CardDescription>
+                                {amenity.amenityDescription}
+                              </CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <AmenityBookingForm amenity={amenity} />
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            </section>
-          ))}
+                        </CardHeader>
+                        <CardContent>
+                          <AmenityBookingForm amenity={amenity} />
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </section>
+            )
+          )}
         </TabsContent>
 
         <TabsContent id="booking-history" value="history" className="space-y-6">

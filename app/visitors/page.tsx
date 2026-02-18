@@ -1,3 +1,4 @@
+import { getCurrentUserRole } from "@/lib/current-user-role"
 import {
   Card,
   CardContent,
@@ -8,7 +9,6 @@ import {
 import { PortalPageBlueprint } from "@/components/layouts/portal-page-blueprint"
 import { ManagerVisitorOversight } from "@/components/visitors/manager-visitor-oversight"
 import { VisitorBookingForm } from "@/components/visitors/visitor-booking-form"
-import { getCurrentUserRole } from "@/lib/current-user-role"
 
 export default async function VisitorsPage() {
   const role = await getCurrentUserRole()
@@ -23,11 +23,14 @@ export default async function VisitorsPage() {
           {
             label: "Policy model",
             value: "Consecutive-night limits",
-            helperText: "Submission validation checks blackout windows and stay rules",
+            helperText:
+              "Submission validation checks blackout windows and stay rules",
           },
           {
             label: "Decision flow",
-            value: isManager ? "Manager approval" : "Roommate + manager notifications",
+            value: isManager
+              ? "Manager approval"
+              : "Roommate + manager notifications",
             helperText: "Every status transition is recorded in visitor logs",
           },
           {
@@ -37,7 +40,9 @@ export default async function VisitorsPage() {
           },
         ]}
         primaryActionTitle={
-          isManager ? "Review pending visitor approvals" : "Submit a new visitor stay"
+          isManager
+            ? "Review pending visitor approvals"
+            : "Submit a new visitor stay"
         }
         primaryActionDescription={
           isManager
@@ -73,7 +78,8 @@ export default async function VisitorsPage() {
           <CardHeader>
             <CardTitle>Register a visitor</CardTitle>
             <CardDescription>
-              Capture guest details, host roommate, and reason for the overnight stay.
+              Capture guest details, host roommate, and reason for the overnight
+              stay.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -85,18 +91,22 @@ export default async function VisitorsPage() {
           <CardHeader>
             <CardTitle>Approval and policy notes</CardTitle>
             <CardDescription>
-              Non-critical guidance stays compact so actions remain the visual priority.
+              Non-critical guidance stays compact so actions remain the visual
+              priority.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Visitor requests can require manager review depending on unit policy.</p>
             <p>
-              Arrival and departure windows notify roommates and property staff automatically
-              for operational visibility.
+              Visitor requests can require manager review depending on unit
+              policy.
             </p>
             <p>
-              Decision notes stay attached to each request to support incident review and
-              compliance audits.
+              Arrival and departure windows notify roommates and property staff
+              automatically for operational visibility.
+            </p>
+            <p>
+              Decision notes stay attached to each request to support incident
+              review and compliance audits.
             </p>
           </CardContent>
         </Card>

@@ -1,7 +1,12 @@
 import { Suspense } from "react"
-
 import { format, parseISO } from "date-fns"
 
+import {
+  calculateOutstanding,
+  getNextOutstandingCharge,
+} from "@/lib/payments/catch-up"
+import { formatCurrency } from "@/lib/payments/currency"
+import { describeAutopayStatus } from "@/lib/payments/status"
 import {
   Card,
   CardContent,
@@ -10,38 +15,33 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { PortalPageBlueprint } from "@/components/layouts/portal-page-blueprint"
-import {
-  calculateOutstanding,
-  getNextOutstandingCharge,
-} from "@/lib/payments/catch-up"
-import { formatCurrency } from "@/lib/payments/currency"
-import { describeAutopayStatus } from "@/lib/payments/status"
 
-import { StripeActions } from "./_components/stripe-actions"
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
-import { PaymentStatusFeed } from "./_components/payment-status-feed"
 import { ContributionSummaryCard } from "./_components/contribution-summary-card"
-import { RoommateLedger } from "./_components/roommate-ledger"
-import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
-import {
-  loadCatchUpBalances,
-  loadReconciliationDashboardData,
-  loadReceiptHistory,
-  loadRoommateLedgers,
-} from "./loaders"
+import { PaymentStatusFeed } from "./_components/payment-status-feed"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 import { ReconciliationDashboardCard } from "./_components/reconciliation-dashboard-card"
+import { RoommateLedger } from "./_components/roommate-ledger"
+import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
+import { StripeActions } from "./_components/stripe-actions"
+import {
+  loadCatchUpBalances,
+  loadReceiptHistory,
+  loadReconciliationDashboardData,
+  loadRoommateLedgers,
+} from "./loaders"
 
 function formatFullDate(date: string) {
   return format(parseISO(date), "MMM d, yyyy")
 }
 
 export default async function PaymentsPage() {
-  const [catchUpBalances, receiptHistory, reconciliationData] = await Promise.all([
-    loadCatchUpBalances(),
-    loadReceiptHistory(),
-    loadReconciliationDashboardData(),
-  ])
+  const [catchUpBalances, receiptHistory, reconciliationData] =
+    await Promise.all([
+      loadCatchUpBalances(),
+      loadReceiptHistory(),
+      loadReconciliationDashboardData(),
+    ])
 
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
@@ -100,7 +100,9 @@ export default async function PaymentsPage() {
           },
         ]}
         primaryActionTitle={
-          isManager ? "Resolve failed or overdue payments" : "Keep rent on schedule"
+          isManager
+            ? "Resolve failed or overdue payments"
+            : "Keep rent on schedule"
         }
         primaryActionDescription={
           isManager
@@ -150,14 +152,22 @@ export default async function PaymentsPage() {
                   className="flex flex-wrap items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4"
                 >
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">{balance.roommateName}</p>
+                    <p className="text-sm font-medium">
+                      {balance.roommateName}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {balance.unitLabel} ·{" "}
-                      {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
+                      {describeAutopayStatus(
+                        balance.autopayStatus,
+                        balance.autopayDay
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Last payment {formatFullDate(balance.lastPaymentDate)} ·{" "}
-                      {formatCurrency(balance.lastPaymentAmount, balance.currency)}
+                      {formatCurrency(
+                        balance.lastPaymentAmount,
+                        balance.currency
+                      )}
                     </p>
                   </div>
                   <div className="text-right">
@@ -210,7 +220,7 @@ export default async function PaymentsPage() {
         <RoommateLedgerSection />
       </Suspense>
 
-      <section id="receipt-history">
+      <section id="receipt-history" className="transition-opacity duration-300">
         <ReceiptHistoryCard receipts={receiptHistory} />
       </section>
 
