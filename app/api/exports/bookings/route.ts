@@ -16,7 +16,7 @@ export async function GET() {
   const role = await fetchMemberRole(supabase as any, user.id)
   if (role !== 'property_manager' && role !== 'admin') return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
-  const csv = toCsv(await getBookingRows())
+  const csv = toCsv((await getBookingRows({ page: 1, pageSize: 1000 })).rows)
   await writeAuditRecord({ action: 'operations.export.bookings', actorId: user.id, actorRole: role, targetType: 'bookings_export' })
 
   return new NextResponse(csv, {

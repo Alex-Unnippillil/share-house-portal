@@ -1,177 +1,183 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
-import { createClient } from "@/utils/supabase-browser";
-import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { createClient } from "@/utils/supabase-browser"
+import { Bell, Check, CheckCheck, X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/components/ui/use-toast"
 
 interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  action_url?: string;
-  read: boolean;
-  created_at: string;
+  id: string
+  title: string
+  message: string
+  type: "info" | "success" | "warning" | "error"
+  action_url?: string
+  read: boolean
+  created_at: string
 }
 
 export function NotificationCenter() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const supabase = useMemo(() => createClient(), []);
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isOpen, setIsOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchNotifications = useCallback(async () => {
-    setLoading(true);
+    setLoading(true)
     try {
       const { data, error } = await (supabase as any)
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
+      setNotifications(data || [])
+      setUnreadCount(data?.filter((n: any) => !n.read).length || 0)
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error("Failed to fetch notifications:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [supabase]);
+  }, [supabase])
 
   useEffect(() => {
-    fetchNotifications();
+    fetchNotifications()
 
     // Subscribe to real-time notifications
     const channel = supabase
-      .channel('notifications')
+      .channel("notifications")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
         },
         (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
+          const newNotification = payload.new as Notification
+          setNotifications((prev) => [newNotification, ...prev])
+          setUnreadCount((prev) => prev + 1)
 
           // Show toast for new notification
           toast({
             title: newNotification.title,
             description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' :
-                    newNotification.type === 'warning' ? 'default' : 'default',
-          });
+            variant:
+              newNotification.type === "error"
+                ? "destructive"
+                : newNotification.type === "warning"
+                ? "default"
+                : "default",
+          })
         }
       )
-      .subscribe();
+      .subscribe()
 
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchNotifications, supabase, toast]);
+      supabase.removeChannel(channel)
+    }
+  }, [fetchNotifications, supabase, toast])
 
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await (supabase as any)
-        .from('notifications')
+        .from("notifications")
         .update({ read: true })
-        .eq('id', notificationId);
+        .eq("id", notificationId)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+      )
+      setUnreadCount((prev) => Math.max(0, prev - 1))
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      console.error("Failed to mark notification as read:", error)
     }
-  };
+  }
 
   const markAllAsRead = async () => {
     try {
-      const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id)
 
-      if (unreadIds.length === 0) return;
+      if (unreadIds.length === 0) return
 
       const { error } = await (supabase as any)
-        .from('notifications')
+        .from("notifications")
         .update({ read: true })
-        .in('id', unreadIds);
+        .in("id", unreadIds)
 
-      if (error) throw error;
+      if (error) throw error
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+      setUnreadCount(0)
 
       toast({
         title: "All notifications marked as read",
-      });
+      })
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+      console.error("Failed to mark all notifications as read:", error)
     }
-  };
+  }
 
   const deleteNotification = async (notificationId: string) => {
     try {
       const { error } = await (supabase as any)
-        .from('notifications')
+        .from("notifications")
         .delete()
-        .eq('id', notificationId);
+        .eq("id", notificationId)
 
-      if (error) throw error;
+      if (error) throw error
 
-      const deletedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      const deletedNotification = notifications.find(
+        (n) => n.id === notificationId
+      )
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
 
       if (deletedNotification && !deletedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setUnreadCount((prev) => Math.max(0, prev - 1))
       }
     } catch (error) {
-      console.error('Failed to delete notification:', error);
+      console.error("Failed to delete notification:", error)
     }
-  };
+  }
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'success':
-        return 'border-green-200 bg-green-100 text-green-800';
-      case 'warning':
-        return 'border-yellow-200 bg-yellow-100 text-yellow-800';
-      case 'error':
-        return 'border-red-200 bg-red-100 text-red-800';
+      case "success":
+        return "border-green-200 bg-green-100 text-green-800"
+      case "warning":
+        return "border-yellow-200 bg-yellow-100 text-yellow-800"
+      case "error":
+        return "border-red-200 bg-red-100 text-red-800"
       default:
-        return 'border-blue-200 bg-blue-100 text-blue-800';
+        return "border-blue-200 bg-blue-100 text-blue-800"
     }
-  };
+  }
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    )
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return date.toLocaleDateString();
-  };
+    if (diffInMinutes < 1) return "Just now"
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`
+    return date.toLocaleDateString()
+  }
 
   return (
     <div className="relative">
@@ -180,6 +186,7 @@ export function NotificationCenter() {
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
         className="relative"
+        aria-label="Open notifications"
       >
         <Bell className="size-5" />
         {unreadCount > 0 && (
@@ -187,7 +194,7 @@ export function NotificationCenter() {
             variant="destructive"
             className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
           >
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         )}
       </Button>
@@ -239,11 +246,11 @@ export function NotificationCenter() {
                         )}
                         onClick={() => {
                           if (!notification.read) {
-                            markAsRead(notification.id);
+                            markAsRead(notification.id)
                           }
                           if (notification.action_url) {
-                            window.location.href = notification.action_url;
-                            setIsOpen(false);
+                            window.location.href = notification.action_url
+                            setIsOpen(false)
                           }
                         }}
                       >
@@ -252,7 +259,10 @@ export function NotificationCenter() {
                             <div className="flex items-center gap-2">
                               <Badge
                                 variant="outline"
-                                className={cn("text-xs", getTypeColor(notification.type))}
+                                className={cn(
+                                  "text-xs",
+                                  getTypeColor(notification.type)
+                                )}
                               >
                                 {notification.type}
                               </Badge>
@@ -260,8 +270,12 @@ export function NotificationCenter() {
                                 {formatTime(notification.created_at)}
                               </span>
                             </div>
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.message}</p>
+                            <p className="text-sm font-medium">
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {notification.message}
+                            </p>
                           </div>
                           <div className="flex gap-1">
                             {!notification.read && (
@@ -269,8 +283,8 @@ export function NotificationCenter() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => {
-                                  e.stopPropagation();
-                                  markAsRead(notification.id);
+                                  e.stopPropagation()
+                                  markAsRead(notification.id)
                                 }}
                                 className="size-6"
                               >
@@ -281,8 +295,8 @@ export function NotificationCenter() {
                               variant="ghost"
                               size="icon"
                               onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNotification(notification.id);
+                                e.stopPropagation()
+                                deleteNotification(notification.id)
                               }}
                               className="size-6 text-muted-foreground hover:text-destructive"
                             >
@@ -297,9 +311,20 @@ export function NotificationCenter() {
                 </div>
               )}
             </ScrollArea>
+            <div className="border-t p-3 text-xs text-muted-foreground">
+              Notification processing follows our{" "}
+              <Link href="/privacy" className="underline">
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link href="/data-retention" className="underline">
+                Data Retention Policy
+              </Link>
+              .
+            </div>
           </CardContent>
         </Card>
       )}
     </div>
-  );
+  )
 }

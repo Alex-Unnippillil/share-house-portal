@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -59,7 +61,10 @@ export function StripeActions() {
         body: JSON.stringify({ customerId: customerId || undefined }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || "Unable to create billing portal session")
+      if (!res.ok)
+        throw new Error(
+          data?.error || "Unable to create billing portal session"
+        )
       if (data?.url) window.location.assign(data.url)
     } catch (e) {
       console.error(e)
@@ -74,12 +79,14 @@ export function StripeActions() {
       const res = await fetch("/api/plaid/link-token", { method: "POST" })
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data?.error?.message || "Unable to initialize bank linking")
+        throw new Error(
+          data?.error?.message || "Unable to initialize bank linking"
+        )
       }
 
       setLinkConsent(data?.consent ?? null)
       setAchMessage(
-        "Plaid Link token created. Complete Plaid Link in your frontend integration and paste the returned public token below to finish setup.",
+        "Plaid Link token created. Complete Plaid Link in your frontend integration and paste the returned public token below to finish setup."
       )
     } catch (error) {
       console.error(error)
@@ -89,7 +96,9 @@ export function StripeActions() {
 
   const linkBankAccount = async () => {
     if (!publicToken || !consentAccepted) {
-      setAchMessage("You must provide a Plaid public token and accept consent before linking a bank account.")
+      setAchMessage(
+        "You must provide a Plaid public token and accept consent before linking a bank account."
+      )
       return
     }
 
@@ -109,11 +118,15 @@ export function StripeActions() {
       }
 
       setAchMessage(
-        `${data?.linkedAccounts?.length ?? 0} bank account(s) linked for ACH. ${data?.achSettlement?.pendingMessage ?? ""}`,
+        `${data?.linkedAccounts?.length ?? 0} bank account(s) linked for ACH. ${
+          data?.achSettlement?.pendingMessage ?? ""
+        }`
       )
     } catch (error) {
       console.error(error)
-      setAchMessage("Bank linking failed. Confirm your public token and try again.")
+      setAchMessage(
+        "Bank linking failed. Confirm your public token and try again."
+      )
     } finally {
       setLinkingBank(false)
     }
@@ -123,12 +136,20 @@ export function StripeActions() {
     <div className="space-y-4">
       <div className="grid gap-4">
         <div className="space-y-3 rounded-md border bg-muted/20 p-4">
-          <p className="text-sm font-medium">ACH bank linking (Plaid + Stripe)</p>
+          <p className="text-sm font-medium">
+            ACH bank linking (Plaid + Stripe)
+          </p>
           <p className="text-xs text-muted-foreground">
-            Link checking/savings accounts through Plaid. We only store tokenized IDs and masked account metadata (for example, bank name and last 4 digits).
+            Link checking/savings accounts through Plaid. We only store
+            tokenized IDs and masked account metadata (for example, bank name
+            and last 4 digits).
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" onClick={initializeBankLinking} variant="outline">
+            <Button
+              type="button"
+              onClick={initializeBankLinking}
+              variant="outline"
+            >
               Create Plaid Link Token
             </Button>
           </div>
@@ -155,7 +176,8 @@ export function StripeActions() {
               className="mt-0.5"
             />
             <span>
-              I authorize tokenized bank linking for ACH debits and consent to recurring autopay withdrawals according to my lease terms.
+              I authorize tokenized bank linking for ACH debits and consent to
+              recurring autopay withdrawals according to my lease terms.
             </span>
           </label>
           <Button
@@ -166,7 +188,28 @@ export function StripeActions() {
           >
             {linkingBank ? "Linking..." : "Exchange Public Token"}
           </Button>
-          {achMessage ? <p className="text-xs text-muted-foreground">{achMessage}</p> : null}
+          {achMessage ? (
+            <p className="text-xs text-muted-foreground">{achMessage}</p>
+          ) : null}
+          <p className="text-xs text-muted-foreground">
+            By linking a bank account or starting checkout, you confirm consent
+            to payment processing and service notifications. See our{" "}
+            <Link href="/terms" className="underline underline-offset-2">
+              Terms
+            </Link>
+            ,{" "}
+            <Link href="/privacy" className="underline underline-offset-2">
+              Privacy Policy
+            </Link>
+            , and{" "}
+            <Link
+              href="/data-retention"
+              className="underline underline-offset-2"
+            >
+              Data Retention Policy
+            </Link>
+            .
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -195,7 +238,9 @@ export function StripeActions() {
             id="checkout-mode"
             className="h-9 w-full rounded-md border bg-background px-3 text-sm"
             value={mode}
-            onChange={(event) => setMode(event.target.value as "payment" | "subscription")}
+            onChange={(event) =>
+              setMode(event.target.value as "payment" | "subscription")
+            }
           >
             <option value="payment">One-time payment</option>
             <option value="subscription">Recurring subscription</option>
@@ -208,12 +253,16 @@ export function StripeActions() {
             placeholder="price_123 (Stripe Price ID)"
             className="min-w-56 flex-1"
           />
-          <Button onClick={startCheckout} disabled={!priceId || loadingCheckout} variant="outline">
+          <Button
+            onClick={startCheckout}
+            disabled={!priceId || loadingCheckout}
+            variant="outline"
+          >
             {loadingCheckout
               ? "Creating..."
               : mode === "subscription"
-                ? "Start recurring checkout"
-                : "Create one-time checkout"}
+              ? "Start recurring checkout"
+              : "Create one-time checkout"}
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -223,7 +272,11 @@ export function StripeActions() {
             placeholder="cus_123 (Stripe customer id, optional)"
             className="min-w-56 flex-1"
           />
-          <Button onClick={openBillingPortal} disabled={loadingPortal} variant="outline">
+          <Button
+            onClick={openBillingPortal}
+            disabled={loadingPortal}
+            variant="outline"
+          >
             {loadingPortal ? "Opening..." : "Open Billing Portal"}
           </Button>
         </div>
