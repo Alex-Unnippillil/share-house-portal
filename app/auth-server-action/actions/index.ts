@@ -1,24 +1,36 @@
-"use server";
+"use server"
 
-import { createSupbaseServerClient } from "@/utils/supaone";
-import { redirect } from "next/navigation";
+import { redirect } from "next/navigation"
+import { createSupbaseServerClient } from "@/utils/supaone"
 
 export async function signUpWithEmailAndPassword(data: {
-	email: string;
-	password: string;
-	confirm: string;
+  email: string
+  password: string
+  confirm: string
 }) {
-	const supabase = await createSupbaseServerClient();
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return JSON.stringify({
+      data: null,
+      error: {
+        message:
+          "Supabase environment variables are missing. Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      },
+    })
+  }
 
-	const result = await supabase.auth.signUp(data);
-	return JSON.stringify(result);
+  const supabase = await createSupbaseServerClient()
+  const result = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+  })
+  return JSON.stringify(result)
 }
 
 export async function logout() {
-	const supabase = await createSupbaseServerClient();
-	await supabase.auth.signOut();
-	redirect("/auth");
+  const supabase = await createSupbaseServerClient()
+  await supabase.auth.signOut()
+  redirect("/auth")
 }
-
-
-
