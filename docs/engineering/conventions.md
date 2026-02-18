@@ -54,6 +54,14 @@ The repository is organized to keep infrastructure, services, clients, and share
 - CI pipelines should leverage workspace-aware tooling (e.g., Turborepo) to run only affected tasks.
 - Include contract tests when changing API schemas or shared libraries.
 
+
+### UI Component Naming and Ownership
+
+- Keep shadcn/ui primitives in `components/ui/` using lower-case file names (for example, `button.tsx`, `table.tsx`, `dialog.tsx`) so imports stay consistent across macOS/Linux environments.
+- Do not add duplicate-suffixed files such as `button (1).tsx`; each primitive must have one canonical file that all routes import from.
+- Feature-level components belong in domain folders (for example, `components/maintenance/`, `components/visitors/`) and should compose primitives from `components/ui/` instead of redefining base controls.
+- `pnpm check:component-files` is required locally and in CI to prevent duplicate filenames and case-variant component paths.
+
 ### Documentation
 
 - Update relevant ADRs, READMEs, and runbooks when architecture or operational behavior changes.

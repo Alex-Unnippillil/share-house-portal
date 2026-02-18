@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate component filenames
+        run: pnpm check:component-files
+
       - name: Lint
         run: pnpm lint
 
