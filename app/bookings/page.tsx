@@ -1,7 +1,7 @@
 import { Suspense } from "react"
-import { Calendar, ShieldAlert, Tv } from "lucide-react"
 
 import { AMENITY_ICON_MAP, groupAmenitiesByProperty } from "@/lib/bookings/amenity-catalog"
+import { getCurrentUserRole } from "@/lib/current-user-role"
 
 import {
   Card,
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { PortalPageBlueprint } from "@/components/layouts/portal-page-blueprint"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { AmenityBookingForm } from "./components/amenity-booking-form"
@@ -19,37 +19,91 @@ import { BookingStats } from "./components/booking-stats"
 
 const amenitiesByProperty = groupAmenitiesByProperty()
 
-export default function BookingsPage() {
-  return (
-    <div className="container max-w-7xl space-y-8 py-8">
-      <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Amenity Bookings</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Browse amenity catalogs by property and book directly inside Cal.com embeds. Bookings are mirrored to Supabase for policy checks, conflict detection, and role-based calendars.
-          </p>
-        </div>
-        <Separator />
-      </header>
+export default async function BookingsPage() {
+  const role = await getCurrentUserRole()
+  const isManager = role === "property_manager" || role === "admin"
 
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-3">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-4 w-3/4 rounded bg-muted"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-1/2 rounded bg-muted"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+  const amenityCount = Object.values(amenitiesByProperty).reduce(
+    (sum, amenities) => sum + amenities.length,
+    0
+  )
+
+  return (
+    <div className="container max-w-7xl space-y-8 py-10">
+      <PortalPageBlueprint
+        title="Amenity Bookings"
+        description="Book shared amenities with Cal.com embeds while keeping policy checks and mirrored booking records in Supabase."
+        metrics={[
+          {
+            label: "Properties",
+            value: `${Object.keys(amenitiesByProperty).length}`,
+            helperText: "Amenity catalogs grouped by property",
+          },
+          {
+            label: "Bookable amenities",
+            value: `${amenityCount}`,
+            helperText: "Kitchen, TV room, parking, and shared devices",
+          },
+          {
+            label: "Sync model",
+            value: "Realtime",
+            helperText: "Cal.com webhook events mirror to Supabase",
+          },
+        ]}
+        primaryActionTitle={
+          isManager
+            ? "Coordinate amenity operations"
+            : "Reserve your next amenity slot"
         }
-      >
-        <BookingStats />
-      </Suspense>
+        primaryActionDescription={
+          isManager
+            ? "Review calendars, reduce conflicts, and keep shared spaces available for all units."
+            : "Launch the amenity catalog and secure an available slot before it fills up."
+        }
+        primaryCta={
+          isManager
+            ? { label: "Review booking calendars", href: "#booking-history" }
+            : { label: "Open amenity catalog", href: "#amenity-catalog" }
+        }
+        fallbackCta={
+          isManager
+            ? { label: "Inspect booking stats", href: "#booking-stats" }
+            : { label: "View your booking history", href: "#booking-history" }
+        }
+        supportModules={[
+          {
+            title: "Conflict safeguards",
+            description:
+              "Recurring reservations and overlap checks run before submission to prevent double-booking.",
+          },
+          {
+            title: "Cancellation windows",
+            description:
+              "Calendar views expose policy-based cancellation eligibility for tenants and managers.",
+          },
+        ]}
+      />
+
+      <section id="booking-stats">
+        <Suspense
+          fallback={
+            <div className="grid gap-4 md:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader className="pb-2">
+                    <div className="h-4 w-3/4 rounded bg-muted"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-8 w-1/2 rounded bg-muted"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          }
+        >
+          <BookingStats />
+        </Suspense>
+      </section>
 
       <Tabs defaultValue="book" className="space-y-6">
         <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -57,12 +111,14 @@ export default function BookingsPage() {
           <TabsTrigger value="history">Calendars</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="book" className="space-y-6">
+        <TabsContent id="amenity-catalog" value="book" className="space-y-6">
           {Object.entries(amenitiesByProperty).map(([propertyName, amenities]) => (
-            <section key={propertyName} className="space-y-4">
+            <section key={propertyName} className="space-y-4 border-t pt-6 first:border-none first:pt-0">
               <div>
                 <h2 className="text-xl font-semibold">{propertyName}</h2>
-                <p className="text-sm text-muted-foreground">Embedded Cal.com schedules scoped to this property&apos;s amenities.</p>
+                <p className="text-sm text-muted-foreground">
+                  Embedded Cal.com schedules scoped to this property&apos;s amenities.
+                </p>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
@@ -91,54 +147,10 @@ export default function BookingsPage() {
           ))}
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-6">
+        <TabsContent id="booking-history" value="history" className="space-y-6">
           <BookingHistory />
         </TabsContent>
       </Tabs>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-2">
-              <Calendar className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Cal.com webhooks</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-xs">
-              Booking create, reschedule, and cancellation events sync into the `bookings` mirror table.
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-2">
-              <Tv className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Conflict detection</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-xs">
-              Policy guardrails validate recurring reservations and check overlap before tenants submit bookings.
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center space-x-2">
-              <ShieldAlert className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Cancellation rules</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="text-xs">
-              Tenant and manager calendars display booking status plus cancellation eligibility by policy window.
-            </CardDescription>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
 }

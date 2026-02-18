@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 
 import { format, parseISO } from "date-fns"
-import { CheckCircle2 } from "lucide-react"
 
 import {
   Card,
@@ -10,13 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { StripeActions } from "./_components/stripe-actions"
-import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
-import { PaymentStatusFeed } from "./_components/payment-status-feed"
-import { ContributionSummaryCard } from "./_components/contribution-summary-card"
-import { RoommateLedger } from "./_components/roommate-ledger"
-import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
+import { PortalPageBlueprint } from "@/components/layouts/portal-page-blueprint"
 import {
   calculateOutstanding,
   getNextOutstandingCharge,
@@ -24,6 +17,12 @@ import {
 import { formatCurrency } from "@/lib/payments/currency"
 import { describeAutopayStatus } from "@/lib/payments/status"
 
+import { StripeActions } from "./_components/stripe-actions"
+import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
+import { PaymentStatusFeed } from "./_components/payment-status-feed"
+import { ContributionSummaryCard } from "./_components/contribution-summary-card"
+import { RoommateLedger } from "./_components/roommate-ledger"
+import { RoommateLedgerSkeleton } from "./_components/roommate-ledger-skeleton"
 import {
   loadCatchUpBalances,
   loadReconciliationDashboardData,
@@ -32,50 +31,6 @@ import {
 } from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
 import { ReconciliationDashboardCard } from "./_components/reconciliation-dashboard-card"
-
-
-const paymentHighlights = [
-  {
-    title: "AutoPay scheduling",
-    description:
-      "Enable recurring rent collection with configurable due dates, grace periods, and automatic late fee handling.",
-    points: [
-      "Assign custom due dates per lease or roommate share.",
-      "Set grace windows before late fees automatically post.",
-      "Keep everyone informed with proactive autopay reminders.",
-    ],
-  },
-  {
-    title: "One-time catch up",
-    description:
-      "Support partial or one-off payments so roommates can settle balances without waiting for the next billing cycle.",
-    points: [
-      "Accept partial payments against outstanding charges instantly.",
-      "Apply settlements across multiple invoices in a single flow.",
-      "Log property manager adjustments so every credit is traceable.",
-    ],
-  },
-  {
-    title: "Receipt history",
-    description:
-      "Download itemized receipts and export payment history for reimbursement, tax, or dispute resolution needs.",
-    points: [
-      "Generate PDF or CSV exports on demand for bookkeeping.",
-      "Surface line items for rent, deposits, and utilities in one view.",
-      "Attach notes and documentation to streamline disputes.",
-    ],
-  },
-  {
-    title: "Roomsily ledger",
-    description:
-      "Track individual roommate contributions alongside property manager adjustments to maintain full transparency.",
-    points: [
-      "Monitor running balances per roommate with live updates.",
-      "Contrast autopay coverage with manual payments at a glance.",
-      "Share the same ledger with roommates, managers, and admins.",
-    ],
-  },
-]
 
 function formatFullDate(date: string) {
   return format(parseISO(date), "MMM d, yyyy")
@@ -86,8 +41,8 @@ export default async function PaymentsPage() {
     loadCatchUpBalances(),
     loadReceiptHistory(),
     loadReconciliationDashboardData(),
-
   ])
+
   const outstandingSummaries = catchUpBalances.map((balance) => {
     const outstanding = calculateOutstanding(balance.charges)
     const nextCharge = getNextOutstandingCharge(balance.charges)
@@ -96,17 +51,17 @@ export default async function PaymentsPage() {
 
   const totalOutstanding = outstandingSummaries.reduce(
     (sum, item) => sum + item.outstanding,
-    0,
+    0
   )
 
   const activeAutopays = catchUpBalances.filter(
-    (balance) => balance.autopayStatus === "active",
+    (balance) => balance.autopayStatus === "active"
   ).length
   const pausedAutopays = catchUpBalances.filter(
-    (balance) => balance.autopayStatus === "paused",
+    (balance) => balance.autopayStatus === "paused"
   ).length
   const disabledAutopays = catchUpBalances.filter(
-    (balance) => balance.autopayStatus === "disabled",
+    (balance) => balance.autopayStatus === "disabled"
   ).length
 
   const autopCoveragePercentage =
@@ -117,87 +72,70 @@ export default async function PaymentsPage() {
   const defaultCurrency = catchUpBalances[0]?.currency ?? "USD"
 
   const roommateSummaries = [...outstandingSummaries].sort(
-    (a, b) => b.outstanding - a.outstanding,
+    (a, b) => b.outstanding - a.outstanding
   )
 
+  const isManager = reconciliationData.canManagePayments
+
   return (
-    <div className="container max-w-5xl space-y-10 py-12">
-      <header className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Payments</h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Manage rent, deposits, and roommate contributions with Stripe-powered autopay and real-time status updates.
-          </p>
-        </div>
-        <Separator />
-      </header>
-      <div className="grid gap-6 md:grid-cols-2">
-        {paymentHighlights.map((item) => (
-          <Card key={item.title} className="h-full">
-            <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                {item.points.map((point) => (
-                  <li key={point} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 size-4 text-primary" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+    <div className="container max-w-6xl space-y-10 py-12">
+      <PortalPageBlueprint
+        title="Payments"
+        description="Manage rent, autopay, and reconciliation from a single Stripe-powered workflow with mirrored status in Supabase."
+        metrics={[
+          {
+            label: "Outstanding total",
+            value: formatCurrency(totalOutstanding, defaultCurrency),
+            helperText: `${catchUpBalances.length} roommates tracked`,
+          },
+          {
+            label: "Autopay coverage",
+            value: `${autopCoveragePercentage}%`,
+            helperText: `${activeAutopays}/${catchUpBalances.length} roommates active`,
+          },
+          {
+            label: "Catch-up needed",
+            value: `${pausedAutopays + disabledAutopays}`,
+            helperText: `${pausedAutopays} paused · ${disabledAutopays} disabled`,
+          },
+        ]}
+        primaryActionTitle={
+          isManager ? "Resolve failed or overdue payments" : "Keep rent on schedule"
+        }
+        primaryActionDescription={
+          isManager
+            ? "Prioritize failed charges, triage retry strategy, and keep roommate ledgers balanced before month end."
+            : "Enable autopay or submit a one-time catch-up payment so your balance stays current."
+        }
+        primaryCta={
+          isManager
+            ? { label: "Open reconciliation queue", href: "#reconciliation" }
+            : { label: "Create catch-up payment", href: "#catch-up-payment" }
+        }
+        fallbackCta={
+          isManager
+            ? { label: "Review settlement status", href: "#status-feed" }
+            : { label: "Manage Stripe billing", href: "#stripe-actions" }
+        }
+        supportModules={[
+          {
+            title: "Receipt history",
+            description:
+              "Download itemized receipts and maintain audit-ready payment history without leaving the portal.",
+          },
+          {
+            title: "Roommate ledger transparency",
+            description:
+              "Compare each roommate's contributions and outstanding balances in one shared source of truth.",
+          },
+        ]}
+      />
+
+      <section
+        id="payments-overview"
+        className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+      >
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Catch-up snapshot</CardTitle>
-              <CardDescription>
-                Monitor outstanding balances and autopay coverage across the unit.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-1 rounded-lg border bg-muted/40 p-4">
-                  <dt className="text-xs uppercase text-muted-foreground">
-                    Outstanding total
-                  </dt>
-                  <dd className="text-lg font-semibold">
-                    {formatCurrency(totalOutstanding, defaultCurrency)}
-                  </dd>
-                  <p className="text-xs text-muted-foreground">
-                    {catchUpBalances.length} roommates tracked
-                  </p>
-                </div>
-                <div className="space-y-1 rounded-lg border bg-muted/40 p-4">
-                  <dt className="text-xs uppercase text-muted-foreground">
-                    Autopay coverage
-                  </dt>
-                  <dd className="text-lg font-semibold">
-                    {activeAutopays}/{catchUpBalances.length}
-                  </dd>
-                  <p className="text-xs text-muted-foreground">
-                    {autopCoveragePercentage}% of roommates on autopay
-                  </p>
-                </div>
-                <div className="space-y-1 rounded-lg border bg-muted/40 p-4">
-                  <dt className="text-xs uppercase text-muted-foreground">
-                    Catch-up required
-                  </dt>
-                  <dd className="text-lg font-semibold">
-                    {pausedAutopays + disabledAutopays}
-                  </dd>
-                  <p className="text-xs text-muted-foreground">
-                    {pausedAutopays} paused · {disabledAutopays} off
-                  </p>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Roommate balances</CardTitle>
@@ -214,13 +152,12 @@ export default async function PaymentsPage() {
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{balance.roommateName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {balance.unitLabel} · {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
+                      {balance.unitLabel} ·{" "}
+                      {describeAutopayStatus(balance.autopayStatus, balance.autopayDay)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Last payment {formatFullDate(balance.lastPaymentDate)} · {formatCurrency(
-                        balance.lastPaymentAmount,
-                        balance.currency,
-                      )}
+                      Last payment {formatFullDate(balance.lastPaymentDate)} ·{" "}
+                      {formatCurrency(balance.lastPaymentAmount, balance.currency)}
                     </p>
                   </div>
                   <div className="text-right">
@@ -229,54 +166,61 @@ export default async function PaymentsPage() {
                     </p>
                     {nextCharge ? (
                       <p className="text-xs text-muted-foreground">
-                        Next: {nextCharge.description} due {format(parseISO(nextCharge.dueDate), "MMM d")}
+                        Next: {nextCharge.description} due{" "}
+                        {format(parseISO(nextCharge.dueDate), "MMM d")}
                       </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No outstanding charges</p>
+                      <p className="text-xs text-muted-foreground">
+                        No outstanding charges
+                      </p>
                     )}
                   </div>
                 </div>
               ))}
             </CardContent>
           </Card>
-          <PaymentStatusFeed balances={catchUpBalances} />
+
+          <section id="status-feed">
+            <PaymentStatusFeed balances={catchUpBalances} />
+          </section>
+
           <ContributionSummaryCard balances={catchUpBalances} />
-          <Card>
-            <CardHeader>
-              <CardTitle>ACH settlement states</CardTitle>
-              <CardDescription>
-                Understand how ACH processing affects autopay and when follow-up may be required.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                <span className="font-medium text-foreground">Pending settlement:</span> ACH transfers can remain pending for 3–5 business days before final settlement.
-              </p>
-              <p>
-                <span className="font-medium text-foreground">Failed settlement:</span> If a debit returns (for example NSF or closed account), autopay is paused and the roommate must relink a bank account or pay manually.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Pay with Stripe</CardTitle>
-              <CardDescription>Create a quick checkout or open Billing Portal</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <StripeActions />
-            </CardContent>
-          </Card>
+
+          <section id="stripe-actions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pay with Stripe</CardTitle>
+                <CardDescription>
+                  Create a one-time checkout session or open Billing Portal.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StripeActions />
+              </CardContent>
+            </Card>
+          </section>
         </div>
-        <CatchUpPaymentCard balances={catchUpBalances} />
+
+        <section id="catch-up-payment">
+          <CatchUpPaymentCard balances={catchUpBalances} />
+        </section>
       </section>
+
       <Suspense fallback={<RoommateLedgerSkeleton />}>
         <RoommateLedgerSection />
       </Suspense>
-      <ReceiptHistoryCard receipts={receiptHistory} />
-      {reconciliationData.canManagePayments ? (
-        <ReconciliationDashboardCard failedPayments={reconciliationData.failedPayments} />
-      ) : null}
 
+      <section id="receipt-history">
+        <ReceiptHistoryCard receipts={receiptHistory} />
+      </section>
+
+      {reconciliationData.canManagePayments ? (
+        <section id="reconciliation">
+          <ReconciliationDashboardCard
+            failedPayments={reconciliationData.failedPayments}
+          />
+        </section>
+      ) : null}
     </div>
   )
 }
