@@ -7,6 +7,8 @@ import type { Database } from '@/lib/supabase';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { formatISO, isPast } from 'date-fns'; // Import formatISO here
+import { createStructuredLogger } from '@/lib/observability/logger';
+import { incrementOperationalMetric } from '@/lib/observability/metrics';
 
 // --- Updated Zod Schema for Server Action ---
 const scheduleSchema = z.object({
@@ -48,13 +50,14 @@ export async function scheduleMeetingAction(
   formData: FormData
 ): Promise<ActionResult> {
 
+ const logger = createStructuredLogger("server_action", { component: "schedule_meeting_action" });
  const cookieStore = cookies();
  const supabase = createClient(cookieStore);
 
   // 1. Check Authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    console.error('Authentication error in server action:', authError);
+    logger.warn('schedule_meeting_authentication_failed', { reason: authError?.message ?? 'no_user' });
     return { success: false, message: null, error: 'You must be logged in to schedule a meeting.', googleEventLink: null };
   }
 
@@ -73,7 +76,7 @@ export async function scheduleMeetingAction(
    const validationResult = scheduleSchema.safeParse(rawData);
 
    if (!validationResult.success) {
-       console.error("Server validation failed:", validationResult.error.flatten());
+       logger.warn("schedule_meeting_validation_failed", { details: validationResult.error.flatten() });
        // Combine Zod error messages
        const errorMessages = Object.values(validationResult.error.flatten().fieldErrors)
            .map(errors => errors?.join('. '))
@@ -87,7 +90,7 @@ export async function scheduleMeetingAction(
 
    // 3. Basic check: User email from form should match logged-in user
    if (validatedData.userEmail !== user.email) {
-       console.error(`Security Alert: Form email (${validatedData.userEmail}) does not match authenticated user (${user.email})`);
+       logger.warn("schedule_meeting_email_mismatch", { formEmail: validatedData.userEmail, authenticatedEmail: user.email });
        return { success: false, message: null, error: 'User email mismatch.', googleEventLink: null };
    }
 
@@ -105,13 +108,14 @@ export async function scheduleMeetingAction(
     });
 
     if (!calendarResult.success || !calendarResult.eventId) {
-      console.error("Failed to create Google Calendar event:", calendarResult.error);
+      logger.error("schedule_meeting_calendar_create_failed", { reason: calendarResult.error });
+      incrementOperationalMetric("webhook_failures_total", { source: "schedule_meeting_action", provider: "google_calendar", eventType: "calendar_event_create" });
       // Pass specific Google error back if available
       const errorMessage = calendarResult.error || 'Failed to create Google Calendar event.';
       return { success: false, message: null, error: errorMessage, googleEventLink: null };
     }
 
-    console.log(`Google Event created: ${calendarResult.eventId}, Link: ${calendarResult.link}`);
+    logger.info("schedule_meeting_calendar_event_created", { eventName: "calendar_event_created", googleEventId: calendarResult.eventId });
 
     // 5. Store meeting info in Supabase DB
     //    Pass the validated Date objects directly to the Supabase client.
@@ -128,11 +132,11 @@ export async function scheduleMeetingAction(
 
     if (dbError) {
       // Log the error, but don't necessarily fail if calendar event succeeded
-      console.error('Error saving meeting to database:', dbError);
+      logger.error('schedule_meeting_db_insert_failed', { reason: dbError.message, code: dbError.code });
       // Optional: Return a partial success message or specific DB error
       // return { success: false, message: null, error: 'Meeting scheduled, but failed to save record.', googleEventLink: calendarResult.link };
     } else {
-       console.log("Meeting details saved to database.");
+       logger.info("schedule_meeting_db_insert_succeeded", { eventName: "meeting_created" });
     }
 
     // 6. Revalidate the path if needed
@@ -147,7 +151,7 @@ export async function scheduleMeetingAction(
     };
 
   } catch (error) {
-    console.error('Unexpected error in scheduleMeetingAction:', error);
+    logger.error('schedule_meeting_unexpected_error', { reason: error instanceof Error ? error.message : 'unknown' });
      let errorMessage = 'An unexpected error occurred while scheduling.';
      if (error instanceof Error) {
          errorMessage = error.message;

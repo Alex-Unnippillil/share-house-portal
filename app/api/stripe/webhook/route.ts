@@ -6,6 +6,8 @@ import {
   sendInAppNotification,
 } from "@/lib/notifications"
 import { jsonError } from "@/lib/errors"
+import { createStructuredLogger } from "@/lib/observability/logger"
+import { incrementOperationalMetric } from "@/lib/observability/metrics"
 import { getStripe } from "@/lib/stripe"
 import type { Database, TablesInsert } from "@/lib/supabase"
 
@@ -27,11 +29,27 @@ function createSupabaseAdminClient(): SupabaseClient<Database> | null {
 }
 
 export async function POST(req: Request) {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
+  const logger = createStructuredLogger("webhook_processor", {
+    component: "stripe_webhook",
+    requestId,
+  })
+
   const stripe = getStripe()
   const signature = (await headers()).get("stripe-signature")
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
+    logger.error("stripe_webhook_configuration_error", {
+      reason: "missing_webhook_secret",
+    })
+    incrementOperationalMetric("webhook_failures_total", {
+      source: "stripe_webhook",
+      provider: "stripe",
+      eventType: "unknown",
+      reason: "missing_webhook_secret",
+    })
+
     return jsonError("CONFIGURATION_ERROR", {
       message: "Stripe webhook secret is not configured",
     })
@@ -39,6 +57,16 @@ export async function POST(req: Request) {
 
   const supabase = createSupabaseAdminClient()
   if (!supabase) {
+    logger.error("stripe_webhook_configuration_error", {
+      reason: "missing_supabase_admin_client",
+    })
+    incrementOperationalMetric("webhook_failures_total", {
+      source: "stripe_webhook",
+      provider: "stripe",
+      eventType: "unknown",
+      reason: "missing_supabase_admin_client",
+    })
+
     return jsonError("CONFIGURATION_ERROR", {
       message: "Supabase client not configured",
     })
@@ -52,6 +80,11 @@ export async function POST(req: Request) {
       signature ?? "",
       webhookSecret
     )
+
+    logger.info("stripe_webhook_received", {
+      eventName: event.type,
+      stripeEventId: event.id,
+    })
 
     switch (event.type) {
       case "checkout.session.completed":
@@ -70,14 +103,30 @@ export async function POST(req: Request) {
         await handleSubscriptionDeleted(supabase, event.data.object)
         break
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        logger.info("stripe_webhook_unhandled_event", {
+          eventName: event.type,
+        })
         break
     }
+
+    logger.info("stripe_webhook_processed", {
+      eventName: event.type,
+      stripeEventId: event.id,
+    })
 
     return new Response("ok", { status: 200 })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid payload"
-    console.error("Webhook error:", message)
+    logger.error("stripe_webhook_processing_failed", {
+      reason: message,
+      provider: "stripe",
+    })
+    incrementOperationalMetric("webhook_failures_total", {
+      source: "stripe_webhook",
+      provider: "stripe",
+      eventType: "unknown",
+      reason: message,
+    })
     const lowerMessage = message.toLowerCase()
     if (lowerMessage.includes("signature")) {
       return jsonError("REQUEST_VALIDATION_ERROR", {

@@ -3,5 +3,15 @@
     "app/api/**/*.rs": {
       "runtime": "vercel-rust@4.0.8"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/ops/data-integrity",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/ops/retention",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react"
 import type { FormEvent } from "react"
 import { Loader2 } from "lucide-react"
+import { track } from "@vercel/analytics"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +48,18 @@ const CONFLICT_TITLES: Record<ConflictCode, string> = {
 }
 
 const BUFFER_MINUTES = 15
+
+async function postOperationalMetric(metricName: string, tags: Record<string, unknown>) {
+  try {
+    await fetch("/api/ops/metrics", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ metricName, tags }),
+    })
+  } catch (error) {
+    console.error("Failed to post operational metric", error)
+  }
+}
 
 function formatDateTimeLocal(date: Date) {
   const pad = (value: number) => value.toString().padStart(2, "0")
@@ -170,15 +183,31 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
         const parsedConflicts = normaliseConflicts((data ?? {}) as RpcPayload)
         const withinBudget = duration <= 20
 
-        console.info("[metrics] amenity_conflict_check", {
+        track("booking_conflict_check", {
           amenityId: amenity.id,
           durationMs: Number(duration.toFixed(2)),
           within20ms: withinBudget,
           conflictCount: parsedConflicts.length,
         })
 
+        if (parsedConflicts.length > 0) {
+          track("booking_conflict_detected", {
+            amenityId: amenity.id,
+            conflictCount: parsedConflicts.length,
+          })
+          void postOperationalMetric("booking_conflicts_total", {
+            amenityId: amenity.id,
+            conflictCount: parsedConflicts.length,
+          })
+        }
+
         if (error) {
           console.error("Failed to run amenity conflict check", error)
+          track("booking_conflict_check_failed", { amenityId: amenity.id })
+          void postOperationalMetric("webhook_failures_total", {
+            source: "booking_conflict_check",
+            amenityId: amenity.id,
+          })
           toast.error("Unable to verify conflicts. Please try again.")
           setStatus("error")
           return
@@ -192,6 +221,11 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
         }
       } catch (rpcError) {
         console.error("Unexpected error during conflict check", rpcError)
+        track("booking_conflict_check_failed", { amenityId: amenity.id })
+        void postOperationalMetric("webhook_failures_total", {
+          source: "booking_conflict_check",
+          amenityId: amenity.id,
+        })
         toast.error("Something went wrong while checking availability")
         setStatus("error")
       }
