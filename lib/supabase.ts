@@ -156,6 +156,18 @@ export type Database = {
         created_at: string | null
         updated_at: string | null
       }>
+      webhook_events: SupabaseTable<{
+        id: string
+        provider: 'stripe'
+        event_id: string
+        event_type: string
+        status: 'processing' | 'processed' | 'failed'
+        payload: Json | null
+        error_message: string | null
+        processed_at: string | null
+        created_at: string | null
+        updated_at: string | null
+      }>
       subscriptions: SupabaseTable<{
         id: string
         user_id: string
