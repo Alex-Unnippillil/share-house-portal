@@ -16,6 +16,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { requirePrivilegedAccess } from '@/lib/authz'
+import { writeAuditRecord } from '@/lib/audit'
+import { getBookingRows, getFinanceRows, getMaintenanceRows, getModerationRows, getOperationsKpis } from '@/lib/operations/data'
+import { getDependencyHealth } from '@/lib/operations/dependency-health'
 
 export default async function OperationsDashboardPage() {
   const { user, role } = await requirePrivilegedAccess()
@@ -34,6 +39,14 @@ export default async function OperationsDashboardPage() {
       getBookingRows(),
       getModerationRows(),
     ])
+  const [kpis, financeRows, maintenanceRows, bookingRows, moderationRows, dependencies] = await Promise.all([
+    getOperationsKpis(),
+    getFinanceRows(),
+    getMaintenanceRows(),
+    getBookingRows(),
+    getModerationRows(),
+    getDependencyHealth(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -61,6 +74,35 @@ export default async function OperationsDashboardPage() {
             </Card>
           </Link>
         ))}
+      </section>
+
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Dependency readiness</CardTitle>
+            <CardDescription>Health snapshot for Supabase, Stripe, Cal.com, and Documenso dependencies.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
+            {dependencies.map((dependency) => (
+              <div key={dependency.name} className="rounded-md border p-3">
+                <p className="font-medium capitalize">{dependency.name}</p>
+                <p
+                  className={
+                    dependency.status === 'healthy'
+                      ? 'text-emerald-600'
+                      : dependency.status === 'degraded'
+                        ? 'text-amber-600'
+                        : 'text-red-600'
+                  }
+                >
+                  {dependency.status}
+                </p>
+                <p className="text-muted-foreground">{dependency.message}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
@@ -120,6 +162,10 @@ export default async function OperationsDashboardPage() {
               Unresolved moderation:{" "}
               {moderationRows.filter((row) => row.status === "open").length}
             </p>
+            <p>Finance exceptions: {financeRows.rows.filter((row) => row.status !== 'succeeded').length}</p>
+            <p>Open maintenance: {maintenanceRows.rows.filter((row) => row.status !== 'completed').length}</p>
+            <p>Pending bookings: {bookingRows.rows.filter((row) => row.status === 'pending').length}</p>
+            <p>Unresolved moderation: {moderationRows.rows.filter((row) => row.status === 'open').length}</p>
           </CardContent>
         </Card>
 

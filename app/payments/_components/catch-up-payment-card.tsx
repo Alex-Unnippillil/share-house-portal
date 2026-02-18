@@ -425,7 +425,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
                             <td className="py-2 pr-2 text-right">
                               {formatCurrency(charge.outstandingAmount, selectedBalance.currency)}
                             </td>
-                            <td className="py-2 pr-2 text-right text-emerald-600">
+                            <td className="py-2 pr-2 text-right text-emerald-700">
                               {applyingAmount > 0
                                 ? `-${formatCurrency(applyingAmount, selectedBalance.currency)}`
                                 : "—"}
@@ -507,7 +507,7 @@ export function CatchUpPaymentCard({ balances }: CatchUpPaymentCardProps) {
       {lastResult ? (
         <>
           <Separator />
-          <CardFooter className="flex flex-col items-start gap-3 bg-muted/30">
+          <CardFooter className="flex flex-col items-start gap-3 bg-muted/30" role="status" aria-live="polite">
             <div className="flex w-full flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">

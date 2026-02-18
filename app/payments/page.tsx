@@ -17,6 +17,13 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import {
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageSection,
+  PageTitle,
+} from "@/components/ui/page-layout"
 
 import { CatchUpPaymentCard } from "./_components/catch-up-payment-card"
 import { ContributionSummaryCard } from "./_components/contribution-summary-card"
@@ -133,6 +140,14 @@ export default async function PaymentsPage() {
         </div>
         <Separator />
       </header>
+    <PageContainer className="max-w-5xl space-y-stack-lg">
+      <PageHeader>
+        <PageTitle>Payments</PageTitle>
+        <PageDescription>
+          Manage rent, deposits, and roommate contributions with Stripe-powered
+          autopay and real-time status updates.
+        </PageDescription>
+      </PageHeader>
       <div className="grid gap-6 md:grid-cols-2">
         {paymentHighlights.map((item) => (
           <Card key={item.title} className="h-full">
@@ -153,7 +168,7 @@ export default async function PaymentsPage() {
           </Card>
         ))}
       </div>
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <PageSection className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -309,6 +324,19 @@ export default async function PaymentsPage() {
                 </Link>{" "}
                 documents retention windows for receipts, notifications, and
                 audit evidence.
+                <span className="font-medium text-foreground">
+                  Pending settlement:
+                </span>{" "}
+                ACH transfers can remain pending for 3–5 business days before
+                final settlement.
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  Failed settlement:
+                </span>{" "}
+                If a debit returns (for example NSF or closed account), autopay
+                is paused and the roommate must relink a bank account or pay
+                manually.
               </p>
             </CardContent>
           </Card>
@@ -325,7 +353,7 @@ export default async function PaymentsPage() {
           </Card>
         </div>
         <CatchUpPaymentCard balances={catchUpBalances} />
-      </section>
+      </PageSection>
       <Suspense fallback={<RoommateLedgerSkeleton />}>
         <RoommateLedgerSection />
       </Suspense>
@@ -336,6 +364,7 @@ export default async function PaymentsPage() {
         />
       ) : null}
     </div>
+    </PageContainer>
   )
 }
 
