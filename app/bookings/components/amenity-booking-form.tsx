@@ -33,6 +33,19 @@ function toIsoString(value: string | undefined) {
   return date.toISOString()
 }
 
+async function postOperationalMetric(
+  metricName: "booking_conflicts_total" | "webhook_failures_total",
+  tags: Record<string, string | number | boolean>
+) {
+  await fetch("/api/ops/metrics", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ metricName, tags }),
+  })
+}
+
 export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem }) {
   const [startValue, setStartValue] = useState(() =>
     formatDateTimeLocal(new Date(Date.now() + 60 * 60 * 1000))
