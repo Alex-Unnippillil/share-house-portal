@@ -75,6 +75,50 @@ type MaintenanceTicket = {
   updatedAt: string
 }
 
+type FloorplanRoommate = {
+  id: string
+  name: string
+  role: "tenant" | "roommate" | "property_manager" | "admin" | "user"
+}
+
+type FloorplanAnnotation = {
+  id: string
+  markerType: "room" | "storage" | "chore"
+  label: string
+  note: string | null
+  x: number
+  y: number
+  createdBy: string
+  visibilityScope: "all_roommates" | "selected_roommates" | "private"
+  visibleToUserIds: string[]
+  version: number
+  updatedAt: string
+}
+
+type FloorplanAnnotationVersion = {
+  id: string
+  annotationId: string
+  action: "created" | "updated" | "deleted" | "rollback"
+  version: number
+  changedBy: string
+  changedAt: string
+  snapshot: FloorplanAnnotation
+}
+
+type FloorplanWorkspace = {
+  floorplanId: string
+  floorplanName: string
+  propertyId: string
+  unitId: string
+  svgMarkup: string
+  currentVersion: number
+  currentUserId: string
+  currentUserRole: "tenant" | "roommate" | "property_manager" | "admin" | "user"
+  roommates: FloorplanRoommate[]
+  annotations: FloorplanAnnotation[]
+  annotationHistory: FloorplanAnnotationVersion[]
+}
+
 async function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -319,9 +363,130 @@ export function loadMaintenanceTicketsUncached() {
   return fetchMaintenanceTickets()
 }
 
+async function fetchFloorplanWorkspace(): Promise<FloorplanWorkspace> {
+  await wait(180)
+
+  const roommates: FloorplanRoommate[] = [
+    { id: "u-1", name: "Jordan", role: "tenant" },
+    { id: "u-2", name: "Avery", role: "roommate" },
+    { id: "u-3", name: "Kai", role: "roommate" },
+    { id: "u-4", name: "Morgan", role: "property_manager" },
+  ]
+
+  const annotations: FloorplanAnnotation[] = [
+    {
+      id: "ann-1",
+      markerType: "room",
+      label: "Bedroom A",
+      note: "Quiet hours after 10PM.",
+      x: 22,
+      y: 28,
+      createdBy: "u-4",
+      visibilityScope: "all_roommates",
+      visibleToUserIds: [],
+      version: 3,
+      updatedAt: "2024-07-18T09:00:00.000Z",
+    },
+    {
+      id: "ann-2",
+      markerType: "storage",
+      label: "Storage shelf 2",
+      note: "Assigned to Avery until September",
+      x: 68,
+      y: 40,
+      createdBy: "u-1",
+      visibilityScope: "selected_roommates",
+      visibleToUserIds: ["u-1", "u-2"],
+      version: 2,
+      updatedAt: "2024-07-20T16:10:00.000Z",
+    },
+    {
+      id: "ann-3",
+      markerType: "chore",
+      label: "Vacuum living room",
+      note: "Wednesday rotation",
+      x: 46,
+      y: 66,
+      createdBy: "u-2",
+      visibilityScope: "all_roommates",
+      visibleToUserIds: [],
+      version: 1,
+      updatedAt: "2024-07-21T11:12:00.000Z",
+    },
+  ]
+
+  return {
+    floorplanId: "floorplan-unit-3b",
+    floorplanName: "Unit 3B - Layout",
+    propertyId: "property-maple-grove",
+    unitId: "unit-3b",
+    currentVersion: 7,
+    currentUserId: "u-2",
+    currentUserRole: "roommate",
+    roommates,
+    annotations,
+    annotationHistory: [
+      {
+        id: "hist-1",
+        annotationId: "ann-2",
+        action: "created",
+        version: 1,
+        changedBy: "u-1",
+        changedAt: "2024-07-18T14:10:00.000Z",
+        snapshot: {
+          ...annotations[1],
+          note: "Assigned to Avery",
+          version: 1,
+        },
+      },
+      {
+        id: "hist-2",
+        annotationId: "ann-2",
+        action: "updated",
+        version: 2,
+        changedBy: "u-1",
+        changedAt: "2024-07-20T16:10:00.000Z",
+        snapshot: annotations[1],
+      },
+      {
+        id: "hist-3",
+        annotationId: "ann-1",
+        action: "updated",
+        version: 3,
+        changedBy: "u-4",
+        changedAt: "2024-07-18T09:00:00.000Z",
+        snapshot: annotations[0],
+      },
+    ],
+    svgMarkup: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Unit 3B floorplan">
+      <rect x="2" y="2" width="96" height="96" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="2"/>
+      <rect x="8" y="8" width="36" height="30" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="26" y="24" font-size="4" text-anchor="middle" fill="#334155">Bedroom A</text>
+      <rect x="54" y="8" width="38" height="26" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="73" y="22" font-size="4" text-anchor="middle" fill="#334155">Bedroom B</text>
+      <rect x="8" y="46" width="56" height="42" fill="#dbeafe" stroke="#93c5fd"/>
+      <text x="36" y="67" font-size="4" text-anchor="middle" fill="#1e40af">Living + Kitchen</text>
+      <rect x="68" y="46" width="24" height="18" fill="#ede9fe" stroke="#a78bfa"/>
+      <text x="80" y="57" font-size="3.5" text-anchor="middle" fill="#5b21b6">Storage</text>
+      <rect x="68" y="70" width="24" height="18" fill="#dcfce7" stroke="#86efac"/>
+      <text x="80" y="81" font-size="3.5" text-anchor="middle" fill="#166534">Bath</text>
+    </svg>`,
+  }
+}
+
+export const getFloorplanWorkspace = cache(fetchFloorplanWorkspace)
+
+export function loadFloorplanWorkspaceUncached() {
+  return fetchFloorplanWorkspace()
+}
+
 export type {
   DashboardMetric,
   DocumentSummary,
+  FloorplanAnnotation,
+  FloorplanAnnotationVersion,
+  FloorplanRoommate,
+  FloorplanWorkspace,
   MaintenanceTicket,
   QuickAction,
   RentSummary,

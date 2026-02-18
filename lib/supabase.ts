@@ -258,6 +258,44 @@ export type Database = {
         updated_at: string | null
         metadata: Json | null
       }>
+      floorplans: SupabaseTable<{
+        id: string
+        property_id: string | null
+        unit_id: string | null
+        storage_path: string
+        original_file_name: string | null
+        uploaded_by: string | null
+        uploaded_at: string
+        current_version: number
+        metadata: Json | null
+      }>
+      floorplan_annotations: SupabaseTable<{
+        id: string
+        floorplan_id: string
+        marker_type: 'room' | 'storage' | 'chore'
+        label: string
+        note: string | null
+        x_position: number
+        y_position: number
+        visibility_scope: 'all_roommates' | 'selected_roommates' | 'private'
+        visible_to_user_ids: string[]
+        version: number
+        created_by: string
+        updated_by: string
+        created_at: string
+        updated_at: string
+        archived_at: string | null
+      }>
+      floorplan_annotation_versions: SupabaseTable<{
+        id: string
+        annotation_id: string
+        floorplan_id: string
+        version: number
+        action: 'created' | 'updated' | 'deleted' | 'rollback'
+        snapshot: Json
+        changed_by: string | null
+        changed_at: string
+      }>
       messages: SupabaseTable<{
         id: string
         thread_id: string
