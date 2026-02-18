@@ -32,6 +32,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Metadata accessibility and validity checks
+        run: pnpm test:metadata
+
       - name: Unit and integration tests
         run: pnpm test
 
