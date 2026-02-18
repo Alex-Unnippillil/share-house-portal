@@ -1,3 +1,4 @@
+import { getMainNavigationItems } from "@/config/navigation"
 import { MainNavItem, SidebarNavItem } from "types/nav"
 
 interface DocsConfig {
@@ -6,36 +7,7 @@ interface DocsConfig {
 }
 
 export const docsConfig: DocsConfig = {
-  mainNav: [
-    {
-      title: "Home",
-      href: "/",
-    },
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-    },
-    {
-      title: "Payments",
-      href: "/payments",
-    },
-    {
-      title: "Documents",
-      href: "/documents",
-    },
-    {
-      title: "Messaging",
-      href: "/messaging",
-    },
-    {
-      title: "Account",
-      href: "/account",
-    },
-    {
-      title: "Contact",
-      href: "/contact",
-    },
-  ],
+  mainNav: getMainNavigationItems("public"),
   sidebarNav: [
     {
       title: "Tools",
