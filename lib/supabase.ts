@@ -188,10 +188,15 @@ export type Database = {
         provider: 'stripe'
         event_id: string
         event_type: string
-        status: 'processing' | 'processed' | 'failed'
+        status: 'processing' | 'processed' | 'failed' | 'dead_lettered'
         payload: Json | null
         error_message: string | null
         processed_at: string | null
+        retry_count: number
+        max_retries: number
+        next_retry_at: string | null
+        last_attempt_at: string | null
+        dead_lettered_at: string | null
         created_at: string | null
         updated_at: string | null
       }>

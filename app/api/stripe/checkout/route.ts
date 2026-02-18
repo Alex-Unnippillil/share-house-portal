@@ -3,6 +3,7 @@ import { NextRequest } from "next/server"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
+import { providerOutageMessage } from "@/lib/resilience"
 import { getAppBaseUrl, getStripe } from "@/lib/stripe"
 
 const allowedPaymentModes = new Set(["payment", "subscription"])
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
       allow_promotion_codes: true,
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig)
+    const checkoutSession = await stripe.checkout.sessions.create(sessionConfig)
 
     logger.info("stripe_checkout_session_created", {
       eventName: "checkout.session.created",
@@ -113,6 +114,9 @@ export async function POST(req: NextRequest) {
       severity: "high",
     })
 
-    return jsonErrorFromUnknown(error, "UPSTREAM_SERVICE_ERROR")
+    return jsonErrorFromUnknown(
+      new Error(providerOutageMessage("stripe")),
+      "UPSTREAM_SERVICE_ERROR"
+    )
   }
 }

@@ -1,3 +1,4 @@
+import { providerOutageMessage, retryWithBackoff } from '@/lib/resilience';
 import { DocumentSigningRequest, DocumentSigningResponse } from '@/types/documents';
 
 const DOCUMENSO_BASE_URL = process.env.DOCUMENSO_BASE_URL || 'https://app.documenso.com';
@@ -74,18 +75,25 @@ class DocumensoService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${this.baseUrl}/api/v1/documents/upload`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: formData,
-    });
+    const { value: response } = await retryWithBackoff(
+      async () => {
+        const response = await fetch(`${this.baseUrl}/api/v1/documents/upload`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: formData,
+        })
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso upload failed: ${error}`);
-    }
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso upload failed: ${response.status} ${error}`);
+        }
+
+        return response
+      },
+      { retries: 2, initialDelayMs: 300, jitter: true }
+    );
 
     return response.json();
   }
@@ -96,16 +104,23 @@ class DocumensoService {
   async createDocumentSigningEnvelope(
     request: DocumensoCreateDocumentRequest
   ): Promise<DocumensoCreateDocumentResponse> {
-    const response = await fetch(`${this.baseUrl}/api/v1/documents`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(request),
-    });
+    const { value: response } = await retryWithBackoff(
+      async () => {
+        const response = await fetch(`${this.baseUrl}/api/v1/documents`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(request),
+        })
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Documenso create document failed: ${error}`);
-    }
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Documenso create document failed: ${response.status} ${error}`);
+        }
+
+        return response
+      },
+      { retries: 2, initialDelayMs: 300, jitter: true }
+    );
 
     return response.json();
   }
@@ -264,7 +279,7 @@ export async function createLeaseSigningRequest(
     console.error('Error creating lease signing request:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: providerOutageMessage('documenso'),
     };
   }
 }

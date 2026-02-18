@@ -6,6 +6,7 @@ import { jsonError } from "@/lib/errors"
 import { sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
 import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
+import { RetryExhaustedError, retryWithBackoff, isLikelyTransientError } from "@/lib/resilience"
 import { getStripe } from "@/lib/stripe"
 import type { Database, Json, TablesInsert } from "@/lib/supabase"
 
@@ -60,17 +61,23 @@ async function isDuplicateEvent(supabase: SupabaseClient<Database>, event: Strip
 async function markEventProcessed(
   supabase: SupabaseClient<Database>,
   eventId: string,
-  status: "processed" | "failed",
-  errorMessage?: string
+  status: "processed" | "failed" | "dead_lettered",
+  options: { errorMessage?: string; retryCount?: number; maxRetries?: number } = {}
 ) {
+  const now = new Date().toISOString()
+
   await supabase
     .from("webhook_events")
     .update({
       status,
-      error_message: errorMessage,
-      processed_at: new Date().toISOString(),
+      error_message: options.errorMessage,
+      processed_at: now,
+      retry_count: options.retryCount ?? 0,
+      max_retries: options.maxRetries ?? 0,
+      dead_lettered_at: status === "dead_lettered" ? now : null,
+      last_attempt_at: now,
+      next_retry_at: null,
     })
-    .eq("provider", "stripe")
     .eq("event_id", eventId)
 }
 
@@ -146,7 +153,7 @@ async function notifyTenantPayment(
 
     await sendInAppNotification({
       userId: tenantId,
-      title: "Payment update",
+      title: "Payment Successful",
       message: `Your payment of ${readableAmount} is now recorded in your receipts.`,
       type: "success",
       actionUrl: "/payments",
@@ -189,7 +196,10 @@ async function handleCheckoutSessionCompleted(
     amount,
     currency: (lineItem?.currency || fullSession.currency || "usd").toUpperCase(),
     description: lineItem?.description || "One-time rent payment",
-    status: fullSession.payment_status === "paid" ? "succeeded" : "pending",
+    status:
+      (fullSession.payment_status ?? session.payment_status) === "paid"
+        ? "succeeded"
+        : "pending",
     processed_at: new Date().toISOString(),
     receipt_url: null,
     tenant_id: tenantId,
@@ -197,7 +207,7 @@ async function handleCheckoutSessionCompleted(
     payment_method_type: "card",
     metadata: {
       session_id: fullSession.id,
-      payment_status: fullSession.payment_status,
+      payment_status: fullSession.payment_status ?? session.payment_status,
       line_item_price: lineItem?.price?.id,
     },
   }
@@ -418,6 +428,47 @@ function recordStripePaymentMetric(
     correlationId,
     severity: "critical",
   })
+async function processStripeEvent(supabase: SupabaseClient<Database>, event: Stripe.Event) {
+  switch (event.type) {
+    case "checkout.session.completed":
+      await handleCheckoutSessionCompleted(
+        supabase,
+        event.data.object as Stripe.Checkout.Session
+      )
+      break
+    case "invoice.payment_succeeded":
+      await handleInvoicePaymentSucceeded(
+        supabase,
+        event.data.object as Stripe.Invoice
+      )
+      break
+    case "invoice.payment_failed":
+      await handleInvoicePaymentFailed(
+        supabase,
+        event.data.object as Stripe.Invoice
+      )
+      break
+    case "customer.subscription.created":
+      await handleSubscriptionCreated(
+        supabase,
+        event.data.object as Stripe.Subscription
+      )
+      break
+    case "customer.subscription.updated":
+      await handleSubscriptionUpdated(
+        supabase,
+        event.data.object as Stripe.Subscription
+      )
+      break
+    case "customer.subscription.deleted":
+      await handleSubscriptionDeleted(
+        supabase,
+        event.data.object as Stripe.Subscription
+      )
+      break
+    default:
+      break
+  }
 }
 
 export async function POST(req: Request) {
@@ -552,9 +603,37 @@ export async function POST(req: Request) {
           eventName: event.type,
         })
         break
-    }
+    const maxRetries = 3
 
-    await markEventProcessed(supabase, event.id, "processed")
+    if (![
+      "checkout.session.completed",
+      "invoice.payment_succeeded",
+      "invoice.payment_failed",
+      "customer.subscription.created",
+      "customer.subscription.updated",
+      "customer.subscription.deleted",
+    ].includes(event.type)) {
+      logger.info("stripe_webhook_unhandled_event", { eventName: event.type })
+      await markEventProcessed(supabase, event.id, "processed", { maxRetries })
+    } else {
+      const result = await retryWithBackoff(
+        async () => {
+          await processStripeEvent(supabase, event)
+        },
+        {
+          retries: maxRetries,
+          initialDelayMs: 350,
+          maxDelayMs: 4_000,
+          jitter: true,
+          shouldRetry: (error) => isLikelyTransientError(error),
+        }
+      )
+
+      await markEventProcessed(supabase, event.id, "processed", {
+        retryCount: Math.max(result.attempts - 1, 0),
+        maxRetries,
+      })
+    }
 
     logger.info("stripe_webhook_processed", {
       eventName: event.type,
@@ -568,6 +647,7 @@ export async function POST(req: Request) {
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unexpected webhook processing error"
+    const exhausted = err instanceof RetryExhaustedError
 
     logger.error("stripe_webhook_processing_failed", {
       reason: message,
@@ -575,6 +655,7 @@ export async function POST(req: Request) {
       eventName: event.type,
       stripeEventId: event.id,
       lifecyclePhase: "webhook.failed",
+      exhausted,
     })
 
     incrementOperationalMetric("webhook_failures_total", {
@@ -586,9 +667,29 @@ export async function POST(req: Request) {
       severity: "critical",
     })
 
-    await markEventProcessed(supabase, event.id, "failed", message)
+    if (exhausted) {
+      await markEventProcessed(supabase, event.id, "dead_lettered", {
+        errorMessage: message,
+        retryCount: Math.max(err.attempts - 1, 0),
+        maxRetries: 3,
+      })
 
-    return jsonError("INTERNAL_SERVER_ERROR", { message })
+      return jsonError("UPSTREAM_SERVICE_ERROR", {
+        message: "Stripe webhook processing exhausted retries and was moved to dead-letter.",
+        details: { eventId: event.id, eventType: event.type },
+      })
+    }
+
+    await markEventProcessed(supabase, event.id, "failed", {
+      errorMessage: message,
+      retryCount: 0,
+      maxRetries: 3,
+    })
+
+    return jsonError("INTERNAL_SERVER_ERROR", {
+      message,
+      details: { eventId: event.id, eventType: event.type },
+    })
   }
 }
 
