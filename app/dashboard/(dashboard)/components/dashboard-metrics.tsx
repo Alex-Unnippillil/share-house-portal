@@ -1,7 +1,9 @@
+import { CalendarDays, CreditCard, UsersRound, Wrench } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
 import { getDashboardMetrics } from "../data"
-import { CalendarDays, CreditCard, UsersRound, Wrench } from "lucide-react"
 
 type TrendCopyKey = "up" | "down" | "neutral"
 
@@ -41,13 +43,20 @@ export async function DashboardMetrics() {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {metric.label}
               </CardTitle>
-              <Badge variant="outline" className="flex size-9 items-center justify-center border-muted-foreground/40 bg-muted/60">
+              <Badge
+                variant="outline"
+                className="flex size-9 items-center justify-center border-muted-foreground/40 bg-muted/60"
+              >
                 <Icon className="size-4 text-primary" />
               </Badge>
             </CardHeader>
             <CardContent className="space-y-2">
-              <p className="text-2xl font-semibold text-foreground">{metric.value}</p>
-              <p className="text-xs text-muted-foreground">{metric.helperText}</p>
+              <p className="text-2xl font-semibold text-foreground">
+                {metric.value}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {metric.helperText}
+              </p>
               <p className="text-xs font-medium text-primary">
                 {trend.prefix} • {metric.trend.label}
               </p>

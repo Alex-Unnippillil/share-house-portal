@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 type DomainTableProps = {
   title: string
@@ -7,7 +13,12 @@ type DomainTableProps = {
   rows: Array<string[]>
 }
 
-export function DomainTable({ title, description, columns, rows }: DomainTableProps) {
+export function DomainTable({
+  title,
+  description,
+  columns,
+  rows,
+}: DomainTableProps) {
   return (
     <Card>
       <CardHeader>
@@ -20,7 +31,10 @@ export function DomainTable({ title, description, columns, rows }: DomainTablePr
             <thead>
               <tr className="border-b text-left">
                 {columns.map((column) => (
-                  <th key={column} className="p-2 font-medium text-muted-foreground">
+                  <th
+                    key={column}
+                    className="p-2 font-medium text-muted-foreground"
+                  >
                     {column}
                   </th>
                 ))}
@@ -28,7 +42,10 @@ export function DomainTable({ title, description, columns, rows }: DomainTablePr
             </thead>
             <tbody>
               {rows.map((row, rowIndex) => (
-                <tr key={`${row[0]}-${rowIndex}`} className="border-b last:border-0">
+                <tr
+                  key={`${row[0]}-${rowIndex}`}
+                  className="border-b last:border-0"
+                >
                   {row.map((cell, cellIndex) => (
                     <td key={`${rowIndex}-${cellIndex}`} className="p-2">
                       {cell}

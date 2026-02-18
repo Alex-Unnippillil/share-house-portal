@@ -109,22 +109,30 @@ export default function AnalyticsCharts() {
               </Badge>
             </CardTitle>
             <CardDescription>
-              Percentage of rent collected on time by month for the current lease cycle.
+              Percentage of rent collected on time by month for the current
+              lease cycle.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex h-56 items-end gap-3">
               {rentCollectionData.map((entry) => (
-                <div key={entry.month} className="flex flex-1 flex-col items-center gap-2">
+                <div
+                  key={entry.month}
+                  className="flex flex-1 flex-col items-center gap-2"
+                >
                   <div className="relative flex size-full items-end justify-center rounded-md bg-gradient-to-t from-primary/10 via-primary/40 to-primary/80">
                     <div
                       className="w-full rounded-md bg-primary"
                       style={{
-                        height: `${(entry.collected / maxRentCollection) * 100}%`,
+                        height: `${
+                          (entry.collected / maxRentCollection) * 100
+                        }%`,
                       }}
                     />
                   </div>
-                  <div className="text-xs font-medium text-muted-foreground">{entry.month}</div>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {entry.month}
+                  </div>
                 </div>
               ))}
             </div>
@@ -140,7 +148,8 @@ export default function AnalyticsCharts() {
               </Badge>
             </CardTitle>
             <CardDescription>
-              Tickets resolved per month with cumulative pace towards the quarterly SLA target.
+              Tickets resolved per month with cumulative pace towards the
+              quarterly SLA target.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -151,12 +160,31 @@ export default function AnalyticsCharts() {
               aria-label="Maintenance tickets resolved per month"
             >
               <defs>
-                <linearGradient id="maintenanceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.1" />
+                <linearGradient
+                  id="maintenanceGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="0%"
+                  y2="100%"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="hsl(var(--primary))"
+                    stopOpacity="0.8"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="hsl(var(--primary))"
+                    stopOpacity="0.1"
+                  />
                 </linearGradient>
               </defs>
-              <path d={maintenancePath} fill="url(#maintenanceGradient)" stroke="hsl(var(--primary))" strokeWidth="1.2" />
+              <path
+                d={maintenancePath}
+                fill="url(#maintenanceGradient)"
+                stroke="hsl(var(--primary))"
+                strokeWidth="1.2"
+              />
               {maintenanceData.map((entry, index) => {
                 const x = (index / (maintenanceData.length - 1)) * 100
                 const y = 100 - (entry.resolved / maxMaintenance) * 100
@@ -198,13 +226,18 @@ export default function AnalyticsCharts() {
             </Badge>
           </CardTitle>
           <CardDescription>
-            Aggregate of the latest roommate sentiment survey indicating intent to renew.
+            Aggregate of the latest roommate sentiment survey indicating intent
+            to renew.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,240px)]">
             <div className="flex items-center justify-center">
-              <div className="relative size-40" role="img" aria-label="Resident renewal sentiment distribution">
+              <div
+                className="relative size-40"
+                role="img"
+                aria-label="Resident renewal sentiment distribution"
+              >
                 <svg viewBox="0 0 100 100" className="absolute inset-0">
                   {churnSlices.map(({ entry, path, labelX, labelY }) => (
                     <g key={entry.label}>
@@ -222,18 +255,30 @@ export default function AnalyticsCharts() {
                 </svg>
                 <div className="absolute inset-6 rounded-full bg-background shadow-inner" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-muted-foreground">Renewal mix</span>
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    Renewal mix
+                  </span>
                 </div>
               </div>
             </div>
             <dl className="space-y-3">
               {churnData.map((entry) => (
-                <div key={entry.label} className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                <div
+                  key={entry.label}
+                  className="flex items-center justify-between rounded-lg border border-border/60 p-3"
+                >
                   <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full" style={{ backgroundColor: segmentColor(entry.label) }} />
-                    <dt className="text-sm font-medium text-foreground">{entry.label}</dt>
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ backgroundColor: segmentColor(entry.label) }}
+                    />
+                    <dt className="text-sm font-medium text-foreground">
+                      {entry.label}
+                    </dt>
                   </div>
-                  <dd className="text-sm font-semibold text-muted-foreground">{entry.value}%</dd>
+                  <dd className="text-sm font-semibold text-muted-foreground">
+                    {entry.value}%
+                  </dd>
                 </div>
               ))}
             </dl>

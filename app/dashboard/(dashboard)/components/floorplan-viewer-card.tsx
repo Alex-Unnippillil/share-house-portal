@@ -16,7 +16,8 @@ export async function FloorplanViewerCard() {
           Floorplan overlays
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          View and annotate room/storage/chore markers with roommate-specific visibility.
+          View and annotate room/storage/chore markers with roommate-specific
+          visibility.
         </p>
       </CardHeader>
 

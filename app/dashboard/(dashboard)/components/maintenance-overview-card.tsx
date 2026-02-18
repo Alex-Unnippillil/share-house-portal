@@ -1,17 +1,25 @@
-import SmartLink from "@/components/navigation/SmartLink"
+import { Wrench } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getMaintenanceTickets } from "../data"
-import { Wrench } from "lucide-react"
+import SmartLink from "@/components/navigation/SmartLink"
 
-const statusLabels: Record<"scheduled" | "in_progress" | "awaiting_vendor", string> = {
+import { getMaintenanceTickets } from "../data"
+
+const statusLabels: Record<
+  "scheduled" | "in_progress" | "awaiting_vendor",
+  string
+> = {
   scheduled: "Scheduled",
   in_progress: "In progress",
   awaiting_vendor: "Awaiting vendor",
 }
 
-const priorityVariants: Record<"low" | "medium" | "high", "outline" | "secondary" | "destructive" | "complete"> = {
+const priorityVariants: Record<
+  "low" | "medium" | "high",
+  "outline" | "secondary" | "destructive" | "complete"
+> = {
   low: "outline",
   medium: "secondary",
   high: "destructive",
@@ -42,16 +50,22 @@ export async function MaintenanceOverviewCard() {
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">{ticket.title}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {ticket.title}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Last updated {new Date(ticket.updatedAt).toLocaleDateString(undefined, {
+                    Last updated{" "}
+                    {new Date(ticket.updatedAt).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
                     })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={priorityVariants[ticket.priority]} className="uppercase">
+                  <Badge
+                    variant={priorityVariants[ticket.priority]}
+                    className="uppercase"
+                  >
                     {ticket.priority} priority
                   </Badge>
                   <Badge variant="outline">{statusLabels[ticket.status]}</Badge>
@@ -61,7 +75,11 @@ export async function MaintenanceOverviewCard() {
           ))}
         </ul>
 
-        <SmartLink href="/maintenance" className="inline-flex" intent="standard">
+        <SmartLink
+          href="/maintenance"
+          className="inline-flex"
+          intent="standard"
+        >
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
             View maintenance queue
           </Button>

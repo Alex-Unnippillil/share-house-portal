@@ -1,9 +1,11 @@
+import { CalendarDays, Clock, RefreshCcw } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import SmartLink from "@/components/navigation/SmartLink"
+
 import { getRentSummary } from "../data"
-import { CalendarDays, Clock, RefreshCcw } from "lucide-react"
 
 export async function NextRentCard() {
   const summary = await getRentSummary()
@@ -25,19 +27,24 @@ export async function NextRentCard() {
     diffInDays > 1
       ? `Due in ${diffInDays} days`
       : diffInDays === 1
-        ? "Due tomorrow"
-        : diffInDays === 0
-          ? "Due today"
-          : `Overdue by ${Math.abs(diffInDays)} days`
+      ? "Due tomorrow"
+      : diffInDays === 0
+      ? "Due today"
+      : `Overdue by ${Math.abs(diffInDays)} days`
 
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
         <div>
           <CardTitle className="text-lg font-semibold">Next rent due</CardTitle>
-          <p className="text-sm text-muted-foreground">Unit 3B • Shared balance</p>
+          <p className="text-sm text-muted-foreground">
+            Unit 3B • Shared balance
+          </p>
         </div>
-        <Badge variant={summary.autopayEnabled ? "secondary" : "outline"} className="flex items-center gap-1">
+        <Badge
+          variant={summary.autopayEnabled ? "secondary" : "outline"}
+          className="flex items-center gap-1"
+        >
           <RefreshCcw className="size-3.5" />
           {summary.autopayEnabled ? "Autopay on" : "Autopay off"}
         </Badge>
@@ -45,7 +52,9 @@ export async function NextRentCard() {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Amount due</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Amount due
+            </p>
             <p className="text-3xl font-semibold">{formattedAmount}</p>
           </div>
           <div className="rounded-lg bg-muted/50 px-3 py-2 text-right">
@@ -77,12 +86,18 @@ export async function NextRentCard() {
             </div>
             <div>
               <p className="text-sm font-medium">
-                Last paid {new Date(summary.lastPaymentDate).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}
+                Last paid{" "}
+                {new Date(summary.lastPaymentDate).toLocaleDateString(
+                  undefined,
+                  {
+                    month: "short",
+                    day: "numeric",
+                  }
+                )}
               </p>
-              <p className="text-xs text-muted-foreground">We’ll email receipts after processing</p>
+              <p className="text-xs text-muted-foreground">
+                We’ll email receipts after processing
+              </p>
             </div>
           </div>
         </div>

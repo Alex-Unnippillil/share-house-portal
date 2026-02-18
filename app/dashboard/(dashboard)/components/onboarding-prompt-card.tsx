@@ -1,10 +1,17 @@
-import SmartLink from "@/components/navigation/SmartLink"
+import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+
+import { computeOnboardingCompletion } from "@/lib/onboarding"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { computeOnboardingCompletion } from "@/lib/onboarding"
-import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import SmartLink from "@/components/navigation/SmartLink"
 
 export async function OnboardingPromptCard() {
   const supabase = await createSupbaseServerClientReadOnly()
@@ -22,8 +29,12 @@ export async function OnboardingPromptCard() {
     .eq("id", user.id)
     .single()
 
-  const metadata = (profile?.metadata ?? {}) as { onboarding?: { completed_steps?: string[] } }
-  const completion = computeOnboardingCompletion(metadata.onboarding?.completed_steps ?? [])
+  const metadata = (profile?.metadata ?? {}) as {
+    onboarding?: { completed_steps?: string[] }
+  }
+  const completion = computeOnboardingCompletion(
+    metadata.onboarding?.completed_steps ?? []
+  )
 
   if (completion.isComplete) {
     return null
@@ -33,11 +44,16 @@ export async function OnboardingPromptCard() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base sm:text-lg">Complete onboarding</CardTitle>
-          <Badge variant="secondary">{completion.completionPercent}% done</Badge>
+          <CardTitle className="text-base sm:text-lg">
+            Complete onboarding
+          </CardTitle>
+          <Badge variant="secondary">
+            {completion.completionPercent}% done
+          </Badge>
         </div>
         <CardDescription>
-          Finish your profile setup to unlock accurate rent reminders, booking approvals, and emergency communication.
+          Finish your profile setup to unlock accurate rent reminders, booking
+          approvals, and emergency communication.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

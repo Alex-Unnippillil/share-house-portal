@@ -3,22 +3,22 @@
 import { useMemo, useState, type MouseEvent } from "react"
 import { History, Layers, RotateCcw, Users } from "lucide-react"
 
+import {
+  canEditAnnotation,
+  canManageAnyAnnotation,
+  filterVisibleAnnotations,
+  getAllowedMarkerTypes,
+  type FloorplanMarkerType,
+  type FloorplanRole,
+  type FloorplanVisibilityScope,
+  type FloorplanAnnotation as PermissionAnnotation,
+} from "@/lib/floorplan-permissions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  canEditAnnotation,
-  canManageAnyAnnotation,
-  filterVisibleAnnotations,
-  getAllowedMarkerTypes,
-  type FloorplanAnnotation as PermissionAnnotation,
-  type FloorplanMarkerType,
-  type FloorplanRole,
-  type FloorplanVisibilityScope,
-} from "@/lib/floorplan-permissions"
 
 import type {
   FloorplanAnnotation,
@@ -43,7 +43,9 @@ type Props = {
   history: FloorplanAnnotationVersion[]
 }
 
-function toPermissionAnnotation(annotation: FloorplanAnnotation): PermissionAnnotation {
+function toPermissionAnnotation(
+  annotation: FloorplanAnnotation
+): PermissionAnnotation {
   return {
     id: annotation.id,
     markerType: annotation.markerType,
@@ -70,15 +72,23 @@ export function FloorplanWorkspaceClient({
   history,
 }: Props) {
   const [annotations, setAnnotations] = useState(initialAnnotations)
-  const [selectedMarkerType, setSelectedMarkerType] = useState<FloorplanMarkerType>("storage")
+  const [selectedMarkerType, setSelectedMarkerType] =
+    useState<FloorplanMarkerType>("storage")
   const [draftLabel, setDraftLabel] = useState("New marker")
   const [draftNote, setDraftNote] = useState("")
-  const [visibilityScope, setVisibilityScope] = useState<FloorplanVisibilityScope>("all_roommates")
-  const [selectedRoommates, setSelectedRoommates] = useState<string[]>([currentUserId])
+  const [visibilityScope, setVisibilityScope] =
+    useState<FloorplanVisibilityScope>("all_roommates")
+  const [selectedRoommates, setSelectedRoommates] = useState<string[]>([
+    currentUserId,
+  ])
 
   const visibleAnnotations = useMemo(
-    () => filterVisibleAnnotations(annotations.map(toPermissionAnnotation), currentUserId),
-    [annotations, currentUserId],
+    () =>
+      filterVisibleAnnotations(
+        annotations.map(toPermissionAnnotation),
+        currentUserId
+      ),
+    [annotations, currentUserId]
   )
 
   const allowedMarkerTypes = getAllowedMarkerTypes(currentUserRole)
@@ -98,7 +108,11 @@ export function FloorplanWorkspaceClient({
       y,
       createdBy: currentUserId,
       visibleToUserIds:
-        visibilityScope === "selected_roommates" ? selectedRoommates : visibilityScope === "private" ? [currentUserId] : [],
+        visibilityScope === "selected_roommates"
+          ? selectedRoommates
+          : visibilityScope === "private"
+          ? [currentUserId]
+          : [],
       visibilityScope,
       version: 1,
       updatedAt: new Date().toISOString(),
@@ -114,13 +128,23 @@ export function FloorplanWorkspaceClient({
       return
     }
 
-    setAnnotations((prev) => prev.map((annotation) => (annotation.id === versionEntry.annotationId ? versionEntry.snapshot : annotation)))
+    setAnnotations((prev) =>
+      prev.map((annotation) =>
+        annotation.id === versionEntry.annotationId
+          ? versionEntry.snapshot
+          : annotation
+      )
+    )
   }
 
   function handleMapClick(event: MouseEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect()
-    const x = Number((((event.clientX - rect.left) / rect.width) * 100).toFixed(2))
-    const y = Number((((event.clientY - rect.top) / rect.height) * 100).toFixed(2))
+    const x = Number(
+      (((event.clientX - rect.left) / rect.width) * 100).toFixed(2)
+    )
+    const y = Number(
+      (((event.clientY - rect.top) / rect.height) * 100).toFixed(2)
+    )
     addAnnotation(x, y)
   }
 
@@ -143,16 +167,29 @@ export function FloorplanWorkspaceClient({
         </TabsList>
 
         <TabsContent value="viewer" className="space-y-3">
-          <p className="text-sm text-muted-foreground">{floorplanName} · version {currentVersion}</p>
+          <p className="text-sm text-muted-foreground">
+            {floorplanName} · version {currentVersion}
+          </p>
           <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-slate-50">
-            <div className="absolute inset-0" dangerouslySetInnerHTML={{ __html: svgMarkup }} />
+            <div
+              className="absolute inset-0"
+              dangerouslySetInnerHTML={{ __html: svgMarkup }}
+            />
             {visibleAnnotations.map((annotation) => (
               <div
                 key={annotation.id}
                 className="absolute"
-                style={{ left: `${annotation.x}%`, top: `${annotation.y}%`, transform: "translate(-50%, -50%)" }}
+                style={{
+                  left: `${annotation.x}%`,
+                  top: `${annotation.y}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
               >
-                <div className={`size-3 rounded-full ring-2 ring-white ${markerStyles[annotation.markerType]}`} />
+                <div
+                  className={`size-3 rounded-full ring-2 ring-white ${
+                    markerStyles[annotation.markerType]
+                  }`}
+                />
               </div>
             ))}
           </div>
@@ -165,7 +202,11 @@ export function FloorplanWorkspaceClient({
                     {annotation.markerType}
                   </Badge>
                 </div>
-                {annotation.note ? <p className="text-xs text-muted-foreground">{annotation.note}</p> : null}
+                {annotation.note ? (
+                  <p className="text-xs text-muted-foreground">
+                    {annotation.note}
+                  </p>
+                ) : null}
               </div>
             ))}
           </div>
@@ -173,50 +214,67 @@ export function FloorplanWorkspaceClient({
 
         <TabsContent value="editor" className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Tap/click on the floorplan to place a marker. Your role controls editable marker types.
+            Tap/click on the floorplan to place a marker. Your role controls
+            editable marker types.
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-3 rounded-lg border p-3">
               <Label htmlFor="marker-label">Marker label</Label>
-              <Input id="marker-label" value={draftLabel} onChange={(event) => setDraftLabel(event.target.value)} />
+              <Input
+                id="marker-label"
+                value={draftLabel}
+                onChange={(event) => setDraftLabel(event.target.value)}
+              />
 
               <Label htmlFor="marker-note">Marker note</Label>
-              <Input id="marker-note" value={draftNote} onChange={(event) => setDraftNote(event.target.value)} />
+              <Input
+                id="marker-note"
+                value={draftNote}
+                onChange={(event) => setDraftNote(event.target.value)}
+              />
 
               <div className="space-y-2">
                 <Label>Marker type</Label>
                 <div className="flex flex-wrap gap-2">
-                  {(["room", "storage", "chore"] as FloorplanMarkerType[]).map((type) => {
-                    const isAllowed = allowedMarkerTypes.includes(type)
-                    return (
-                      <Button
-                        key={type}
-                        size="sm"
-                        variant={selectedMarkerType === type ? "default" : "outline"}
-                        onClick={() => setSelectedMarkerType(type)}
-                        disabled={!isAllowed}
-                        className="capitalize"
-                      >
-                        {type}
-                      </Button>
-                    )
-                  })}
+                  {(["room", "storage", "chore"] as FloorplanMarkerType[]).map(
+                    (type) => {
+                      const isAllowed = allowedMarkerTypes.includes(type)
+                      return (
+                        <Button
+                          key={type}
+                          size="sm"
+                          variant={
+                            selectedMarkerType === type ? "default" : "outline"
+                          }
+                          onClick={() => setSelectedMarkerType(type)}
+                          disabled={!isAllowed}
+                          className="capitalize"
+                        >
+                          {type}
+                        </Button>
+                      )
+                    }
+                  )}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Visibility</Label>
                 <div className="flex flex-wrap gap-2">
-                  {([
-                    { value: "all_roommates", label: "All" },
-                    { value: "selected_roommates", label: "Selected" },
-                    { value: "private", label: "Private" },
-                  ] as { value: FloorplanVisibilityScope; label: string }[]).map((option) => (
+                  {(
+                    [
+                      { value: "all_roommates", label: "All" },
+                      { value: "selected_roommates", label: "Selected" },
+                      { value: "private", label: "Private" },
+                    ] as { value: FloorplanVisibilityScope; label: string }[]
+                  ).map((option) => (
                     <Button
                       key={option.value}
                       size="sm"
-                      variant={visibilityScope === option.value ? "default" : "outline"}
+                      variant={
+                        visibilityScope === option.value ? "default" : "outline"
+                      }
                       onClick={() => setVisibilityScope(option.value)}
                     >
                       {option.label}
@@ -238,7 +296,9 @@ export function FloorplanWorkspaceClient({
                           variant={selected ? "default" : "outline"}
                           onClick={() =>
                             setSelectedRoommates((prev) =>
-                              selected ? prev.filter((id) => id !== roommate.id) : [...prev, roommate.id],
+                              selected
+                                ? prev.filter((id) => id !== roommate.id)
+                                : [...prev, roommate.id]
                             )
                           }
                         >
@@ -256,22 +316,33 @@ export function FloorplanWorkspaceClient({
               onClick={handleMapClick}
               aria-label="Floorplan editor canvas"
             >
-              <div className="absolute inset-0" dangerouslySetInnerHTML={{ __html: svgMarkup }} />
+              <div
+                className="absolute inset-0"
+                dangerouslySetInnerHTML={{ __html: svgMarkup }}
+              />
               {annotations.map((annotation) => {
                 const editable = canEditAnnotation(
                   toPermissionAnnotation(annotation),
                   currentUserRole,
-                  currentUserId,
+                  currentUserId
                 )
                 return (
                   <div
                     key={annotation.id}
                     className="absolute"
-                    style={{ left: `${annotation.x}%`, top: `${annotation.y}%`, transform: "translate(-50%, -50%)" }}
+                    style={{
+                      left: `${annotation.x}%`,
+                      top: `${annotation.y}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
                   >
                     <div
-                      className={`size-3 rounded-full ring-2 ring-white ${markerStyles[annotation.markerType]} ${editable ? "opacity-100" : "opacity-40"}`}
-                      title={`${annotation.label}${editable ? "" : " (read-only)"}`}
+                      className={`size-3 rounded-full ring-2 ring-white ${
+                        markerStyles[annotation.markerType]
+                      } ${editable ? "opacity-100" : "opacity-40"}`}
+                      title={`${annotation.label}${
+                        editable ? "" : " (read-only)"
+                      }`}
                     />
                   </div>
                 )
@@ -296,8 +367,11 @@ export function FloorplanWorkspaceClient({
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Changed by {roommates.find((roommate) => roommate.id === versionEntry.changedBy)?.name ?? "System"} at{" "}
-                  {new Date(versionEntry.changedAt).toLocaleString()}
+                  Changed by{" "}
+                  {roommates.find(
+                    (roommate) => roommate.id === versionEntry.changedBy
+                  )?.name ?? "System"}{" "}
+                  at {new Date(versionEntry.changedAt).toLocaleString()}
                 </p>
                 <Button
                   size="sm"

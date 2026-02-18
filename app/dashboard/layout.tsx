@@ -1,35 +1,39 @@
-import { Suspense, type ReactNode } from "react"
-
+import { type ReactNode } from "react"
 import { redirect } from "next/navigation"
-
-import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
-import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
 import { readUserSession } from "@/utils/actions"
+
+import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
+import {
+  DashboardAsyncBoundary,
+  DashboardMainPanel,
+  DashboardShellFrame,
+  DashboardSidebarRail,
+} from "@/app/dashboard/components/layout-primitives"
+
 import MobileSideNav from "./components/MobileSideNav"
 import SideNav from "./components/SideNav"
 import ToggleSidebar from "./components/ToggleSidebar"
 
 export default async function Layout({ children }: { children: ReactNode }) {
-	const { data: userSession } = await readUserSession();
+  const { data: userSession } = await readUserSession()
 
-	if (!userSession.session) {
-		return redirect("/auth");
-	}
-	return (
-		<div className="flex w-full ">
-			<div className="flex h-screen flex-col">
-				<SideNav />
-				<MobileSideNav />
-			</div>
+  if (!userSession.session) {
+    return redirect("/auth")
+  }
 
-                        <div className="w-full space-y-5 bg-gray-100 p-5 sm:flex-1 sm:p-10 dark:bg-inherit">
-                                <ToggleSidebar />
-                                <ErrorBoundary>
-                                        <Suspense fallback={<RouteSkeleton />}>
-                                                {children}
-                                        </Suspense>
-                                </ErrorBoundary>
-                        </div>
-                </div>
-        );
+  return (
+    <DashboardShellFrame>
+      <DashboardSidebarRail>
+        <SideNav />
+        <MobileSideNav />
+      </DashboardSidebarRail>
+
+      <DashboardMainPanel className="space-y-stack-lg">
+        <ToggleSidebar />
+        <DashboardAsyncBoundary fallback={<RouteSkeleton />}>
+          {children}
+        </DashboardAsyncBoundary>
+      </DashboardMainPanel>
+    </DashboardShellFrame>
+  )
 }

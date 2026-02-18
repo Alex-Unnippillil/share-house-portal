@@ -1,25 +1,29 @@
-import SmartLink from "@/components/navigation/SmartLink"
+import { CalendarCheck } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getUpcomingBookings } from "../data"
-import { CalendarCheck } from "lucide-react"
+import SmartLink from "@/components/navigation/SmartLink"
 
-const statusCopy: Record<"confirmed" | "pending" | "waitlisted", { label: string; variant: "secondary" | "outline" | "destructive" }>
-  = {
-    confirmed: {
-      label: "Confirmed",
-      variant: "secondary",
-    },
-    pending: {
-      label: "Awaiting approval",
-      variant: "outline",
-    },
-    waitlisted: {
-      label: "Waitlisted",
-      variant: "destructive",
-    },
-  }
+import { getUpcomingBookings } from "../data"
+
+const statusCopy: Record<
+  "confirmed" | "pending" | "waitlisted",
+  { label: string; variant: "secondary" | "outline" | "destructive" }
+> = {
+  confirmed: {
+    label: "Confirmed",
+    variant: "secondary",
+  },
+  pending: {
+    label: "Awaiting approval",
+    variant: "outline",
+  },
+  waitlisted: {
+    label: "Waitlisted",
+    variant: "destructive",
+  },
+}
 
 export async function UpcomingBookingsCard() {
   const bookings = await getUpcomingBookings()
@@ -48,7 +52,9 @@ export async function UpcomingBookingsCard() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium text-foreground">{booking.amenity}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {booking.amenity}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(booking.date).toLocaleDateString(undefined, {
                         weekday: "short",

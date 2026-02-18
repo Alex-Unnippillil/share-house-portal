@@ -1,79 +1,78 @@
-import { Suspense } from "react"
+import {
+  DashboardAsyncBoundary,
+  DashboardCardGrid,
+  DashboardSectionStack,
+} from "@/app/dashboard/components/layout-primitives"
 
-import { DashboardWelcome } from "./components/dashboard-welcome"
-import { NextRentCard } from "./components/next-rent-card"
-import { RecentDocumentsCard } from "./components/recent-documents-card"
-import { RoommateBoardCard } from "./components/roommate-board-card"
 import { DashboardMetrics } from "./components/dashboard-metrics"
 import { DashboardQuickActions } from "./components/dashboard-quick-actions"
-import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
-import { MaintenanceOverviewCard } from "./components/maintenance-overview-card"
+import { DashboardWelcome } from "./components/dashboard-welcome"
 import { FloorplanViewerCard } from "./components/floorplan-viewer-card"
+import { MaintenanceOverviewCard } from "./components/maintenance-overview-card"
+import { NextRentCard } from "./components/next-rent-card"
+import { OnboardingPromptCard } from "./components/onboarding-prompt-card"
+import { RecentDocumentsCard } from "./components/recent-documents-card"
+import { RoommateBoardCard } from "./components/roommate-board-card"
 import {
   DashboardBoardSkeleton,
   DashboardCardSkeleton,
   DashboardHeaderSkeleton,
   DashboardStatsSkeleton,
 } from "./components/skeletons"
-
-import { OnboardingPromptCard } from "./components/onboarding-prompt-card"
+import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
-      <Suspense fallback={<DashboardHeaderSkeleton />}>
+    <DashboardSectionStack>
+      <DashboardAsyncBoundary fallback={<DashboardHeaderSkeleton />}>
         <DashboardWelcome />
-      </Suspense>
+      </DashboardAsyncBoundary>
 
-      <Suspense fallback={<DashboardCardSkeleton />}>
+      <DashboardAsyncBoundary fallback={<DashboardCardSkeleton />}>
         <OnboardingPromptCard />
-      </Suspense>
+      </DashboardAsyncBoundary>
 
-      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-        <Suspense fallback={<DashboardStatsSkeleton />}>
+      <div className="grid gap-card-gap xl:grid-cols-[2fr_1fr]">
+        <DashboardAsyncBoundary fallback={<DashboardStatsSkeleton />}>
           <DashboardMetrics />
-        </Suspense>
-        <Suspense
-          fallback={
-            <div className="h-full">
-              <DashboardCardSkeleton />
-            </div>
-          }
+        </DashboardAsyncBoundary>
+        <DashboardAsyncBoundary
+          className="h-full"
+          fallback={<DashboardCardSkeleton />}
         >
           <DashboardQuickActions />
-        </Suspense>
+        </DashboardAsyncBoundary>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <div className="space-y-4 xl:col-span-2">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Suspense fallback={<DashboardCardSkeleton />}>
+      <div className="grid gap-card-gap xl:grid-cols-3">
+        <DashboardSectionStack className="gap-card-gap xl:col-span-2">
+          <DashboardCardGrid>
+            <DashboardAsyncBoundary fallback={<DashboardCardSkeleton />}>
               <NextRentCard />
-            </Suspense>
-            <Suspense fallback={<DashboardCardSkeleton />}>
+            </DashboardAsyncBoundary>
+            <DashboardAsyncBoundary fallback={<DashboardCardSkeleton />}>
               <RecentDocumentsCard />
-            </Suspense>
-          </div>
+            </DashboardAsyncBoundary>
+          </DashboardCardGrid>
 
-          <Suspense fallback={<DashboardBoardSkeleton />}>
+          <DashboardAsyncBoundary fallback={<DashboardBoardSkeleton />}>
             <RoommateBoardCard />
-          </Suspense>
+          </DashboardAsyncBoundary>
 
-          <Suspense fallback={<DashboardCardSkeleton />}>
+          <DashboardAsyncBoundary fallback={<DashboardCardSkeleton />}>
             <FloorplanViewerCard />
-          </Suspense>
-        </div>
+          </DashboardAsyncBoundary>
+        </DashboardSectionStack>
 
-
-        <div className="space-y-4">
-          <Suspense fallback={<DashboardCardSkeleton />}>
+        <DashboardSectionStack className="gap-card-gap">
+          <DashboardAsyncBoundary fallback={<DashboardCardSkeleton />}>
             <UpcomingBookingsCard />
-          </Suspense>
-          <Suspense fallback={<DashboardCardSkeleton />}>
+          </DashboardAsyncBoundary>
+          <DashboardAsyncBoundary fallback={<DashboardCardSkeleton />}>
             <MaintenanceOverviewCard />
-          </Suspense>
-        </div>
+          </DashboardAsyncBoundary>
+        </DashboardSectionStack>
       </div>
-    </div>
+    </DashboardSectionStack>
   )
 }

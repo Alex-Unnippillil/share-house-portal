@@ -30,5 +30,12 @@ module.exports = {
         files: ["*.ts", "*.tsx"],
         parser: "@typescript-eslint/parser",
       },
+      {
+        files: ["app/dashboard/**/*.{ts,tsx}"],
+        rules: {
+          "semi": ["error", "never"],
+          "no-multiple-empty-lines": ["error", { max: 1, maxEOF: 0 }],
+        },
+      },
     ],
   }
