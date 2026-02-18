@@ -28,6 +28,15 @@ const roleTheme: Record<PortalRole, string> = {
   admin: "bg-maintenance-open/15 text-maintenance-open",
 }
 
+
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === href
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
 function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
   const pathname = usePathname()
   const navItems = roleNavigation[role].primaryNav.map((item) => ({
@@ -45,7 +54,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
               <Link
                 className={cn(
                   "block rounded-md px-3 py-2 text-body-sm transition",
-                  pathname === item.href ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-muted"
+                  isActiveRoute(pathname, item.href) ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-muted"
                 )}
                 href={item.href}
               >
@@ -73,7 +82,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
                   <Link
                     className={cn(
                       "block rounded-md px-3 py-2 text-body-sm",
-                      pathname === item.href ? "bg-primary/10 text-foreground" : "hover:bg-muted"
+                      isActiveRoute(pathname, item.href) ? "bg-primary/10 text-foreground" : "hover:bg-muted"
                     )}
                     href={item.href}
                   >

@@ -7,27 +7,7 @@ type RoleNavigationConfig = {
   primaryNav: MainNavItem[]
 }
 
-const tenantPrimaryNav: MainNavItem[] = [
-  { title: "Dashboard", href: "/dashboard" },
-  { title: "Payments", href: "/payments" },
-  { title: "Bookings", href: "/bookings" },
-  { title: "Documents", href: "/documents" },
-  { title: "Maintenance", href: "/maintenance" },
-  { title: "Messaging", href: "/messaging" },
-  { title: "Visitors", href: "/visitors" },
-]
-
-const managerPrimaryNav: MainNavItem[] = [
-  { title: "Dashboard", href: "/dashboard" },
-  { title: "Payments", href: "/payments" },
-  { title: "Bookings", href: "/bookings" },
-  { title: "Documents", href: "/documents" },
-  { title: "Maintenance", href: "/maintenance" },
-  { title: "Messaging", href: "/messaging" },
-  { title: "Visitors", href: "/visitors" },
-]
-
-const adminPrimaryNav: MainNavItem[] = [
+export const appWorkspaceNav: MainNavItem[] = [
   { title: "Dashboard", href: "/dashboard" },
   { title: "Payments", href: "/payments" },
   { title: "Bookings", href: "/bookings" },
@@ -40,19 +20,19 @@ const adminPrimaryNav: MainNavItem[] = [
 export const roleNavigation: Record<PortalRole, RoleNavigationConfig> = {
   tenant: {
     roleLabel: "Tenant",
-    primaryNav: tenantPrimaryNav,
+    primaryNav: appWorkspaceNav,
   },
   roommate: {
     roleLabel: "Roommate",
-    primaryNav: tenantPrimaryNav,
+    primaryNav: appWorkspaceNav,
   },
   property_manager: {
     roleLabel: "Property manager",
-    primaryNav: managerPrimaryNav,
+    primaryNav: appWorkspaceNav,
   },
   admin: {
     roleLabel: "Admin",
-    primaryNav: adminPrimaryNav,
+    primaryNav: appWorkspaceNav,
   },
 }
 

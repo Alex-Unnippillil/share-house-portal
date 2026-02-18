@@ -13,6 +13,15 @@ interface MainNavProps {
   items?: NavItem[]
 }
 
+
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === href
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
 export function MainNav({ appName, items }: MainNavProps) {
   const pathname = usePathname()
 
@@ -38,7 +47,7 @@ export function MainNav({ appName, items }: MainNavProps) {
                   className={cn(
                     "rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     item.disabled && "cursor-not-allowed opacity-80",
-                    pathname === item.href
+                    isActiveRoute(pathname, item.href)
                       ? "bg-primary/10 text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   )}

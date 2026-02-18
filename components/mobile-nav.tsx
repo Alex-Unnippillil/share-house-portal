@@ -18,6 +18,15 @@ interface MobileNavProps {
   items: NavItem[]
 }
 
+
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === href
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
 export function MobileNav({ appName, isAuthenticated, items }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -111,7 +120,7 @@ function MobileLink({ href, onOpenChange, className, children, ...props }: Mobil
       }}
       className={cn(
         "rounded-md px-2 py-1.5 text-sm",
-        pathname === href ? "bg-primary/10 text-foreground" : "text-muted-foreground",
+        isActiveRoute(pathname, href.toString()) ? "bg-primary/10 text-foreground" : "text-muted-foreground",
         className
       )}
       intent="navigation"

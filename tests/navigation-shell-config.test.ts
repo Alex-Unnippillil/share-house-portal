@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { getRoleNavigation, publicNav, roleNavigation, type PortalRole } from "@/config/navigation"
+import { appWorkspaceNav, getRoleNavigation, publicNav, roleNavigation, type PortalRole } from "@/config/navigation"
 
 const expectedWorkflowRoutes = [
   "/dashboard",
@@ -31,6 +31,9 @@ describe("portal role navigation", () => {
   })
 
   it("uses one source of truth across role map entries", () => {
-    expect(roleNavigation.tenant.primaryNav).toBe(roleNavigation.roommate.primaryNav)
+    expect(roleNavigation.tenant.primaryNav).toBe(appWorkspaceNav)
+    expect(roleNavigation.roommate.primaryNav).toBe(appWorkspaceNav)
+    expect(roleNavigation.property_manager.primaryNav).toBe(appWorkspaceNav)
+    expect(roleNavigation.admin.primaryNav).toBe(appWorkspaceNav)
   })
 })
