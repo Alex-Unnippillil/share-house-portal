@@ -1,21 +1,23 @@
 /** @type {import('tailwindcss').Config} */
+const { designTokens } = require("./config/tailwind/tokens")
+
 module.exports = {
   darkMode: ["class"],
   content: [
-    './app/**/*.{ts,tsx,js,jsx,mdx,md}',
-    './components/**/*.{ts,tsx,js,jsx,mdx,md}',
-    './hooks/**/*.{ts,tsx,js,jsx}',
-    './lib/**/*.{ts,tsx,js,jsx}',
-    './queries/**/*.{ts,tsx,js,jsx}',
-    './utils/**/*.{ts,tsx,js,jsx}',
-    './config/**/*.{ts,tsx,js,jsx}',
-    './supabase/**/*.{ts,tsx,js,jsx}',
-    './docs/**/*.{md,mdx}',
-    './pages/**/*.{ts,tsx,js,jsx,mdx,md}',
-    './src/**/*.{ts,tsx,js,jsx,mdx,md}',
-    './types/**/*.{ts,tsx}',
-    './mdx-components.{ts,tsx,js,jsx,mdx}',
-    '*.{js,ts,jsx,tsx,mdx,md}',
+    "./app/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./components/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./hooks/**/*.{ts,tsx,js,jsx}",
+    "./lib/**/*.{ts,tsx,js,jsx}",
+    "./queries/**/*.{ts,tsx,js,jsx}",
+    "./utils/**/*.{ts,tsx,js,jsx}",
+    "./config/**/*.{ts,tsx,js,jsx}",
+    "./supabase/**/*.{ts,tsx,js,jsx}",
+    "./docs/**/*.{md,mdx}",
+    "./pages/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./src/**/*.{ts,tsx,js,jsx,mdx,md}",
+    "./types/**/*.{ts,tsx}",
+    "./mdx-components.{ts,tsx,js,jsx,mdx}",
+    "*.{js,ts,jsx,tsx,mdx,md}",
   ],
   prefix: "",
   theme: {
@@ -27,7 +29,13 @@ module.exports = {
       },
     },
     extend: {
+      spacing: designTokens.spacing,
+      fontSize: designTokens.typography,
       colors: {
+        brand: designTokens.colors.brand,
+        payment: designTokens.colors.payment,
+        booking: designTokens.colors.booking,
+        maintenance: designTokens.colors.maintenance,
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

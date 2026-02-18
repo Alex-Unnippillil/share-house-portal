@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss"
 
+import { designTokens } from "./config/tailwind/tokens"
+
 const config = {
   darkMode: ["class"],
   content: [
@@ -28,7 +30,13 @@ const config = {
       },
     },
     extend: {
+      spacing: designTokens.spacing,
+      fontSize: designTokens.typography,
       colors: {
+        brand: designTokens.colors.brand,
+        payment: designTokens.colors.payment,
+        booking: designTokens.colors.booking,
+        maintenance: designTokens.colors.maintenance,
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -88,4 +96,3 @@ const config = {
 } satisfies Config
 
 export default config
-
