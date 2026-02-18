@@ -37,3 +37,37 @@ jobs:
 
       - name: Production build
         run: pnpm build
+
+  e2e:
+    name: E2E launch-blocking suites
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build application for E2E
+        run: pnpm build
+
+      - name: Run E2E suites
+        run: pnpm test:e2e:ci
+        env:
+          CI: true
+
+      - name: Enforce per-suite launch thresholds
+        run: pnpm test:e2e:thresholds
