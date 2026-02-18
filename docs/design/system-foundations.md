@@ -83,6 +83,13 @@ Each shell provides:
 - normalized title/subtitle header,
 - consistent content container sizing + spacing.
 
+### Route-group shell contract
+
+- `app/(public)` must own public-facing routes and always render `SiteHeader` + `SiteFooter`.
+- `app/(portal)` must own authenticated product routes and resolve one of the portal shells based on member role.
+- Auth/minimal routes (`/auth`, `/auth-server-action`, `/signout`) intentionally stay outside both groups so they can render distraction-free layouts.
+- Feature-level layouts inside `(portal)` (for example `dashboard/layout.tsx`) must avoid rebuilding bespoke sidebars or spacing wrappers and should rely on the parent portal shell primitives.
+
 ## 4) Accessibility defaults
 
 ### Focus states
