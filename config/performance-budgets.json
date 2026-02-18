@@ -1,0 +1,12 @@
+{
+  "webVitals": {
+    "lcpMs": 2500,
+    "inpMs": 200,
+    "cls": 0.1
+  },
+  "apiResponseMs": {
+    "/api/bookings/history?limit=20": 450,
+    "/api/search/global?query=unit": 350,
+    "/api/exports/maintenance": 500
+  }
+}
