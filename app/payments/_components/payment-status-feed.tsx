@@ -18,6 +18,7 @@ import {
   createRoommateAutopayState,
   describeAutopayStatus,
   deriveAutopayStatusFromStripeStatus,
+  getAchSettlementMessage,
   type RoommateAutopayState,
 } from "@/lib/payments/status"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
@@ -165,6 +166,7 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
           const roommateId = record.tenant_id ?? undefined
           const hasSubscription = Boolean(record.stripe_subscription_id)
           const amount = roundToCurrency(record.amount ?? 0)
+          const isAchPayment = record.payment_method_type === "ach" || record.payment_method_type === "us_bank_account"
           const occurredAt = record.processed_at
             ? record.processed_at
             : record.created_at
@@ -223,6 +225,7 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
               currency: (record.currency ?? reference?.currency ?? "USD").toUpperCase(),
               occurredAt,
               description:
+                getAchSettlementMessage(record.status, isAchPayment) ||
                 record.description ||
                 getFeedStatusLabel(record.status, hasSubscription),
               category:

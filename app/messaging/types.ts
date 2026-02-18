@@ -14,6 +14,11 @@ export type ThreadListItem = {
   activity: string
   reactions: string[]
   pinned?: boolean
+  locked?: boolean
+  unitId?: string | null
+  propertyId?: string | null
+  isAnnouncement?: boolean
+  scheduledFor?: string | null
 }
 
 export type Attachment = {
@@ -89,9 +94,20 @@ export type ActiveThread = {
   owner: string
   participants: number
   updated: string
+  locked?: boolean
+  pinned?: boolean
+}
+
+export type CurrentMessagingUser = {
+  id: string
+  role: string
+  unitId: string | null
+  propertyId: string | null
+  canModerate: boolean
 }
 
 export type MessagingThreadData = {
+  currentUser: CurrentMessagingUser | null
   threadFilters: ThreadFilter[]
   threadList: ThreadListItem[]
   activeThread: ActiveThread | null
@@ -190,6 +206,11 @@ export function mapThreadRowToList(row: Tables<"threads">): ThreadListItem {
     activity: row.activity ?? "",
     reactions: ensureArray<string>(row.reactions),
     pinned: row.pinned ?? undefined,
+    locked: row.locked ?? undefined,
+    unitId: row.unit_id,
+    propertyId: row.property_id,
+    isAnnouncement: row.thread_type === "announcement",
+    scheduledFor: row.scheduled_for,
   }
 }
 
@@ -202,6 +223,8 @@ export function mapThreadRowToActive(row: Tables<"threads">): ActiveThread {
     owner: row.owner_name ?? "Unknown owner",
     participants: row.participants_count ?? 0,
     updated: formatRelativeTime(row.updated_at ?? row.last_message_at),
+    locked: row.locked ?? undefined,
+    pinned: row.pinned ?? undefined,
   }
 }
 
@@ -286,4 +309,3 @@ export function buildPollSnapshots(
 export function sortPostsByCreatedAt(posts: ThreadPost[]) {
   return [...posts].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 }
-

@@ -2,12 +2,10 @@ import { Suspense } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { FileText, Users, Clock, Upload } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UploadDocumentDialog } from "./components/upload-document-dialog"
 import { DocumentsStats } from "./components/documents-stats"
-import { DocumentsList } from "./components/documents-list"
-import { DocumentsListSkeleton } from "./components/documents-list-skeleton"
-import { DocumentsFilters } from "./components/documents-filters"
+import { DocumentsWorkspace } from "./components/documents-workspace"
+import { TenantHistoryTimelines } from "./components/tenant-history-timelines"
 
 export default function DocumentsPage() {
   return (
@@ -17,7 +15,7 @@ export default function DocumentsPage() {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Documents</h1>
             <p className="text-base text-muted-foreground sm:text-lg">
-              Manage leases, agreements, and household documents with secure signing and version control.
+              Manage leases, notices, and account files with secure access, version history, and audit tracking.
             </p>
           </div>
           <UploadDocumentDialog />
@@ -25,7 +23,6 @@ export default function DocumentsPage() {
         <Separator />
       </header>
 
-      {/* Stats Overview */}
       <Suspense fallback={<div className="grid gap-4 md:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
@@ -41,44 +38,15 @@ export default function DocumentsPage() {
         <DocumentsStats />
       </Suspense>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="all" className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-md grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="leases">Leases</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="signed">Signed</TabsTrigger>
-          </TabsList>
-          <DocumentsFilters />
-        </div>
+      <DocumentsWorkspace />
 
-        <TabsContent value="all" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{}} />
-          </Suspense>
-        </TabsContent>
+      <Suspense fallback={<div className="grid gap-6 lg:grid-cols-2">
+        <Card className="h-64 animate-pulse" />
+        <Card className="h-64 animate-pulse" />
+      </div>}>
+        <TenantHistoryTimelines />
+      </Suspense>
 
-        <TabsContent value="leases" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ type: ['lease'] }} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="pending" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['pending_signature'] }} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="signed" className="space-y-6">
-          <Suspense fallback={<DocumentsListSkeleton />}>
-            <DocumentsList filter={{ status: ['signed'] }} />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-
-      {/* Feature Highlights */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
@@ -126,12 +94,12 @@ export default function DocumentsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Upload className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">Bulk Operations</CardTitle>
+              <CardTitle className="text-sm font-medium">Controlled Sharing</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <CardDescription className="text-xs">
-              Upload multiple documents and manage permissions at scale.
+              Signed access URLs ensure files are only retrieved through verified sessions.
             </CardDescription>
           </CardContent>
         </Card>

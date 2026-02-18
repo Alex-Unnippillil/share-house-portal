@@ -34,7 +34,7 @@ export function UploadDocumentDialog() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    document_type: 'other' as const,
+    document_type: 'other',
     tenant_id: '',
     unit_id: '',
     requires_signature: false,
@@ -100,6 +100,7 @@ export function UploadDocumentDialog() {
       submitData.append('tenant_id', formData.tenant_id);
       submitData.append('unit_id', formData.unit_id);
       submitData.append('requires_signature', formData.requires_signature.toString());
+      submitData.append('source', 'tenant_portal');
       submitData.append('expires_at', formData.expires_at);
 
       const result = await uploadDocumentAction(submitData);
@@ -210,6 +211,8 @@ export function UploadDocumentDialog() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="lease">Lease Agreement</SelectItem>
+                <SelectItem value="notice">Notice</SelectItem>
+                <SelectItem value="account_file">Account File</SelectItem>
                 <SelectItem value="addendum">Addendum</SelectItem>
                 <SelectItem value="insurance">Insurance</SelectItem>
                 <SelectItem value="maintenance">Maintenance</SelectItem>

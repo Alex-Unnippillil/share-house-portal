@@ -22,11 +22,43 @@ export async function loadMessagingThreadData(): Promise<MessagingThreadData> {
   const cookieStore = cookies()
   const supabase = createSupabaseServer(cookieStore)
 
-  const { data: threadRows, error: threadError } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("role, unit_id")
+        .eq("id", user.id)
+        .maybeSingle()
+    : { data: null }
+
+  const canModerate = profile?.role === "property_manager" || profile?.role === "admin"
+
+  const currentUser = user
+    ? {
+        id: user.id,
+        role: profile?.role ?? "tenant",
+        unitId: profile?.unit_id ?? null,
+        propertyId: null,
+        canModerate,
+      }
+    : null
+
+  let threadQuery = supabase
     .from("threads")
     .select("*")
+    .is("deleted_at", null)
+    .or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`)
     .order("pinned", { ascending: false })
     .order("last_message_at", { ascending: false, nullsFirst: false })
+
+  if (currentUser?.unitId) {
+    threadQuery = threadQuery.or(`unit_id.eq.${currentUser.unitId},unit_id.is.null`)
+  }
+
+  const { data: threadRows, error: threadError } = await threadQuery
 
   if (threadError) {
     console.error("Failed to load threads", threadError)
@@ -60,6 +92,7 @@ export async function loadMessagingThreadData(): Promise<MessagingThreadData> {
   const pollSnapshots = buildPollSnapshots(threadPosts, activeThread)
 
   return {
+    currentUser,
     threadFilters,
     threadList,
     activeThread,
@@ -68,4 +101,3 @@ export async function loadMessagingThreadData(): Promise<MessagingThreadData> {
     pollSnapshots,
   }
 }
-

@@ -5,6 +5,7 @@ import {
   createRoommateAutopayState,
   describeAutopayStatus,
   deriveAutopayStatusFromStripeStatus,
+  getAchSettlementMessage,
   summarizeContributionCategories,
 } from "@/lib/payments/status"
 
@@ -104,6 +105,14 @@ describe("payments status helpers", () => {
     expect(describeAutopayStatus("active", 1)).toContain("1st")
     expect(describeAutopayStatus("paused", 15)).toContain("resumes")
     expect(describeAutopayStatus("disabled", 20)).toBe("Autopay off")
+  })
+
+
+  it("provides ACH settlement messaging for pending and failed states", () => {
+    expect(getAchSettlementMessage("pending", true)).toContain("3–5 business days")
+    expect(getAchSettlementMessage("failed", true)).toContain("Autopay is paused")
+    expect(getAchSettlementMessage("succeeded", true)).toBeNull()
+    expect(getAchSettlementMessage("pending", false)).toBeNull()
   })
 
   it("exposes badge metadata for autopay statuses", () => {
