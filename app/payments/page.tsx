@@ -240,6 +240,22 @@ export default async function PaymentsPage() {
           <ContributionSummaryCard balances={catchUpBalances} />
           <Card>
             <CardHeader>
+              <CardTitle>ACH settlement states</CardTitle>
+              <CardDescription>
+                Understand how ACH processing affects autopay and when follow-up may be required.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                <span className="font-medium text-foreground">Pending settlement:</span> ACH transfers can remain pending for 3–5 business days before final settlement.
+              </p>
+              <p>
+                <span className="font-medium text-foreground">Failed settlement:</span> If a debit returns (for example NSF or closed account), autopay is paused and the roommate must relink a bank account or pay manually.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Pay with Stripe</CardTitle>
               <CardDescription>Create a quick checkout or open Billing Portal</CardDescription>
             </CardHeader>
