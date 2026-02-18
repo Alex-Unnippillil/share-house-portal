@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Bell, X, Check, CheckCheck } from "lucide-react";
+import { type ReactNode, useState, useEffect, useCallback, useMemo } from "react";
+import {
+  AlertTriangle,
+  Bell,
+  Check,
+  CheckCheck,
+  Inbox,
+  Loader2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/utils/supabase-browser";
 import { cn } from "@/lib/utils";
@@ -26,11 +36,14 @@ export function NotificationCenter() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
   const supabase = useMemo(() => createClient(), []);
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const { data, error } = await (supabase as any)
         .from('notifications')
@@ -44,10 +57,23 @@ export function NotificationCenter() {
       setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
+      setErrorMessage("We couldn't load your notifications. Please try again.");
     } finally {
       setLoading(false);
     }
   }, [supabase]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateViewport = () => setIsMobile(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateViewport);
+    };
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
@@ -149,17 +175,23 @@ export function NotificationCenter() {
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'border-green-200 bg-green-100 text-green-800';
-      case 'warning':
-        return 'border-yellow-200 bg-yellow-100 text-yellow-800';
-      case 'error':
-        return 'border-red-200 bg-red-100 text-red-800';
-      default:
-        return 'border-blue-200 bg-blue-100 text-blue-800';
-    }
+  const notificationTypeStyles: Record<Notification["type"], { label: string; className: string }> = {
+    info: {
+      label: "Info",
+      className: "border-border bg-secondary text-secondary-foreground",
+    },
+    success: {
+      label: "Success",
+      className: "border-booking-confirmed/30 bg-booking-confirmed/15 text-booking-confirmed",
+    },
+    warning: {
+      label: "Warning",
+      className: "border-payment-pending/30 bg-payment-pending/15 text-payment-pending",
+    },
+    error: {
+      label: "Error",
+      className: "border-destructive/30 bg-destructive/10 text-destructive",
+    },
   };
 
   const formatTime = (dateString: string) => {
@@ -173,133 +205,232 @@ export function NotificationCenter() {
     return date.toLocaleDateString();
   };
 
-  return (
-    <div className="relative">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative"
-      >
-        <Bell className="size-5" />
-        {unreadCount > 0 && (
-          <Badge
-            variant="destructive"
-            className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
-          >
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </Badge>
-        )}
-      </Button>
-
-      {isOpen && (
-        <Card className="absolute right-0 top-12 z-50 max-h-96 w-96 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notifications</CardTitle>
-            <div className="flex gap-2">
-              {unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={markAllAsRead}
-                  className="size-6 px-2 text-xs"
-                >
-                  <CheckCheck className="mr-1 size-3" />
-                  Mark all read
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="size-6"
-              >
-                <X className="size-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-80">
-              {loading ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  Loading notifications...
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No notifications yet
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {notifications.map((notification, index) => (
-                    <div key={notification.id}>
-                      <div
-                        className={cn(
-                          "cursor-pointer p-3 transition-colors hover:bg-muted/50",
-                          !notification.read && "bg-muted/20"
-                        )}
-                        onClick={() => {
-                          if (!notification.read) {
-                            markAsRead(notification.id);
-                          }
-                          if (notification.action_url) {
-                            window.location.href = notification.action_url;
-                            setIsOpen(false);
-                          }
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant="outline"
-                                className={cn("text-xs", getTypeColor(notification.type))}
-                              >
-                                {notification.type}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {formatTime(notification.created_at)}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.message}</p>
-                          </div>
-                          <div className="flex gap-1">
-                            {!notification.read && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markAsRead(notification.id);
-                                }}
-                                className="size-6"
-                              >
-                                <Check className="size-3" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNotification(notification.id);
-                              }}
-                              className="size-6 text-muted-foreground hover:text-destructive"
-                            >
-                              <X className="size-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      {index < notifications.length - 1 && <Separator />}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
+  const renderState = ({
+    icon,
+    title,
+    description,
+    action,
+  }: {
+    icon: ReactNode;
+    title: string;
+    description: string;
+    action?: ReactNode;
+  }) => (
+    <div className="flex h-full min-h-52 flex-col items-center justify-center gap-3 p-6 text-center">
+      <div className="rounded-full border bg-muted/50 p-3 text-muted-foreground">{icon}</div>
+      <div className="space-y-1">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      {action}
     </div>
+  );
+
+  const panelContent = (
+    <Card className="max-h-[28rem] border-0 shadow-none">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b pb-2">
+        <CardTitle className="text-sm font-medium">Notifications</CardTitle>
+        <div className="flex gap-2">
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={markAllAsRead}
+              className="h-7 px-2 text-xs"
+              aria-label="Mark all notifications as read"
+            >
+              <CheckCheck className="mr-1 size-3" />
+              Mark all read
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsOpen(false)}
+            className="size-7"
+            aria-label="Close notifications"
+          >
+            <X className="size-3" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ScrollArea className="h-80">
+          {loading
+            ? renderState({
+                icon: <Loader2 className="size-4 animate-spin" />,
+                title: "Loading notifications",
+                description: "Please wait while we refresh your activity feed.",
+              })
+            : errorMessage
+              ? renderState({
+                  icon: <AlertTriangle className="size-4" />,
+                  title: "Unable to load notifications",
+                  description: errorMessage,
+                  action: (
+                    <Button size="sm" variant="outline" onClick={fetchNotifications}>
+                      Try again
+                    </Button>
+                  ),
+                })
+              : notifications.length === 0
+                ? renderState({
+                    icon: <Inbox className="size-4" />,
+                    title: "No notifications yet",
+                    description: "When updates arrive, you'll see them here.",
+                  })
+                : (
+                  <div className="space-y-1">
+                    {notifications.map((notification, index) => {
+                      const typeStyle = notificationTypeStyles[notification.type];
+
+                      return (
+                        <div key={notification.id}>
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className={cn(
+                              "cursor-pointer p-3 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none",
+                              !notification.read && "bg-muted/20"
+                            )}
+                            onClick={() => {
+                              if (!notification.read) {
+                                markAsRead(notification.id);
+                              }
+                              if (notification.action_url) {
+                                window.location.href = notification.action_url;
+                                setIsOpen(false);
+                              }
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                if (!notification.read) {
+                                  markAsRead(notification.id);
+                                }
+                                if (notification.action_url) {
+                                  window.location.href = notification.action_url;
+                                  setIsOpen(false);
+                                }
+                              }
+                            }}
+                            aria-label={`Open notification: ${notification.title}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    variant="outline"
+                                    className={cn("text-xs", typeStyle.className)}
+                                  >
+                                    {typeStyle.label}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatTime(notification.created_at)}
+                                  </span>
+                                </div>
+                                <p className="text-sm font-medium">{notification.title}</p>
+                                <p className="text-xs text-muted-foreground">{notification.message}</p>
+                              </div>
+                              <div className="flex gap-1">
+                                {!notification.read && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      markAsRead(notification.id);
+                                    }}
+                                    className="size-6"
+                                    aria-label={`Mark notification ${notification.title} as read`}
+                                  >
+                                    <Check className="size-3" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteNotification(notification.id);
+                                  }}
+                                  className="size-6 text-muted-foreground hover:text-destructive"
+                                  aria-label={`Delete notification ${notification.title}`}
+                                >
+                                  <X className="size-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                          {index < notifications.length - 1 && <Separator />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              aria-label="Open notifications"
+            >
+              <Bell className="size-5" />
+              {unreadCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="right"
+            className="w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] p-0 sm:w-[26rem] sm:max-w-[26rem]"
+          >
+            {panelContent}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              aria-label="Open notifications"
+            >
+              <Bell className="size-5" />
+              {unreadCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -right-1 -top-1 flex size-5 items-center justify-center p-0 text-xs"
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={12}
+            className="w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] p-0 sm:w-[26rem] sm:max-w-[26rem] md:w-[28rem] md:max-w-[28rem]"
+          >
+            {panelContent}
+          </PopoverContent>
+        </Popover>
+      )}
+    </>
   );
 }
