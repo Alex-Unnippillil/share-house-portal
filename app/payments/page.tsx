@@ -26,10 +26,12 @@ import { describeAutopayStatus } from "@/lib/payments/status"
 
 import {
   loadCatchUpBalances,
+  loadReconciliationDashboardData,
   loadReceiptHistory,
   loadRoommateLedgers,
 } from "./loaders"
 import { ReceiptHistoryCard } from "./_components/receipt-history-card"
+import { ReconciliationDashboardCard } from "./_components/reconciliation-dashboard-card"
 
 
 const paymentHighlights = [
@@ -80,9 +82,10 @@ function formatFullDate(date: string) {
 }
 
 export default async function PaymentsPage() {
-  const [catchUpBalances, receiptHistory] = await Promise.all([
+  const [catchUpBalances, receiptHistory, reconciliationData] = await Promise.all([
     loadCatchUpBalances(),
     loadReceiptHistory(),
+    loadReconciliationDashboardData(),
 
   ])
   const outstandingSummaries = catchUpBalances.map((balance) => {
@@ -240,6 +243,22 @@ export default async function PaymentsPage() {
           <ContributionSummaryCard balances={catchUpBalances} />
           <Card>
             <CardHeader>
+              <CardTitle>ACH settlement states</CardTitle>
+              <CardDescription>
+                Understand how ACH processing affects autopay and when follow-up may be required.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                <span className="font-medium text-foreground">Pending settlement:</span> ACH transfers can remain pending for 3–5 business days before final settlement.
+              </p>
+              <p>
+                <span className="font-medium text-foreground">Failed settlement:</span> If a debit returns (for example NSF or closed account), autopay is paused and the roommate must relink a bank account or pay manually.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Pay with Stripe</CardTitle>
               <CardDescription>Create a quick checkout or open Billing Portal</CardDescription>
             </CardHeader>
@@ -254,6 +273,9 @@ export default async function PaymentsPage() {
         <RoommateLedgerSection />
       </Suspense>
       <ReceiptHistoryCard receipts={receiptHistory} />
+      {reconciliationData.canManagePayments ? (
+        <ReconciliationDashboardCard failedPayments={reconciliationData.failedPayments} />
+      ) : null}
 
     </div>
   )

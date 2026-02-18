@@ -4,50 +4,17 @@ import { useMemo, useState, useTransition } from "react"
 import type { FormEvent } from "react"
 import { Loader2 } from "lucide-react"
 import { track } from "@vercel/analytics"
+import { ExternalLink, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+
+import type { AmenityCatalogItem } from "@/lib/bookings/amenity-catalog"
+import { buildCalEmbedUrl } from "@/lib/bookings/amenity-catalog"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createClient } from "@/utils/supabase-browser"
-import { cn } from "@/lib/utils"
-
-interface Amenity {
-  id: string
-  name: string
-  description: string
-  duration: string
-  maxAdvance: string
-}
-
-type ConflictCode =
-  | "INVALID_RANGE"
-  | "PAST_START"
-  | "TIME_OVERLAP"
-  | "BUFFER_CONFLICT"
-
-type ConflictSeverity = "error" | "warning"
-
-interface ConflictEntry {
-  code: ConflictCode
-  severity: ConflictSeverity
-  details: Record<string, unknown> | null
-}
-
-interface RpcPayload {
-  conflicts?: unknown
-  has_conflict?: unknown
-}
-
-const CONFLICT_TITLES: Record<ConflictCode, string> = {
-  INVALID_RANGE: "Invalid time range",
-  PAST_START: "Start time is in the past",
-  TIME_OVERLAP: "Overlapping booking",
-  BUFFER_CONFLICT: "Buffer window conflict",
-}
-
-const BUFFER_MINUTES = 15
+import { Switch } from "@/components/ui/switch"
 
 async function postOperationalMetric(metricName: string, tags: Record<string, unknown>) {
   try {
@@ -72,20 +39,6 @@ function formatDateTimeLocal(date: Date) {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-const displayFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-})
-
-function formatForDisplay(value: unknown) {
-  if (typeof value !== "string") return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return displayFormatter.format(date)
-}
-
 function toIsoString(value: string | undefined) {
   if (!value) return null
   const date = new Date(value)
@@ -93,77 +46,36 @@ function toIsoString(value: string | undefined) {
   return date.toISOString()
 }
 
-function normaliseConflicts(payload: RpcPayload): ConflictEntry[] {
-  const conflicts = Array.isArray(payload.conflicts) ? payload.conflicts : []
-
-  return conflicts
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") return null
-      const record = entry as Record<string, unknown>
-      const code = record.code
-      const severity = record.severity
-      const details = record.details
-
-      if (
-        (code === "INVALID_RANGE" ||
-          code === "PAST_START" ||
-          code === "TIME_OVERLAP" ||
-          code === "BUFFER_CONFLICT") &&
-        (severity === "error" || severity === "warning")
-      ) {
-        return {
-          code,
-          severity,
-          details:
-            details && typeof details === "object" ? (details as Record<string, unknown>) : null,
-        }
-      }
-
-      return null
-    })
-    .filter((entry): entry is ConflictEntry => Boolean(entry))
-}
-
-export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
-  const supabase = useMemo(() => createClient(), [])
-  const [startValue, setStartValue] = useState(() => {
-    const now = new Date()
-    const defaultStart = new Date(now.getTime() + 60 * 60 * 1000)
-    return formatDateTimeLocal(defaultStart)
-  })
-  const [endValue, setEndValue] = useState(() => {
-    const now = new Date()
-    const defaultStart = new Date(now.getTime() + 60 * 60 * 1000)
-    const defaultEnd = new Date(defaultStart.getTime() + 60 * 60 * 1000)
-    return formatDateTimeLocal(defaultEnd)
-  })
-  const [conflicts, setConflicts] = useState<ConflictEntry[]>([])
-  const [status, setStatus] = useState<"idle" | "available" | "conflict" | "error">("idle")
-  const [lastDuration, setLastDuration] = useState<number | null>(null)
-  const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
+export function AmenityBookingForm({ amenity }: { amenity: AmenityCatalogItem }) {
+  const [startValue, setStartValue] = useState(() => formatDateTimeLocal(new Date(Date.now() + 60 * 60 * 1000)))
+  const [endValue, setEndValue] = useState(() => formatDateTimeLocal(new Date(Date.now() + 2 * 60 * 60 * 1000)))
+  const [allowRecurring, setAllowRecurring] = useState(false)
+  const [frequency, setFrequency] = useState<"daily" | "weekly">("weekly")
+  const [occurrences, setOccurrences] = useState(2)
+  const [warnings, setWarnings] = useState<string[]>([])
+  const [errors, setErrors] = useState<string[]>([])
+  const [conflictCount, setConflictCount] = useState<number | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const statusBadge = (() => {
-    switch (status) {
-      case "available":
-        return <Badge variant="secondary">No conflicts</Badge>
-      case "conflict":
-        return <Badge variant="destructive">Conflicts detected</Badge>
-      case "error":
-        return <Badge variant="outline">Check failed</Badge>
-      default:
-        return <Badge variant="outline">Awaiting check</Badge>
+  const embedUrl = useMemo(() => {
+    const url = new URL(buildCalEmbedUrl(amenity))
+    if (startValue) {
+      const startDate = new Date(startValue)
+      if (!Number.isNaN(startDate.getTime())) {
+        url.searchParams.set("date", startDate.toISOString().slice(0, 10))
+      }
     }
-  })()
+    return url.toString()
+  }, [amenity, startValue])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const startIso = toIsoString(startValue)
-    const endIso = toIsoString(endValue)
+    const startTime = toIsoString(startValue)
+    const endTime = toIsoString(endValue)
 
-    if (!startIso || !endIso) {
-      toast.error("Please provide valid start and end times")
+    if (!startTime || !endTime) {
+      toast.error("Please provide valid start and end time")
       return
     }
 
@@ -184,11 +96,33 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
         const withinBudget = duration <= 20
 
         track("booking_conflict_check", {
+      setErrors([])
+      setWarnings([])
+
+      const response = await fetch("/api/bookings/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           amenityId: amenity.id,
-          durationMs: Number(duration.toFixed(2)),
-          within20ms: withinBudget,
-          conflictCount: parsedConflicts.length,
-        })
+          startTime,
+          endTime,
+          recurrence: {
+            enabled: allowRecurring,
+            frequency,
+            count: allowRecurring ? occurrences : undefined,
+          },
+        }),
+      })
+
+      const payload = (await response.json()) as {
+        ok?: boolean
+        allowed?: boolean
+        errors?: string[]
+        warnings?: string[]
+        conflicts?: unknown[]
+      }
 
         if (parsedConflicts.length > 0) {
           track("booking_conflict_detected", {
@@ -212,9 +146,14 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
           setStatus("error")
           return
         }
+      if (!response.ok || !payload.ok) {
+        toast.error("Unable to validate booking right now")
+        return
+      }
 
-        setConflicts(parsedConflicts)
-        setStatus(parsedConflicts.length > 0 ? "conflict" : "available")
+      setWarnings(payload.warnings ?? [])
+      setErrors(payload.errors ?? [])
+      setConflictCount(payload.conflicts?.length ?? 0)
 
         if (parsedConflicts.length === 0) {
           toast.success(`Slot for ${amenity.name} looks clear!`)
@@ -228,117 +167,144 @@ export function AmenityBookingForm({ amenity }: { amenity: Amenity }) {
         })
         toast.error("Something went wrong while checking availability")
         setStatus("error")
+      if (!payload.allowed) {
+        toast.error("Booking violates policy or conflicts with another reservation")
+        return
       }
+
+      toast.success("Validation passed. Complete this reservation in Cal.com below.")
     })
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <div className="space-y-2">
-        <Label htmlFor={`${amenity.id}-start`}>Start time</Label>
-        <Input
-          id={`${amenity.id}-start`}
-          type="datetime-local"
-          value={startValue}
-          onChange={(event) => setStartValue(event.target.value)}
-          min={formatDateTimeLocal(new Date())}
-          required
-        />
-      </div>
+    <div className="space-y-4">
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor={`${amenity.id}-start`}>Start time</Label>
+            <Input
+              id={`${amenity.id}-start`}
+              type="datetime-local"
+              value={startValue}
+              onChange={(event) => setStartValue(event.target.value)}
+              min={formatDateTimeLocal(new Date())}
+              required
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${amenity.id}-end`}>End time</Label>
-        <Input
-          id={`${amenity.id}-end`}
-          type="datetime-local"
-          value={endValue}
-          onChange={(event) => setEndValue(event.target.value)}
-          min={startValue}
-          required
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor={`${amenity.id}-end`}>End time</Label>
+            <Input
+              id={`${amenity.id}-end`}
+              type="datetime-local"
+              value={endValue}
+              onChange={(event) => setEndValue(event.target.value)}
+              min={startValue}
+              required
+            />
+          </div>
+        </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {statusBadge}
-          {isPending && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Loader2 className="size-3 animate-spin" /> Checking…
-            </span>
+        <div className="space-y-3 rounded-md border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor={`${amenity.id}-recurring`} className="text-sm font-medium">
+              Recurring reservation
+            </Label>
+            <Switch
+              id={`${amenity.id}-recurring`}
+              checked={allowRecurring}
+              onCheckedChange={setAllowRecurring}
+            />
+          </div>
+
+          {allowRecurring && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={`${amenity.id}-frequency`}>Frequency</Label>
+                <select
+                  id={`${amenity.id}-frequency`}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={frequency}
+                  onChange={(event) => setFrequency(event.target.value as "daily" | "weekly")}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor={`${amenity.id}-occurrences`}>Occurrences</Label>
+                <Input
+                  id={`${amenity.id}-occurrences`}
+                  type="number"
+                  min={2}
+                  max={amenity.maxRecurringOccurrences}
+                  value={occurrences}
+                  onChange={(event) => setOccurrences(Number(event.target.value || 2))}
+                />
+              </div>
+            </div>
           )}
         </div>
 
-        <Button disabled={isPending} type="submit">
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="size-4 animate-spin" /> Checking
-            </span>
-          ) : (
-            "Check availability"
-          )}
-        </Button>
-      </div>
-
-      {conflicts.length > 0 && (
-        <ul className="space-y-2" role="status" aria-live="polite">
-          {conflicts.map((conflict, index) => {
-            const details = conflict.details || {}
-            const start = formatForDisplay(details.start_time)
-            const end = formatForDisplay(details.end_time)
-
-            const message = (() => {
-              switch (conflict.code) {
-                case "TIME_OVERLAP":
-                  if (start && end) {
-                    return `Overlaps with an existing booking from ${start} to ${end}.`
-                  }
-                  return "Overlaps with another confirmed booking."
-                case "BUFFER_CONFLICT":
-                  if (start && end) {
-                    return `Needs a ${BUFFER_MINUTES}-minute buffer around a booking from ${start} to ${end}.`
-                  }
-                  return `Needs a ${BUFFER_MINUTES}-minute buffer before or after another booking.`
-                case "PAST_START":
-                  return "Start time must be in the future."
-                case "INVALID_RANGE":
-                  return "End time must be later than the start time."
-                default:
-                  return "Conflict detected."
-              }
-            })()
-
-            const style =
-              conflict.severity === "error"
-                ? "border border-destructive/50 bg-destructive/10 text-destructive"
-                : "border border-amber-200 bg-amber-50 text-amber-900"
-
-            return (
-              <li
-                key={`${conflict.code}-${index}`}
-                className={cn("rounded-md p-3 text-sm", style)}
-              >
-                <p className="font-medium">{CONFLICT_TITLES[conflict.code]}</p>
-                <p>{message}</p>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-
-      {status === "available" && (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900" role="status" aria-live="polite">
-          <p className="font-medium">All clear</p>
-          <p>No conflicts detected for this time range.</p>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <Badge variant="outline">max {amenity.durationMinutes} min</Badge>
+          <Badge variant="outline">advance {amenity.maxAdvanceDays} days</Badge>
+          <Badge variant="outline">cancel ≥ {amenity.cancellationWindowHours}h before start</Badge>
         </div>
-      )}
 
-      {lastDuration !== null && (
-        <p className="text-xs text-muted-foreground">
-          Response time: {lastDuration.toFixed(1)}ms
-          {lastDuration <= 20 ? " • within 20ms budget" : " • exceeded 20ms budget"}
-          {lastCheckedAt ? ` • Checked at ${displayFormatter.format(lastCheckedAt)}` : ""}
-        </p>
-      )}
-    </form>
+        <div className="flex items-center justify-between">
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" /> Validating
+              </span>
+            ) : (
+              "Validate booking"
+            )}
+          </Button>
+
+          <a
+            className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+            href={embedUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open in Cal.com <ExternalLink className="size-3" />
+          </a>
+        </div>
+
+        {errors.length > 0 && (
+          <ul className="space-y-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            {errors.map((error) => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+        )}
+
+        {warnings.length > 0 && (
+          <ul className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        )}
+
+        {conflictCount !== null && (
+          <p className="text-xs text-muted-foreground">
+            {conflictCount === 0
+              ? "No overlapping bookings found in local mirror."
+              : `${conflictCount} overlapping booking(s) detected in local mirror.`}
+          </p>
+        )}
+      </form>
+
+      <iframe
+        title={`${amenity.amenityName} booking embed`}
+        src={embedUrl}
+        className="h-[420px] w-full rounded-md border"
+        loading="lazy"
+      />
+    </div>
   )
 }

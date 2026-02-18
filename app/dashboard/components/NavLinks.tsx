@@ -40,6 +40,7 @@ export default function NavLinks() {
 
 	const links = isLandlord
 		? [
+			{ href: "/dashboard/operations", text: "Operations", Icon: CrumpledPaperIcon },
 			{ href: "/dashboard/members", text: "Members", Icon: PersonIcon },
 			{ href: "/payments", text: "Payments", Icon: CrumpledPaperIcon },
 			{ href: "/documents", text: "Documents", Icon: CrumpledPaperIcon },
