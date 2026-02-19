@@ -1,21 +1,22 @@
-import React from "react";
-import DailogForm from "../DialogForm";
-import { Button } from "@/components/ui/button";
-import { Pencil1Icon } from "@radix-ui/react-icons";
-import EditForm from "./EditForm";
+import { Pencil1Icon } from "@radix-ui/react-icons"
+
+import { Button } from "@/components/ui/button"
+
+import DialogForm from "../DialogForm"
+import EditForm from "./EditForm"
 
 export default function EditMember() {
-	return (
-		<DailogForm
-			id="update-trigger"
-			title="Edit Member"
-			Trigger={
-				<Button variant="outline">
-					<Pencil1Icon />
-					Edit
-				</Button>
-			}
-			form={<EditForm />}
-		/>
-	);
+  return (
+    <DialogForm
+      id="update-trigger"
+      title="Edit Member"
+      Trigger={
+        <Button size="sm" variant="outline" className="gap-2">
+          <Pencil1Icon />
+          Edit
+        </Button>
+      }
+      form={<EditForm />}
+    />
+  )
 }

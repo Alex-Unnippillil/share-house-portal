@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 
 import { PageSection } from "@/components/ui/page-layout"
+import { SectionStack } from "@/components/layouts/layout-primitives"
 
 import { DashboardMetrics } from "./components/dashboard-metrics"
 import { DashboardQuickActions } from "./components/dashboard-quick-actions"
@@ -21,7 +22,7 @@ import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-section">
+    <SectionStack>
       <Suspense fallback={<DashboardHeaderSkeleton />}>
         <DashboardWelcome />
       </Suspense>
@@ -46,7 +47,7 @@ export default function DashboardPage() {
       </PageSection>
 
       <PageSection className="grid gap-card-gap xl:grid-cols-3">
-        <div className="space-y-card-gap xl:col-span-2">
+        <div className="card-stack xl:col-span-2">
           <div className="grid gap-card-gap md:grid-cols-2">
             <Suspense fallback={<DashboardCardSkeleton />}>
               <NextRentCard />
@@ -65,7 +66,7 @@ export default function DashboardPage() {
           </Suspense>
         </div>
 
-        <div className="space-y-card-gap">
+        <div className="card-stack">
           <Suspense fallback={<DashboardCardSkeleton />}>
             <UpcomingBookingsCard />
           </Suspense>
@@ -74,6 +75,6 @@ export default function DashboardPage() {
           </Suspense>
         </div>
       </PageSection>
-    </div>
+    </SectionStack>
   )
 }

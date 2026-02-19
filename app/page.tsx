@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation"
+import { readUserSession } from "@/utils/actions"
 
+import LandingHeader from "@/components/landing/landing-header"
 import {
   FeatureGridSection,
   FinalCtaSection,
@@ -9,8 +11,7 @@ import {
   PrismSection,
   WorkflowSection,
 } from "@/components/landing/landing-sections"
-import LandingHeader from "@/components/landing/landing-header"
-import { readUserSession } from "@/utils/actions"
+import { AppShell, SectionStack } from "@/components/layouts/layout-primitives"
 
 export default async function IndexPage() {
   const userSessionResponse = await readUserSession()
@@ -20,15 +21,17 @@ export default async function IndexPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <AppShell className="bg-background">
       <LandingHeader />
-      <HeroSection />
-      <FeatureGridSection />
-      <PersonasSection />
-      <PrismSection />
-      <IntegrationsSection />
-      <WorkflowSection />
-      <FinalCtaSection />
-    </div>
+      <SectionStack className="pb-section">
+        <HeroSection />
+        <FeatureGridSection />
+        <PersonasSection />
+        <PrismSection />
+        <IntegrationsSection />
+        <WorkflowSection />
+        <FinalCtaSection />
+      </SectionStack>
+    </AppShell>
   )
 }

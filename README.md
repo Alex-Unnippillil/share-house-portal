@@ -5,32 +5,38 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 ## Features
 
 ### 🏠 **Core Functionality**
+
 - **Multi-tenant Property Management**: Support for multiple roommates sharing rental properties
 - **Role-based Access Control**: Separate workflows for tenants, roommates, property managers, and admins
 - **Responsive Mobile-First Design**: Optimized for mobile usage with modern UI components
 
 ### 💳 **Payment Management**
+
 - **Stripe Integration**: Secure rent payments with autopay functionality
 - **Subscription Support**: Recurring rent payments with configurable billing cycles
 - **Payment Receipts**: Automatic receipt generation and email notifications
 - **Financial Tracking**: Complete payment history and reconciliation tools
 
 ### 📅 **Amenity Bookings**
+
 - **Shared Space Scheduling**: Book kitchen, TV room, PlayStation, parking spots, and shared computers
 - **Cal.com Integration**: Self-hosted calendar system with double-booking prevention
 - **Conflict Detection**: Smart scheduling to prevent overlapping reservations
 
 ### 📄 **Document Management**
+
 - **Documenso Integration**: Secure document signing and storage
 - **Lease Agreements**: Digital lease management with version history
 - **Audit Trails**: Complete document access logging for compliance
 
 ### 💬 **Communication**
+
 - **Realtime Messaging**: Roommate-to-roommate communication with threads
 - **Notifications**: In-app and email notifications for important events
 - **Maintenance Requests**: Issue tracking and resolution workflow
 
 ### 🏢 **Admin Features**
+
 - **Property Management**: Multi-unit property administration
 - **Visitor Logs**: Overnight guest tracking and approval workflows
 - **Analytics Dashboard**: Payment success rates, booking utilization, and financial reports
@@ -49,6 +55,7 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - pnpm 10+
 - Supabase account
@@ -78,7 +85,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+Open [http://localhost:3000](http://localhost:3000) to view the application. Tailwind is configured through the canonical `tailwind.config.js` file (the Next.js/PostCSS pipeline resolves `tailwind.config.js` before `tailwind.config.ts`).
 
 ### Stripe Configuration
 
@@ -90,7 +97,6 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](docs/engineering/vercel-deployment-runbook.md) and configure variables according to [`docs/engineering/environment-contract.md`](docs/engineering/environment-contract.md).
 
-
 ## CI & Branch Protection
 
 - GitHub Actions uses pnpm for install/lint/typecheck/test/build gates.
@@ -100,6 +106,8 @@ Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](
 ## Operations & Reliability
 
 Review the [Performance & Availability Playbook](docs/perf/playbook.md) for service level objectives, monitoring dashboards, alert channels, and rollback procedures across Next.js, Supabase, and Stripe integrations.
+
+Layout and responsiveness reviews should follow the [`docs/design-qa-checklist.md`](docs/design-qa-checklist.md) checklist before merge.
 
 ## Project Structure
 

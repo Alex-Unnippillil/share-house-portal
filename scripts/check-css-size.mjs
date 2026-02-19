@@ -11,7 +11,7 @@ const tailwindCli = require.resolve("tailwindcss/lib/cli.js")
 const projectRoot = resolve(process.cwd())
 const configPath = resolve(
   projectRoot,
-  process.env.TAILWIND_CONFIG_PATH ?? "tailwind.config.ts",
+  process.env.TAILWIND_CONFIG_PATH ?? "tailwind.config.js",
 )
 const inputCss = resolve(
   projectRoot,
