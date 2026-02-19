@@ -3,6 +3,10 @@ const designTokens = {
   spacing: {
     section: "clamp(1.5rem, 2vw, 2.5rem)",
     "content-gutter": "clamp(1rem, 3vw, 2rem)",
+    "dashboard-x": "1rem",
+    "dashboard-x-sm": "1.5rem",
+    "dashboard-x-lg": "2.5rem",
+    "dashboard-y": "1.5rem",
     "card-gap": "1rem",
     "stack-sm": "0.75rem",
     "stack-md": "1rem",

@@ -70,12 +70,12 @@ body {}
 
 @layer utilities {
   .app-backdrop {
-    @apply bg-background/90;
+    @apply bg-background/90 text-foreground;
   }
 
   @supports ((-webkit-backdrop-filter: blur(0)) or (backdrop-filter: blur(0))) {
     .app-backdrop {
-      @apply bg-background/60 backdrop-blur-xl;
+      @apply bg-background/70 backdrop-blur-xl dark:bg-background/60;
     }
   }
 
