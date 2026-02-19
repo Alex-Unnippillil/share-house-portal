@@ -27,6 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import SmartLink from "@/components/navigation/SmartLink"
+import LandingHeader from "@/components/landing/landing-header"
 
 const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
   ssr: false,
