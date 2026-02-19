@@ -1,20 +1,39 @@
+import { getRoleCue } from "@/lib/role-cues"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import SmartLink from "@/components/navigation/SmartLink"
-import { getWelcomeMessage } from "../data"
+
+import { getDashboardRole, getWelcomeMessage } from "../data"
 
 export async function DashboardWelcome() {
-  const message = await getWelcomeMessage()
+  const [message, role] = await Promise.all([
+    getWelcomeMessage(),
+    getDashboardRole(),
+  ])
+  const roleCue = getRoleCue(role)
 
   return (
-    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className={cn(
+        "flex flex-col gap-5 rounded-2xl border border-border/60 p-5 sm:flex-row sm:items-center sm:justify-between",
+        roleCue.accentClassName,
+        "role-cue-surface"
+      )}
+    >
       <div className="space-y-1">
-        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-          Resident dashboard
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+            Resident dashboard
+          </p>
+          <span className="role-cue-badge">{roleCue.roleLabel}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">{roleCue.contextCopy}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           {message.title}
         </h1>
-        <p className="text-sm text-muted-foreground sm:text-base">{message.subtitle}</p>
+        <p className="text-sm text-muted-foreground sm:text-base">
+          {message.subtitle}
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

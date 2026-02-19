@@ -1,6 +1,8 @@
 import "server-only"
-
 import { cache } from "react"
+import { readUserSession } from "@/utils/actions"
+
+import { normalizePortalRole } from "@/lib/role-cues"
 
 import {
   fetchMockDashboardMetrics,
@@ -44,10 +46,24 @@ const dashboardDataSource = process.env.DASHBOARD_DATA_SOURCE ?? "mock"
 const usingMockData = dashboardDataSource.toLowerCase() === "mock"
 
 async function fetchWelcomeMessage(): Promise<WelcomeMessage> {
-  return usingMockData ? fetchMockWelcomeMessage() : fetchProductionWelcomeMessage()
+  return usingMockData
+    ? fetchMockWelcomeMessage()
+    : fetchProductionWelcomeMessage()
 }
 
 export const getWelcomeMessage = cache(fetchWelcomeMessage)
+
+async function fetchDashboardRole() {
+  const { data } = await readUserSession()
+  const claimedRole =
+    data.session?.user?.app_metadata?.role ??
+    data.session?.user?.user_metadata?.role
+  return normalizePortalRole(
+    typeof claimedRole === "string" ? claimedRole : null
+  )
+}
+
+export const getDashboardRole = cache(fetchDashboardRole)
 
 export function loadWelcomeMessageUncached() {
   return fetchWelcomeMessage()
@@ -64,7 +80,9 @@ export function loadRentSummaryUncached() {
 }
 
 async function fetchRecentDocuments(): Promise<DocumentSummary[]> {
-  return usingMockData ? fetchMockRecentDocuments() : fetchProductionRecentDocuments()
+  return usingMockData
+    ? fetchMockRecentDocuments()
+    : fetchProductionRecentDocuments()
 }
 
 export const getRecentDocuments = cache(fetchRecentDocuments)
@@ -74,7 +92,9 @@ export function loadRecentDocumentsUncached() {
 }
 
 async function fetchRoommateUpdates(): Promise<RoommateUpdate[]> {
-  return usingMockData ? fetchMockRoommateUpdates() : fetchProductionRoommateUpdates()
+  return usingMockData
+    ? fetchMockRoommateUpdates()
+    : fetchProductionRoommateUpdates()
 }
 
 export const getRoommateUpdates = cache(fetchRoommateUpdates)
@@ -84,7 +104,9 @@ export function loadRoommateUpdatesUncached() {
 }
 
 async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
-  return usingMockData ? fetchMockDashboardMetrics() : fetchProductionDashboardMetrics()
+  return usingMockData
+    ? fetchMockDashboardMetrics()
+    : fetchProductionDashboardMetrics()
 }
 
 export const getDashboardMetrics = cache(fetchDashboardMetrics)
@@ -104,7 +126,9 @@ export function loadQuickActionsUncached() {
 }
 
 async function fetchUpcomingBookings(): Promise<UpcomingBooking[]> {
-  return usingMockData ? fetchMockUpcomingBookings() : fetchProductionUpcomingBookings()
+  return usingMockData
+    ? fetchMockUpcomingBookings()
+    : fetchProductionUpcomingBookings()
 }
 
 export const getUpcomingBookings = cache(fetchUpcomingBookings)

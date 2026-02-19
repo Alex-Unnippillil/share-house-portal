@@ -1,8 +1,9 @@
 import React from "react"
 
-import { ThemeToggle } from "@/components/theme-toggle"
-import { getRoleNavigation, type PortalRole } from "@/config/navigation"
+import type { PortalRole } from "@/config/navigation"
+import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 import NavLinks from "./NavLinks"
 import SignOut from "./SignOut"
@@ -17,37 +18,50 @@ type SideBarProps = {
   role?: PortalRole | null
 }
 
-export default function SideNav({ role = "tenant" }: SideNavProps) {
-  return <SideBar className="dark:bg-gradient-dark hidden flex-1 lg:block" role={role} />
+export default function SideNav({ role }: SideNavProps) {
+  return (
+    <SideBar
+      role={role}
+      className="dark:bg-gradient-dark hidden flex-1 lg:block"
+    />
+  )
 }
 
-export const SideBar = ({ className, onNavigate, role = "tenant" }: SideBarProps) => {
-  const { roleLabel } = getRoleNavigation(role)
+export const SideBar = ({ className, onNavigate, role }: SideBarProps) => {
+  const roleCue = getRoleCue(role)
 
   return (
     <div className={className}>
       <div
         className={cn(
-          "flex size-full flex-col rounded-2xl border border-border/60 bg-background/85 p-6 shadow-2xl backdrop-blur-xl lg:w-96 lg:p-10 [&_a]:min-h-11 [&_a]:px-3 [&_a]:py-2 [&_a]:text-base"
+          "flex size-full flex-col space-y-5 rounded-2xl border border-border/60 bg-background/85 p-6 shadow-2xl backdrop-blur-xl lg:w-96 lg:p-10 [&_a]:min-h-11 [&_a]:px-3 [&_a]:py-2 [&_a]:text-base"
         )}
       >
-        <div className="sticky top-0 z-10 -mx-1 mb-5 flex items-start justify-between gap-3 border-b border-border/70 bg-background/95 px-1 pb-4 pt-1 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <div>
-            <h1 className="text-3xl font-semibold">Roomsily</h1>
-            <p className="text-sm text-muted-foreground">www.roomsily household hub</p>
-            <p className="mt-2 inline-flex rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary">
-              {roleLabel}
+        <div className="flex-1 space-y-5">
+          <div
+            className={cn(
+              "space-y-3 rounded-xl p-3",
+              roleCue.accentClassName,
+              "role-cue-surface"
+            )}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h1 className="text-3xl font-semibold">Roomsily</h1>
+                <p className="text-sm text-muted-foreground">
+                  www.roomsily household hub
+                </p>
+              </div>
+              <ThemeToggle />
+            </div>
+            <span className="role-cue-badge">{roleCue.roleLabel}</span>
+            <p className="text-xs text-muted-foreground">
+              {roleCue.contextCopy}
             </p>
           </div>
-
-          <ThemeToggle />
+          <NavLinks onNavigate={onNavigate} role={roleCue.role} />
         </div>
-
-        <div className="flex-1 space-y-5 overflow-y-auto pr-1">
-          <NavLinks onNavigate={onNavigate} role={role} />
-        </div>
-
-        <div className="mt-5 border-t border-border/70 pt-4">
+        <div>
           <SignOut />
         </div>
       </div>
