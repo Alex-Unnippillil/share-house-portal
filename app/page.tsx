@@ -28,6 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import SmartLink from "@/components/navigation/SmartLink"
+import { PersonasSection } from "@/components/landing/personas-section"
 import { MotionReveal } from "@/components/landing/motion"
 
 const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
@@ -121,31 +122,6 @@ const portalFeatures = [
     icon: Sparkles,
     href: "/dashboard",
     ctaLabel: "View dashboard",
-  },
-]
-
-const personaPlaybooks = [
-  {
-    badge: "Roommates",
-    title: "A calmer home hub",
-    description:
-      "Track rent, chores, and shared spaces from a mobile-first portal that respects everyone’s time.",
-    points: [
-      "Automatic rent splits with clear history and reminders for each roommate",
-      "A personalised daily agenda of bookings, chores, and open polls",
-      "Visitor check-ins and document vaults that remove guesswork",
-    ],
-  },
-  {
-    badge: "Property teams",
-    title: "Operations with context",
-    description:
-      "Connect leasing, finance, and community updates to lower churn and support happier households.",
-    points: [
-      "Stripe, Supabase, and Documenso data aligned in one control centre",
-      "Real-time alerts when payments slip or maintenance escalates",
-      "Exports, audit trails, and permissions tuned for compliance",
-    ],
   },
 ]
 
@@ -410,6 +386,8 @@ export default async function IndexPage() {
         </div>
       </section>
 
+
+      <PersonasSection />
       <section
         className="border-y border-border/70 bg-muted/10 py-20 sm:py-24"
         id="roles"
