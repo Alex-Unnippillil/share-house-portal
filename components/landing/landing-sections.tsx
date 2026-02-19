@@ -13,7 +13,8 @@ import {
   Wallet,
 } from "lucide-react"
 
-import SmartLink from "@/components/navigation/SmartLink"
+import { siteConfig } from "@/config/site"
+import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -23,8 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { siteConfig } from "@/config/site"
-import { cn } from "@/lib/utils"
+import SmartLink from "@/components/navigation/SmartLink"
 
 import { LANDING_SECTION_IDS } from "./landing-ids"
 
@@ -201,10 +201,13 @@ const workflowSteps = [
 
 export function HeroSection() {
   return (
-    <section id={LANDING_SECTION_IDS.hero} className="relative overflow-hidden border-b">
+    <section
+      id={LANDING_SECTION_IDS.hero}
+      className="relative overflow-hidden border-b"
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background dark:from-primary/15" />
-      <div className="container relative mx-auto px-4 py-24 sm:py-32">
+      <div className="layout-content relative py-section">
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
           <div className="space-y-10 text-center lg:text-left">
             <div className="flex justify-center lg:justify-start">
@@ -220,8 +223,8 @@ export function HeroSection() {
                 Modern operations for every roommate and property manager
               </h1>
               <p className="mx-auto max-w-2xl text-body-lg text-muted-foreground lg:mx-0">
-                Roomsily brings autopay, bookings, documents, and updates into an
-                intuitive workspace that keeps households aligned without the
+                Roomsily brings autopay, bookings, documents, and updates into
+                an intuitive workspace that keeps households aligned without the
                 group-chat chaos.
               </p>
             </div>
@@ -255,9 +258,13 @@ export function HeroSection() {
                     <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <item.icon className="size-5" aria-hidden="true" />
                     </span>
-                    <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.title}
+                    </p>
                   </div>
-                  <p className="mt-3 text-sm text-muted-foreground">{item.description}</p>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -286,7 +293,9 @@ export function HeroSection() {
                   </span>
                   <div className="leading-tight">
                     <p className="text-sm font-semibold text-white">Roomsily</p>
-                    <p className="text-xs text-slate-300">Shared-home command center</p>
+                    <p className="text-xs text-slate-300">
+                      Shared-home command center
+                    </p>
                   </div>
                 </div>
                 <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-200">
@@ -297,12 +306,20 @@ export function HeroSection() {
               <div className="relative space-y-4 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Next rent cycle</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">$4,280 due</p>
-                    <p className="mt-1 text-xs text-slate-300">4 roommates · 82% already funded</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-300">
+                      Next rent cycle
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-white">
+                      $4,280 due
+                    </p>
+                    <p className="mt-1 text-xs text-slate-300">
+                      4 roommates · 82% already funded
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Today&rsquo;s flow</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-300">
+                      Today&rsquo;s flow
+                    </p>
                     <ul className="mt-3 space-y-2 text-xs text-slate-100">
                       <li className="flex items-center gap-2">
                         <CalendarClock className="size-3.5 text-primary" />
@@ -322,8 +339,12 @@ export function HeroSection() {
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-white">Household health</p>
-                    <p className="text-xs text-emerald-200">All systems normal</p>
+                    <p className="text-sm font-medium text-white">
+                      Household health
+                    </p>
+                    <p className="text-xs text-emerald-200">
+                      All systems normal
+                    </p>
                   </div>
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
                     <div className="h-full w-[84%] rounded-full bg-gradient-to-r from-cyan-300 to-primary" />
@@ -348,7 +369,9 @@ export function HeroSection() {
                 <metric.icon className="size-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-3xl font-semibold text-foreground">{metric.value}</p>
+                <p className="text-3xl font-semibold text-foreground">
+                  {metric.value}
+                </p>
                 <p className="text-sm text-muted-foreground">{metric.label}</p>
               </div>
             </div>
@@ -361,34 +384,43 @@ export function HeroSection() {
 
 export function FeatureGridSection() {
   return (
-    <section id={LANDING_SECTION_IDS.features} className="container mx-auto px-4 py-20 sm:py-24">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-balance text-display-lg">Shared-house workflows in one tenant portal</h2>
-        <p className="mt-4 text-muted-foreground">
-          From rent to repairs, Roomsily keeps every roommate aligned with clear automations and
-          actionable insights.
-        </p>
-      </div>
-      <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {portalFeatures.map((feature) => (
-          <Card
-            key={feature.title}
-            className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg"
-          >
-            <CardHeader className="space-y-5">
-              <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <feature.icon className="size-5" aria-hidden="true" />
-              </div>
-              <CardTitle className="text-heading-sm">{feature.title}</CardTitle>
-              <CardDescription>{feature.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="mt-auto">
-              <Link href={feature.href} className="text-sm font-medium text-primary hover:underline">
-                <span>{feature.ctaLabel}</span>
-              </Link>
-            </CardContent>
-          </Card>
-        ))}
+    <section id={LANDING_SECTION_IDS.features} className="py-section">
+      <div className="layout-content">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-balance text-display-lg">
+            Shared-house workflows in one tenant portal
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            From rent to repairs, Roomsily keeps every roommate aligned with
+            clear automations and actionable insights.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {portalFeatures.map((feature) => (
+            <Card
+              key={feature.title}
+              className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg"
+            >
+              <CardHeader className="space-y-5">
+                <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <feature.icon className="size-5" aria-hidden="true" />
+                </div>
+                <CardTitle className="text-heading-sm">
+                  {feature.title}
+                </CardTitle>
+                <CardDescription>{feature.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Link
+                  href={feature.href}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  <span>{feature.ctaLabel}</span>
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </section>
   )
@@ -396,13 +428,18 @@ export function FeatureGridSection() {
 
 export function PersonasSection() {
   return (
-    <section id={LANDING_SECTION_IDS.personas} className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
-      <div className="container mx-auto px-4">
+    <section
+      id={LANDING_SECTION_IDS.personas}
+      className="border-y border-border/70 bg-muted/10 py-section"
+    >
+      <div className="layout-content">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-display-lg">Designed for the people using it</h2>
+          <h2 className="text-balance text-display-lg">
+            Designed for the people using it
+          </h2>
           <p className="mt-4 text-muted-foreground">
-            Whether you’re paying rent or overseeing dozens of units, Roomsily gives every role the
-            clarity they need.
+            Whether you’re paying rent or overseeing dozens of units, Roomsily
+            gives every role the clarity they need.
           </p>
         </div>
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
@@ -419,14 +456,21 @@ export function PersonasSection() {
                 >
                   {persona.badge}
                 </Badge>
-                <CardTitle className="text-heading-md">{persona.title}</CardTitle>
-                <CardDescription className="text-base">{persona.description}</CardDescription>
+                <CardTitle className="text-heading-md">
+                  {persona.title}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {persona.description}
+                </CardDescription>
               </CardHeader>
               <CardContent className="relative">
                 <ul className="space-y-3 text-sm text-muted-foreground">
                   {persona.points.map((point) => (
                     <li key={point} className="flex items-start gap-3">
-                      <span className="mt-1 size-2 rounded-full bg-primary" aria-hidden="true" />
+                      <span
+                        className="mt-1 size-2 rounded-full bg-primary"
+                        aria-hidden="true"
+                      />
                       <span>{point}</span>
                     </li>
                   ))}
@@ -442,35 +486,41 @@ export function PersonasSection() {
 
 export function PrismSection() {
   return (
-    <section id={LANDING_SECTION_IDS.prism} className="border-y border-border/70 bg-muted/20 py-20 sm:py-24">
-      <div className="container mx-auto px-4">
+    <section
+      id={LANDING_SECTION_IDS.prism}
+      className="border-y border-border/70 bg-muted/20 py-section"
+    >
+      <div className="layout-content">
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
           <div className="space-y-6">
-            <h2 className="text-balance text-display-lg">Visualize your household operating system</h2>
+            <h2 className="text-balance text-display-lg">
+              Visualize your household operating system
+            </h2>
             <p className="text-muted-foreground">
-              The Roomsily network links Stripe, Supabase, Cal.com, and Documenso so payments,
-              bookings, documents, and updates move together without copy-paste work.
+              The Roomsily network links Stripe, Supabase, Cal.com, and
+              Documenso so payments, bookings, documents, and updates move
+              together without copy-paste work.
             </p>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-2 rounded-full bg-primary" />
                 <span>
-                  Orbit between features to see how roommate actions sync across integrations in
-                  real time.
+                  Orbit between features to see how roommate actions sync across
+                  integrations in real time.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-2 rounded-full bg-primary" />
                 <span>
-                  Spot automation opportunities from autopay to amenity approvals without leaving
-                  the tenant view.
+                  Spot automation opportunities from autopay to amenity
+                  approvals without leaving the tenant view.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-2 rounded-full bg-primary" />
                 <span>
-                  Share the visualization during onboarding to align roommates and property managers
-                  instantly.
+                  Share the visualization during onboarding to align roommates
+                  and property managers instantly.
                 </span>
               </li>
             </ul>
@@ -508,15 +558,22 @@ export function IntegrationsSection() {
   return (
     <section
       id={LANDING_SECTION_IDS.integrations}
-      className="border-b border-border/70 bg-muted/10 py-20 sm:py-24"
+      className="border-b border-border/70 bg-muted/10 py-section"
     >
-      <div className="container mx-auto px-4">
+      <div className="layout-content">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           {integrationHighlights.map((highlight) => (
-            <Card key={highlight.title} className="h-full border-border/70 bg-background/95 shadow-sm">
+            <Card
+              key={highlight.title}
+              className="h-full border-border/70 bg-background/95 shadow-sm"
+            >
               <CardHeader className="space-y-4">
-                <CardTitle className="text-heading-md">{highlight.title}</CardTitle>
-                <CardDescription className="text-base">{highlight.description}</CardDescription>
+                <CardTitle className="text-heading-md">
+                  {highlight.title}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {highlight.description}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <ul className="space-y-3 text-sm text-muted-foreground">
@@ -548,42 +605,48 @@ export function IntegrationsSection() {
 
 export function WorkflowSection() {
   return (
-    <section id={LANDING_SECTION_IDS.workflow} className="container mx-auto px-4 py-20 sm:py-24">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-balance text-display-lg">How households move into Roomsily</h2>
-        <p className="mt-4 text-muted-foreground">
-          Guided onboarding and contextual tips remove the friction from getting every roommate
-          connected.
-        </p>
+    <section id={LANDING_SECTION_IDS.workflow} className="py-section">
+      <div className="layout-content">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-balance text-display-lg">
+            How households move into Roomsily
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Guided onboarding and contextual tips remove the friction from
+            getting every roommate connected.
+          </p>
+        </div>
+        <ol className="relative mt-12 grid gap-6 md:grid-cols-4">
+          {workflowSteps.map((item, index) => (
+            <li
+              key={item.step}
+              className="relative flex h-full flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm"
+            >
+              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                {item.step}
+              </span>
+              <h3 className="text-heading-sm text-foreground">{item.title}</h3>
+              <p className="text-sm text-muted-foreground">
+                {item.description}
+              </p>
+              {index < workflowSteps.length - 1 && (
+                <span
+                  className="absolute right-[-18px] top-1/2 hidden h-px w-10 -translate-y-1/2 bg-border md:block"
+                  aria-hidden="true"
+                />
+              )}
+            </li>
+          ))}
+        </ol>
       </div>
-      <ol className="relative mt-12 grid gap-6 md:grid-cols-4">
-        {workflowSteps.map((item, index) => (
-          <li
-            key={item.step}
-            className="relative flex h-full flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm"
-          >
-            <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-              {item.step}
-            </span>
-            <h3 className="text-heading-sm text-foreground">{item.title}</h3>
-            <p className="text-sm text-muted-foreground">{item.description}</p>
-            {index < workflowSteps.length - 1 && (
-              <span
-                className="absolute right-[-18px] top-1/2 hidden h-px w-10 -translate-y-1/2 bg-border md:block"
-                aria-hidden="true"
-              />
-            )}
-          </li>
-        ))}
-      </ol>
     </section>
   )
 }
 
 export function FinalCtaSection() {
   return (
-    <section id={LANDING_SECTION_IDS.finalCta} className="pb-24">
-      <div className="container mx-auto px-4">
+    <section id={LANDING_SECTION_IDS.finalCta} className="py-section">
+      <div className="layout-content">
         <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
           <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl space-y-4">
@@ -591,8 +654,8 @@ export function FinalCtaSection() {
                 Ready to centre your shared household around clarity?
               </h3>
               <p className="text-body-md text-muted-foreground">
-                Launch Roomsily with guided onboarding and give every roommate one place to handle
-                payments, bookings, and documents.
+                Launch Roomsily with guided onboarding and give every roommate
+                one place to handle payments, bookings, and documents.
               </p>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row">
