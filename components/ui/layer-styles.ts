@@ -3,6 +3,12 @@ export const uiLayerTokens = {
   overlayBlur: "supports-[backdrop-filter]:backdrop-blur-sm",
   surfaceBorder: "border border-border/60",
   surfaceShadow: "shadow-lg shadow-black/10 dark:shadow-black/40",
+  surfaces: {
+    solid: "surface-solid",
+    glass: "surface-glass",
+    elevated: "surface-elevated",
+  },
+  surfaceHover: "surface-hover",
   radiusMd: "rounded-md",
   radiusLg: "rounded-lg",
 } as const

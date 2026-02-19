@@ -1,17 +1,38 @@
 import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { uiLayerTokens } from "@/components/ui/layer-styles"
+
+const cardVariants = cva("rounded-xl text-card-foreground", {
+  variants: {
+    surface: {
+      solid: uiLayerTokens.surfaces.solid,
+      glass: uiLayerTokens.surfaces.glass,
+      elevated: uiLayerTokens.surfaces.elevated,
+    },
+    interactive: {
+      true: uiLayerTokens.surfaceHover,
+      false: "",
+    },
+  },
+  defaultVariants: {
+    surface: "solid",
+    interactive: false,
+  },
+})
+
+interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {}
 
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+  CardProps
+>(({ className, surface, interactive, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
-      className
-    )}
+    className={cn(cardVariants({ surface, interactive }), className)}
     {...props}
   />
 ))

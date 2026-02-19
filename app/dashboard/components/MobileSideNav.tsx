@@ -38,14 +38,14 @@ export default function MobileSideNav({ role }: { role?: PortalRole | null }) {
           aria-label="Open navigation menu"
           aria-haspopup="dialog"
           aria-expanded={open}
-          className="inline-flex min-h-11 items-center justify-center rounded-md border border-input bg-background/85 px-3 py-2 text-foreground shadow-sm backdrop-blur-xl transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
+          className="inline-flex min-h-11 items-center justify-center rounded-md px-3 py-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden surface-glass"
         >
           <HamburgerMenuIcon className="size-5" aria-hidden="true" />
         </button>
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="flex border-border/60 bg-background/85 shadow-2xl backdrop-blur-xl dark:bg-gradient-dark"
+        className="flex dark:bg-gradient-dark surface-glass"
       >
         <SideBar role={role} onNavigate={() => setOpen(false)} />
       </SheetContent>

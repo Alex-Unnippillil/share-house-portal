@@ -48,6 +48,19 @@ body {
     --role-admin-accent: 20 78% 44%;
     --role-admin-surface: 24 100% 96%;
     --role-admin-foreground: 20 82% 28%;
+
+    --surface: var(--card);
+    --surface-muted: 210 40% 96%;
+    --surface-foreground: var(--card-foreground);
+    --surface-glass-bg: 0 0% 100%;
+    --surface-solid-bg: var(--card);
+    --surface-elevated-bg: 215 33% 98%;
+    --surface-border: var(--border);
+    --surface-blur: 16px;
+    --surface-border-alpha: 0.58;
+    --surface-shadow-strength: 0.16;
+    --surface-hover-shadow-strength: 0.24;
+    --surface-hover-border-alpha: 0.82;
   }
 
   .dark {
@@ -83,6 +96,19 @@ body {
     --role-admin-accent: 26 96% 71%;
     --role-admin-surface: 22 40% 21%;
     --role-admin-foreground: 25 100% 90%;
+
+    --surface: var(--card);
+    --surface-muted: 217 33% 17%;
+    --surface-foreground: var(--card-foreground);
+    --surface-glass-bg: 222 47% 14%;
+    --surface-solid-bg: 222 42% 14%;
+    --surface-elevated-bg: 222 39% 17%;
+    --surface-border: 215 28% 72%;
+    --surface-blur: 20px;
+    --surface-border-alpha: 0.3;
+    --surface-shadow-strength: 0.42;
+    --surface-hover-shadow-strength: 0.52;
+    --surface-hover-border-alpha: 0.5;
   }
 
   html:focus-within {
@@ -140,20 +166,51 @@ body {
   }
 
   .glass-surface {
-    @apply border shadow-sm;
-    color: hsl(var(--surface-foreground));
-    border-color: hsl(var(--surface-border) / 0.7);
-    background-color: hsl(var(--surface) / 0.9);
-    box-shadow: 0 10px 30px -20px hsl(var(--foreground) / 0.45);
-    backdrop-filter: blur(18px);
+    @apply surface-glass;
   }
 
   .glass-surface-hover {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+    @apply surface-hover;
   }
 
   .glass-border {
-    border-color: hsl(var(--surface-border) / 0.7);
+    border-color: hsl(var(--surface-border) / var(--surface-border-alpha));
+  }
+
+  .surface-solid,
+  .surface-glass,
+  .surface-elevated {
+    @apply border;
+    color: hsl(var(--surface-foreground));
+    border-color: hsl(var(--surface-border) / var(--surface-border-alpha));
+    transition-property: border-color, box-shadow, transform, background-color;
+    transition-duration: 180ms;
+    transition-timing-function: ease-out;
+  }
+
+  .surface-solid {
+    background-color: hsl(var(--surface-solid-bg) / 0.96);
+    box-shadow: 0 14px 34px -28px hsl(var(--foreground) / var(--surface-shadow-strength));
+  }
+
+  .surface-glass {
+    background-color: hsl(var(--surface-glass-bg) / 0.72);
+    box-shadow: 0 16px 38px -30px hsl(var(--foreground) / var(--surface-shadow-strength));
+    backdrop-filter: blur(var(--surface-blur));
+  }
+
+  .surface-elevated {
+    background-color: hsl(var(--surface-elevated-bg) / 0.95);
+    box-shadow: 0 20px 45px -30px hsl(var(--foreground) / var(--surface-shadow-strength));
+  }
+
+  .surface-hover {
+    @apply motion-safe:hover:-translate-y-0.5;
+  }
+
+  .surface-hover:hover {
+    border-color: hsl(var(--surface-border) / var(--surface-hover-border-alpha));
+    box-shadow: 0 22px 44px -30px hsl(var(--foreground) / var(--surface-hover-shadow-strength));
   }
 
   .page-shell {

@@ -34,7 +34,7 @@ export const SideBar = ({ className, onNavigate, role }: SideBarProps) => {
     <div className={className}>
       <div
         className={cn(
-          "flex size-full flex-col space-y-5 rounded-2xl border border-border/60 bg-background/85 p-6 shadow-2xl backdrop-blur-xl lg:w-96 lg:p-10 [&_a]:min-h-11 [&_a]:px-3 [&_a]:py-2 [&_a]:text-base"
+          "surface-glass flex size-full flex-col space-y-5 rounded-2xl p-6 lg:w-96 lg:p-10 [&_a]:min-h-11 [&_a]:px-3 [&_a]:py-2 [&_a]:text-base"
         )}
       >
         <div className="flex-1 space-y-5">
