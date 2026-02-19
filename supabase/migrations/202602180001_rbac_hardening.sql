@@ -98,6 +98,25 @@ AS $$
     );
 $$;
 
+CREATE OR REPLACE FUNCTION public.is_safe_profile_self_update(next_profile public.profiles)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles existing_profile
+    WHERE existing_profile.id = next_profile.id
+      AND existing_profile.role = next_profile.role
+      AND existing_profile.property_id IS NOT DISTINCT FROM next_profile.property_id
+      AND existing_profile.unit_id IS NOT DISTINCT FROM next_profile.unit_id
+      AND existing_profile.is_active = next_profile.is_active
+      AND existing_profile.created_by IS NOT DISTINCT FROM next_profile.created_by
+  );
+$$;
+
 DROP POLICY IF EXISTS "Managers and admins can read assignments" ON public.manager_unit_assignments;
 CREATE POLICY "Managers and admins can read assignments" ON public.manager_unit_assignments
   FOR SELECT USING (
@@ -122,7 +141,10 @@ CREATE POLICY "Users can read profiles in scope" ON public.profiles
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK (
+    auth.uid() = id
+    AND public.is_safe_profile_self_update(profiles)
+  );
 
 DROP POLICY IF EXISTS "Managers and admins can manage unit profiles" ON public.profiles;
 CREATE POLICY "Managers and admins can manage unit profiles" ON public.profiles
