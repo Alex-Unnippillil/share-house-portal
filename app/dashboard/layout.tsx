@@ -11,7 +11,7 @@ import { AssistPanelShell } from "@/components/portal/assist-panel-shell"
 import { StatusCenter } from "@/components/portal/status-center"
 import { PageContainer } from "@/components/ui/page-layout"
 import { normalizePortalRole } from "@/lib/role-cues"
-import { readUserSession } from "@/lib/supabase/user-session"
+import { readUserSession } from "@/utils/actions"
 
 import {
   getMaintenanceTickets,
