@@ -41,13 +41,13 @@ export async function DashboardMetrics() {
     <div className="space-y-3">
       <div
         className={cn(
-          "flex items-center justify-between rounded-lg border border-border/60 p-3",
+          "surface-solid flex items-center justify-between rounded-lg p-3",
           roleCue.accentClassName
         )}
       >
         <div className="flex items-center gap-2">
           <span className="role-cue-dot" aria-hidden="true" />
-          <p className="text-sm font-medium role-cue-heading">
+          <p className="role-cue-heading text-sm font-medium">
             Performance overview
           </p>
         </div>
@@ -60,7 +60,7 @@ export async function DashboardMetrics() {
           const trend = trendCopy[metric.trend.direction]
 
           return (
-            <Card key={metric.id} className="border-border/60 shadow-none">
+            <Card key={metric.id} surface="solid">
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {metric.label}

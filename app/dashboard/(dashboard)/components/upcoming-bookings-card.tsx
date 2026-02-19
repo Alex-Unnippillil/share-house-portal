@@ -25,7 +25,7 @@ export async function UpcomingBookingsCard() {
   const bookings = await getUpcomingBookings()
 
   return (
-    <Card>
+    <Card surface="glass">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -44,7 +44,7 @@ export async function UpcomingBookingsCard() {
             return (
               <li
                 key={booking.id}
-                className="rounded-lg border border-border/60 p-3 shadow-sm"
+                className="surface-solid rounded-lg p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

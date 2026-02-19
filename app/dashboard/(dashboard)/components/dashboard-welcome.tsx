@@ -15,7 +15,7 @@ export async function DashboardWelcome() {
   return (
     <div
       className={cn(
-        "flex flex-col gap-5 rounded-2xl border border-border/60 p-5 sm:flex-row sm:items-center sm:justify-between",
+        "surface-solid flex flex-col gap-5 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between",
         roleCue.accentClassName,
         "role-cue-surface"
       )}
