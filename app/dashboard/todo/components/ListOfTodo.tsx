@@ -44,9 +44,9 @@ export default function ListOfTodo() {
 										<div>
 											<span
 												className={cn(
-													"  rounded-full border-[.5px] px-2 py-1 text-sm capitalize  shadow dark:bg-zinc-800",
+													"  rounded-full border-[.5px] px-2 py-1 text-sm capitalize  shadow bg-muted",
 													{
-														"border-green-500 bg-green-400 dark:text-green-400":
+														"border-payment-paid-border bg-payment-paid text-payment-paid-background":
 															todo.status ===
 															"completed",
 													}
@@ -60,9 +60,9 @@ export default function ListOfTodo() {
 							} else {
 								return (
 									<h1
-										className="flex items-center text-lg dark:text-white"
-										key={index}
-									>
+									className="flex items-center text-lg text-foreground"
+									key={index}
+								>
 										{todo[key as keyof typeof todo]}
 									</h1>
 								);
@@ -72,7 +72,7 @@ export default function ListOfTodo() {
 						<div className="flex items-center gap-2">
 							<Button
 								variant="outline"
-								className="bg-dark dark:bg-inherit"
+								className="bg-background"
 							>
 								<TrashIcon />
 								delete
