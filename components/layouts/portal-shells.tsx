@@ -1,15 +1,13 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 
 import { roleNavigation, type PortalRole } from "@/config/navigation"
+import { NavItemRow } from "@/components/navigation/nav-item-row"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { uiLayerTokens } from "@/components/ui/layer-styles"
 import { Button } from "@/components/ui/button"
-import { PageContainer } from "@/components/ui/page-layout"
 import {
   Sheet,
   SheetContent,
@@ -25,19 +23,14 @@ type PortalShellProps = {
   children: React.ReactNode
 }
 
-function isActiveRoute(pathname: string, href: string) {
-  if (href === "/") {
-    return pathname === href
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`)
-}
-
 function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
   const pathname = usePathname()
   const navItems = roleNavigation[role].primaryNav.map((item) => ({
     href: item.href ?? "/",
     title: item.title,
+    subtitle: item.subtitle,
+    badge: item.badge,
+    icon: item.icon,
   }))
 
   return (
@@ -47,21 +40,22 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
         aria-label="Portal"
       >
         <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">
-          Navigation
+          Workspace
         </p>
         <ul className="space-y-stack-sm">
           {navItems.map((item) => (
             <li key={`${item.href}-${item.title}`}>
               <Link
                 className={cn(
-                  "block rounded-md px-3 py-2 text-body-sm transition",
+                  "block rounded-md border px-3 py-2 text-body-sm transition-colors",
                   isActiveRoute(pathname, item.href)
                     ? "bg-primary/10 text-foreground"
                     : "text-foreground hover:bg-muted/70"
                 )}
                 href={item.href}
+                aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
               >
-                {item.title}
+                <NavItemRow title={item.title} subtitle={item.subtitle} badge={item.badge} icon={item.icon} />
               </Link>
             </li>
           ))}
@@ -84,14 +78,15 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
                 <li key={`${item.href}-${item.title}`}>
                   <Link
                     className={cn(
-                      "block rounded-md px-3 py-2 text-body-sm",
+                      "block rounded-md border px-3 py-2 text-body-sm transition-colors",
                       isActiveRoute(pathname, item.href)
                         ? "bg-primary/10 text-foreground"
                         : "hover:bg-muted/70"
                     )}
                     href={item.href}
+                    aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
                   >
-                    {item.title}
+                    <NavItemRow title={item.title} subtitle={item.subtitle} badge={item.badge} icon={item.icon} />
                   </Link>
                 </li>
               ))}
@@ -103,7 +98,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
   )
 }
 
-function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
+export function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
   const roleCue = getRoleCue(role)
 
   return (
@@ -111,15 +106,10 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
       <header className={cn("border-b p-content-gutter", uiLayerTokens.navChrome)}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-display-lg text-foreground">{title}</h1>
+            <p className="text-label-sm uppercase tracking-wide text-muted-foreground">Share House Portal</p>
+            <h1 className="text-heading-lg text-foreground">{title}</h1>
             <p className="text-body-sm text-muted-foreground">{subtitle}</p>
-            <p
-              className={cn(
-                "mt-1 text-xs",
-                roleCue.accentClassName,
-                "role-cue-heading"
-              )}
-            >
+            <p className={cn("mt-1 text-label-sm", roleCue.accentClassName, "role-cue-heading")}>
               {roleCue.contextCopy}
             </p>
           </div>
@@ -128,12 +118,10 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
           </span>
         </div>
       </header>
-      <div className="flex min-h-[calc(100vh-108px)] flex-col lg:flex-row">
+      <div className="flex min-h-[calc(100vh-120px)] flex-col lg:flex-row">
         <ResponsiveNav title={title} role={role} />
-        <main className="flex-1">
-          <PageContainer variant="dashboard" className="flex flex-col gap-section">
-            {children}
-          </PageContainer>
+        <main id="main-content" className="min-w-0 flex-1 py-section">
+          {children}
         </main>
       </div>
     </div>
