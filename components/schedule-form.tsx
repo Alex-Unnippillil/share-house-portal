@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button'
-import { scheduleMeetingAction } from '@/app/schedule/actions';
+import { scheduleMeetingAction } from '@/app/(portal)/schedule/actions';
 import { useFormState, useFormStatus } from 'react-dom';
 import { DayPicker } from 'react-day-picker';
 import * as z from 'zod'; // Import Zod

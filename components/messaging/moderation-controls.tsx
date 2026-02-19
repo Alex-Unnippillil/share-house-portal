@@ -2,8 +2,8 @@
 
 import { Flag, Lock, Megaphone, Pin, ShieldCheck, Unlock } from "lucide-react"
 
-import { moderateThreadAction, publishAnnouncementAction } from "@/app/messaging/actions"
-import type { ActiveThread, CurrentMessagingUser } from "@/app/messaging/types"
+import { moderateThreadAction, publishAnnouncementAction } from "@/app/(portal)/messaging/actions"
+import type { ActiveThread, CurrentMessagingUser } from "@/app/(portal)/messaging/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

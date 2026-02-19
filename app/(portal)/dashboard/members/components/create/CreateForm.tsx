@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
-import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
+import { DashboardSubmitButton } from "@/app/(portal)/dashboard/components/dashboard-submit-button"
 
 import { createMember } from "../../actions"
 

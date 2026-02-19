@@ -9,7 +9,7 @@ import {
 } from "@/lib/payments/catch-up"
 import type { CatchUpCharge } from "@/types/payments"
 
-import { loadCatchUpBalances } from "@/app/payments/loaders"
+import { loadCatchUpBalances } from "@/app/(portal)/payments/loaders"
 
 const sampleCharges: CatchUpCharge[] = [
   {
