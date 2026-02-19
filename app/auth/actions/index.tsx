@@ -33,6 +33,9 @@ function unknownErrorResponse(error: unknown) {
 }
 
 export async function signUpWithEmailAndPassword(data: {
+  username: string
+  fullName?: string
+  role: "tenant" | "roommate"
   email: string
   password: string
   confirm: string
@@ -49,8 +52,59 @@ export async function signUpWithEmailAndPassword(data: {
     const result = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: {
+        emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL
+          ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/auth`
+          : undefined,
+        data: {
+          username: data.username,
+          full_name: data.fullName,
+          role: data.role,
+        },
+      },
     })
 
+    return JSON.stringify(result)
+  } catch (error) {
+    return unknownErrorResponse(error)
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return missingSupabaseEnvResponse()
+  }
+
+  try {
+    const supabase = await createSupbaseServerClient()
+    const redirectTo = process.env.NEXT_PUBLIC_SITE_URL
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/auth?mode=reset`
+      : undefined
+
+    const result = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    })
+
+    return JSON.stringify(result)
+  } catch (error) {
+    return unknownErrorResponse(error)
+  }
+}
+
+export async function updatePassword(newPassword: string) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return missingSupabaseEnvResponse()
+  }
+
+  try {
+    const supabase = await createSupbaseServerClient()
+    const result = await supabase.auth.updateUser({ password: newPassword })
     return JSON.stringify(result)
   } catch (error) {
     return unknownErrorResponse(error)
