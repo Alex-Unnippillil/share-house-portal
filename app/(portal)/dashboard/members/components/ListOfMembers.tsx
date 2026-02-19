@@ -3,7 +3,7 @@ import { TrashIcon } from "@radix-ui/react-icons"
 import {
   dashboardEmptyStateClass,
   dashboardStatusBadgeVariants,
-} from "@/app/dashboard/components/dashboard-component-variants"
+} from "@/app/(portal)/dashboard/components/dashboard-component-variants"
 import { Button } from "@/components/ui/button"
 import { TableCell, TableRow } from "@/components/ui/table"
 

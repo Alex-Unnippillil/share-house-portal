@@ -2,9 +2,9 @@ import React, { lazy, Suspense, type ReactElement } from "react"
 import { renderToString } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
-import { DocumentsListSkeleton } from "@/app/documents/components/documents-list-skeleton"
-import { MessagingThreadsSkeleton } from "@/app/messaging/_components/messaging-threads-skeleton"
-import { RoommateLedgerSkeleton } from "@/app/payments/_components/roommate-ledger-skeleton"
+import { DocumentsListSkeleton } from "@/app/(portal)/documents/components/documents-list-skeleton"
+import { MessagingThreadsSkeleton } from "@/app/(portal)/messaging/_components/messaging-threads-skeleton"
+import { RoommateLedgerSkeleton } from "@/app/(portal)/payments/_components/roommate-ledger-skeleton"
 
 function expectSkeletonFallback(fallback: ReactElement, resolvedCopy: string) {
   const delay = 450
