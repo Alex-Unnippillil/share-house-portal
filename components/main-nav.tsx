@@ -27,7 +27,11 @@ export function MainNav({ appName, items }: MainNavProps) {
 
   return (
     <div className="mr-2 hidden gap-4 lg:flex lg:gap-8">
-      <SmartLink href="/" className="inline-flex" intent="navigation">
+      <SmartLink
+        href="/"
+        className="inline-flex rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        intent="navigation"
+      >
         <span className="flex items-center gap-2">
           <Icons.logo className="size-6 text-primary" />
           <div className="flex flex-col leading-tight">
@@ -37,18 +41,19 @@ export function MainNav({ appName, items }: MainNavProps) {
         </span>
       </SmartLink>
       {items?.length ? (
-        <nav aria-label="Primary" className="flex gap-2">
+        <nav aria-label="Primary" className="flex gap-1 rounded-lg border border-border/60 bg-background/80 p-1">
           {items.map(
             (item) =>
               item.href && (
                 <SmartLink
                   key={item.href}
                   href={item.href}
+                  aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "relative rounded-md px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                     item.disabled && "cursor-not-allowed opacity-80",
                     isActiveRoute(pathname, item.href)
-                      ? "bg-primary/10 text-foreground"
+                      ? "bg-primary/10 text-foreground after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-primary"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                   intent="navigation"
