@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.18.3",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@vercel/speed-insights",
+      "bufferutil",
+      "core-js-pure",
+      "esbuild",
+      "sharp",
+      "unrs-resolver",
+      "utf-8-validate"
+    ]
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
