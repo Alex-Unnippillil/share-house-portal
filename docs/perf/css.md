@@ -10,7 +10,7 @@ purged result is verified in both local development and CI.
 1. Install dependencies (`npm install`, `pnpm install`, or `yarn install`).
 2. Run `npm run css:purge` (or the equivalent command for your package manager).
 3. The script invokes the Tailwind CLI against `app/globals.css` with the
-   production content globs from `tailwind.config.ts`, writes the purged bundle
+   production content globs from `tailwind.config.js`, writes the purged bundle
    to a temporary directory, and reports the compressed size.
 4. Builds fail when the bundle exceeds the default 90&nbsp;kB limit. Set
    `CSS_BUNDLE_MAX_KB` to override the guardrail for experiments:
@@ -41,7 +41,7 @@ Dynamic class names (for example, values assembled from data or persisted in a
 CMS) must be registered explicitly so they survive the purge:
 
 ```ts
-// tailwind.config.ts
+// tailwind.config.js
 const config = {
   // ...
   safelist: [

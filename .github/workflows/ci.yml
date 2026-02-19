@@ -29,6 +29,9 @@ jobs:
       - name: Validate component filenames
         run: pnpm check:component-files
 
+      - name: Validate Tailwind config source
+        run: pnpm check:tailwind-config
+
       - name: Lint
         run: pnpm lint
 

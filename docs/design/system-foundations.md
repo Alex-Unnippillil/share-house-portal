@@ -4,7 +4,7 @@ This document standardizes how feature teams build tenant, property manager, and
 
 ## 1) Shared Tailwind tokens (`config/tailwind`)
 
-The canonical token source is `config/tailwind/tokens.js`, consumed by `tailwind.config.ts` and `tailwind.config.js`.
+The canonical token source is `config/tailwind/tokens.js`, consumed by the canonical `tailwind.config.js`.
 
 ### Spacing tokens
 

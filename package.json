@@ -19,7 +19,7 @@
     "test:perf": "pnpm css:purge",
     "perf:ci": "pnpm test:perf",
     "check:component-files": "node scripts/check-component-filenames.mjs",
-    "check:palette-classes": "node scripts/check-no-palette-classes.mjs"
+    "check:tailwind-config": "node scripts/check-tailwind-config.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
