@@ -27,6 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import SmartLink from "@/components/navigation/SmartLink"
+import { MotionReveal } from "@/components/landing/motion"
 
 const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
   ssr: false,
@@ -237,7 +238,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.login}
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition hover:bg-primary/90"
+                    "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition duration-200 hover:bg-primary/90 fine:hover:-translate-y-0.5 fine:hover:shadow-xl"
                   )}
                 >
                   <span>Sign in</span>
@@ -246,7 +247,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
-                    "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
+                    "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition duration-200 hover:border-primary hover:bg-primary/10 fine:hover:-translate-y-0.5 fine:hover:shadow-lg"
                   )}
                 >
                   <span>Create your household</span>
@@ -254,9 +255,10 @@ export default async function IndexPage() {
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 {heroHighlights.map((item) => (
-                  <div
+                  <MotionReveal
                     key={item.title}
-                    className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur"
+                    delay={0.06}
+                    className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur transition-shadow duration-200 fine:hover:shadow-md"
                   >
                     <div className="flex items-center gap-3">
                       <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -269,7 +271,7 @@ export default async function IndexPage() {
                     <p className="mt-3 text-sm text-muted-foreground">
                       {item.description}
                     </p>
-                  </div>
+                  </MotionReveal>
                 ))}
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground lg:justify-start">
@@ -359,9 +361,10 @@ export default async function IndexPage() {
           </div>
           <div className="mt-16 grid gap-4 sm:grid-cols-3">
             {heroMetrics.map((metric) => (
-              <div
+              <MotionReveal
                 key={metric.label}
-                className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur"
+                delay={0.08}
+                className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur transition-shadow duration-200 fine:hover:shadow-md"
               >
                 <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <metric.icon className="size-5" aria-hidden="true" />
@@ -374,14 +377,14 @@ export default async function IndexPage() {
                     {metric.label}
                   </p>
                 </div>
-              </div>
+              </MotionReveal>
             ))}
           </div>
         </div>
       </section>
 
       <section className="container mx-auto px-4 py-20 sm:py-24">
-        <div className="mx-auto max-w-2xl text-center">
+        <MotionReveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             Shared-house workflows in one tenant portal
           </h2>
@@ -389,13 +392,13 @@ export default async function IndexPage() {
             From rent to repairs, Roomsily keeps every roommate aligned with
             clear automations and actionable insights.
           </p>
-        </div>
+        </MotionReveal>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {portalFeatures.map((feature) => (
-            <Card
-              key={feature.title}
-              className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg"
-            >
+          {portalFeatures.map((feature, index) => (
+            <MotionReveal key={feature.title} delay={index * 0.05}>
+              <Card
+                className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition duration-200 fine:hover:-translate-y-0.5 fine:hover:border-primary/60 fine:hover:shadow-lg"
+              >
               <CardHeader className="space-y-5">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <feature.icon className="size-5" aria-hidden="true" />
@@ -414,13 +417,14 @@ export default async function IndexPage() {
                 </Link>
               </CardContent>
             </Card>
+            </MotionReveal>
           ))}
         </div>
       </section>
 
       <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
         <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl text-center">
+          <MotionReveal className="mx-auto max-w-2xl text-center">
             <h2 className="text-balance text-display-lg">
               Designed for the people using it
             </h2>
@@ -428,13 +432,13 @@ export default async function IndexPage() {
               Whether you’re paying rent or overseeing dozens of units, Roomsily
               gives every role the clarity they need.
             </p>
-          </div>
+          </MotionReveal>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            {personaPlaybooks.map((persona) => (
-              <Card
-                key={persona.badge}
-                className="relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur"
-              >
+            {personaPlaybooks.map((persona, index) => (
+              <MotionReveal key={persona.badge} delay={index * 0.08}>
+                <Card
+                  className="relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur transition-shadow duration-200 fine:hover:shadow-md"
+                >
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
                 <CardHeader className="relative space-y-4">
                   <Badge
@@ -463,7 +467,8 @@ export default async function IndexPage() {
                     ))}
                   </ul>
                 </CardContent>
-              </Card>
+                </Card>
+              </MotionReveal>
             ))}
           </div>
         </div>
@@ -509,7 +514,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
-                    "border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
+                    "border-primary/40 bg-background/80 text-primary transition duration-200 hover:border-primary hover:bg-primary/10 fine:hover:-translate-y-0.5 fine:hover:shadow-lg"
                   )}
                 >
                   <span>Book a walkthrough</span>
@@ -518,7 +523,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "sm" }),
-                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                    "bg-primary text-primary-foreground transition duration-200 hover:bg-primary/90 fine:hover:-translate-y-0.5 fine:hover:shadow-lg"
                   )}
                 >
                   <span>Start onboarding</span>
@@ -535,11 +540,11 @@ export default async function IndexPage() {
       <section className="border-b border-border/70 bg-muted/10 py-20 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            {integrationHighlights.map((highlight) => (
-              <Card
-                key={highlight.title}
-                className="h-full border-border/70 bg-background/95 shadow-sm"
-              >
+            {integrationHighlights.map((highlight, index) => (
+              <MotionReveal key={highlight.title} delay={index * 0.08}>
+                <Card
+                  className="h-full border-border/70 bg-background/95 shadow-sm transition-shadow duration-200 fine:hover:shadow-md"
+                >
                 <CardHeader className="space-y-4">
                   <CardTitle className="text-heading-md">
                     {highlight.title}
@@ -568,14 +573,15 @@ export default async function IndexPage() {
                     <span>{`${highlight.cta.label} →`}</span>
                   </SmartLink>
                 </CardContent>
-              </Card>
+                </Card>
+              </MotionReveal>
             ))}
           </div>
         </div>
       </section>
 
       <section className="container mx-auto px-4 py-20 sm:py-24">
-        <div className="mx-auto max-w-2xl text-center">
+        <MotionReveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             How households move into Roomsily
           </h2>
@@ -583,7 +589,7 @@ export default async function IndexPage() {
             Guided onboarding and contextual tips remove the friction from
             getting every roommate connected.
           </p>
-        </div>
+        </MotionReveal>
         <ol className="relative mt-12 grid gap-6 md:grid-cols-4">
           {workflowSteps.map((item, index) => (
             <li
@@ -610,7 +616,8 @@ export default async function IndexPage() {
 
       <section className="pb-24">
         <div className="container mx-auto px-4">
-          <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
+          <MotionReveal>
+            <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
             <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
               <div className="max-w-xl space-y-4">
                 <h3 className="text-balance text-display-lg">
@@ -626,7 +633,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
+                    "bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition duration-200 hover:bg-primary/90 fine:hover:-translate-y-0.5 fine:hover:shadow-xl"
                   )}
                   intent="critical"
                 >
@@ -636,7 +643,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
-                    "border-primary/40 bg-white/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-white"
+                    "border-primary/40 bg-white/70 px-8 text-base font-semibold text-primary transition duration-200 hover:border-primary hover:bg-white fine:hover:-translate-y-0.5 fine:hover:shadow-lg"
                   )}
                   intent="passive"
                 >
@@ -644,7 +651,8 @@ export default async function IndexPage() {
                 </SmartLink>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </MotionReveal>
         </div>
       </section>
     </div>
