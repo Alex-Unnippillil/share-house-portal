@@ -13,9 +13,9 @@ import LandingHeader from "@/components/landing/landing-header"
 import { readUserSession } from "@/utils/actions"
 
 export default async function IndexPage() {
-  const { data: userSession } = await readUserSession()
+  const userSessionResponse = await readUserSession()
 
-  if (userSession.session) {
+  if (userSessionResponse.data.session) {
     redirect("/dashboard")
   }
 
