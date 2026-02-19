@@ -44,17 +44,6 @@ export default function CreateForm() {
     })
     form.reset()
   }
-	function onSubmit(data: z.infer<typeof FormSchema>) {
-		toast({
-			title: "You have successfully create todo.",
-			description: (
-				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
-					<code className="text-card-foreground">{data.title} is created</code>
-				</pre>
-			),
-		});
-		form.reset();
-	}
 
   return (
     <Form {...form}>
