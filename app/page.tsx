@@ -1,25 +1,18 @@
 import dynamic from "next/dynamic"
+import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { readUserSession } from "@/utils/actions"
-import {
-  BellRing,
-  CalendarClock,
-  FileText,
-  ListChecks,
-  MessageSquare,
-  PiggyBank,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  Wallet,
-} from "lucide-react"
 
-import { siteConfig } from "@/config/site"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
 import {
+  FeatureGridSection,
+  FinalCtaSection,
+  HeroSection,
+  IntegrationsSection,
+  PersonasSection,
+  PrismSection,
+  WorkflowSection,
+} from "@/components/landing/landing-sections"
+import { readUserSession } from "@/utils/actions"
   Card,
   CardContent,
   CardDescription,
@@ -27,16 +20,64 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import SmartLink from "@/components/navigation/SmartLink"
-import LandingHeader from "@/components/landing/landing-header"
+import LazyMount from "@/components/landing/lazy-mount"
+import { PersonasSection } from "@/components/landing/personas-section"
+import { MotionReveal } from "@/components/landing/motion"
 
 const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/40 bg-background/70 text-sm text-muted-foreground">
-      Calibrating shared-house orbit…
+    <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/30 bg-background/70 text-sm text-muted-foreground">
+      Loading household map…
     </div>
   ),
 })
+
+const prismPoster = (
+  <div
+    className="relative flex size-full items-center justify-center overflow-hidden rounded-3xl"
+    aria-label="Static household integration diagram"
+  >
+    <svg
+      viewBox="0 0 640 420"
+      className="size-full"
+      role="img"
+      aria-hidden="true"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <radialGradient id="posterGlow" cx="50%" cy="45%" r="65%">
+          <stop offset="0%" stopColor="rgb(56 189 248 / 0.42)" />
+          <stop offset="100%" stopColor="rgb(15 23 42 / 0)" />
+        </radialGradient>
+      </defs>
+      <rect width="640" height="420" fill="rgb(2 6 23)" />
+      <rect width="640" height="420" fill="url(#posterGlow)" />
+      <g stroke="rgb(148 163 184 / 0.4)" strokeWidth="1.5" fill="none">
+        <path d="M120 210L210 155L300 210L210 265Z" />
+        <path d="M340 210L430 155L520 210L430 265Z" />
+        <path d="M230 130L320 75L410 130L320 185Z" />
+        <path d="M230 290L320 235L410 290L320 345Z" />
+      </g>
+      <g fill="rgb(56 189 248 / 0.85)">
+        <circle cx="210" cy="210" r="7" />
+        <circle cx="430" cy="210" r="7" />
+        <circle cx="320" cy="130" r="7" />
+        <circle cx="320" cy="290" r="7" />
+      </g>
+      <circle cx="320" cy="210" r="44" fill="rgb(14 116 144 / 0.6)" />
+      <text
+        x="320"
+        y="216"
+        fill="rgb(226 232 240)"
+        fontSize="14"
+        textAnchor="middle"
+      >
+        Roomsily
+      </text>
+    </svg>
+  </div>
+)
 
 const integrationBadges = [
   "Stripe Billing",
@@ -123,31 +164,6 @@ const portalFeatures = [
   },
 ]
 
-const personaPlaybooks = [
-  {
-    badge: "Roommates",
-    title: "A calmer home hub",
-    description:
-      "Track rent, chores, and shared spaces from a mobile-first portal that respects everyone’s time.",
-    points: [
-      "Automatic rent splits with clear history and reminders for each roommate",
-      "A personalised daily agenda of bookings, chores, and open polls",
-      "Visitor check-ins and document vaults that remove guesswork",
-    ],
-  },
-  {
-    badge: "Property teams",
-    title: "Operations with context",
-    description:
-      "Connect leasing, finance, and community updates to lower churn and support happier households.",
-    points: [
-      "Stripe, Supabase, and Documenso data aligned in one control centre",
-      "Real-time alerts when payments slip or maintenance escalates",
-      "Exports, audit trails, and permissions tuned for compliance",
-    ],
-  },
-]
-
 const integrationHighlights = [
   {
     title: "Finance spine with Stripe + Supabase",
@@ -200,6 +216,67 @@ const workflowSteps = [
   },
 ]
 
+const landingNavLinks = [
+  { label: "Features", href: "#features" },
+  { label: "Integrations", href: "#integrations" },
+  { label: "Workflow", href: "#workflow" },
+]
+function HeroMedia() {
+  return (
+    <div className="relative mx-auto w-full max-w-xl">
+      <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/75 shadow-2xl shadow-primary/15 backdrop-blur">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-primary/10" />
+        <Image
+          src="/landing/hero-preview.svg"
+          alt="Roomsily dashboard preview showing rent, bookings, and household activity"
+          priority
+          width={1200}
+          height={860}
+          className="h-auto w-full"
+        />
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-2xl border border-primary/25 bg-slate-950 text-slate-100 shadow-lg shadow-primary/10 sm:mt-6">
+        <div className="relative flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/20 text-xs font-bold text-primary">
+              R
+            </span>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold text-white">Live household details</p>
+              <p className="text-xs text-slate-300">Synced moments from the tenant feed</p>
+            </div>
+          </div>
+          <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 text-[11px] font-medium text-emerald-200">
+            Healthy
+          </span>
+        </div>
+
+        <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-300">Next rent cycle</p>
+            <p className="mt-2 text-lg font-semibold text-white">$4,280 due</p>
+            <p className="mt-1 text-xs text-slate-300">4 roommates · 82% funded</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-300">Today’s flow</p>
+            <ul className="mt-2 space-y-1.5 text-xs text-slate-100">
+              <li className="flex items-center gap-2">
+                <CalendarClock className="size-3.5 text-primary" />
+                Kitchen booking · 6:00–8:00 PM
+              </li>
+              <li className="flex items-center gap-2">
+                <BellRing className="size-3.5 text-primary" />
+                Visitor request approved
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default async function IndexPage() {
   const { data: userSession } = await readUserSession()
 
@@ -212,6 +289,51 @@ export default async function IndexPage() {
       <section className="glass-border relative overflow-hidden border-b">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),transparent_58%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.12),transparent_58%)]" />
         <div className="container relative mx-auto px-content-gutter py-section">
+      <HeroSection />
+      <FeatureGridSection />
+      <PersonasSection />
+      <PrismSection />
+      <IntegrationsSection />
+      <WorkflowSection />
+      <FinalCtaSection />
+      <LandingHeader />
+
+      <section className="relative overflow-hidden border-b" id="top">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background dark:from-primary/15" />
+        <div className="container relative mx-auto px-4 py-16 sm:py-20 lg:py-24">
+          <header className="mb-10 flex items-center justify-between gap-4 sm:mb-12">
+            <Link href="/" className="text-base font-semibold tracking-tight text-foreground">
+              Roomsily
+            </Link>
+            <nav className="hidden items-center gap-6 md:flex" aria-label="Landing sections">
+              {landingNavLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+            <details className="relative md:hidden">
+              <summary className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg border border-border/70 px-4 text-sm font-medium text-foreground marker:content-none">
+                Menu
+              </summary>
+              <div className="absolute right-0 z-10 mt-2 w-52 space-y-2 rounded-xl border border-border/70 bg-background p-3 shadow-lg">
+                {landingNavLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </details>
+          </header>
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
             <div className="space-y-10 text-center lg:text-left">
               <div className="flex justify-center lg:justify-start">
@@ -234,29 +356,31 @@ export default async function IndexPage() {
               </div>
               <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
                 <Link
-                  href={siteConfig.links.login}
+                  href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition hover:bg-primary/90"
+                    "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition duration-200 hover:bg-primary/90 fine:hover:-translate-y-0.5 fine:hover:shadow-xl"
+                  )}
+                >
+                  <span>Start onboarding</span>
+                </Link>
+                <Link
+                  href={siteConfig.links.login}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition duration-200 hover:border-primary hover:bg-primary/10 fine:hover:-translate-y-0.5 fine:hover:shadow-lg"
                   )}
                 >
                   <span>Sign in</span>
                 </Link>
-                <Link
-                  href={siteConfig.links.signup}
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
-                    "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
-                  )}
-                >
-                  <span>Create your household</span>
-                </Link>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {heroHighlights.map((item) => (
-                  <div
+                  <MotionReveal
                     key={item.title}
                     className="glass-surface glass-border rounded-2xl p-5 text-left"
+                    delay={0.06}
+                    className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur transition-shadow duration-200 fine:hover:shadow-md"
                   >
                     <div className="flex items-center gap-3">
                       <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -269,7 +393,7 @@ export default async function IndexPage() {
                     <p className="mt-3 text-sm text-muted-foreground">
                       {item.description}
                     </p>
-                  </div>
+                  </MotionReveal>
                 ))}
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground lg:justify-start">
@@ -356,12 +480,15 @@ export default async function IndexPage() {
                 </div>
               </div>
             </div>
+            <HeroMedia />
           </div>
           <div className="mt-16 grid gap-4 sm:grid-cols-3">
             {heroMetrics.map((metric) => (
-              <div
+              <MotionReveal
                 key={metric.label}
                 className="glass-surface glass-border flex items-center gap-4 rounded-2xl px-6 py-5 text-left"
+                delay={0.08}
+                className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur transition-shadow duration-200 fine:hover:shadow-md"
               >
                 <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <metric.icon className="size-5" aria-hidden="true" />
@@ -374,14 +501,17 @@ export default async function IndexPage() {
                     {metric.label}
                   </p>
                 </div>
-              </div>
+              </MotionReveal>
             ))}
           </div>
         </div>
       </section>
 
       <section className="container mx-auto px-content-gutter py-section">
+      <section id="features" className="container mx-auto px-4 py-14 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-2xl text-center">
+      <section className="container mx-auto px-4 py-20 sm:py-24">
+        <MotionReveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             Shared-house workflows in one tenant portal
           </h2>
@@ -389,13 +519,18 @@ export default async function IndexPage() {
             From rent to repairs, Roomsily keeps every roommate aligned with
             clear automations and actionable insights.
           </p>
-        </div>
+        </MotionReveal>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {portalFeatures.map((feature) => (
             <Card
               key={feature.title}
               className="glass-surface glass-border glass-surface-hover flex h-full flex-col"
             >
+          {portalFeatures.map((feature, index) => (
+            <MotionReveal key={feature.title} delay={index * 0.05}>
+              <Card
+                className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition duration-200 fine:hover:-translate-y-0.5 fine:hover:border-primary/60 fine:hover:shadow-lg"
+              >
               <CardHeader className="space-y-5">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <feature.icon className="size-5" aria-hidden="true" />
@@ -414,6 +549,7 @@ export default async function IndexPage() {
                 </Link>
               </CardContent>
             </Card>
+            </MotionReveal>
           ))}
         </div>
       </section>
@@ -421,6 +557,16 @@ export default async function IndexPage() {
       <section className="glass-border border-y bg-muted/10 py-section">
         <div className="container mx-auto px-content-gutter">
           <div className="mx-auto max-w-2xl text-center">
+      <section className="border-y border-border/70 bg-muted/10 py-14 sm:py-16 lg:py-20">
+
+      <PersonasSection />
+      <section
+        className="border-y border-border/70 bg-muted/10 py-20 sm:py-24"
+        id="roles"
+        style={{ scrollMarginTop: "7rem" }}
+      >
+        <div className="container mx-auto px-4">
+          <MotionReveal className="mx-auto max-w-2xl text-center">
             <h2 className="text-balance text-display-lg">
               Designed for the people using it
             </h2>
@@ -428,7 +574,7 @@ export default async function IndexPage() {
               Whether you’re paying rent or overseeing dozens of units, Roomsily
               gives every role the clarity they need.
             </p>
-          </div>
+          </MotionReveal>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
             {personaPlaybooks.map((persona) => (
               <Card
@@ -436,6 +582,12 @@ export default async function IndexPage() {
                 className="glass-surface glass-border relative h-full overflow-hidden"
               >
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.12),transparent_70%)]" />
+            {personaPlaybooks.map((persona, index) => (
+              <MotionReveal key={persona.badge} delay={index * 0.08}>
+                <Card
+                  className="relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur transition-shadow duration-200 fine:hover:shadow-md"
+                >
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
                 <CardHeader className="relative space-y-4">
                   <Badge
                     variant="secondary"
@@ -463,7 +615,8 @@ export default async function IndexPage() {
                     ))}
                   </ul>
                 </CardContent>
-              </Card>
+                </Card>
+              </MotionReveal>
             ))}
           </div>
         </div>
@@ -471,6 +624,13 @@ export default async function IndexPage() {
 
       <section className="glass-border border-y bg-muted/20 py-section">
         <div className="container mx-auto px-content-gutter">
+      <section className="border-y border-border/70 bg-muted/20 py-14 sm:py-16 lg:py-20">
+      <section
+        className="border-y border-border/70 bg-muted/20 py-20 sm:py-24"
+        id="integrations"
+        style={{ scrollMarginTop: "7rem" }}
+      >
+        <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
             <div className="space-y-6">
               <h2 className="text-balance text-display-lg">
@@ -510,6 +670,9 @@ export default async function IndexPage() {
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
                     "glass-surface glass-border text-primary hover:border-primary hover:bg-primary/10"
+                    "min-h-11 border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "px-0 text-primary hover:bg-transparent hover:text-primary/90"
                   )}
                 >
                   <span>Book a walkthrough</span>
@@ -518,7 +681,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "sm" }),
-                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                    "min-h-11 bg-primary text-primary-foreground hover:bg-primary/90"
                   )}
                 >
                   <span>Start onboarding</span>
@@ -540,6 +703,17 @@ export default async function IndexPage() {
                 key={highlight.title}
                 className="glass-surface glass-border h-full"
               >
+      <section
+        id="integrations"
+        className="border-b border-border/70 bg-muted/10 py-14 sm:py-16 lg:py-20"
+      >
+        <div className="container mx-auto px-4">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+            {integrationHighlights.map((highlight, index) => (
+              <MotionReveal key={highlight.title} delay={index * 0.08}>
+                <Card
+                  className="h-full border-border/70 bg-background/95 shadow-sm transition-shadow duration-200 fine:hover:shadow-md"
+                >
                 <CardHeader className="space-y-4">
                   <CardTitle className="text-heading-md">
                     {highlight.title}
@@ -568,7 +742,8 @@ export default async function IndexPage() {
                     <span>{`${highlight.cta.label} →`}</span>
                   </SmartLink>
                 </CardContent>
-              </Card>
+                </Card>
+              </MotionReveal>
             ))}
           </div>
         </div>
@@ -576,6 +751,8 @@ export default async function IndexPage() {
 
       <section className="container mx-auto px-content-gutter py-section">
         <div className="mx-auto max-w-2xl text-center">
+      <section className="container mx-auto px-4 py-20 sm:py-24">
+        <MotionReveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             How households move into Roomsily
           </h2>
@@ -583,7 +760,7 @@ export default async function IndexPage() {
             Guided onboarding and contextual tips remove the friction from
             getting every roommate connected.
           </p>
-        </div>
+        </MotionReveal>
         <ol className="relative mt-12 grid gap-6 md:grid-cols-4">
           {workflowSteps.map((item, index) => (
             <li
@@ -626,25 +803,27 @@ export default async function IndexPage() {
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
+                    "min-h-11 bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
+                    "bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition duration-200 hover:bg-primary/90 fine:hover:-translate-y-0.5 fine:hover:shadow-xl"
                   )}
                   intent="critical"
                 >
                   <span>Start onboarding</span>
                 </SmartLink>
                 <SmartLink
-                  href={siteConfig.links.contact}
+                  href={siteConfig.links.login}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "glass-border bg-background/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-background"
                   )}
                   intent="passive"
                 >
-                  <span>Talk with us</span>
+                  <span>Sign in</span>
                 </SmartLink>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </MotionReveal>
         </div>
       </section>
     </div>
