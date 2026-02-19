@@ -51,8 +51,8 @@ export default function TodoForm({ isEdit }: { isEdit: boolean }) {
 		toast({
 			title: "You submitted the following values:",
 			description: (
-				<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-					<code className="text-white">
+				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
+					<code className="text-card-foreground">
 						{JSON.stringify(data, null, 2)}
 					</code>
 				</pre>
@@ -67,8 +67,8 @@ export default function TodoForm({ isEdit }: { isEdit: boolean }) {
 		toast({
 			title: "You submitted the following values:",
 			description: (
-				<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-					<code className="text-white">
+				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
+					<code className="text-card-foreground">
 						{JSON.stringify(data, null, 2)}
 					</code>
 				</pre>
