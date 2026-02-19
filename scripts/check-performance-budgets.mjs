@@ -33,6 +33,22 @@ if (!budgets.webVitals || typeof budgets.webVitals !== 'object') {
   errors.push('Missing webVitals in config/performance-budgets.json')
 }
 
+
+if (!budgets.jsBundles || typeof budgets.jsBundles !== 'object') {
+  errors.push('Missing jsBundles budget map in config/performance-budgets.json')
+} else {
+  for (const [route, budgetKb] of Object.entries(budgets.jsBundles)) {
+    if (!route.startsWith('/')) {
+      errors.push(`JS budget route must start with /: ${route}`)
+    }
+
+    if (typeof budgetKb !== 'number' || !Number.isFinite(budgetKb) || budgetKb <= 0) {
+      errors.push(`JS budget for ${route} must be a positive number`)
+    }
+  }
+}
+
+
 if (errors.length) {
   console.error('Performance budget check failed:')
   for (const error of errors) {

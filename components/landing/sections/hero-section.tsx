@@ -1,6 +1,6 @@
-import dynamic from "next/dynamic"
 import { BellRing, CalendarClock, MessageSquare } from "lucide-react"
 
+import FeaturePrismLazy from "@/components/feature-prism-lazy"
 import { Badge } from "@/components/ui/badge"
 import { siteConfig } from "@/config/site"
 
@@ -8,15 +8,6 @@ import { heroHighlights, heroMetrics, integrationBadges } from "../landing-conte
 import { BadgeRow, CtaButtonGroup, MetricCard } from "../landing-shared"
 import { LANDING_SECTION_IDS } from "../landing-ids"
 import { LandingSection } from "../section-primitives"
-
-const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/40 bg-background/70 text-sm text-muted-foreground">
-      Calibrating shared-house orbit…
-    </div>
-  ),
-})
 
 export function HeroSection() {
   return (
@@ -139,7 +130,7 @@ export function HeroSection() {
                 </div>
               </div>
               <div className="h-[180px] overflow-hidden rounded-2xl border border-white/10 bg-black/20 sm:h-[220px]">
-                <FeaturePrism />
+                <FeaturePrismLazy fallbackLabel="Calibrating shared-house orbit…" />
               </div>
             </div>
           </div>
