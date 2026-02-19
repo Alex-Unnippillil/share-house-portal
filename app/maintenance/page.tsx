@@ -1,3 +1,4 @@
+import { SectionStack } from "@/components/layouts/layout-primitives"
 import { MaintenanceDashboard } from "@/components/maintenance/maintenance-dashboard"
 import {
   PageContainer,
@@ -12,11 +13,14 @@ export default function MaintenancePage() {
       <PageHeader>
         <PageTitle>Maintenance Requests</PageTitle>
         <PageDescription>
-          Submit issues with clear severity and access windows, then track every assignment and status change in a shared timeline.
+          Submit issues with clear severity and access windows, then track every
+          assignment and status change in a shared timeline.
         </PageDescription>
       </PageHeader>
 
-      <MaintenanceDashboard />
+      <SectionStack>
+        <MaintenanceDashboard />
+      </SectionStack>
     </PageContainer>
   )
 }

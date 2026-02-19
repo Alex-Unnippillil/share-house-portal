@@ -26,7 +26,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "layout-content space-y-section py-section",
+        "mx-auto w-full space-y-section px-content-gutter py-section",
         pageContainerVariantClasses[variant],
         className
       )}

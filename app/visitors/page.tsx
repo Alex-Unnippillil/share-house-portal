@@ -12,8 +12,10 @@ import {
   PageContainer,
   PageDescription,
   PageHeader,
+  PageSection,
   PageTitle,
 } from "@/components/ui/page-layout"
+import { SectionStack } from "@/components/layouts/layout-primitives"
 import { ManagerVisitorOversight } from "@/components/visitors/manager-visitor-oversight"
 import { VisitorBookingForm } from "@/components/visitors/visitor-booking-form"
 
@@ -59,12 +61,13 @@ export default async function VisitorsPage() {
       <PageHeader>
         <PageTitle>Overnight Visitor Requests</PageTitle>
         <PageDescription>
-          Register guests, enforce unit policy constraints, and keep roommates and managers informed.
+          Register guests, enforce unit policy constraints, and keep roommates
+          and managers informed.
         </PageDescription>
       </PageHeader>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Card>
+      <PageSection className="grid gap-8 lg:grid-cols-2">
+        <Card surface="elevated">
           <CardHeader>
             <CardTitle>Register a visitor</CardTitle>
             <CardDescription>
@@ -77,19 +80,19 @@ export default async function VisitorsPage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
+        <SectionStack className="space-y-card-gap">
           {visitorHighlights.map((item) => (
-            <Card key={item.title}>
+            <Card key={item.title} surface="glass" interactive>
               <CardHeader>
-                <CardTitle className="text-lg">{item.title}</CardTitle>
+                <CardTitle>{item.title}</CardTitle>
                 <CardDescription>{item.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
-        </div>
-      </div>
+        </SectionStack>
+      </PageSection>
 
-      <Card>
+      <Card surface="solid">
         <CardHeader>
           <CardTitle>Visitor policy and regional compliance</CardTitle>
           <CardDescription>
@@ -97,7 +100,7 @@ export default async function VisitorsPage() {
             blackout windows, and overlap rules before approval routing.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
+        <CardContent className="space-y-2 text-body-sm text-muted-foreground">
           <p>
             Regional occupancy, safety, and recordkeeping obligations vary.
             Managers should align unit policy settings and approval practices

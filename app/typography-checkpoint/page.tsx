@@ -1,9 +1,10 @@
 import { TypographyHierarchyCheckpoint } from "@/components/patterns/typography-hierarchy-checkpoint"
+import { PageContainer } from "@/components/ui/page-layout"
 
 export default function TypographyCheckpointPage() {
   return (
-    <div className="container max-w-5xl px-content-gutter py-section">
+    <PageContainer variant="narrow">
       <TypographyHierarchyCheckpoint />
-    </div>
+    </PageContainer>
   )
 }
