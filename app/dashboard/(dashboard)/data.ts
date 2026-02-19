@@ -2,6 +2,9 @@ import "server-only"
 
 import { cache } from "react"
 
+import { getFloorplanSvg } from "@/lib/data/floorplans"
+import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+
 type WelcomeMessage = {
   title: string
   subtitle: string
@@ -119,15 +122,34 @@ type FloorplanWorkspace = {
   annotationHistory: FloorplanAnnotationVersion[]
 }
 
-async function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+async function getViewerContext() {
+  const supabase = await createSupbaseServerClientReadOnly()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { supabase, user: null, profile: null }
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id,full_name,role,unit_id,rent_share")
+    .eq("id", user.id)
+    .maybeSingle()
+
+  return { supabase, user, profile }
 }
 
 async function fetchWelcomeMessage(): Promise<WelcomeMessage> {
-  await wait(120)
+  const { profile } = await getViewerContext()
+  const firstName = profile?.full_name?.split(" ")[0] ?? "there"
+
   return {
-    title: "Welcome back, Jordan",
-    subtitle: "Here’s what’s happening with Unit 3B today.",
+    title: `Welcome back, ${firstName}`,
+    subtitle: profile?.unit_id
+      ? `Here’s what’s happening for your unit (${profile.unit_id}) today.`
+      : "Here’s what’s happening in your household today.",
     primaryAction: {
       href: "/payments",
       label: "Settle rent",
@@ -146,14 +168,51 @@ export function loadWelcomeMessageUncached() {
 }
 
 async function fetchRentSummary(): Promise<RentSummary> {
-  await wait(240)
+  const { supabase, user, profile } = await getViewerContext()
+
+  const [{ data: latestPayment }, { data: subscription }, { data: openBalances }] = await Promise.all([
+    user
+      ? supabase
+          .from("rent_payments")
+          .select("amount,created_at,status")
+          .eq("user_id", user.id)
+          .in("status", ["completed", "succeeded"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    user
+      ? supabase
+          .from("subscriptions")
+          .select("current_period_end,status")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    user
+      ? supabase
+          .from("rent_payments")
+          .select("amount")
+          .eq("user_id", user.id)
+          .in("status", ["pending", "failed"])
+      : Promise.resolve({ data: [] }),
+  ])
+
+  const dueDate =
+    subscription?.current_period_end ??
+    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString()
+
+  const balance = (openBalances ?? []).reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0)
+  const amount = Number(profile?.rent_share ?? latestPayment?.amount ?? 0)
+
   return {
-    amount: 1260,
-    dueDate: "2024-08-01",
-    autopayEnabled: true,
-    balance: 0,
-    lastPaymentDate: "2024-07-01",
-    status: "due_soon",
+    amount,
+    dueDate,
+    autopayEnabled: subscription?.status === "active",
+    balance,
+    lastPaymentDate: latestPayment?.created_at ?? new Date().toISOString(),
+    status: balance > 0 ? "overdue" : "due_soon",
   }
 }
 
@@ -164,30 +223,30 @@ export function loadRentSummaryUncached() {
 }
 
 async function fetchRecentDocuments(): Promise<DocumentSummary[]> {
-  await wait(180)
-  return [
-    {
-      name: "Lease agreement v2.pdf",
-      href: "/documents",
-      category: "Lease",
-      status: "viewed",
-      updatedAt: "2024-06-15",
-    },
-    {
-      name: "House rules.pdf",
-      href: "/documents",
-      category: "Policies",
-      status: "new",
-      updatedAt: "2024-07-10",
-    },
-    {
-      name: "September chore rotation.pdf",
-      href: "/documents",
-      category: "Chores",
-      status: "action_required",
-      updatedAt: "2024-07-22",
-    },
-  ]
+  const { supabase, user, profile } = await getViewerContext()
+  if (!user) {
+    return []
+  }
+
+  const { data } = await supabase
+    .from("documents")
+    .select("id,title,document_type,status,updated_at,tenant_id,unit_id")
+    .or(`tenant_id.eq.${user.id}${profile?.unit_id ? `,unit_id.eq.${profile.unit_id}` : ""}`)
+    .order("updated_at", { ascending: false })
+    .limit(3)
+
+  return (data ?? []).map((document) => ({
+    name: document.title,
+    href: "/documents",
+    category: document.document_type.replaceAll("_", " "),
+    status:
+      document.status === "pending_signature" || document.status === "draft"
+        ? "action_required"
+        : document.status === "signed"
+          ? "viewed"
+          : "new",
+    updatedAt: document.updated_at ?? new Date().toISOString(),
+  }))
 }
 
 export const getRecentDocuments = cache(fetchRecentDocuments)
@@ -197,31 +256,27 @@ export function loadRecentDocumentsUncached() {
 }
 
 async function fetchRoommateUpdates(): Promise<RoommateUpdate[]> {
-  await wait(320)
-  const now = new Date()
-  return [
-    {
-      id: "1",
-      author: "Jordan",
-      message: "Wi-Fi was down earlier — rebooted the router and it’s stable again.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 45).toISOString(),
-      topic: "maintenance",
-    },
-    {
-      id: "2",
-      author: "Avery",
-      message: "Can we swap parking spots this weekend while my guests visit?",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 5).toISOString(),
-      topic: "logistics",
-    },
-    {
-      id: "3",
-      author: "Property manager",
-      message: "Reminder: fire alarm inspection on Thursday at 10:00 AM.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
-      topic: "announcement",
-    },
-  ]
+  const { supabase, profile } = await getViewerContext()
+
+  const query = supabase
+    .from("threads")
+    .select("id,title,summary,category,activity,owner_name,last_message_at,updated_at,created_at,unit_id")
+    .order("last_message_at", { ascending: false })
+    .limit(6)
+
+  const { data } = profile?.unit_id ? await query.eq("unit_id", profile.unit_id) : await query
+
+  return (data ?? []).slice(0, 3).map((thread) => ({
+    id: thread.id,
+    author: thread.owner_name ?? "Roommate",
+    message: thread.activity ?? thread.summary ?? thread.title,
+    timestamp: thread.last_message_at ?? thread.updated_at ?? thread.created_at ?? new Date().toISOString(),
+    topic: thread.category.includes("maintenance")
+      ? "maintenance"
+      : thread.category.includes("announce")
+        ? "announcement"
+        : "logistics",
+  }))
 }
 
 export const getRoommateUpdates = cache(fetchRoommateUpdates)
@@ -231,38 +286,44 @@ export function loadRoommateUpdatesUncached() {
 }
 
 async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
-  await wait(160)
+  const [{ amount, dueDate }, bookings, updates, tickets] = await Promise.all([
+    fetchRentSummary(),
+    fetchUpcomingBookings(),
+    fetchRoommateUpdates(),
+    fetchMaintenanceTickets(),
+  ])
+
   return [
     {
       id: "rent",
       label: "This month’s rent",
-      value: "$1,260",
-      helperText: "Due in 5 days",
-      trend: { direction: "neutral", label: "Autopay scheduled" },
+      value: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount),
+      helperText: `Due ${new Date(dueDate).toLocaleDateString()}`,
+      trend: { direction: "neutral", label: "Synced from billing" },
       icon: "rent",
     },
     {
       id: "calendar",
       label: "Upcoming bookings",
-      value: "3",
-      helperText: "Kitchen, TV room & parking",
-      trend: { direction: "up", label: "+1 vs last week" },
+      value: String(bookings.length),
+      helperText: "Pulled from your booking history",
+      trend: { direction: "up", label: "Live amenity schedule" },
       icon: "calendar",
     },
     {
       id: "roommates",
       label: "Roommate updates",
-      value: "4",
-      helperText: "New notes in the last 24h",
-      trend: { direction: "up", label: "Active thread" },
+      value: String(updates.length),
+      helperText: "Most recent board activity",
+      trend: { direction: "up", label: "Realtime thread activity" },
       icon: "roommates",
     },
     {
       id: "maintenance",
       label: "Open maintenance",
-      value: "2",
-      helperText: "Both scheduled for this week",
-      trend: { direction: "down", label: "No overdue items" },
+      value: String(tickets.length),
+      helperText: "Outstanding work orders",
+      trend: { direction: "down", label: "Synced with requests" },
       icon: "maintenance",
     },
   ]
@@ -275,24 +336,23 @@ export function loadDashboardMetricsUncached() {
 }
 
 async function fetchQuickActions(): Promise<QuickAction[]> {
-  await wait(140)
   return [
     {
       id: "payments",
       label: "Record a payment",
-      description: "Log an off-platform rent payment",
+      description: "Log or review rent payments",
       href: "/payments",
     },
     {
       id: "amenity",
       label: "Reserve an amenity",
-      description: "Kitchen, TV room, parking & more",
+      description: "Create or manage amenity bookings",
       href: "/schedule",
     },
     {
       id: "visitor",
       label: "Register a visitor",
-      description: "Stay compliant with overnight policy",
+      description: "Add and track overnight visitor stays",
       href: "/visitors",
     },
   ]
@@ -304,31 +364,31 @@ export function loadQuickActionsUncached() {
   return fetchQuickActions()
 }
 
+function formatBookingTimeframe(startTime: string, endTime: string) {
+  return `${new Date(startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} – ${new Date(endTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+}
+
 async function fetchUpcomingBookings(): Promise<UpcomingBooking[]> {
-  await wait(200)
-  return [
-    {
-      id: "booking-1",
-      amenity: "Kitchen",
-      date: "2024-07-26",
-      timeframe: "5:00 – 7:00 PM",
-      status: "confirmed",
-    },
-    {
-      id: "booking-2",
-      amenity: "Parking spot",
-      date: "2024-07-27",
-      timeframe: "All day",
-      status: "pending",
-    },
-    {
-      id: "booking-3",
-      amenity: "PlayStation nook",
-      date: "2024-07-28",
-      timeframe: "8:00 – 10:00 PM",
-      status: "confirmed",
-    },
-  ]
+  const { supabase, user } = await getViewerContext()
+  if (!user) {
+    return []
+  }
+
+  const { data } = await supabase
+    .from("bookings")
+    .select("id,amenity_name,start_time,end_time,status")
+    .eq("tenant_id", user.id)
+    .gte("start_time", new Date().toISOString())
+    .order("start_time", { ascending: true })
+    .limit(3)
+
+  return (data ?? []).map((booking) => ({
+    id: booking.id,
+    amenity: booking.amenity_name,
+    date: booking.start_time,
+    timeframe: formatBookingTimeframe(booking.start_time, booking.end_time),
+    status: booking.status === "cancelled" ? "waitlisted" : booking.status,
+  }))
 }
 
 export const getUpcomingBookings = cache(fetchUpcomingBookings)
@@ -338,23 +398,30 @@ export function loadUpcomingBookingsUncached() {
 }
 
 async function fetchMaintenanceTickets(): Promise<MaintenanceTicket[]> {
-  await wait(220)
-  return [
-    {
-      id: "maintenance-1",
-      title: "Washer door latch replacement",
-      status: "scheduled",
-      priority: "medium",
-      updatedAt: "2024-07-22T14:30:00.000Z",
-    },
-    {
-      id: "maintenance-2",
-      title: "HVAC seasonal tune-up",
-      status: "in_progress",
-      priority: "high",
-      updatedAt: "2024-07-21T09:00:00.000Z",
-    },
-  ]
+  const { supabase, user, profile } = await getViewerContext()
+
+  let query = supabase
+    .from("maintenance_requests")
+    .select("id,title,status,priority,updated_at,unit_id,requested_by")
+    .in("status", ["pending", "in_progress"])
+    .order("updated_at", { ascending: false })
+    .limit(3)
+
+  if (profile?.unit_id) {
+    query = query.eq("unit_id", profile.unit_id)
+  } else if (user) {
+    query = query.eq("requested_by", user.id)
+  }
+
+  const { data } = await query
+
+  return (data ?? []).map((ticket) => ({
+    id: ticket.id,
+    title: ticket.title,
+    status: ticket.status === "pending" ? "awaiting_vendor" : "in_progress",
+    priority: ticket.priority === "urgent" ? "high" : ticket.priority === "normal" ? "medium" : ticket.priority,
+    updatedAt: ticket.updated_at ?? new Date().toISOString(),
+  }))
 }
 
 export const getMaintenanceTickets = cache(fetchMaintenanceTickets)
@@ -364,113 +431,109 @@ export function loadMaintenanceTicketsUncached() {
 }
 
 async function fetchFloorplanWorkspace(): Promise<FloorplanWorkspace> {
-  await wait(180)
+  const { supabase, user, profile } = await getViewerContext()
 
-  const roommates: FloorplanRoommate[] = [
-    { id: "u-1", name: "Jordan", role: "tenant" },
-    { id: "u-2", name: "Avery", role: "roommate" },
-    { id: "u-3", name: "Kai", role: "roommate" },
-    { id: "u-4", name: "Morgan", role: "property_manager" },
-  ]
+  const { data: floorplan } = profile?.unit_id
+    ? await supabase
+        .from("floorplans")
+        .select("id,property_id,unit_id,storage_path,current_version")
+        .eq("unit_id", profile.unit_id)
+        .order("uploaded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null }
 
-  const annotations: FloorplanAnnotation[] = [
-    {
-      id: "ann-1",
-      markerType: "room",
-      label: "Bedroom A",
-      note: "Quiet hours after 10PM.",
-      x: 22,
-      y: 28,
-      createdBy: "u-4",
-      visibilityScope: "all_roommates",
-      visibleToUserIds: [],
-      version: 3,
-      updatedAt: "2024-07-18T09:00:00.000Z",
-    },
-    {
-      id: "ann-2",
-      markerType: "storage",
-      label: "Storage shelf 2",
-      note: "Assigned to Avery until September",
-      x: 68,
-      y: 40,
-      createdBy: "u-1",
-      visibilityScope: "selected_roommates",
-      visibleToUserIds: ["u-1", "u-2"],
-      version: 2,
-      updatedAt: "2024-07-20T16:10:00.000Z",
-    },
-    {
-      id: "ann-3",
-      markerType: "chore",
-      label: "Vacuum living room",
-      note: "Wednesday rotation",
-      x: 46,
-      y: 66,
-      createdBy: "u-2",
-      visibilityScope: "all_roommates",
-      visibleToUserIds: [],
-      version: 1,
-      updatedAt: "2024-07-21T11:12:00.000Z",
-    },
-  ]
+  if (!floorplan || !profile?.unit_id || !user) {
+    return {
+      floorplanId: "",
+      floorplanName: "No floorplan yet",
+      propertyId: "",
+      unitId: profile?.unit_id ?? "",
+      svgMarkup: "<svg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'></svg>",
+      currentVersion: 0,
+      currentUserId: user?.id ?? "",
+      currentUserRole: profile?.role ?? "user",
+      roommates: [],
+      annotations: [],
+      annotationHistory: [],
+    }
+  }
+
+  const [annotationsResult, historyResult, roommatesResult] = await Promise.all([
+    supabase
+      .from("floorplan_annotations")
+      .select("*")
+      .eq("floorplan_id", floorplan.id)
+      .is("archived_at", null)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("floorplan_annotation_versions")
+      .select("id,annotation_id,action,version,changed_by,changed_at,snapshot")
+      .eq("floorplan_id", floorplan.id)
+      .order("changed_at", { ascending: false })
+      .limit(25),
+    supabase
+      .from("profiles")
+      .select("id,full_name,role")
+      .eq("unit_id", profile.unit_id),
+  ])
+
+  const annotations = (annotationsResult.data ?? []).map((annotation) => ({
+    id: annotation.id,
+    markerType: annotation.marker_type,
+    label: annotation.label,
+    note: annotation.note,
+    x: annotation.x_position,
+    y: annotation.y_position,
+    createdBy: annotation.created_by,
+    visibilityScope: annotation.visibility_scope,
+    visibleToUserIds: annotation.visible_to_user_ids ?? [],
+    version: annotation.version,
+    updatedAt: annotation.updated_at,
+  }))
+
+  const annotationsById = new Map(annotations.map((annotation) => [annotation.id, annotation]))
+
+  const annotationHistory = (historyResult.data ?? []).flatMap((entry) => {
+    const currentAnnotation = annotationsById.get(entry.annotation_id)
+    if (!currentAnnotation) {
+      return []
+    }
+
+    return {
+      id: entry.id,
+      annotationId: entry.annotation_id,
+      action: entry.action,
+      version: entry.version,
+      changedBy: entry.changed_by ?? currentAnnotation.createdBy,
+      changedAt: entry.changed_at,
+      snapshot: currentAnnotation,
+    }
+  })
+
+  let svgMarkup = "<svg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'></svg>"
+  try {
+    svgMarkup = await getFloorplanSvg(supabase as any, floorplan.storage_path)
+  } catch {
+    // Keep an empty SVG fallback if the storage asset is missing.
+  }
 
   return {
-    floorplanId: "floorplan-unit-3b",
-    floorplanName: "Unit 3B - Layout",
-    propertyId: "property-maple-grove",
-    unitId: "unit-3b",
-    currentVersion: 7,
-    currentUserId: "u-2",
-    currentUserRole: "roommate",
-    roommates,
+    floorplanId: floorplan.id,
+    floorplanName: `Unit ${floorplan.unit_id} layout`,
+    propertyId: floorplan.property_id ?? "",
+    unitId: floorplan.unit_id ?? "",
+    svgMarkup,
+    currentVersion: floorplan.current_version,
+    currentUserId: user.id,
+    currentUserRole: profile.role ?? "user",
+    roommates: (roommatesResult.data ?? []).map((roommate) => ({
+      id: roommate.id,
+      name: roommate.full_name ?? "Roommate",
+      role: roommate.role ?? "user",
+    })),
     annotations,
-    annotationHistory: [
-      {
-        id: "hist-1",
-        annotationId: "ann-2",
-        action: "created",
-        version: 1,
-        changedBy: "u-1",
-        changedAt: "2024-07-18T14:10:00.000Z",
-        snapshot: {
-          ...annotations[1],
-          note: "Assigned to Avery",
-          version: 1,
-        },
-      },
-      {
-        id: "hist-2",
-        annotationId: "ann-2",
-        action: "updated",
-        version: 2,
-        changedBy: "u-1",
-        changedAt: "2024-07-20T16:10:00.000Z",
-        snapshot: annotations[1],
-      },
-      {
-        id: "hist-3",
-        annotationId: "ann-1",
-        action: "updated",
-        version: 3,
-        changedBy: "u-4",
-        changedAt: "2024-07-18T09:00:00.000Z",
-        snapshot: annotations[0],
-      },
-    ],
-    svgMarkup: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Unit 3B floorplan">
-      <rect x="2" y="2" width="96" height="96" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="2"/>
-      <rect x="8" y="8" width="36" height="30" fill="#e2e8f0" stroke="#94a3b8"/>
-      <text x="26" y="24" font-size="4" text-anchor="middle" fill="#334155">Bedroom A</text>
-      <rect x="54" y="8" width="38" height="26" fill="#e2e8f0" stroke="#94a3b8"/>
-      <text x="73" y="22" font-size="4" text-anchor="middle" fill="#334155">Bedroom B</text>
-      <rect x="8" y="46" width="56" height="42" fill="#dbeafe" stroke="#93c5fd"/>
-      <text x="36" y="67" font-size="4" text-anchor="middle" fill="#1e40af">Living + Kitchen</text>
-      <rect x="68" y="46" width="24" height="18" fill="#ede9fe" stroke="#a78bfa"/>
-      <text x="80" y="57" font-size="3.5" text-anchor="middle" fill="#5b21b6">Storage</text>
-      <rect x="68" y="70" width="24" height="18" fill="#dcfce7" stroke="#86efac"/>
-      <text x="80" y="81" font-size="3.5" text-anchor="middle" fill="#166534">Bath</text>
-    </svg>`,
+    annotationHistory,
   }
 }
 
