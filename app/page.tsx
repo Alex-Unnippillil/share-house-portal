@@ -23,15 +23,17 @@ export default async function IndexPage() {
   return (
     <AppShell className="bg-background">
       <LandingHeader />
-      <SectionStack className="pb-section">
-        <HeroSection />
-        <FeatureGridSection />
-        <PersonasSection />
-        <PrismSection />
-        <IntegrationsSection />
-        <WorkflowSection />
-        <FinalCtaSection />
-      </SectionStack>
+      <main id="main-content" tabIndex={-1} className="focus:outline-none">
+        <SectionStack className="pb-section">
+          <HeroSection />
+          <FeatureGridSection />
+          <PersonasSection />
+          <PrismSection />
+          <IntegrationsSection />
+          <WorkflowSection />
+          <FinalCtaSection />
+        </SectionStack>
+      </main>
     </AppShell>
   )
 }

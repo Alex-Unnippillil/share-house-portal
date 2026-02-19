@@ -4,13 +4,19 @@ import * as React from "react"
 import { usePathname } from "next/navigation"
 
 import SmartLink from "@/components/navigation/SmartLink"
+import { NavItemRow } from "@/components/navigation/nav-item-row"
 import { Icons } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import { NavItem } from "@/types/nav"
 
+type MainNavEntry = NavItem & {
+  subtitle?: string
+  badge?: string
+}
+
 interface MainNavProps {
   appName: string
-  items?: NavItem[]
+  items?: MainNavEntry[]
 }
 
 
@@ -50,15 +56,21 @@ export function MainNav({ appName, items }: MainNavProps) {
                   href={item.href}
                   aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
                   className={cn(
-                    "relative rounded-md px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                    "rounded-md border px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                     item.disabled && "cursor-not-allowed opacity-80",
                     isActiveRoute(pathname, item.href)
-                      ? "bg-primary/10 text-foreground after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "border-primary/30 bg-primary/10 text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                   intent="navigation"
                 >
-                  {item.title}
+                  <NavItemRow
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    badge={item.badge}
+                    icon={item.icon}
+                    className="min-w-[180px]"
+                  />
                 </SmartLink>
               )
           )}
