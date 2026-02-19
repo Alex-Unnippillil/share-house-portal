@@ -1,7 +1,8 @@
-import { Input } from "@/components/ui/input";
-import React from "react";
+import { Input } from "@/components/ui/input"
 
 export default function SearchTodo() {
+  return <Input placeholder="Search by title or author" className="bg-card" />
+}
 	return (
 		<Input
 			placeholder="search by title,author"
