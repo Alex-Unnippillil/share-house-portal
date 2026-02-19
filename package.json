@@ -27,10 +27,11 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:a11y": "playwright test e2e/tenant-manager-journeys.spec.ts -g \"keyboard|screen-reader\"",
-    "test:perf": "pnpm css:purge",
+    "test:perf": "pnpm css:purge && pnpm js:budget && node scripts/check-performance-budgets.mjs",
     "perf:ci": "pnpm test:perf",
     "check:component-files": "node scripts/check-component-filenames.mjs",
-    "check:tailwind-config": "node scripts/check-tailwind-config.mjs"
+    "check:tailwind-config": "node scripts/check-tailwind-config.mjs",
+    "js:budget": "node scripts/check-js-size.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

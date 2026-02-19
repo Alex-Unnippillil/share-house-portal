@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { track } from "@vercel/analytics/react"
 
+import FeaturePrismLazy from "@/components/feature-prism-lazy"
 import {
   Card,
   CardContent,
@@ -27,11 +28,6 @@ const AnalyticsCharts = dynamic(() => import("./analytics-charts"), {
   loading: () => <LoadingState label="Preparing analytics…" />,
 })
 
-const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
-  ssr: false,
-  loading: () => <LoadingState label="Warming up 3D preview…" />,
-})
-
 const SECTION_CONFIG = [
   {
     value: "analytics",
@@ -45,7 +41,7 @@ const SECTION_CONFIG = [
     label: "3D Floorplan",
     description: "Interactive holographic preview of the shared household layout.",
     loaderLabel: "Warming up 3D preview…",
-    Component: FeaturePrism,
+    Component: FeaturePrismLazy,
   },
 ] as const
 

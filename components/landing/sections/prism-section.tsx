@@ -1,19 +1,9 @@
-import dynamic from "next/dynamic"
-
+import FeaturePrismLazy from "@/components/feature-prism-lazy"
 import { siteConfig } from "@/config/site"
 
 import { CtaButtonGroup } from "../landing-shared"
 import { LANDING_SECTION_IDS } from "../landing-ids"
 import { LandingSection } from "../section-primitives"
-
-const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/40 bg-background/70 text-sm text-muted-foreground">
-      Calibrating shared-house orbit…
-    </div>
-  ),
-})
 
 export function PrismSection() {
   return (
@@ -66,7 +56,7 @@ export function PrismSection() {
           />
         </div>
         <div className="relative h-[320px] w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-xl shadow-primary/20 md:h-[420px]">
-          <FeaturePrism />
+          <FeaturePrismLazy fallbackLabel="Calibrating shared-house orbit…" />
         </div>
       </div>
     </LandingSection>

@@ -1,5 +1,6 @@
-import dynamic from "next/dynamic"
 import Link from "next/link"
+
+import FeaturePrismLazy from "@/components/feature-prism-lazy"
 import {
   BellRing,
   CalendarClock,
@@ -28,15 +29,6 @@ import SmartLink from "@/components/navigation/SmartLink"
 
 import { LANDING_SECTION_IDS } from "./landing-ids"
 import LazyMount from "./lazy-mount"
-
-const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/40 bg-background/70 text-sm text-muted-foreground">
-      Calibrating shared-house orbit…
-    </div>
-  ),
-})
 
 const integrationBadges = [
   "Stripe Billing",
@@ -550,16 +542,7 @@ export function PrismSection() {
             </div>
           </div>
           <div className="relative h-[320px] w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-xl shadow-primary/20 md:h-[420px]">
-            <LazyMount
-              className="size-full"
-              fallback={
-                <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/40 bg-background/70 text-sm text-muted-foreground">
-                  Skipping heavy visuals to keep your device responsive.
-                </div>
-              }
-            >
-              <FeaturePrism />
-            </LazyMount>
+            <FeaturePrismLazy fallbackLabel="Calibrating shared-house orbit…" />
           </div>
         </div>
       </div>

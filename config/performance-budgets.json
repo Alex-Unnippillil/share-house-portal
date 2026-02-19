@@ -8,5 +8,11 @@
     "/api/bookings/history?limit=20": 450,
     "/api/search/global?query=unit": 350,
     "/api/exports/maintenance": 500
+  },
+  "jsBundles": {
+    "/": 1900,
+    "/dashboard": 900,
+    "/payments": 1200,
+    "/documents": 1150
   }
 }
