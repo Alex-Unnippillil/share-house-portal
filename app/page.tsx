@@ -208,10 +208,9 @@ export default async function IndexPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <section className="relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background dark:from-primary/15" />
-        <div className="container relative mx-auto px-4 py-24 sm:py-32">
+      <section className="glass-border relative overflow-hidden border-b">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),transparent_58%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.12),transparent_58%)]" />
+        <div className="container relative mx-auto px-content-gutter py-section">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
             <div className="space-y-10 text-center lg:text-left">
               <div className="flex justify-center lg:justify-start">
@@ -226,7 +225,7 @@ export default async function IndexPage() {
                 <h1 className="text-balance text-display-xl">
                   Modern operations for every roommate and property manager
                 </h1>
-                <p className="mx-auto max-w-2xl text-body-lg text-muted-foreground lg:mx-0">
+                <p className="mx-auto max-w-prose text-body-lg text-muted-foreground lg:mx-0">
                   Roomsily brings autopay, bookings, documents, and updates into
                   an intuitive workspace that keeps households aligned without
                   the group-chat chaos.
@@ -256,7 +255,7 @@ export default async function IndexPage() {
                 {heroHighlights.map((item) => (
                   <div
                     key={item.title}
-                    className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur"
+                    className="glass-surface glass-border rounded-2xl p-5 text-left"
                   >
                     <div className="flex items-center gap-3">
                       <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -277,7 +276,7 @@ export default async function IndexPage() {
                 {integrationBadges.map((badge) => (
                   <span
                     key={badge}
-                    className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium uppercase tracking-wide text-primary"
+                    className="glass-border rounded-full bg-primary/5 px-3 py-1 text-xs font-medium uppercase tracking-wide text-primary"
                   >
                     {badge}
                   </span>
@@ -285,8 +284,8 @@ export default async function IndexPage() {
               </div>
             </div>
             <div className="relative mx-auto flex w-full max-w-xl justify-center">
-              <div className="absolute -inset-10 rounded-[3rem] bg-gradient-to-br from-primary/40 via-primary/10 to-transparent blur-3xl" />
-              <div className="relative w-full overflow-hidden rounded-3xl border border-primary/30 bg-slate-950 text-slate-100 shadow-2xl shadow-primary/20">
+              <div className="absolute -inset-10 rounded-[3rem] bg-gradient-to-br from-primary/25 via-primary/10 to-transparent blur-3xl" />
+              <div className="relative w-full overflow-hidden rounded-3xl border border-primary/20 bg-slate-950 text-slate-100 shadow-xl shadow-primary/10">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),transparent_55%)]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.22),transparent_50%)]" />
 
@@ -361,7 +360,7 @@ export default async function IndexPage() {
             {heroMetrics.map((metric) => (
               <div
                 key={metric.label}
-                className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur"
+                className="glass-surface glass-border flex items-center gap-4 rounded-2xl px-6 py-5 text-left"
               >
                 <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <metric.icon className="size-5" aria-hidden="true" />
@@ -380,12 +379,12 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-20 sm:py-24">
+      <section className="container mx-auto px-content-gutter py-section">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             Shared-house workflows in one tenant portal
           </h2>
-          <p className="mt-4 text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-prose text-body-md text-muted-foreground">
             From rent to repairs, Roomsily keeps every roommate aligned with
             clear automations and actionable insights.
           </p>
@@ -394,7 +393,7 @@ export default async function IndexPage() {
           {portalFeatures.map((feature) => (
             <Card
               key={feature.title}
-              className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg"
+              className="glass-surface glass-border glass-surface-hover flex h-full flex-col"
             >
               <CardHeader className="space-y-5">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -418,13 +417,13 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
-        <div className="container mx-auto px-4">
+      <section className="glass-border border-y bg-muted/10 py-section">
+        <div className="container mx-auto px-content-gutter">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-balance text-display-lg">
               Designed for the people using it
             </h2>
-            <p className="mt-4 text-muted-foreground">
+            <p className="mx-auto mt-4 max-w-prose text-body-md text-muted-foreground">
               Whether you’re paying rent or overseeing dozens of units, Roomsily
               gives every role the clarity they need.
             </p>
@@ -433,9 +432,9 @@ export default async function IndexPage() {
             {personaPlaybooks.map((persona) => (
               <Card
                 key={persona.badge}
-                className="relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur"
+                className="glass-surface glass-border relative h-full overflow-hidden"
               >
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.12),transparent_70%)]" />
                 <CardHeader className="relative space-y-4">
                   <Badge
                     variant="secondary"
@@ -469,14 +468,14 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="border-y border-border/70 bg-muted/20 py-20 sm:py-24">
-        <div className="container mx-auto px-4">
+      <section className="glass-border border-y bg-muted/20 py-section">
+        <div className="container mx-auto px-content-gutter">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
             <div className="space-y-6">
               <h2 className="text-balance text-display-lg">
                 Visualize your household operating system
               </h2>
-              <p className="text-muted-foreground">
+              <p className="max-w-prose text-body-md text-muted-foreground">
                 The Roomsily network links Stripe, Supabase, Cal.com, and
                 Documenso so payments, bookings, documents, and updates move
                 together without copy-paste work.
@@ -509,7 +508,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
-                    "border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
+                    "glass-surface glass-border text-primary hover:border-primary hover:bg-primary/10"
                   )}
                 >
                   <span>Book a walkthrough</span>
@@ -525,26 +524,26 @@ export default async function IndexPage() {
                 </Link>
               </div>
             </div>
-            <div className="relative h-[320px] w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-xl shadow-primary/20 md:h-[420px]">
+            <div className="glass-surface glass-border relative h-[320px] w-full overflow-hidden rounded-3xl md:h-[420px]">
               <FeaturePrism />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-border/70 bg-muted/10 py-20 sm:py-24">
-        <div className="container mx-auto px-4">
+      <section className="glass-border border-b bg-muted/10 py-section">
+        <div className="container mx-auto px-content-gutter">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             {integrationHighlights.map((highlight) => (
               <Card
                 key={highlight.title}
-                className="h-full border-border/70 bg-background/95 shadow-sm"
+                className="glass-surface glass-border h-full"
               >
                 <CardHeader className="space-y-4">
                   <CardTitle className="text-heading-md">
                     {highlight.title}
                   </CardTitle>
-                  <CardDescription className="text-base">
+                  <CardDescription className="max-w-prose text-body-md">
                     {highlight.description}
                   </CardDescription>
                 </CardHeader>
@@ -574,12 +573,12 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-20 sm:py-24">
+      <section className="container mx-auto px-content-gutter py-section">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             How households move into Roomsily
           </h2>
-          <p className="mt-4 text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-prose text-body-md text-muted-foreground">
             Guided onboarding and contextual tips remove the friction from
             getting every roommate connected.
           </p>
@@ -588,7 +587,7 @@ export default async function IndexPage() {
           {workflowSteps.map((item, index) => (
             <li
               key={item.step}
-              className="relative flex h-full flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm"
+              className="glass-surface glass-border relative flex h-full flex-col gap-4 rounded-2xl p-6"
             >
               <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                 {item.step}
@@ -608,15 +607,15 @@ export default async function IndexPage() {
         </ol>
       </section>
 
-      <section className="pb-24">
-        <div className="container mx-auto px-4">
-          <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
+      <section className="py-section">
+        <div className="container mx-auto px-content-gutter">
+          <Card className="glass-surface glass-border overflow-hidden">
             <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
               <div className="max-w-xl space-y-4">
                 <h3 className="text-balance text-display-lg">
                   Ready to centre your shared household around clarity?
                 </h3>
-                <p className="text-body-md text-muted-foreground">
+                <p className="max-w-prose text-body-md text-muted-foreground">
                   Launch Roomsily with guided onboarding and give every roommate
                   one place to handle payments, bookings, and documents.
                 </p>
@@ -636,7 +635,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
-                    "border-primary/40 bg-white/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-white"
+                    "glass-border bg-background/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-background"
                   )}
                   intent="passive"
                 >

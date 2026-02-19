@@ -74,14 +74,14 @@ body {}
   }
 
   .glass-surface {
-    @apply bg-background/95 shadow-sm border border-zinc-200/80 dark:bg-zinc-950/90 dark:border-zinc-800/85 supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-zinc-950/60 supports-[backdrop-filter]:backdrop-blur-xl;
+    @apply border border-zinc-200/65 bg-background/90 shadow-sm shadow-zinc-900/5 dark:border-zinc-800/70 dark:bg-zinc-950/85 dark:shadow-black/20 supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-zinc-950/60 supports-[backdrop-filter]:backdrop-blur-xl;
   }
 
   .glass-surface-hover {
-    @apply transition-all duration-200 fine:hover:-translate-y-0.5 fine:hover:shadow-md fine:hover:bg-background/95 fine:hover:dark:bg-zinc-900/90 fine:hover:supports-[backdrop-filter]:bg-background/80 fine:hover:supports-[backdrop-filter]:dark:bg-zinc-900/75;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-background/95 hover:dark:bg-zinc-900/90 hover:supports-[backdrop-filter]:bg-background/80 hover:supports-[backdrop-filter]:dark:bg-zinc-900/75;
   }
 
   .glass-border {
-    @apply border border-zinc-200/75 dark:border-zinc-800/85 supports-[backdrop-filter]:border-zinc-200/60 supports-[backdrop-filter]:dark:border-zinc-700/70;
+    @apply border border-zinc-200/65 dark:border-zinc-800/70 supports-[backdrop-filter]:border-zinc-200/55 supports-[backdrop-filter]:dark:border-zinc-700/65;
   }
 }
