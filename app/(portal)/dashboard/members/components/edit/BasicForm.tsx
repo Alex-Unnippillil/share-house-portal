@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
-import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
+import { DashboardSubmitButton } from "@/app/(portal)/dashboard/components/dashboard-submit-button"
 
 const FormSchema = z.object({
   name: z.string().min(2, {

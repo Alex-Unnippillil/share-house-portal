@@ -11,11 +11,11 @@ class ResizeObserverMock {
 
 vi.stubGlobal("ResizeObserver", ResizeObserverMock)
 
-vi.mock("@/app/dashboard/members/components/edit/EditMember", () => ({
+vi.mock("@/app/(portal)/dashboard/members/components/edit/EditMember", () => ({
   default: () => <button type="button">Edit</button>,
 }))
 
-vi.mock("@/app/dashboard/todo/actions", () => ({
+vi.mock("@/app/(portal)/dashboard/todo/actions", () => ({
   createTodo: vi.fn(),
   updateTodoById: vi.fn(),
 }))
@@ -24,8 +24,8 @@ vi.mock("@/components/ui/use-toast", () => ({
   toast: vi.fn(),
 }))
 
-import ListOfMembers from "@/app/dashboard/members/components/ListOfMembers"
-import TodoForm from "@/app/dashboard/todo/components/TodoForm"
+import ListOfMembers from "@/app/(portal)/dashboard/members/components/ListOfMembers"
+import TodoForm from "@/app/(portal)/dashboard/todo/components/TodoForm"
 
 describe("dashboard members/todo visual states", () => {
   it("marks the first member row as active and styles status badges", () => {

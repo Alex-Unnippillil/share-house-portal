@@ -6,7 +6,7 @@ import { createBrowserClient } from "@supabase/ssr"
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 import { AlertTriangle, MessageSquarePlus, Paperclip, Vote } from "lucide-react"
 
-import { reportAbuseAction } from "@/app/messaging/actions"
+import { reportAbuseAction } from "@/app/(portal)/messaging/actions"
 import ModerationControls from "@/components/messaging/moderation-controls"
 import { EmptyState } from "@/components/patterns/empty-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"

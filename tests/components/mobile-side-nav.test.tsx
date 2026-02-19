@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
 }))
 
-vi.mock("@/app/dashboard/components/SideNav", () => ({
+vi.mock("@/app/(portal)/dashboard/components/SideNav", () => ({
   SideBar: ({ onNavigate }: { onNavigate?: () => void }) => (
     <nav aria-label="Mock Sidebar Navigation">
       <button type="button" onClick={onNavigate}>
@@ -19,7 +19,7 @@ vi.mock("@/app/dashboard/components/SideNav", () => ({
   ),
 }))
 
-import MobileSideNav from "@/app/dashboard/components/MobileSideNav"
+import MobileSideNav from "@/app/(portal)/dashboard/components/MobileSideNav"
 
 describe("MobileSideNav", () => {
   beforeEach(() => {
