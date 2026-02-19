@@ -1,6 +1,4 @@
-import { Suspense, type ReactNode } from "react"
-import { redirect } from "next/navigation"
-import { readUserSession } from "@/utils/actions"
+import { AuthenticatedRouteLayout } from "@/components/layouts/authenticated-route-layout"
 
 import { CommandPalette } from "@/components/command-palette/CommandPalette"
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"

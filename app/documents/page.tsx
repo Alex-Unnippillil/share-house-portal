@@ -9,7 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import {
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageTitle,
+} from "@/components/ui/page-layout"
 
 import { DocumentsStats } from "./components/documents-stats"
 import { DocumentsWorkspace } from "./components/documents-workspace"
@@ -18,22 +23,18 @@ import { UploadDocumentDialog } from "./components/upload-document-dialog"
 
 export default function DocumentsPage() {
   return (
-    <div className="container max-w-7xl space-y-8 py-8">
-      <header className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Documents
-            </h1>
-            <p className="text-base text-muted-foreground sm:text-lg">
-              Manage leases, notices, and account files with secure access,
-              version history, and audit tracking.
-            </p>
+    <PageContainer variant="dashboard">
+      <PageHeader>
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-stack-sm">
+            <PageTitle>Documents</PageTitle>
+            <PageDescription>
+              Manage leases, notices, and account files with secure access, version history, and audit tracking.
+            </PageDescription>
           </div>
           <UploadDocumentDialog />
         </div>
-        <Separator />
-      </header>
+      </PageHeader>
 
       <Suspense
         fallback={
@@ -164,6 +165,6 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   )
 }

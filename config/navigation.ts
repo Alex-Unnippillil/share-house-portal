@@ -36,18 +36,18 @@ type RoleNavigationConfig = {
 }
 
 export const appWorkspaceNav: RoleNavItem[] = [
-  { title: "Dashboard", href: "/dashboard", domain: "core", subtitle: "Household overview" },
-  { title: "Payments", href: "/payments", domain: "core", subtitle: "Rent, autopay & receipts", badge: "Due" },
-  { title: "Bookings", href: "/bookings", domain: "core", subtitle: "Amenities & shared spaces" },
-  { title: "Documents", href: "/documents", domain: "operations", subtitle: "Leases & files" },
-  { title: "Maintenance", href: "/maintenance", domain: "operations", subtitle: "Issues & follow-up", badge: "Priority" },
-  { title: "Message board", href: "/messaging", domain: "operations", subtitle: "Roommate updates" },
-  { title: "Visitors", href: "/visitors", domain: "account", subtitle: "Overnight guest log" },
+  { title: "Dashboard", href: "/dashboard", icon: "dashboard", domain: "core", subtitle: "Household overview" },
+  { title: "Payments", href: "/payments", icon: "creditCard", domain: "core", subtitle: "Rent, autopay & receipts", badge: "Due" },
+  { title: "Bookings", href: "/bookings", icon: "calendar", domain: "core", subtitle: "Amenities & shared spaces" },
+  { title: "Documents", href: "/documents", icon: "fileText", domain: "operations", subtitle: "Leases & files" },
+  { title: "Maintenance", href: "/maintenance", icon: "wrench", domain: "operations", subtitle: "Issues & follow-up", badge: "Priority" },
+  { title: "Message board", href: "/messaging", icon: "messages", domain: "operations", subtitle: "Roommate updates" },
+  { title: "Visitors", href: "/visitors", icon: "visitors", domain: "account", subtitle: "Overnight guest log" },
 ]
 
 export const publicNav: MainNavItem[] = [
-  { title: "Home", href: "/" },
-  { title: "Contact", href: "/contact" },
+  { title: "Home", href: "/", icon: "home" },
+  { title: "Contact", href: "/contact", icon: "phone" },
 ]
 
 export const navigationConfig: Record<NavTree, NavigationItem[]> = {
@@ -58,6 +58,7 @@ export const navigationConfig: Record<NavTree, NavigationItem[]> = {
     {
       title: "Members",
       href: "/dashboard/members",
+      icon: "users",
       roles: ["property_manager", "admin"],
       domain: "account",
       subtitle: "Roster & access",
@@ -69,6 +70,7 @@ export const navigationConfig: Record<NavTree, NavigationItem[]> = {
     {
       title: "Members",
       href: "/dashboard/members",
+      icon: "users",
       roles: ["property_manager", "admin"],
       domain: "account",
       subtitle: "Roster & access",

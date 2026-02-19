@@ -111,6 +111,10 @@ body {
     --surface-hover-border-alpha: 0.5;
   }
 
+  html {
+    scroll-padding-top: 4rem;
+  }
+
   html:focus-within {
     scroll-behavior: smooth;
   }
@@ -119,6 +123,14 @@ body {
     html:focus-within {
       scroll-behavior: auto;
     }
+  }
+
+  :target {
+    scroll-margin-top: 7rem;
+  }
+
+  [id] {
+    scroll-margin-top: 7rem;
   }
 
   * {
@@ -169,11 +181,8 @@ body {
     @apply surface-glass;
   }
 
-  .glass-surface-hover {
-    @apply surface-hover;
-  }
-
   .glass-border {
+    @apply border;
     border-color: hsl(var(--surface-border) / var(--surface-border-alpha));
   }
 
@@ -211,6 +220,26 @@ body {
   .surface-hover:hover {
     border-color: hsl(var(--surface-border) / var(--surface-hover-border-alpha));
     box-shadow: 0 22px 44px -30px hsl(var(--foreground) / var(--surface-hover-shadow-strength));
+  }
+
+  .nav-chrome {
+    @apply glass-surface glass-border;
+  }
+
+  .card-solid {
+    @apply surface-solid;
+  }
+
+  .card-elevated {
+    @apply surface-elevated;
+  }
+
+  .card-glass {
+    @apply glass-surface glass-border;
+  }
+
+  .card-interactive {
+    @apply surface-hover;
   }
 
   .page-shell {

@@ -30,6 +30,9 @@ const navItems = [
 
 export default function LandingHeader() {
   const pathname = usePathname()
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
   const activeSection = useActiveSection({
     sectionIds: navItems.map((item) => item.id),
   })
@@ -49,12 +52,21 @@ export default function LandingHeader() {
       return
     }
 
-    section.scrollIntoView({ behavior: "smooth", block: "start" })
+    section.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    })
     window.history.replaceState(null, "", `/#${sectionId}`)
   }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        Skip to content
+      </a>
       <div className="layout-content flex h-16 items-center justify-between gap-4">
         <Link
           href="/"
