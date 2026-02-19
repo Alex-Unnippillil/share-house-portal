@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Minimal base colors */
+:root {
+}
+
+.dark {
+}
+
+body {
+}
+
 /* Shadcn UI Theme */
 @layer base {
   :root {
@@ -82,9 +92,30 @@
   }
 }
 
-@layer components {}
+@layer components {
+}
 
 @layer utilities {
+  .layout-shell {
+    @apply relative flex min-h-screen flex-col;
+  }
+
+  .layout-content {
+    @apply mx-auto w-full px-dashboard-x sm:px-dashboard-x-sm lg:px-dashboard-x-lg;
+  }
+
+  .section-stack {
+    @apply space-y-section;
+  }
+
+  .card-stack {
+    @apply space-y-card-gap;
+  }
+
+  .route-readable {
+    @apply max-w-3xl;
+  }
+
   .app-backdrop {
     @apply bg-background;
     background-image: linear-gradient(
