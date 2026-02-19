@@ -108,6 +108,12 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b p-content-gutter">
+        <a
+          href="#main-content"
+          className="sr-only z-50 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        >
+          Skip to content
+        </a>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-display-lg text-foreground">{title}</h1>
@@ -129,7 +135,7 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
       </header>
       <div className="flex min-h-[calc(100vh-108px)] flex-col lg:flex-row">
         <ResponsiveNav title={title} role={role} />
-        <main className="flex-1">
+        <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
           <PageContainer variant="dashboard" className="flex flex-col gap-section">
             {children}
           </PageContainer>

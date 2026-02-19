@@ -111,6 +111,10 @@ body {
     --surface-hover-border-alpha: 0.5;
   }
 
+  html {
+    scroll-padding-top: 4rem;
+  }
+
   html:focus-within {
     scroll-behavior: smooth;
   }
