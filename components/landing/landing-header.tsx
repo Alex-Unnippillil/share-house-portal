@@ -49,7 +49,9 @@ export default function LandingHeader() {
       return
     }
 
-    section.scrollIntoView({ behavior: "smooth", block: "start" })
+    const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
+    section.scrollIntoView({ behavior: shouldReduceMotion ? "auto" : "smooth", block: "start" })
     window.history.replaceState(null, "", `/#${sectionId}`)
   }
 

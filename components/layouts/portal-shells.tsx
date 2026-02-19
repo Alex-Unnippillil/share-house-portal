@@ -129,11 +129,11 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
       </header>
       <div className="flex min-h-[calc(100vh-108px)] flex-col lg:flex-row">
         <ResponsiveNav title={title} role={role} />
-        <main className="flex-1">
+        <div className="flex-1">
           <PageContainer variant="dashboard" className="flex flex-col gap-section">
             {children}
           </PageContainer>
-        </main>
+        </div>
       </div>
     </div>
   )

@@ -61,6 +61,7 @@ body {
     --surface-shadow-strength: 0.16;
     --surface-hover-shadow-strength: 0.24;
     --surface-hover-border-alpha: 0.82;
+    --sticky-header-offset: 5rem;
   }
 
   .dark {
@@ -109,6 +110,10 @@ body {
     --surface-shadow-strength: 0.42;
     --surface-hover-shadow-strength: 0.52;
     --surface-hover-border-alpha: 0.5;
+  }
+
+  html {
+    scroll-padding-top: var(--sticky-header-offset);
   }
 
   html:focus-within {

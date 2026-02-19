@@ -2,8 +2,8 @@ import { TypographyHierarchyCheckpoint } from "@/components/patterns/typography-
 
 export default function TypographyCheckpointPage() {
   return (
-    <main className="container max-w-5xl px-content-gutter py-section">
+    <div className="container max-w-5xl px-content-gutter py-section">
       <TypographyHierarchyCheckpoint />
-    </main>
+    </div>
   )
 }
