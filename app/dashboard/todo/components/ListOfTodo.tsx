@@ -1,13 +1,13 @@
 import { TrashIcon } from "@radix-ui/react-icons"
 
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
   dashboardEmptyStateClass,
   dashboardStatusBadgeVariants,
   dashboardTableContainerClass,
   dashboardTableRowVariants,
 } from "@/app/dashboard/components/dashboard-component-variants"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
 import EditTodo from "./EditTodo"
 
@@ -35,13 +35,20 @@ const todos: TodoRow[] = [
 
 export default function ListOfTodo() {
   if (!todos.length) {
-    return <div className={dashboardEmptyStateClass}>No todos yet. Create one to get started.</div>
+    return (
+      <div className={dashboardEmptyStateClass}>
+        No todos yet. Create one to get started.
+      </div>
+    )
   }
 
   return (
     <div className={cn(dashboardTableContainerClass, "mx-2")}>
       {todos.map((todo, index) => (
-        <div key={todo.title + index} className={dashboardTableRowVariants({ active: index === 0 })}>
+        <div
+          key={todo.title + index}
+          className={dashboardTableRowVariants({ active: index === 0 })}
+        >
           <p className="font-medium text-foreground">{todo.title}</p>
           <div>
             <span
