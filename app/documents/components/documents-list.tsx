@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { DocumentWithLease, DocumentListFilters } from '@/types/documents';
 import { getDocumentsAction } from '../actions';
 import { DocumentActions } from './document-actions';
@@ -107,17 +108,20 @@ export function DocumentsList({ filter }: DocumentsListProps) {
   }
 
   if (documents.length === 0) {
+    const hasActiveFilters = Object.keys(filter).length > 0
+
     return (
-      <Card className="p-12">
-        <div className="text-center">
-          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-medium">No documents found</h3>
-          <p className="text-sm text-muted-foreground">
-            {Object.keys(filter).length > 0
-              ? "No documents match your current filters."
-              : "Get started by uploading your first document."}
-          </p>
-        </div>
+      <Card className="p-4 md:p-6">
+        <EmptyState
+          icon={FileText}
+          title="No documents found"
+          description={hasActiveFilters
+            ? "No documents match your current filters. Try broadening your search to find older records."
+            : "Upload your first lease, notice, or account file to start your document workspace."}
+          primaryAction={!hasActiveFilters ? <Button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Go to upload controls</Button> : undefined}
+          secondaryAction={hasActiveFilters ? <Button variant="outline" onClick={() => window.location.reload()}>Reset filters</Button> : undefined}
+          compact
+        />
       </Card>
     );
   }
