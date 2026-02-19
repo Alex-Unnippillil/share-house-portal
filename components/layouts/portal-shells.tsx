@@ -4,12 +4,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { Menu } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
 
 import { roleNavigation, type PortalRole } from "@/config/navigation"
 import { NavItemRow } from "@/components/navigation/nav-item-row"
-import { isActiveRoute } from "@/components/navigation/route-match"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { uiLayerTokens } from "@/components/ui/layer-styles"
