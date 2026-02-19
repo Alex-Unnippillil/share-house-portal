@@ -18,13 +18,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { useActiveSection } from "@/components/landing/use-active-section"
+import { LANDING_SECTION_IDS } from "@/components/landing/landing-ids"
 
 const navItems = [
-  { id: "features", label: "Features" },
-  { id: "roles", label: "Roles" },
-  { id: "integrations", label: "Integrations" },
-  { id: "how-it-works", label: "How it works" },
-  { id: "contact", label: "Contact" },
+  { id: LANDING_SECTION_IDS.features, label: "Features" },
+  { id: LANDING_SECTION_IDS.personas, label: "Roles" },
+  { id: LANDING_SECTION_IDS.integrations, label: "Integrations" },
+  { id: LANDING_SECTION_IDS.workflow, label: "How it works" },
+  { id: LANDING_SECTION_IDS.finalCta, label: "Contact" },
 ] as const
 
 export default function LandingHeader() {
