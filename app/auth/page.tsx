@@ -10,7 +10,15 @@ import SmartLink from "@/components/navigation/SmartLink"
 
 import AuthForm from "./components/AuthForm"
 
-export default async function page() {
+interface AuthPageProps {
+  searchParams?: {
+    mode?: "login" | "signup" | "reset"
+    message?: string
+    error?: string
+  }
+}
+
+export default async function page({ searchParams }: AuthPageProps) {
   const { data: userSession } = await readUserSession()
 
   if (userSession.session) {
@@ -33,7 +41,11 @@ export default async function page() {
             Login to your Roomsily account.
           </p>
         </div>
-        <AuthForm />
+        <AuthForm
+          initialMode={searchParams?.mode}
+          notice={searchParams?.message}
+          error={searchParams?.error}
+        />
         <p className="px-8 text-center text-sm text-muted-foreground">
           By clicking continue, you agree to our{" "}
           <SmartLink
