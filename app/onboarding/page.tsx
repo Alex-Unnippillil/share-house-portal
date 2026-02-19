@@ -1,5 +1,7 @@
 import { Metadata } from "next"
 
+import { PageContainer } from "@/components/ui/page-layout"
+
 import { loadOnboardingState } from "./loaders"
 import { OnboardingClient } from "./onboarding-client"
 
@@ -12,8 +14,8 @@ export default async function OnboardingPage() {
   const data = await loadOnboardingState()
 
   return (
-    <div className="px-4 py-6 sm:px-6">
+    <PageContainer variant="narrow">
       <OnboardingClient initialData={data} />
-    </div>
+    </PageContainer>
   )
 }

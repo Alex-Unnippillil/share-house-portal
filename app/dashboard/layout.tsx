@@ -4,7 +4,7 @@ import { readUserSession } from "@/utils/actions"
 
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
-import { ContentContainer } from "@/components/layouts/layout-primitives"
+import { PageContainer } from "@/components/ui/page-layout"
 
 export default async function DashboardLayout({
   children,
@@ -18,12 +18,12 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="app-backdrop w-full border border-border/70 py-dashboard-y text-foreground">
-      <ContentContainer width="wide">
+    <div className="app-backdrop w-full border border-border/70 text-foreground">
+      <PageContainer variant="dashboard">
         <ErrorBoundary>
           <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
         </ErrorBoundary>
-      </ContentContainer>
+      </PageContainer>
     </div>
   )
 }

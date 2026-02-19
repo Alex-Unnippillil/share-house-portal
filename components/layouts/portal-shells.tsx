@@ -8,6 +8,7 @@ import { roleNavigation, type PortalRole } from "@/config/navigation"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { PageContainer } from "@/components/ui/page-layout"
 import {
   Sheet,
   SheetContent,
@@ -128,10 +129,10 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
       </header>
       <div className="flex min-h-[calc(100vh-108px)] flex-col lg:flex-row">
         <ResponsiveNav title={title} role={role} />
-        <main className="flex-1 p-content-gutter">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-section">
+        <main className="flex-1">
+          <PageContainer variant="dashboard" className="flex flex-col gap-section">
             {children}
-          </div>
+          </PageContainer>
         </main>
       </div>
     </div>
