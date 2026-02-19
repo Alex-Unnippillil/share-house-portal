@@ -1,13 +1,19 @@
 "use client"
 
+import type { ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu } from "lucide-react"
+import { Bell, Menu, Search } from "lucide-react"
 
-import { roleNavigation, type PortalRole } from "@/config/navigation"
+import { getRoleNavigation, type PortalRole } from "@/config/navigation"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
+import { NotificationCenter } from "@/components/notifications/notification-center"
+import { SignOutButton } from "@/components/sign-out-button"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { PageContainer } from "@/components/ui/page-layout"
 import {
   Sheet,
@@ -16,12 +22,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { siteConfig } from "@/config/site"
 
-type PortalShellProps = {
+type PortalLayoutShellProps = {
   role: PortalRole
-  title: string
-  subtitle: string
-  children: React.ReactNode
+  children: ReactNode
 }
 
 function isActiveRoute(pathname: string, href: string) {
@@ -32,105 +37,132 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
+function SidebarNavigation({ role }: { role: PortalRole }) {
   const pathname = usePathname()
-  const navItems = roleNavigation[role].primaryNav.map((item) => ({
-    href: item.href ?? "/",
-    title: item.title,
-  }))
+  const navigation = getRoleNavigation(role)
 
   return (
-    <>
-      <nav
-        className="hidden w-72 shrink-0 border-r bg-muted/20 p-content-gutter lg:block"
-        aria-label="Portal"
-      >
-        <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">
-          Navigation
-        </p>
-        <ul className="space-y-stack-sm">
-          {navItems.map((item) => (
-            <li key={`${item.href}-${item.title}`}>
-              <Link
-                className={cn(
-                  "block rounded-md px-3 py-2 text-body-sm transition",
-                  isActiveRoute(pathname, item.href)
-                    ? "bg-primary/10 text-foreground"
-                    : "text-foreground hover:bg-muted"
-                )}
-                href={item.href}
-              >
-                {item.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="border-b p-content-gutter lg:hidden">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button size="sm" variant="outline">
-              <Menu className="mr-2 size-4" />
-              Menu
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72">
-            <SheetHeader>
-              <SheetTitle>{title} Navigation</SheetTitle>
-            </SheetHeader>
-            <ul className="mt-stack-lg space-y-stack-sm">
-              {navItems.map((item) => (
-                <li key={`${item.href}-${item.title}`}>
+    <nav className="space-y-6" aria-label="Portal sidebar">
+      {navigation.sections.map((section) => (
+        <section key={section.id} aria-labelledby={`portal-nav-${section.id}`}>
+          <h2
+            id={`portal-nav-${section.id}`}
+            className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            {section.title}
+          </h2>
+          <ul className="space-y-1">
+            {section.items.map((item) => {
+              const href = item.href ?? "/"
+
+              return (
+                <li key={`${item.title}-${href}`}>
                   <Link
+                    href={href}
+                    aria-current={isActiveRoute(pathname, href) ? "page" : undefined}
                     className={cn(
-                      "block rounded-md px-3 py-2 text-body-sm",
-                      isActiveRoute(pathname, item.href)
-                        ? "bg-primary/10 text-foreground"
-                        : "hover:bg-muted"
+                      "block rounded-md border border-transparent px-3 py-2 text-sm transition",
+                      isActiveRoute(pathname, href)
+                        ? "border-primary/20 bg-primary/10 text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
-                    href={item.href}
                   >
-                    {item.title}
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{item.title}</span>
+                      {item.badge ? (
+                        <Badge variant="secondary" className="text-[10px] uppercase">
+                          {item.badge}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    {item.subtitle ? (
+                      <p className="mt-0.5 text-xs text-muted-foreground">{item.subtitle}</p>
+                    ) : null}
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
+              )
+            })}
+          </ul>
+        </section>
+      ))}
+    </nav>
   )
 }
 
-function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
+export function PortalLayoutShell({ role, children }: PortalLayoutShellProps) {
   const roleCue = getRoleCue(role)
+  const roleNavigation = getRoleNavigation(role)
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b p-content-gutter">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-display-lg text-foreground">{title}</h1>
-            <p className="text-body-sm text-muted-foreground">{subtitle}</p>
-            <p
-              className={cn(
-                "mt-1 text-xs",
-                roleCue.accentClassName,
-                "role-cue-heading"
-              )}
-            >
-              {roleCue.contextCopy}
-            </p>
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <PageContainer variant="dashboard" className="py-3">
+          <div className="flex items-center gap-3 lg:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Open navigation">
+                  <Menu className="size-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[320px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>{siteConfig.name}</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  <SidebarNavigation role={role} />
+                </div>
+              </SheetContent>
+            </Sheet>
+            <p className="text-sm font-semibold">{siteConfig.name}</p>
+            <Badge className={cn("ml-auto", roleCue.accentClassName)}>{roleNavigation.roleLabel}</Badge>
           </div>
-          <span className={cn("role-cue-badge", roleCue.accentClassName)}>
-            {roleNavigation[role].roleLabel}
-          </span>
-        </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <div>
+              <p className="text-sm font-semibold">{siteConfig.name}</p>
+              <p className="text-xs text-muted-foreground">{roleCue.contextCopy}</p>
+            </div>
+            <Badge className={cn("ml-2", roleCue.accentClassName)}>{roleNavigation.roleLabel}</Badge>
+            <div className="ml-auto flex w-full max-w-sm items-center gap-2">
+              <Search className="size-4 text-muted-foreground" />
+              <Input
+                placeholder="Search portal"
+                aria-label="Search portal"
+                className="h-9"
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <NotificationCenter />
+              <ThemeToggle />
+              <SignOutButton variant="outline" size="sm">
+                Account
+              </SignOutButton>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-end gap-2 lg:hidden">
+            <Button variant="ghost" size="icon" aria-label="Search">
+              <Search className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Notifications">
+              <Bell className="size-4" />
+            </Button>
+            <ThemeToggle />
+            <SignOutButton variant="outline" size="sm">
+              Account
+            </SignOutButton>
+          </div>
+        </PageContainer>
       </header>
-      <div className="flex min-h-[calc(100vh-108px)] flex-col lg:flex-row">
-        <ResponsiveNav title={title} role={role} />
-        <main className="flex-1">
-          <PageContainer variant="dashboard" className="flex flex-col gap-section">
+
+      <div className="flex min-h-[calc(100vh-130px)]">
+        <aside className="sticky top-[130px] hidden h-[calc(100vh-130px)] w-80 overflow-y-auto border-r px-4 py-6 lg:block">
+          <SidebarNavigation role={role} />
+        </aside>
+
+        <main className="min-w-0 flex-1" aria-label="Portal content">
+          <PageContainer variant="dashboard" className="py-8">
+            <div className="mb-6" aria-label="Breadcrumb slot" />
             {children}
           </PageContainer>
         </main>
@@ -139,42 +171,14 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
   )
 }
 
-export function TenantLayoutShell({ children }: { children: React.ReactNode }) {
-  return (
-    <PortalShell
-      role="tenant"
-      title="Tenant Portal"
-      subtitle="Track rent, amenities, and roommate updates."
-    >
-      {children}
-    </PortalShell>
-  )
+export function TenantLayoutShell({ children }: { children: ReactNode }) {
+  return <PortalLayoutShell role="tenant">{children}</PortalLayoutShell>
 }
 
-export function PropertyManagerLayoutShell({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <PortalShell
-      role="property_manager"
-      title="Property Manager Workspace"
-      subtitle="Oversee bookings, maintenance, and tenant activity."
-    >
-      {children}
-    </PortalShell>
-  )
+export function PropertyManagerLayoutShell({ children }: { children: ReactNode }) {
+  return <PortalLayoutShell role="property_manager">{children}</PortalLayoutShell>
 }
 
-export function AdminLayoutShell({ children }: { children: React.ReactNode }) {
-  return (
-    <PortalShell
-      role="admin"
-      title="Admin Back Office"
-      subtitle="Reconcile payments, compliance, and platform health."
-    >
-      {children}
-    </PortalShell>
-  )
+export function AdminLayoutShell({ children }: { children: ReactNode }) {
+  return <PortalLayoutShell role="admin">{children}</PortalLayoutShell>
 }

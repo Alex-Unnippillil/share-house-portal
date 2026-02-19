@@ -6,7 +6,7 @@ import {
         loadRentSummaryUncached,
         loadRoommateUpdatesUncached,
         loadWelcomeMessageUncached,
-} from "@/app/dashboard/(dashboard)/data"
+} from "@/app/(portal)/dashboard/(dashboard)/data"
 
 export async function GET() {
         const sequentialStart = performance.now()
