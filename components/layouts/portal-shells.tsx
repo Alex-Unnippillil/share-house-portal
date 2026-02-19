@@ -1,9 +1,13 @@
 "use client"
 
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
 import { Menu } from "lucide-react"
 
 import { roleNavigation, type PortalRole } from "@/config/navigation"
 import { NavItemRow } from "@/components/navigation/nav-item-row"
+import { PageContainer } from "@/components/ui/page-layout"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { uiLayerTokens } from "@/components/ui/layer-styles"
@@ -15,6 +19,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/"
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
 
 type PortalShellProps = {
   role: PortalRole
