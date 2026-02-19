@@ -2,13 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Minimal base colors */
-:root {}
-
-.dark {}
-
-body {}
-
 /* Shadcn UI Theme */
 @layer base {
   :root {
@@ -32,6 +25,12 @@ body {}
     --input: 214 32% 91%;
     --ring: 222 47% 11%;
     --radius: 0.675rem;
+
+    --surface: var(--card);
+    --surface-foreground: var(--card-foreground);
+    --surface-muted: var(--muted);
+    --surface-accent: var(--accent);
+    --surface-border: var(--border);
   }
 
   .dark {
@@ -54,10 +53,14 @@ body {}
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 210 40% 98%;
-  }
-}
 
-@layer base {
+    --surface: var(--card);
+    --surface-foreground: var(--card-foreground);
+    --surface-muted: var(--muted);
+    --surface-accent: var(--accent);
+    --surface-border: var(--border);
+  }
+
   html:focus-within {
     scroll-behavior: smooth;
   }
@@ -71,8 +74,11 @@ body {}
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-screen bg-background text-foreground antialiased;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
   }
 }
 
@@ -80,18 +86,43 @@ body {}
 
 @layer utilities {
   .app-backdrop {
-    @apply bg-background bg-gradient-to-b from-background via-background to-zinc-100/60 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/85 supports-[backdrop-filter]:bg-background/75 supports-[backdrop-filter]:dark:bg-zinc-950/75 supports-[backdrop-filter]:backdrop-blur-xl;
+    @apply bg-background;
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--background)),
+      hsl(var(--surface-muted) / 0.4)
+    );
   }
 
   .glass-surface {
-    @apply border border-zinc-200/65 bg-background/90 shadow-sm shadow-zinc-900/5 dark:border-zinc-800/70 dark:bg-zinc-950/85 dark:shadow-black/20 supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-zinc-950/60 supports-[backdrop-filter]:backdrop-blur-xl;
+    @apply border shadow-sm;
+    color: hsl(var(--surface-foreground));
+    border-color: hsl(var(--surface-border) / 0.7);
+    background-color: hsl(var(--surface) / 0.9);
+    box-shadow: 0 10px 30px -20px hsl(var(--foreground) / 0.45);
+    backdrop-filter: blur(18px);
   }
 
   .glass-surface-hover {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:bg-background/95 hover:dark:bg-zinc-900/90 hover:supports-[backdrop-filter]:bg-background/80 hover:supports-[backdrop-filter]:dark:bg-zinc-900/75;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
   }
 
   .glass-border {
-    @apply border border-zinc-200/65 dark:border-zinc-800/70 supports-[backdrop-filter]:border-zinc-200/55 supports-[backdrop-filter]:dark:border-zinc-700/65;
+    border-color: hsl(var(--surface-border) / 0.7);
+  }
+
+  .page-shell {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  .content-shell {
+    @apply mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8;
+  }
+
+  .section-shell {
+    @apply rounded-lg border p-4 sm:p-6;
+    border-color: hsl(var(--surface-border));
+    background-color: hsl(var(--surface-muted) / 0.45);
+    color: hsl(var(--surface-foreground));
   }
 }
