@@ -1,5 +1,4 @@
 import dynamic from "next/dynamic"
-import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { readUserSession } from "@/utils/actions"
@@ -287,30 +286,72 @@ export default async function IndexPage() {
             </div>
             <div className="relative mx-auto flex w-full max-w-xl justify-center">
               <div className="absolute -inset-10 rounded-[3rem] bg-gradient-to-br from-primary/40 via-primary/10 to-transparent blur-3xl" />
-              <div className="relative w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-2xl shadow-primary/20 backdrop-blur">
-                <div className="absolute right-6 top-6 flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  Autopay synced
-                </div>
-                <Image
-                  src="/roomsily-og.svg"
-                  alt="Roomsily tenant portal preview showing rent, bookings, and messages"
-                  width={960}
-                  height={720}
-                  priority
-                  sizes="(min-width: 1024px) 480px, 100vw"
-                  className="w-full object-contain"
-                />
-                <div className="absolute bottom-6 left-6 flex flex-col gap-3 rounded-2xl border border-white/20 bg-background/90 p-4 text-left shadow-lg shadow-primary/10">
-                  <p className="text-sm font-semibold text-foreground">
-                    Tonight&rsquo;s schedule
-                  </p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <CalendarClock className="size-4 text-primary" />
-                    <span>Kitchen reserved · 6–8pm</span>
+              <div className="relative w-full overflow-hidden rounded-3xl border border-primary/30 bg-slate-950 text-slate-100 shadow-2xl shadow-primary/20">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),transparent_55%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.22),transparent_50%)]" />
+
+                <div className="relative flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-primary/20 text-sm font-bold text-primary">
+                      R
+                    </span>
+                    <div className="leading-tight">
+                      <p className="text-sm font-semibold text-white">Roomsily</p>
+                      <p className="text-xs text-slate-300">
+                        Shared-home command center
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <MessageSquare className="size-4 text-primary" />
-                    <span>Roommate poll closes in 2 hours</span>
+                  <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                    Autopay synced
+                  </span>
+                </div>
+
+                <div className="relative space-y-4 p-5 sm:p-6">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                      <p className="text-xs uppercase tracking-[0.16em] text-slate-300">
+                        Next rent cycle
+                      </p>
+                      <p className="mt-2 text-2xl font-semibold text-white">$4,280 due</p>
+                      <p className="mt-1 text-xs text-slate-300">
+                        4 roommates · 82% already funded
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                      <p className="text-xs uppercase tracking-[0.16em] text-slate-300">
+                        Today&rsquo;s flow
+                      </p>
+                      <ul className="mt-3 space-y-2 text-xs text-slate-100">
+                        <li className="flex items-center gap-2">
+                          <CalendarClock className="size-3.5 text-primary" />
+                          Kitchen booking · 6:00–8:00 PM
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <BellRing className="size-3.5 text-primary" />
+                          Visitor request approved
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <MessageSquare className="size-3.5 text-primary" />
+                          Poll closes in 2 hours
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-white">Household health</p>
+                      <p className="text-xs text-emerald-200">All systems normal</p>
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full w-[84%] rounded-full bg-gradient-to-r from-cyan-300 to-primary" />
+                    </div>
+                    <div className="mt-3 grid gap-2 text-xs text-slate-200 sm:grid-cols-3">
+                      <span>Payments: 98%</span>
+                      <span>Bookings: No conflicts</span>
+                      <span>Maintenance SLA: 2.4h</span>
+                    </div>
                   </div>
                 </div>
               </div>
