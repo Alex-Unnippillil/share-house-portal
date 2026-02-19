@@ -14,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <div className="w-full bg-muted/20 px-4 py-6 sm:px-6 lg:px-10">
+    <div className="app-backdrop w-full border border-border/70 px-dashboard-x py-dashboard-y text-foreground sm:px-dashboard-x-sm lg:px-dashboard-x-lg">
       <ErrorBoundary>
         <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
       </ErrorBoundary>
