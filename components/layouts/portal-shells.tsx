@@ -3,7 +3,7 @@
 import { Menu } from "lucide-react"
 
 import { roleNavigation, type PortalRole } from "@/config/navigation"
-import { RoleNavList } from "@/components/navigation/role-nav-list"
+import { NavItemRow } from "@/components/navigation/nav-item-row"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,15 @@ type PortalShellProps = {
 }
 
 function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
+  const pathname = usePathname()
+  const navItems = roleNavigation[role].primaryNav.map((item) => ({
+    href: item.href ?? "/",
+    title: item.title,
+    subtitle: item.subtitle,
+    badge: item.badge,
+    icon: item.icon,
+  }))
+
   return (
     <>
       <nav
@@ -32,7 +41,24 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
         <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">
           Workspace
         </p>
-        <RoleNavList role={role} compact />
+        <ul className="space-y-stack-sm">
+          {navItems.map((item) => (
+            <li key={`${item.href}-${item.title}`}>
+              <Link
+                className={cn(
+                  "block rounded-md border px-3 py-2 text-body-sm transition-colors",
+                  isActiveRoute(pathname, item.href)
+                    ? "border-primary/30 bg-primary/10 text-foreground"
+                    : "border-transparent text-foreground hover:bg-muted"
+                )}
+                href={item.href}
+                aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
+              >
+                <NavItemRow title={item.title} subtitle={item.subtitle} badge={item.badge} icon={item.icon} />
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
       <div className="border-b p-content-gutter lg:hidden">
         <Sheet>
@@ -46,9 +72,24 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
             <SheetHeader>
               <SheetTitle>{title} Navigation</SheetTitle>
             </SheetHeader>
-            <div className="mt-stack-lg">
-              <RoleNavList role={role} compact />
-            </div>
+            <ul className="mt-stack-lg space-y-stack-sm">
+              {navItems.map((item) => (
+                <li key={`${item.href}-${item.title}`}>
+                  <Link
+                    className={cn(
+                      "block rounded-md border px-3 py-2 text-body-sm transition-colors",
+                      isActiveRoute(pathname, item.href)
+                        ? "border-primary/30 bg-primary/10 text-foreground"
+                        : "border-transparent text-foreground hover:bg-muted"
+                    )}
+                    href={item.href}
+                    aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
+                  >
+                    <NavItemRow title={item.title} subtitle={item.subtitle} badge={item.badge} icon={item.icon} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </SheetContent>
         </Sheet>
       </div>
