@@ -1,0 +1,56 @@
+<svg width="1200" height="860" viewBox="0 0 1200 860" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Roomsily hero preview</title>
+  <desc id="desc">Stylized Roomsily dashboard with cards for payments, bookings, and activity updates.</desc>
+  <defs>
+    <linearGradient id="bg" x1="60" y1="40" x2="1160" y2="820" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A1424"/>
+      <stop offset="1" stop-color="#111C33"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="780" y1="220" x2="1100" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D946EF" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#818CF8"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="40" y="40" width="1120" height="780" rx="36" fill="url(#bg)"/>
+  <rect x="40" y="40" width="1120" height="780" rx="36" stroke="#31415F" stroke-width="2"/>
+
+  <circle cx="110" cy="106" r="8" fill="#FB7185"/>
+  <circle cx="138" cy="106" r="8" fill="#FBBF24"/>
+  <circle cx="166" cy="106" r="8" fill="#34D399"/>
+
+  <rect x="88" y="150" width="432" height="182" rx="20" fill="#111E35" stroke="#2E405F"/>
+  <text x="116" y="186" fill="#98A9C9" font-family="Inter, Arial, sans-serif" font-size="20">Rent cycle</text>
+  <text x="116" y="244" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="700">$4,280 due</text>
+  <text x="116" y="282" fill="#9FB1CC" font-family="Inter, Arial, sans-serif" font-size="20">4 roommates · 82% funded</text>
+
+  <rect x="548" y="150" width="564" height="182" rx="20" fill="#101A30" stroke="#2E405F"/>
+  <text x="576" y="186" fill="#98A9C9" font-family="Inter, Arial, sans-serif" font-size="20">Today&apos;s activity</text>
+  <circle cx="586" cy="230" r="8" fill="#22D3EE"/>
+  <text x="608" y="236" fill="#E2E8F0" font-family="Inter, Arial, sans-serif" font-size="20">Kitchen booking · 6:00–8:00 PM</text>
+  <circle cx="586" cy="270" r="8" fill="#818CF8"/>
+  <text x="608" y="276" fill="#E2E8F0" font-family="Inter, Arial, sans-serif" font-size="20">Visitor request approved</text>
+
+  <rect x="88" y="362" width="734" height="186" rx="20" fill="#101B31" stroke="#2E405F"/>
+  <text x="116" y="398" fill="#98A9C9" font-family="Inter, Arial, sans-serif" font-size="20">Household health</text>
+  <rect x="116" y="434" width="678" height="16" rx="8" fill="#20314C"/>
+  <rect x="116" y="434" width="546" height="16" rx="8" fill="url(#teal)"/>
+  <text x="116" y="486" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="18">Payments: 98%</text>
+  <text x="336" y="486" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="18">Bookings: No conflicts</text>
+  <text x="604" y="486" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="18">Maintenance SLA: 2.4h</text>
+
+  <rect x="848" y="362" width="264" height="386" rx="20" fill="url(#panel)" stroke="#3A4E70"/>
+  <text x="880" y="404" fill="#E2E8F0" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="600">Integrations</text>
+  <rect x="880" y="432" width="200" height="50" rx="12" fill="#0D172A" stroke="#3B4C6A"/>
+  <text x="904" y="464" fill="#93C5FD" font-family="Inter, Arial, sans-serif" font-size="18">Stripe Billing</text>
+  <rect x="880" y="500" width="200" height="50" rx="12" fill="#0D172A" stroke="#3B4C6A"/>
+  <text x="904" y="532" fill="#67E8F9" font-family="Inter, Arial, sans-serif" font-size="18">Supabase</text>
+  <rect x="880" y="568" width="200" height="50" rx="12" fill="#0D172A" stroke="#3B4C6A"/>
+  <text x="904" y="600" fill="#A5B4FC" font-family="Inter, Arial, sans-serif" font-size="18">Cal.com</text>
+  <rect x="880" y="636" width="200" height="50" rx="12" fill="#0D172A" stroke="#3B4C6A"/>
+  <text x="904" y="668" fill="#F9A8D4" font-family="Inter, Arial, sans-serif" font-size="18">Documenso</text>
+</svg>
