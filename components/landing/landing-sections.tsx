@@ -624,7 +624,7 @@ export function WorkflowSection() {
           {workflowSteps.map((item, index) => (
             <li
               key={item.step}
-              className="relative flex h-full flex-col gap-4 rounded-2xl p-6 surface-solid"
+              className="surface-solid relative flex h-full flex-col gap-4 rounded-2xl p-6"
             >
               <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                 {item.step}
