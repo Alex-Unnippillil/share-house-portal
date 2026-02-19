@@ -10,7 +10,7 @@ type PageContainerVariant = "default" | "narrow" | "wide" | "dashboard"
 const pageContainerVariantClasses: Record<PageContainerVariant, string> = {
   default: "max-w-7xl",
   narrow: "max-w-6xl",
-  wide: "max-w-7xl",
+  wide: "max-w-screen-2xl",
   dashboard: "max-w-7xl",
 }
 
@@ -26,7 +26,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "container space-y-section px-content-gutter py-section",
+        "layout-content space-y-section py-section",
         pageContainerVariantClasses[variant],
         className
       )}
