@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 
 import { roleNavigation, type PortalRole } from "@/config/navigation"
+import { NavItemRow } from "@/components/navigation/nav-item-row"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,9 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
   const navItems = roleNavigation[role].primaryNav.map((item) => ({
     href: item.href ?? "/",
     title: item.title,
+    subtitle: item.subtitle,
+    badge: item.badge,
+    icon: item.icon,
   }))
 
   return (
@@ -53,14 +57,15 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
             <li key={`${item.href}-${item.title}`}>
               <Link
                 className={cn(
-                  "block rounded-md px-3 py-2 text-body-sm transition",
+                  "block rounded-md border px-3 py-2 text-body-sm transition-colors",
                   isActiveRoute(pathname, item.href)
-                    ? "bg-primary/10 text-foreground"
-                    : "text-foreground hover:bg-muted"
+                    ? "border-primary/30 bg-primary/10 text-foreground"
+                    : "border-transparent text-foreground hover:bg-muted"
                 )}
                 href={item.href}
+                aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
               >
-                {item.title}
+                <NavItemRow title={item.title} subtitle={item.subtitle} badge={item.badge} icon={item.icon} />
               </Link>
             </li>
           ))}
@@ -83,14 +88,15 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
                 <li key={`${item.href}-${item.title}`}>
                   <Link
                     className={cn(
-                      "block rounded-md px-3 py-2 text-body-sm",
+                      "block rounded-md border px-3 py-2 text-body-sm transition-colors",
                       isActiveRoute(pathname, item.href)
-                        ? "bg-primary/10 text-foreground"
-                        : "hover:bg-muted"
+                        ? "border-primary/30 bg-primary/10 text-foreground"
+                        : "border-transparent text-foreground hover:bg-muted"
                     )}
                     href={item.href}
+                    aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
                   >
-                    {item.title}
+                    <NavItemRow title={item.title} subtitle={item.subtitle} badge={item.badge} icon={item.icon} />
                   </Link>
                 </li>
               ))}
