@@ -6,6 +6,7 @@ import { roleNavigation, type PortalRole } from "@/config/navigation"
 import { NavItemRow } from "@/components/navigation/nav-item-row"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
+import { uiLayerTokens } from "@/components/ui/layer-styles"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -35,7 +36,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
   return (
     <>
       <nav
-        className="hidden w-72 shrink-0 border-r bg-muted/20 p-content-gutter lg:block"
+        className={cn("hidden w-72 shrink-0 border-r p-content-gutter lg:block", uiLayerTokens.navChrome)}
         aria-label="Portal"
       >
         <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">
@@ -48,8 +49,8 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
                 className={cn(
                   "block rounded-md border px-3 py-2 text-body-sm transition-colors",
                   isActiveRoute(pathname, item.href)
-                    ? "border-primary/30 bg-primary/10 text-foreground"
-                    : "border-transparent text-foreground hover:bg-muted"
+                    ? "bg-primary/10 text-foreground"
+                    : "text-foreground hover:bg-muted/70"
                 )}
                 href={item.href}
                 aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
@@ -60,7 +61,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
           ))}
         </ul>
       </nav>
-      <div className="border-b p-content-gutter lg:hidden">
+      <div className={cn("border-b p-content-gutter lg:hidden", uiLayerTokens.navChrome)}>
         <Sheet>
           <SheetTrigger asChild>
             <Button size="sm" variant="outline">
@@ -68,7 +69,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
               Menu
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72">
+          <SheetContent side="left" className={cn("w-72", uiLayerTokens.navChrome)}>
             <SheetHeader>
               <SheetTitle>{title} Navigation</SheetTitle>
             </SheetHeader>
@@ -79,8 +80,8 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
                     className={cn(
                       "block rounded-md border px-3 py-2 text-body-sm transition-colors",
                       isActiveRoute(pathname, item.href)
-                        ? "border-primary/30 bg-primary/10 text-foreground"
-                        : "border-transparent text-foreground hover:bg-muted"
+                        ? "bg-primary/10 text-foreground"
+                        : "hover:bg-muted/70"
                     )}
                     href={item.href}
                     aria-current={isActiveRoute(pathname, item.href) ? "page" : undefined}
@@ -101,11 +102,8 @@ export function PortalShell({ role, title, subtitle, children }: PortalShellProp
   const roleCue = getRoleCue(role)
 
   return (
-    <div className="min-h-screen bg-background">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-body-sm focus:shadow">
-        Skip to main content
-      </a>
-      <header className="sticky top-0 z-30 border-b bg-background/95 p-content-gutter backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <div className="app-backdrop min-h-screen">
+      <header className={cn("border-b p-content-gutter", uiLayerTokens.navChrome)}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-label-sm uppercase tracking-wide text-muted-foreground">Share House Portal</p>
