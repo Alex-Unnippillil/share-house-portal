@@ -5,11 +5,31 @@ import {
   Menu,
   Linkedin,
   LucideIcon,
+  LayoutDashboard,
+  CreditCard,
+  CalendarDays,
+  FileText,
+  Wrench,
+  MessagesSquare,
+  UserRoundCheck,
+  Users,
+  Home,
+  Phone,
 } from "lucide-react"
 
 export type Icon = LucideIcon
 
 export const Icons = {
+  home: Home,
+  dashboard: LayoutDashboard,
+  creditCard: CreditCard,
+  calendar: CalendarDays,
+  fileText: FileText,
+  wrench: Wrench,
+  messages: MessagesSquare,
+  visitors: UserRoundCheck,
+  users: Users,
+  phone: Phone,
   sun: SunMedium,
   moon: Moon,
   menu: Menu,

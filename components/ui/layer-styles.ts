@@ -1,14 +1,15 @@
 export const uiLayerTokens = {
   overlayDimming: "bg-background/70 dark:bg-black/70",
   overlayBlur: "supports-[backdrop-filter]:backdrop-blur-sm",
-  surfaceBorder: "border border-border/60",
+  surfaceBorder: "glass-border",
   surfaceShadow: "shadow-lg shadow-black/10 dark:shadow-black/40",
   surfaces: {
-    solid: "surface-solid",
-    glass: "surface-glass",
-    elevated: "surface-elevated",
+    solid: "card-solid",
+    glass: "card-glass",
+    elevated: "card-elevated",
   },
-  surfaceHover: "surface-hover",
+  surfaceHover: "card-interactive",
+  navChrome: "nav-chrome",
   radiusMd: "rounded-md",
   radiusLg: "rounded-lg",
 } as const

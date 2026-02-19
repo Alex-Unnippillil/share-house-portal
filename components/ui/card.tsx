@@ -6,7 +6,7 @@ import { uiLayerTokens } from "@/components/ui/layer-styles"
 
 const cardVariants = cva("rounded-xl text-card-foreground", {
   variants: {
-    surface: {
+    variant: {
       solid: uiLayerTokens.surfaces.solid,
       glass: uiLayerTokens.surfaces.glass,
       elevated: uiLayerTokens.surfaces.elevated,
@@ -17,22 +17,25 @@ const cardVariants = cva("rounded-xl text-card-foreground", {
     },
   },
   defaultVariants: {
-    surface: "solid",
+    variant: "solid",
     interactive: false,
   },
 })
 
 interface CardProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof cardVariants> {}
+    Omit<VariantProps<typeof cardVariants>, "variant"> {
+  surface?: VariantProps<typeof cardVariants>["variant"]
+  variant?: VariantProps<typeof cardVariants>["variant"]
+}
 
 const Card = React.forwardRef<
   HTMLDivElement,
   CardProps
->(({ className, surface, interactive, ...props }, ref) => (
+>(({ className, surface, variant, interactive, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(cardVariants({ surface, interactive }), className)}
+    className={cn(cardVariants({ variant: variant ?? surface, interactive }), className)}
     {...props}
   />
 ))
