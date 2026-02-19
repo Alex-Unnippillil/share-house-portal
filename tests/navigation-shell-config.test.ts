@@ -30,7 +30,7 @@ describe("portal role navigation", () => {
     expect(nav.primaryNav).toEqual(publicNav)
   })
 
-  it("uses one source of truth across role map entries", () => {
+  it("uses shared nav for tenant personas and extended nav for manager personas", () => {
     expect(roleNavigation.tenant.primaryNav).toBe(appWorkspaceNav)
     expect(roleNavigation.roommate.primaryNav).toBe(appWorkspaceNav)
 
