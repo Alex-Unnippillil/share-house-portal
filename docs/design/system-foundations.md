@@ -68,22 +68,46 @@ Use semantic font tokens rather than ad hoc `text-*` classes:
 - Use badges for status, role, and policy-level metadata only.
 - Prefer semantic status colors (`payment.*`, `booking.*`, `maintenance.*`) over arbitrary palettes.
 
-## 3) Base layout shells
+## 3) Canonical application navigation
 
-Use shared shells in `components/layouts/portal-shells.tsx`:
+The canonical navigation system is `SiteHeader` + `MainNav` + `MobileNav`, all driven from `config/navigation.ts` (`getRoleNavigation`).
 
-- `TenantLayoutShell`
-- `PropertyManagerLayoutShell`
-- `AdminLayoutShell`
+- Desktop: `components/main-nav.tsx`
+- Mobile: `components/mobile-nav.tsx`
+- Shared orchestration: `components/site-header.tsx`
 
-Each shell provides:
+This is the only navigation system that should receive net-new UX updates.
 
-- responsive nav (desktop sidebar + mobile sheet menu),
-- role-specific IA starter links,
-- normalized title/subtitle header,
-- consistent content container sizing + spacing.
+### Deprecated or removed alternatives
 
-## 4) Accessibility defaults
+- `app/dashboard/components/SideNav.tsx`, `MobileSideNav.tsx`, and `NavLinks.tsx` are removed.
+- `components/layouts/portal-shells.tsx` is deprecated and retained temporarily for migration safety.
+
+Do not create new route-level side navigation variants unless an ADR introduces a new canonical pattern.
+
+## 4) Visual baseline: what "good" looks like
+
+### Spacing baseline
+
+- Page chrome uses `p-content-gutter`; content sections use `gap-section`.
+- Cards stack with `gap-card-gap`; internal card content uses `stack-sm` to `stack-lg` intentionally.
+- Dense nav actions keep a minimum target of `min-h-10` to `min-h-11` for touch accessibility.
+
+### Typography baseline
+
+- Page/route titles use `text-display-lg`.
+- Card and module headings use `text-heading-md` or `text-heading-sm`.
+- Standard copy uses `text-body-md`; helper copy/meta uses `text-body-sm` or `text-label-sm`.
+- Avoid ad hoc one-off text sizing unless documented as an explicit exception.
+
+### Surface usage baseline
+
+- Use neutral `bg-background` for page base and `Card` for grouped information.
+- Use `bg-muted`/`bg-muted/60` only for secondary emphasis (active nav affordance, grouped controls).
+- Reserve high-contrast brand surfaces (`bg-primary`, status variants) for selected states, priority badges, and primary actions.
+- Preserve visible borders (`border`, `border-border/60+`) when separating adjacent interactive clusters.
+
+## 5) Accessibility defaults
 
 ### Focus states
 
@@ -106,7 +130,7 @@ Each shell provides:
 - Ensure text + icon contrast meets WCAG AA (4.5:1 normal text, 3:1 large text/icons).
 - Status colors must remain readable in light and dark mode; combine hue + label text instead of color-only signaling.
 
-## 5) Reusable UI patterns
+## 6) Reusable UI patterns
 
 ### Status badge pattern
 
