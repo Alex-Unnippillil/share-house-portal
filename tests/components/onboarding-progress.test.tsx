@@ -21,10 +21,10 @@ describe("OnboardingProgress", () => {
     const step3 = screen.getByRole("link", { name: "3" })
     const step4 = screen.getByRole("link", { name: "4" })
 
-    expect(step1).toHaveClass("bg-slate-800")
-    expect(step2).toHaveClass("bg-slate-800")
-    expect(step3).toHaveClass("bg-slate-800")
-    expect(step4).toHaveClass("bg-slate-100")
+    expect(step1).toHaveClass("bg-primary")
+    expect(step2).toHaveClass("bg-primary")
+    expect(step3).toHaveClass("bg-primary")
+    expect(step4).toHaveClass("bg-muted")
   })
 
   it("keeps all onboarding links accessible", () => {

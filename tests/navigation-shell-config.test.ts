@@ -30,10 +30,20 @@ describe("portal role navigation", () => {
     expect(nav.primaryNav).toEqual(publicNav)
   })
 
-  it("uses one source of truth across role map entries", () => {
+  it("uses shared nav for tenant personas and extended nav for manager personas", () => {
     expect(roleNavigation.tenant.primaryNav).toBe(appWorkspaceNav)
     expect(roleNavigation.roommate.primaryNav).toBe(appWorkspaceNav)
-    expect(roleNavigation.property_manager.primaryNav).toBe(appWorkspaceNav)
-    expect(roleNavigation.admin.primaryNav).toBe(appWorkspaceNav)
+    expect(roleNavigation.property_manager.primaryNav).toEqual([
+      ...appWorkspaceNav,
+      {
+        title: "Members",
+        href: "/dashboard/members",
+        roles: ["property_manager", "admin"],
+        domain: "account",
+        subtitle: "Roster & access",
+        badge: "Admin",
+      },
+    ])
+    expect(roleNavigation.admin.primaryNav).toEqual(roleNavigation.property_manager.primaryNav)
   })
 })

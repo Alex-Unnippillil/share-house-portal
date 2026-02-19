@@ -48,8 +48,8 @@ describe("dashboard members/todo visual states", () => {
       />,
     )
 
-    const activeRow = screen.getByText("Admin").closest("div")
-    expect(activeRow).toHaveAttribute("data-active", "true")
+    const activeRow = screen.getByText("Admin").closest("tr")
+    expect(activeRow).toHaveClass("bg-muted/40")
 
     expect(screen.getByText("active").className).toContain("text-emerald")
     expect(screen.getByText("resigned").className).toContain("text-red")
