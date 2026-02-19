@@ -199,6 +199,12 @@ const workflowSteps = [
   },
 ]
 
+const landingNavLinks = [
+  { label: "Features", href: "#features" },
+  { label: "Integrations", href: "#integrations" },
+  { label: "Workflow", href: "#workflow" },
+]
+
 export default async function IndexPage() {
   const { data: userSession } = await readUserSession()
 
@@ -211,7 +217,39 @@ export default async function IndexPage() {
       <section className="relative overflow-hidden border-b">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background dark:from-primary/15" />
-        <div className="container relative mx-auto px-4 py-24 sm:py-32">
+        <div className="container relative mx-auto px-4 py-16 sm:py-20 lg:py-24">
+          <header className="mb-10 flex items-center justify-between gap-4 sm:mb-12">
+            <Link href="/" className="text-base font-semibold tracking-tight text-foreground">
+              Roomsily
+            </Link>
+            <nav className="hidden items-center gap-6 md:flex" aria-label="Landing sections">
+              {landingNavLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+            <details className="relative md:hidden">
+              <summary className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg border border-border/70 px-4 text-sm font-medium text-foreground marker:content-none">
+                Menu
+              </summary>
+              <div className="absolute right-0 z-10 mt-2 w-52 space-y-2 rounded-xl border border-border/70 bg-background p-3 shadow-lg">
+                {landingNavLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </details>
+          </header>
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
             <div className="space-y-10 text-center lg:text-left">
               <div className="flex justify-center lg:justify-start">
@@ -252,7 +290,7 @@ export default async function IndexPage() {
                   <span>Create your household</span>
                 </Link>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {heroHighlights.map((item) => (
                   <div
                     key={item.title}
@@ -380,7 +418,7 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-20 sm:py-24">
+      <section id="features" className="container mx-auto px-4 py-14 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             Shared-house workflows in one tenant portal
@@ -418,7 +456,7 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
+      <section className="border-y border-border/70 bg-muted/10 py-14 sm:py-16 lg:py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-balance text-display-lg">
@@ -469,7 +507,7 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="border-y border-border/70 bg-muted/20 py-20 sm:py-24">
+      <section className="border-y border-border/70 bg-muted/20 py-14 sm:py-16 lg:py-20">
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
             <div className="space-y-6">
@@ -509,7 +547,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
-                    "border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
+                    "min-h-11 border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
                   )}
                 >
                   <span>Book a walkthrough</span>
@@ -518,7 +556,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "sm" }),
-                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                    "min-h-11 bg-primary text-primary-foreground hover:bg-primary/90"
                   )}
                 >
                   <span>Start onboarding</span>
@@ -532,7 +570,10 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="border-b border-border/70 bg-muted/10 py-20 sm:py-24">
+      <section
+        id="integrations"
+        className="border-b border-border/70 bg-muted/10 py-14 sm:py-16 lg:py-20"
+      >
         <div className="container mx-auto px-4">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             {integrationHighlights.map((highlight) => (
@@ -574,7 +615,7 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-20 sm:py-24">
+      <section id="workflow" className="container mx-auto px-4 py-14 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             How households move into Roomsily
@@ -608,7 +649,7 @@ export default async function IndexPage() {
         </ol>
       </section>
 
-      <section className="pb-24">
+      <section className="pb-14 pt-4 sm:pb-16 sm:pt-6 lg:pb-20 lg:pt-8">
         <div className="container mx-auto px-4">
           <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
             <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
@@ -626,7 +667,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
+                    "min-h-11 bg-primary px-8 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                   )}
                   intent="critical"
                 >
@@ -636,7 +677,7 @@ export default async function IndexPage() {
                   href={siteConfig.links.contact}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
-                    "border-primary/40 bg-white/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-white"
+                    "min-h-11 border-primary/40 bg-white/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-white"
                   )}
                   intent="passive"
                 >
