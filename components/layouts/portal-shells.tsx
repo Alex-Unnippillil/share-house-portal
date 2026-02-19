@@ -126,11 +126,11 @@ export function PortalShell({ role, title, subtitle, children }: PortalShellProp
       </header>
       <div className="flex min-h-[calc(100vh-120px)] flex-col lg:flex-row">
         <ResponsiveNav title={title} role={role} />
-        <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
+        <div className="flex-1">
           <PageContainer variant="dashboard" className="flex flex-col gap-section">
             {children}
           </PageContainer>
-        </main>
+        </div>
       </div>
     </div>
   )
