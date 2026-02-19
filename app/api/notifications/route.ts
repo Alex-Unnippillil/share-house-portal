@@ -10,6 +10,7 @@ import {
   type InAppNotification,
   type NotificationData,
 } from "@/lib/notifications"
+import { requirePrivilegedApiAccess } from "@/lib/api-auth"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import type { Database } from "@/lib/supabase"
 import { createClient } from "@/utils/supa-server-actions"
@@ -226,6 +227,11 @@ type NotificationRequest =
 
 export async function POST(request: Request) {
   try {
+    const authContext = await requirePrivilegedApiAccess()
+    if (authContext instanceof Response) {
+      return authContext
+    }
+
     const payload = (await request.json()) as NotificationRequest
 
     switch (payload.type) {

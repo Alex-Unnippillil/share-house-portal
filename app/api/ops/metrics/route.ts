@@ -1,3 +1,4 @@
+import { requirePrivilegedApiAccess } from "@/lib/api-auth"
 import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
 
@@ -23,6 +24,11 @@ export async function POST(req: Request) {
   })
 
   try {
+    const authContext = await requirePrivilegedApiAccess()
+    if (authContext instanceof Response) {
+      return authContext
+    }
+
     const body = (await req.json()) as {
       metricName?: string
       tags?: Record<string, string | number | boolean>

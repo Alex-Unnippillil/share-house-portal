@@ -1,4 +1,5 @@
 import { PaymentReceiptEmail } from "@/components/emails/payment-receipt"
+import { requirePrivilegedApiAccess } from "@/lib/api-auth"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import { Resend } from "resend"
 import { z } from "zod"
@@ -29,6 +30,11 @@ const paymentReceiptSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authContext = await requirePrivilegedApiAccess()
+  if (authContext instanceof Response) {
+    return authContext
+  }
+
   const resendApiKey = process.env.RESEND_API_KEY
   if (!resendApiKey) {
     return jsonError("CONFIGURATION_ERROR", {
