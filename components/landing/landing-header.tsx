@@ -58,13 +58,13 @@ export default function LandingHeader() {
       <div className="layout-content flex h-16 items-center justify-between gap-4">
         <Link
           href="/"
-          className="rounded-md text-sm font-semibold text-foreground transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-md text-sm font-semibold text-foreground transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           Roomsily
         </Link>
 
         <nav
-          className="hidden items-center gap-1 md:flex"
+          className="hidden items-center gap-1 rounded-lg border border-border/60 bg-background/80 p-1 md:flex"
           aria-label="Landing sections"
         >
           {navItems.map((item) => {
@@ -75,10 +75,11 @@ export default function LandingHeader() {
                 key={item.id}
                 href={`/#${item.id}`}
                 onClick={(event) => handleAnchorClick(event, item.id)}
+                aria-current={isActive ? "location" : undefined}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "relative rounded-md px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isActive
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary/10 text-primary after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -93,14 +94,14 @@ export default function LandingHeader() {
             href={siteConfig.links.login}
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
-              "font-medium"
+              "font-medium focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             )}
           >
             Sign in
           </Link>
           <Link
             href={siteConfig.links.signup}
-            className={cn(buttonVariants({ size: "sm" }))}
+            className={cn(buttonVariants({ size: "sm" }), "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2")}
           >
             Start onboarding
           </Link>
@@ -108,7 +109,7 @@ export default function LandingHeader() {
 
         <Sheet>
           <SheetTrigger
-            className="inline-flex size-9 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+            className="inline-flex size-9 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:hidden"
             aria-label="Open navigation menu"
           >
             <Menu className="size-5" />
@@ -126,11 +127,12 @@ export default function LandingHeader() {
                   <Link
                     href={`/#${item.id}`}
                     onClick={(event) => handleAnchorClick(event, item.id)}
+                    aria-current={activeSection === item.id ? "location" : undefined}
                     className={cn(
-                      "flex rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "relative flex min-h-10 items-center rounded-md border-l-2 border-transparent px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                       activeSection === item.id
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "border-l-primary bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                     )}
                   >
                     {item.label}
@@ -138,11 +140,11 @@ export default function LandingHeader() {
                 </SheetClose>
               ))}
             </div>
-            <div className="mt-8 grid gap-3">
+            <div className="mt-8 grid gap-3 border-t border-border/70 pt-4">
               <SheetClose asChild>
                 <Link
                   href={siteConfig.links.signup}
-                  className={cn(buttonVariants({ size: "sm" }), "w-full")}
+                  className={cn(buttonVariants({ size: "sm" }), "w-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2")}
                 >
                   Start onboarding
                 </Link>
@@ -152,7 +154,7 @@ export default function LandingHeader() {
                   href={siteConfig.links.login}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "sm" }),
-                    "w-full"
+                    "w-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   )}
                 >
                   Sign in
