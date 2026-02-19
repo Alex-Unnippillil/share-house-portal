@@ -37,12 +37,12 @@ export default function MobileSideNav() {
 					aria-label="Open navigation menu"
 					aria-haspopup="dialog"
 					aria-expanded={open}
-					className="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
+					className="inline-flex min-h-11 items-center justify-center rounded-md border border-input bg-background/85 px-3 py-2 text-foreground shadow-sm backdrop-blur-xl transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
 				>
 					<HamburgerMenuIcon className="size-5" aria-hidden="true" />
 				</button>
 			</SheetTrigger>
-			<SheetContent side="left" className="dark:bg-gradient-dark flex">
+			<SheetContent side="left" className="dark:bg-gradient-dark flex border-border/60 bg-background/85 shadow-2xl backdrop-blur-xl">
 				<SideBar onNavigate={() => setOpen(false)} />
 			</SheetContent>
 		</Sheet>
