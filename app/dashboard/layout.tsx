@@ -1,3 +1,7 @@
+import { Suspense, type ReactNode } from "react"
+
+import { redirect } from "next/navigation"
+
 import { AuthenticatedRouteLayout } from "@/components/layouts/authenticated-route-layout"
 
 import { CommandPalette } from "@/components/command-palette/CommandPalette"
@@ -7,6 +11,7 @@ import { AssistPanelShell } from "@/components/portal/assist-panel-shell"
 import { StatusCenter } from "@/components/portal/status-center"
 import { PageContainer } from "@/components/ui/page-layout"
 import { normalizePortalRole } from "@/lib/role-cues"
+import { readUserSession } from "@/lib/supabase/user-session"
 
 import {
   getMaintenanceTickets,
