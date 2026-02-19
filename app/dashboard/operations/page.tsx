@@ -1,9 +1,7 @@
 import Link from "next/link"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { writeAuditRecord } from "@/lib/audit"
 import { requirePrivilegedAccess } from "@/lib/authz"
-import { getDependencyHealth } from "@/lib/operations/dependency-health"
 import {
   getBookingRows,
   getFinanceRows,
@@ -11,6 +9,14 @@ import {
   getModerationRows,
   getOperationsKpis,
 } from "@/lib/operations/data"
+import { getDependencyHealth } from "@/lib/operations/dependency-health"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 export default async function OperationsDashboardPage() {
   const { user, role } = await requirePrivilegedAccess()
@@ -21,26 +27,35 @@ export default async function OperationsDashboardPage() {
     targetType: "operations_dashboard",
   })
 
-  const [kpis, financeRows, maintenanceRows, bookingRows, moderationRows, dependencies] =
-    await Promise.all([
-      getOperationsKpis(),
-      getFinanceRows(),
-      getMaintenanceRows(),
-      getBookingRows(),
-      getModerationRows(),
-      getDependencyHealth(),
-    ])
+  const [
+    kpis,
+    financeRows,
+    maintenanceRows,
+    bookingRows,
+    moderationRows,
+    dependencies,
+  ] = await Promise.all([
+    getOperationsKpis(),
+    getFinanceRows(),
+    getMaintenanceRows(),
+    getBookingRows(),
+    getModerationRows(),
+    getDependencyHealth(),
+  ])
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Operations Command Center</h1>
+    <div className="section-stack">
+      <header className="route-readable space-y-1">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Operations Command Center
+        </h1>
         <p className="text-muted-foreground">
-          Unified KPIs and drill-down workflows for finance, maintenance, bookings, and moderation.
+          Unified KPIs and drill-down workflows for finance, maintenance,
+          bookings, and moderation.
         </p>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-card-gap md:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
           <Link key={kpi.id} href={kpi.href}>
             <Card className="h-full transition hover:border-primary/40 hover:shadow-sm">
@@ -56,12 +71,13 @@ export default async function OperationsDashboardPage() {
         ))}
       </section>
 
-      <section>
+      <section className="route-readable">
         <Card>
           <CardHeader>
             <CardTitle>Dependency readiness</CardTitle>
             <CardDescription>
-              Health snapshot for Supabase, Stripe, Cal.com, and Documenso dependencies.
+              Health snapshot for Supabase, Stripe, Cal.com, and Documenso
+              dependencies.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
@@ -73,8 +89,8 @@ export default async function OperationsDashboardPage() {
                     dependency.status === "healthy"
                       ? "text-emerald-600"
                       : dependency.status === "degraded"
-                        ? "text-amber-600"
-                        : "text-red-600"
+                      ? "text-amber-600"
+                      : "text-red-600"
                   }
                 >
                   {dependency.status}
@@ -86,17 +102,19 @@ export default async function OperationsDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
+      <section className="grid gap-card-gap xl:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Audit retention and export compliance</CardTitle>
             <CardDescription>
-              Retention and export events are tracked to support compliance commitments.
+              Retention and export events are tracked to support compliance
+              commitments.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              All operations exports create audit records with actor, role, and target metadata for traceability.
+              All operations exports create audit records with actor, role, and
+              target metadata for traceability.
             </p>
             <p>
               <Link className="underline" href="/data-retention">
@@ -108,7 +126,8 @@ export default async function OperationsDashboardPage() {
               <Link className="underline" href="/privacy">
                 Privacy Policy
               </Link>{" "}
-              explains how operational records are used for legal and security obligations.
+              explains how operational records are used for legal and security
+              obligations.
             </p>
           </CardContent>
         </Card>
@@ -116,20 +135,48 @@ export default async function OperationsDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Operational queues</CardTitle>
-            <CardDescription>Live queue counts and direct drill-down links.</CardDescription>
+            <CardDescription>
+              Live queue counts and direct drill-down links.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>Finance exceptions: {financeRows.rows.filter((row) => row.status !== "succeeded").length}</p>
-            <p>Open maintenance: {maintenanceRows.rows.filter((row) => row.status !== "completed").length}</p>
-            <p>Pending bookings: {bookingRows.rows.filter((row) => row.status === "pending").length}</p>
-            <p>Unresolved moderation: {moderationRows.rows.filter((row) => row.status === "open").length}</p>
+            <p>
+              Finance exceptions:{" "}
+              {
+                financeRows.rows.filter((row) => row.status !== "succeeded")
+                  .length
+              }
+            </p>
+            <p>
+              Open maintenance:{" "}
+              {
+                maintenanceRows.rows.filter((row) => row.status !== "completed")
+                  .length
+              }
+            </p>
+            <p>
+              Pending bookings:{" "}
+              {
+                bookingRows.rows.filter((row) => row.status === "pending")
+                  .length
+              }
+            </p>
+            <p>
+              Unresolved moderation:{" "}
+              {
+                moderationRows.rows.filter((row) => row.status === "open")
+                  .length
+              }
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Tools</CardTitle>
-            <CardDescription>Cross-domain actions for operations users.</CardDescription>
+            <CardDescription>
+              Cross-domain actions for operations users.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>

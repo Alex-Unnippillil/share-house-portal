@@ -27,9 +27,9 @@ import type {
 } from "../data"
 
 const markerStyles: Record<FloorplanMarkerType, string> = {
-  room: "bg-blue-600",
-  storage: "bg-violet-600",
-  chore: "bg-emerald-600",
+  room: "bg-booking-confirmed",
+  storage: "bg-maintenance-open",
+  chore: "bg-payment-paid",
 }
 
 type Props = {
@@ -144,7 +144,7 @@ export function FloorplanWorkspaceClient({
 
         <TabsContent value="viewer" className="space-y-3">
           <p className="text-sm text-muted-foreground">{floorplanName} · version {currentVersion}</p>
-          <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-slate-50">
+          <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-muted/40">
             <div className="absolute inset-0" dangerouslySetInnerHTML={{ __html: svgMarkup }} />
             {visibleAnnotations.map((annotation) => (
               <div
@@ -152,7 +152,7 @@ export function FloorplanWorkspaceClient({
                 className="absolute"
                 style={{ left: `${annotation.x}%`, top: `${annotation.y}%`, transform: "translate(-50%, -50%)" }}
               >
-                <div className={`size-3 rounded-full ring-2 ring-white ${markerStyles[annotation.markerType]}`} />
+                <div className={`size-3 rounded-full ring-2 ring-background ${markerStyles[annotation.markerType]}`} />
               </div>
             ))}
           </div>
@@ -252,7 +252,7 @@ export function FloorplanWorkspaceClient({
             </div>
 
             <div
-              className="relative aspect-square w-full cursor-crosshair overflow-hidden rounded-lg border bg-slate-50"
+              className="relative aspect-square w-full cursor-crosshair overflow-hidden rounded-lg border bg-muted/40"
               onClick={handleMapClick}
               aria-label="Floorplan editor canvas"
             >
@@ -270,7 +270,7 @@ export function FloorplanWorkspaceClient({
                     style={{ left: `${annotation.x}%`, top: `${annotation.y}%`, transform: "translate(-50%, -50%)" }}
                   >
                     <div
-                      className={`size-3 rounded-full ring-2 ring-white ${markerStyles[annotation.markerType]} ${editable ? "opacity-100" : "opacity-40"}`}
+                      className={`size-3 rounded-full ring-2 ring-background ${markerStyles[annotation.markerType]} ${editable ? "opacity-100" : "opacity-40"}`}
                       title={`${annotation.label}${editable ? "" : " (read-only)"}`}
                     />
                   </div>

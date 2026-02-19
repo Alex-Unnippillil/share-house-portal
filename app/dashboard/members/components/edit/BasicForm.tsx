@@ -40,6 +40,18 @@ export default function BasicForm() {
       ),
     })
   }
+	function onSubmit(data: z.infer<typeof FormSchema>) {
+		toast({
+			title: "You submitted the following values:",
+			description: (
+				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
+					<code className="text-card-foreground">
+						{JSON.stringify(data, null, 2)}
+					</code>
+				</pre>
+			),
+		});
+	}
 
   return (
     <Form {...form}>

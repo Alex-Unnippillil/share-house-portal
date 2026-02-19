@@ -18,13 +18,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { useActiveSection } from "@/components/landing/use-active-section"
+import { LANDING_SECTION_IDS } from "@/components/landing/landing-ids"
 
 const navItems = [
-  { id: "features", label: "Features" },
-  { id: "roles", label: "Roles" },
-  { id: "integrations", label: "Integrations" },
-  { id: "how-it-works", label: "How it works" },
-  { id: "contact", label: "Contact" },
+  { id: LANDING_SECTION_IDS.features, label: "Features" },
+  { id: LANDING_SECTION_IDS.personas, label: "Roles" },
+  { id: LANDING_SECTION_IDS.integrations, label: "Integrations" },
+  { id: LANDING_SECTION_IDS.workflow, label: "How it works" },
+  { id: LANDING_SECTION_IDS.finalCta, label: "Contact" },
 ] as const
 
 export default function LandingHeader() {
@@ -54,7 +55,7 @@ export default function LandingHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
+      <div className="layout-content flex h-16 items-center justify-between gap-4">
         <Link
           href="/"
           className="rounded-md text-sm font-semibold text-foreground transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -62,7 +63,10 @@ export default function LandingHeader() {
           Roomsily
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Landing sections">
+        <nav
+          className="hidden items-center gap-1 md:flex"
+          aria-label="Landing sections"
+        >
           {navItems.map((item) => {
             const isActive = activeSection === item.id
 
@@ -87,11 +91,17 @@ export default function LandingHeader() {
         <div className="hidden items-center gap-3 md:flex">
           <Link
             href={siteConfig.links.login}
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "font-medium")}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "font-medium"
+            )}
           >
             Sign in
           </Link>
-          <Link href={siteConfig.links.signup} className={cn(buttonVariants({ size: "sm" }))}>
+          <Link
+            href={siteConfig.links.signup}
+            className={cn(buttonVariants({ size: "sm" }))}
+          >
             Start onboarding
           </Link>
         </div>
@@ -106,7 +116,9 @@ export default function LandingHeader() {
           <SheetContent side="right" className="w-[85vw] sm:max-w-sm">
             <SheetHeader>
               <SheetTitle>Navigate Roomsily</SheetTitle>
-              <SheetDescription>Jump to sections or continue onboarding.</SheetDescription>
+              <SheetDescription>
+                Jump to sections or continue onboarding.
+              </SheetDescription>
             </SheetHeader>
             <div className="mt-6 space-y-2">
               {navItems.map((item) => (
@@ -128,14 +140,20 @@ export default function LandingHeader() {
             </div>
             <div className="mt-8 grid gap-3">
               <SheetClose asChild>
-                <Link href={siteConfig.links.signup} className={cn(buttonVariants({ size: "sm" }), "w-full")}>
+                <Link
+                  href={siteConfig.links.signup}
+                  className={cn(buttonVariants({ size: "sm" }), "w-full")}
+                >
                   Start onboarding
                 </Link>
               </SheetClose>
               <SheetClose asChild>
                 <Link
                   href={siteConfig.links.login}
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full")}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "w-full"
+                  )}
                 >
                   Sign in
                 </Link>

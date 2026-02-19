@@ -45,6 +45,35 @@ const FormSchema = z
 export default function MemberForm() {
   const roles = ["admin", "user"]
   const status = ["active", "resigned"]
+	const roles = ["admin", "user"];
+	const status = ["active", "resigned"];
+
+	const form = useForm<z.infer<typeof FormSchema>>({
+		resolver: zodResolver(FormSchema),
+		defaultValues: {
+			name: "",
+			role: "user",
+			status: "active",
+			email: "",
+		},
+	});
+
+	function onSubmit(data: z.infer<typeof FormSchema>) {
+		createMember();
+
+		document.getElementById("create-trigger")?.click();
+
+		toast({
+			title: "You submitted the following values:",
+			description: (
+				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
+					<code className="text-card-foreground">
+						{JSON.stringify(data, null, 2)}
+					</code>
+				</pre>
+			),
+		});
+	}
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),

@@ -49,6 +49,17 @@ export default function TodoForm({ isEdit }: { isEdit: boolean }) {
       ),
     })
   }
+		toast({
+			title: "You submitted the following values:",
+			description: (
+				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
+					<code className="text-card-foreground">
+						{JSON.stringify(data, null, 2)}
+					</code>
+				</pre>
+			),
+		});
+	};
 
   const handleUpdateMember = (data: z.infer<typeof FormSchema>) => {
     updateTodoById("hello")
@@ -63,6 +74,17 @@ export default function TodoForm({ isEdit }: { isEdit: boolean }) {
       ),
     })
   }
+		toast({
+			title: "You submitted the following values:",
+			description: (
+				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
+					<code className="text-card-foreground">
+						{JSON.stringify(data, null, 2)}
+					</code>
+				</pre>
+			),
+		});
+	};
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     if (isEdit) {
