@@ -38,7 +38,7 @@ This matrix maps route-level access (middleware) and table-level actions (Supaba
 | `subscriptions` | Read own subscriptions | Same as tenant | Read subscriptions for users in assigned units | Full override |
 | `maintenance_requests` | Read own + same-unit requests; create own | Same as tenant | Read/update assigned-unit requests | Full override |
 | `visitor_logs` | Read/create own host records + same-unit visibility | Same as tenant | Read/update visitor logs for assigned units | Full override |
-| `amenity_bookings` | Read/create own + same-unit household bookings | Same as tenant | Read/update assigned-unit household bookings | Full override |
+| `bookings` | Read/create own bookings; same-unit visibility via `can_access_user(tenant_id)` | Same as tenant | Read/update/delete bookings for users in assigned units | Full override |
 | `notifications` | Read/update own notifications | Same as tenant | Read notifications for users in assigned units | Full override |
 | `email_notifications` | Read own email notification logs | Same as tenant | No default global read | Full override |
 
