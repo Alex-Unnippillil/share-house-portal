@@ -37,7 +37,6 @@ export default function TodoForm({ isEdit }: { isEdit: boolean }) {
 
   const handleCreateMember = (data: z.infer<typeof FormSchema>) => {
     createTodo()
-
     document.getElementById("create-trigger")?.click()
 
     toast({
