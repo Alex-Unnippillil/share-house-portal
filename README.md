@@ -78,7 +78,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+Open [http://localhost:3000](http://localhost:3000) to view the application. Tailwind is configured through the canonical `tailwind.config.js` file (the Next.js/PostCSS pipeline resolves `tailwind.config.js` before `tailwind.config.ts`).
 
 ### Stripe Configuration
 
