@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
-import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 import {
   Form,
   FormControl,
@@ -23,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
+import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 
 import { createMember } from "../../actions"
 
@@ -45,35 +45,6 @@ const FormSchema = z
 export default function MemberForm() {
   const roles = ["admin", "user"]
   const status = ["active", "resigned"]
-	const roles = ["admin", "user"];
-	const status = ["active", "resigned"];
-
-	const form = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			name: "",
-			role: "user",
-			status: "active",
-			email: "",
-		},
-	});
-
-	function onSubmit(data: z.infer<typeof FormSchema>) {
-		createMember();
-
-		document.getElementById("create-trigger")?.click();
-
-		toast({
-			title: "You submitted the following values:",
-			description: (
-				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
-					<code className="text-card-foreground">
-						{JSON.stringify(data, null, 2)}
-					</code>
-				</pre>
-			),
-		});
-	}
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -102,7 +73,10 @@ export default function MemberForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4 p-2">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full space-y-4 p-2"
+      >
         <FormField
           control={form.control}
           name="email"
@@ -169,9 +143,9 @@ export default function MemberForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem value={role} key={role}>
-                      {role}
+                  {roles.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -189,12 +163,12 @@ export default function MemberForm() {
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select user status" />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {status.map((item) => (
-                    <SelectItem value={item} key={item}>
+                    <SelectItem key={item} value={item}>
                       {item}
                     </SelectItem>
                   ))}
@@ -204,7 +178,7 @@ export default function MemberForm() {
             </FormItem>
           )}
         />
-        <DashboardSubmitButton label="Submit" />
+        <DashboardSubmitButton label="Create" />
       </form>
     </Form>
   )

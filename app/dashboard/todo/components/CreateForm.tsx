@@ -1,11 +1,10 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useTransition } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
-import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 import {
   Form,
   FormControl,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
+import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 
 const FormSchema = z.object({
   title: z.string().min(1, {
@@ -44,17 +44,6 @@ export default function CreateForm() {
     })
     form.reset()
   }
-	function onSubmit(data: z.infer<typeof FormSchema>) {
-		toast({
-			title: "You have successfully create todo.",
-			description: (
-				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
-					<code className="text-card-foreground">{data.title} is created</code>
-				</pre>
-			),
-		});
-		form.reset();
-	}
 
   return (
     <Form {...form}>

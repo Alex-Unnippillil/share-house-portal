@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
-import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 import {
   Form,
   FormControl,
@@ -22,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
+import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 
 const FormSchema = z.object({
   role: z.enum(["admin", "user"]),
@@ -50,18 +50,6 @@ export default function AdvanceForm() {
       ),
     })
   }
-	function onSubmit(data: z.infer<typeof FormSchema>) {
-		toast({
-			title: "You submitted the following values:",
-			description: (
-				<pre className="mt-2 w-[340px] rounded-md bg-card p-4">
-					<code className="text-card-foreground">
-						{JSON.stringify(data, null, 2)}
-					</code>
-				</pre>
-			),
-		});
-	}
 
   return (
     <Form {...form}>
@@ -110,7 +98,9 @@ export default function AdvanceForm() {
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Resigned means the user is no longer active in the property.</FormDescription>
+              <FormDescription>
+                Resigned means the user is no longer active in the property.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -1,10 +1,3 @@
-export { FeatureGridSection } from "./sections/feature-grid-section"
-export { FinalCtaSection } from "./sections/final-cta-section"
-export { HeroSection } from "./sections/hero-section"
-export { IntegrationsSection } from "./sections/integrations-section"
-export { PersonasSection } from "./sections/personas-section"
-export { PrismSection } from "./sections/prism-section"
-export { WorkflowSection } from "./sections/workflow-section"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import {
@@ -313,12 +306,20 @@ export function HeroSection() {
               <div className="relative space-y-4 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl border border-primary-foreground/20 bg-background/10 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">Next rent cycle</p>
-                    <p className="mt-2 text-2xl font-semibold text-primary-foreground">$4,280 due</p>
-                    <p className="mt-1 text-xs text-primary-foreground/70">4 roommates · 82% already funded</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">
+                      Next rent cycle
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-primary-foreground">
+                      $4,280 due
+                    </p>
+                    <p className="mt-1 text-xs text-primary-foreground/70">
+                      4 roommates · 82% already funded
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-primary-foreground/20 bg-background/10 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">Today&rsquo;s flow</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">
+                      Today&rsquo;s flow
+                    </p>
                     <ul className="mt-3 space-y-2 text-xs text-primary-foreground">
                       <li className="flex items-center gap-2">
                         <CalendarClock className="size-3.5 text-primary" />
