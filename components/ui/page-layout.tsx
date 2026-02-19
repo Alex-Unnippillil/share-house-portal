@@ -40,7 +40,7 @@ export function PageTitle({
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h1 className={cn("text-display-lg text-balance", className)} {...props} />
+    <h1 className={cn("text-balance text-display-lg", className)} {...props} />
   )
 }
 
