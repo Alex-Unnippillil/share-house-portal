@@ -41,6 +41,12 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        Skip to content
+      </a>
       <div className="container flex h-16 items-center justify-between gap-4">
         <MainNav appName={siteConfig.name} items={navItems} />
         <MobileNav appName={siteConfig.name} isAuthenticated={isAuthenticated} items={navItems} />
