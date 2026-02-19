@@ -2,25 +2,17 @@ import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { readUserSession } from "@/utils/actions"
-import {
-  BellRing,
-  CalendarClock,
-  FileText,
-  ListChecks,
-  MessageSquare,
-  PiggyBank,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  Wallet,
-} from "lucide-react"
 
-import { siteConfig } from "@/config/site"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
 import {
+  FeatureGridSection,
+  FinalCtaSection,
+  HeroSection,
+  IntegrationsSection,
+  PersonasSection,
+  PrismSection,
+  WorkflowSection,
+} from "@/components/landing/landing-sections"
+import { readUserSession } from "@/utils/actions"
   Card,
   CardContent,
   CardDescription,
@@ -242,6 +234,13 @@ export default async function IndexPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <HeroSection />
+      <FeatureGridSection />
+      <PersonasSection />
+      <PrismSection />
+      <IntegrationsSection />
+      <WorkflowSection />
+      <FinalCtaSection />
       <LandingHeader />
 
       <section className="relative overflow-hidden border-b" id="top">
