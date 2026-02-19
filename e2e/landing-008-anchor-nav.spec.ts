@@ -1,15 +1,37 @@
 import { expect, test } from "@playwright/test"
 
+
+const sectionIds = [
+  "landing-features",
+  "landing-personas",
+  "landing-prism",
+  "landing-integrations",
+  "landing-workflow",
+  "landing-final-cta",
+]
+
 test.describe("LANDING-008 landing header navigation", () => {
   test("supports desktop anchor navigation", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto("/")
 
     await page.getByRole("link", { name: "Features" }).click()
-    await expect(page).toHaveURL(/#features$/)
+    await expect(page).toHaveURL(/#landing-features$/)
 
     await page.getByRole("link", { name: "How it works" }).click()
-    await expect(page).toHaveURL(/#how-it-works$/)
+    await expect(page).toHaveURL(/#landing-workflow$/)
+  })
+
+
+  test("desktop navigation landmarks are present and reachable", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto("/")
+
+    for (const id of sectionIds) {
+      const section = page.locator(`section#${id}`)
+      await section.scrollIntoViewIfNeeded()
+      await expect(section).toBeVisible()
+    }
   })
 
   test("opens mobile sheet with anchors and ctas", async ({ page }) => {

@@ -1,39 +1,21 @@
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import { ReactNode } from "react"
 
-import React, { ReactNode } from "react";
+import { DashboardDialogForm } from "@/app/dashboard/components/dashboard-dialog-form"
 
-export default function DailogForm({
-	Trigger,
-	id,
-	title,
-	form,
-}: {
-	title: string;
-	Trigger: ReactNode;
-	id: string;
-	form: ReactNode;
-}) {
-	return (
-		<Dialog>
-			<DialogTrigger asChild id={id}>
-				{Trigger}
-			</DialogTrigger>
-			<DialogContent className="dark:bg-gradient-dark my-5 sm:max-w-[525px]">
-				<DialogHeader>
-					<DialogTitle>{title}</DialogTitle>
-					<DialogDescription>
-						
-					</DialogDescription>
-				</DialogHeader>
-				{form}
-			</DialogContent>
-		</Dialog>
-	);
+type DialogFormProps = {
+  title: string
+  Trigger: ReactNode
+  id: string
+  form: ReactNode
+}
+
+export default function DialogForm({ Trigger, id, title, form }: DialogFormProps) {
+  return (
+    <DashboardDialogForm
+      title={title}
+      trigger={Trigger}
+      triggerId={id}
+      form={form}
+    />
+  )
 }

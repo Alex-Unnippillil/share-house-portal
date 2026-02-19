@@ -1,5 +1,14 @@
 import { expect, test } from "@playwright/test"
 
+const sectionIds = [
+  "landing-features",
+  "landing-personas",
+  "landing-prism",
+  "landing-integrations",
+  "landing-workflow",
+  "landing-final-cta",
+]
+
 test.describe("landing mobile QA", () => {
   test("hero headline and CTA are visible above the fold on 390x844", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
@@ -23,16 +32,27 @@ test.describe("landing mobile QA", () => {
     await page.goto("/")
 
     await page.getByText("Menu", { exact: true }).click()
-    const featuresLink = page.locator('details a[href="#features"]')
+    const featuresLink = page.locator('details a[href="#landing-features"]')
     await expect(featuresLink).toBeVisible()
 
     await featuresLink.click()
-    await expect(page).toHaveURL(/#features$/)
+    await expect(page).toHaveURL(/#landing-features$/)
 
-    const sectionTop = await page.locator("#features").evaluate((node) => {
+    const sectionTop = await page.locator("#landing-features").evaluate((node) => {
       return node.getBoundingClientRect().top
     })
     expect(Math.abs(sectionTop)).toBeLessThan(140)
+  })
+
+  test("mobile viewport keeps every landing section visible", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto("/")
+
+    for (const id of sectionIds) {
+      const section = page.locator(`section#${id}`)
+      await section.scrollIntoViewIfNeeded()
+      await expect(section).toBeVisible()
+    }
   })
 
   test("page does not allow horizontal scrolling on mobile", async ({ page }) => {

@@ -1,11 +1,17 @@
-import { Input } from "@/components/ui/input";
-import React from "react";
+import { Input } from "@/components/ui/input"
 
 export default function SearchMembers() {
+  return (
+    <Input
+      placeholder="Search by role or name"
+      className="bg-card"
+    />
+  )
+}
 	return (
 		<Input
 			placeholder="search by role, name"
-			className=" bg-white ring-zinc-300 focus:ring-zinc-300 dark:bg-inherit  focus:dark:ring-zinc-700"
+			className="bg-background ring-border focus:ring-ring"
 		/>
 	);
 }

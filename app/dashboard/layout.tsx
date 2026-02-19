@@ -1,12 +1,16 @@
 import { Suspense, type ReactNode } from "react"
-
 import { redirect } from "next/navigation"
+import { readUserSession } from "@/utils/actions"
 
 import { ErrorBoundary } from "@/components/feedback/ErrorBoundary"
 import { RouteSkeleton } from "@/components/feedback/RouteSkeleton"
-import { readUserSession } from "@/utils/actions"
+import { ContentContainer } from "@/components/layouts/layout-primitives"
 
-export default async function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
   const { data: userSession } = await readUserSession()
 
   if (!userSession.session) {
@@ -14,10 +18,12 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <div className="app-backdrop w-full border border-border/70 px-dashboard-x py-dashboard-y text-foreground sm:px-dashboard-x-sm lg:px-dashboard-x-lg">
-      <ErrorBoundary>
-        <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
-      </ErrorBoundary>
+    <div className="app-backdrop w-full border border-border/70 py-dashboard-y text-foreground">
+      <ContentContainer width="wide">
+        <ErrorBoundary>
+          <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
+        </ErrorBoundary>
+      </ContentContainer>
     </div>
   )
 }
