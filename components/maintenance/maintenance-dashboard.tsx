@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
+import { ClipboardList } from "lucide-react";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -364,7 +366,12 @@ export function MaintenanceDashboard() {
           <CardContent className="space-y-4">
             {loading ? <p className="text-sm text-muted-foreground">Loading requests…</p> : null}
             {!loading && !visibleTenantRequests.length ? (
-              <p className="text-sm text-muted-foreground">No maintenance requests yet.</p>
+              <EmptyState
+                icon={ClipboardList}
+                title="No maintenance requests yet"
+                description="Submit your first request above with issue details and preferred access windows to start the triage timeline."
+                compact
+              />
             ) : null}
 
             {visibleTenantRequests.map((request) => {

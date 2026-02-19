@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { createBrowserClient } from "@supabase/ssr"
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
-import { AlertTriangle, Paperclip } from "lucide-react"
+import { AlertTriangle, MessageSquarePlus, Paperclip, Vote } from "lucide-react"
 
 import { reportAbuseAction } from "@/app/messaging/actions"
 import ModerationControls from "@/components/messaging/moderation-controls"
+import { EmptyState } from "@/components/patterns/empty-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -270,7 +271,15 @@ export function MessagingThreadsClient({ initialData }: MessagingThreadsClientPr
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {threadList.length === 0 ? <p className="text-sm text-muted-foreground">No threads yet. Start the first conversation.</p> : threadList.map((thread) => (
+              {threadList.length === 0 ? (
+                <EmptyState
+                  icon={MessageSquarePlus}
+                  title="No threads yet"
+                  description="Start the first conversation so roommates can share updates, votes, and decisions in one place."
+                  primaryAction={<Button size="sm">Start thread</Button>}
+                  compact
+                />
+              ) : threadList.map((thread) => (
                 <ThreadListCard
                   key={thread.id}
                   thread={thread}
@@ -288,7 +297,14 @@ export function MessagingThreadsClient({ initialData }: MessagingThreadsClientPr
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                {pollSnapshots.length === 0 ? <p className="text-sm text-muted-foreground">No active polls in this thread yet.</p> : pollSnapshots.map((poll) => <PollSnapshotCard key={poll.id} poll={poll} />)}
+                {pollSnapshots.length === 0 ? (
+                  <EmptyState
+                    icon={Vote}
+                    title="No active polls"
+                    description="Launch a poll in any thread when you need roommates to align on schedules or chores."
+                    compact
+                  />
+                ) : pollSnapshots.map((poll) => <PollSnapshotCard key={poll.id} poll={poll} />)}
               </div>
             </CardContent>
           </Card>
@@ -314,7 +330,12 @@ export function MessagingThreadsClient({ initialData }: MessagingThreadsClientPr
             </CardHeader>
             <CardContent className="space-y-8">
               {threadPosts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{activeThread ? "No posts yet — be the first to share an update." : "Pick a thread to load its conversation."}</p>
+                <EmptyState
+                  icon={MessageSquarePlus}
+                  title={activeThread ? "No posts yet" : "Pick a thread"}
+                  description={activeThread ? "Be the first to post an update and get the conversation moving." : "Select a thread from the left to view its conversation and activity."}
+                  compact
+                />
               ) : (
                 threadPosts.map((post, index) => (
                   <div key={post.id} className="space-y-4">

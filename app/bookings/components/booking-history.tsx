@@ -6,8 +6,10 @@ import { canCancelBooking } from '@/lib/bookings/policy'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/patterns/empty-state'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CalendarPlus } from 'lucide-react'
 
 type BookingHistoryRow = {
   id: string
@@ -77,7 +79,15 @@ export function BookingHistory() {
     }
 
     if (list.length === 0) {
-      return <p className="text-sm text-muted-foreground">No mirrored bookings yet.</p>
+      return (
+        <EmptyState
+          icon={CalendarPlus}
+          title="No bookings yet"
+          description="Create your first amenity reservation from the Amenity catalog tab to populate this calendar history."
+          secondaryAction={<Button variant="outline" onClick={() => void loadRows()}>Refresh history</Button>}
+          compact
+        />
+      )
     }
 
     return (
