@@ -27,15 +27,62 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import SmartLink from "@/components/navigation/SmartLink"
+import LazyMount from "@/components/landing/lazy-mount"
 
 const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/40 bg-background/70 text-sm text-muted-foreground">
-      Calibrating shared-house orbit…
+    <div className="flex h-full items-center justify-center rounded-3xl border border-dashed border-primary/30 bg-background/70 text-sm text-muted-foreground">
+      Loading household map…
     </div>
   ),
 })
+
+const prismPoster = (
+  <div
+    className="relative flex size-full items-center justify-center overflow-hidden rounded-3xl"
+    aria-label="Static household integration diagram"
+  >
+    <svg
+      viewBox="0 0 640 420"
+      className="size-full"
+      role="img"
+      aria-hidden="true"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <radialGradient id="posterGlow" cx="50%" cy="45%" r="65%">
+          <stop offset="0%" stopColor="rgb(56 189 248 / 0.42)" />
+          <stop offset="100%" stopColor="rgb(15 23 42 / 0)" />
+        </radialGradient>
+      </defs>
+      <rect width="640" height="420" fill="rgb(2 6 23)" />
+      <rect width="640" height="420" fill="url(#posterGlow)" />
+      <g stroke="rgb(148 163 184 / 0.4)" strokeWidth="1.5" fill="none">
+        <path d="M120 210L210 155L300 210L210 265Z" />
+        <path d="M340 210L430 155L520 210L430 265Z" />
+        <path d="M230 130L320 75L410 130L320 185Z" />
+        <path d="M230 290L320 235L410 290L320 345Z" />
+      </g>
+      <g fill="rgb(56 189 248 / 0.85)">
+        <circle cx="210" cy="210" r="7" />
+        <circle cx="430" cy="210" r="7" />
+        <circle cx="320" cy="130" r="7" />
+        <circle cx="320" cy="290" r="7" />
+      </g>
+      <circle cx="320" cy="210" r="44" fill="rgb(14 116 144 / 0.6)" />
+      <text
+        x="320"
+        y="216"
+        fill="rgb(226 232 240)"
+        fontSize="14"
+        textAnchor="middle"
+      >
+        Roomsily
+      </text>
+    </svg>
+  </div>
+)
 
 const integrationBadges = [
   "Stripe Billing",
@@ -526,7 +573,9 @@ export default async function IndexPage() {
               </div>
             </div>
             <div className="relative h-[320px] w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-xl shadow-primary/20 md:h-[420px]">
-              <FeaturePrism />
+              <LazyMount fallback={prismPoster}>
+                <FeaturePrism />
+              </LazyMount>
             </div>
           </div>
         </div>
