@@ -234,22 +234,22 @@ export default async function IndexPage() {
               </div>
               <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
                 <Link
-                  href={siteConfig.links.login}
+                  href={siteConfig.links.signup}
                   className={cn(
                     buttonVariants({ size: "lg" }),
                     "bg-primary px-8 text-base font-semibold shadow-lg shadow-primary/30 transition hover:bg-primary/90"
                   )}
                 >
-                  <span>Sign in</span>
+                  <span>Start onboarding</span>
                 </Link>
                 <Link
-                  href={siteConfig.links.signup}
+                  href={siteConfig.links.login}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-primary/40 bg-background/80 px-8 text-base font-semibold backdrop-blur transition hover:border-primary hover:bg-primary/10"
                   )}
                 >
-                  <span>Create your household</span>
+                  <span>Sign in</span>
                 </Link>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
@@ -508,20 +508,11 @@ export default async function IndexPage() {
                 <Link
                   href={siteConfig.links.contact}
                   className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "border-primary/40 bg-background/80 text-primary hover:border-primary hover:bg-primary/10"
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "px-0 text-primary hover:bg-transparent hover:text-primary/90"
                   )}
                 >
                   <span>Book a walkthrough</span>
-                </Link>
-                <Link
-                  href={siteConfig.links.signup}
-                  className={cn(
-                    buttonVariants({ size: "sm" }),
-                    "bg-primary text-primary-foreground hover:bg-primary/90"
-                  )}
-                >
-                  <span>Start onboarding</span>
                 </Link>
               </div>
             </div>
@@ -633,14 +624,14 @@ export default async function IndexPage() {
                   <span>Start onboarding</span>
                 </SmartLink>
                 <SmartLink
-                  href={siteConfig.links.contact}
+                  href={siteConfig.links.login}
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-primary/40 bg-white/70 px-8 text-base font-semibold text-primary hover:border-primary hover:bg-white"
                   )}
                   intent="passive"
                 >
-                  <span>Talk with us</span>
+                  <span>Sign in</span>
                 </SmartLink>
               </div>
             </CardContent>
