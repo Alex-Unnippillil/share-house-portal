@@ -58,6 +58,16 @@ body {}
 }
 
 @layer base {
+  html:focus-within {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+      scroll-behavior: auto;
+    }
+  }
+
   * {
     @apply border-border;
   }
