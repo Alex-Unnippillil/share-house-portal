@@ -39,9 +39,7 @@ import type {
   WelcomeMessage,
 } from "./types"
 
-const dashboardDataSource =
-  process.env.DASHBOARD_DATA_SOURCE ??
-  (process.env.NODE_ENV === "production" ? "production" : "mock")
+const dashboardDataSource = process.env.DASHBOARD_DATA_SOURCE ?? "mock"
 
 const usingMockData = dashboardDataSource.toLowerCase() === "mock"
 

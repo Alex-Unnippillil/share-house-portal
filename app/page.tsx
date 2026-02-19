@@ -224,7 +224,7 @@ export default async function IndexPage() {
                 </Badge>
               </div>
               <div className="space-y-6">
-                <h1 className="text-display-xl text-balance">
+                <h1 className="text-balance text-display-xl">
                   Modern operations for every roommate and property manager
                 </h1>
                 <p className="mx-auto max-w-2xl text-body-lg text-muted-foreground lg:mx-0">
@@ -341,7 +341,7 @@ export default async function IndexPage() {
 
       <section className="container mx-auto px-4 py-20 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-display-lg text-balance">
+          <h2 className="text-balance text-display-lg">
             Shared-house workflows in one tenant portal
           </h2>
           <p className="mt-4 text-muted-foreground">
@@ -380,7 +380,7 @@ export default async function IndexPage() {
       <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-display-lg text-balance">
+            <h2 className="text-balance text-display-lg">
               Designed for the people using it
             </h2>
             <p className="mt-4 text-muted-foreground">
@@ -432,7 +432,7 @@ export default async function IndexPage() {
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
             <div className="space-y-6">
-              <h2 className="text-display-lg text-balance">
+              <h2 className="text-balance text-display-lg">
                 Visualize your household operating system
               </h2>
               <p className="text-muted-foreground">
@@ -535,7 +535,7 @@ export default async function IndexPage() {
 
       <section className="container mx-auto px-4 py-20 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-display-lg text-balance">
+          <h2 className="text-balance text-display-lg">
             How households move into Roomsily
           </h2>
           <p className="mt-4 text-muted-foreground">
@@ -572,7 +572,7 @@ export default async function IndexPage() {
           <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
             <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
               <div className="max-w-xl space-y-4">
-                <h3 className="text-display-lg text-balance">
+                <h3 className="text-balance text-display-lg">
                   Ready to centre your shared household around clarity?
                 </h3>
                 <p className="text-body-md text-muted-foreground">
