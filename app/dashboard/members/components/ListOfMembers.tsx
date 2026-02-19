@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import {
   dashboardEmptyStateClass,
   dashboardStatusBadgeVariants,
-  dashboardTableContainerClass,
-  dashboardTableRowVariants,
 } from "@/app/dashboard/components/dashboard-component-variants"
+import { Button } from "@/components/ui/button"
+import { TableCell, TableRow } from "@/components/ui/table"
 
 import { DashboardMember } from "../data"
 import EditMember from "./edit/EditMember"
@@ -19,50 +19,44 @@ export default function ListOfMembers({
 }) {
   if (!members.length) {
     return (
-      <div className={dashboardEmptyStateClass}>
-        No members have been added yet.
-      </div>
+      <tbody>
+        <tr>
+          <td colSpan={5} className="p-2">
+            <div className={dashboardEmptyStateClass}>No members have been added yet.</div>
+          </td>
+        </tr>
+      </tbody>
     )
   }
 
   return (
-    <div className={cn(dashboardTableContainerClass, "mx-2")}>
+    <tbody>
       {members.map((member, index) => {
         const roleTone = member.role === "admin" ? "success" : "warning"
         const statusTone = member.status === "active" ? "success" : "danger"
 
         return (
-          <div
-            className={dashboardTableRowVariants({ active: index === 0 })}
-            data-active={index === 0}
-            key={member.name + index}
-          >
-            <p className="font-medium text-foreground">{member.name}</p>
-            <div>
-              <span
-                className={dashboardStatusBadgeVariants({ tone: roleTone })}
-              >
-                {member.role}
-              </span>
-            </div>
-            <p className="text-muted-foreground">{member.createdAt}</p>
-            <div>
-              <span
-                className={dashboardStatusBadgeVariants({ tone: statusTone })}
-              >
-                {member.status}
-              </span>
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              <Button size="sm" variant="outline" className="gap-2">
-                <TrashIcon />
-                Delete
-              </Button>
-              <EditMember />
-            </div>
-          </div>
+          <TableRow key={member.name + index} className={index === 0 ? "bg-muted/40" : undefined}>
+            <TableCell className="font-medium text-foreground">{member.name}</TableCell>
+            <TableCell>
+              <span className={dashboardStatusBadgeVariants({ tone: roleTone })}>{member.role}</span>
+            </TableCell>
+            <TableCell className="text-muted-foreground">{member.createdAt}</TableCell>
+            <TableCell>
+              <span className={dashboardStatusBadgeVariants({ tone: statusTone })}>{member.status}</span>
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex items-center justify-end gap-2">
+                <Button size="sm" variant="outline" className="gap-2">
+                  <TrashIcon />
+                  Delete
+                </Button>
+                <EditMember />
+              </div>
+            </TableCell>
+          </TableRow>
         )
       })}
-    </div>
+    </tbody>
   )
 }

@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import {
   dashboardEmptyStateClass,
   dashboardStatusBadgeVariants,
-  dashboardTableContainerClass,
-  dashboardTableRowVariants,
 } from "@/app/dashboard/components/dashboard-component-variants"
+import { Button } from "@/components/ui/button"
+import { TableCell, TableRow } from "@/components/ui/table"
 
 import EditTodo from "./EditTodo"
 
@@ -36,21 +36,22 @@ const todos: TodoRow[] = [
 export default function ListOfTodo() {
   if (!todos.length) {
     return (
-      <div className={dashboardEmptyStateClass}>
-        No todos yet. Create one to get started.
-      </div>
+      <tbody>
+        <tr>
+          <td colSpan={5} className="p-2">
+            <div className={dashboardEmptyStateClass}>No todos yet. Create one to get started.</div>
+          </td>
+        </tr>
+      </tbody>
     )
   }
 
   return (
-    <div className={cn(dashboardTableContainerClass, "mx-2")}>
+    <tbody>
       {todos.map((todo, index) => (
-        <div
-          key={todo.title + index}
-          className={dashboardTableRowVariants({ active: index === 0 })}
-        >
-          <p className="font-medium text-foreground">{todo.title}</p>
-          <div>
+        <TableRow key={todo.title + index} className={index === 0 ? "bg-muted/40" : undefined}>
+          <TableCell className="font-medium text-foreground">{todo.title}</TableCell>
+          <TableCell>
             <span
               className={dashboardStatusBadgeVariants({
                 tone: todo.status === "completed" ? "success" : "warning",
@@ -58,18 +59,20 @@ export default function ListOfTodo() {
             >
               {todo.status}
             </span>
-          </div>
-          <p className="text-muted-foreground">{todo.createdAt}</p>
-          <p className="text-muted-foreground">{todo.createdBy}</p>
-          <div className="flex items-center justify-end gap-2">
-            <Button size="sm" variant="outline" className="gap-2">
-              <TrashIcon />
-              Delete
-            </Button>
-            <EditTodo />
-          </div>
-        </div>
+          </TableCell>
+          <TableCell className="text-muted-foreground">{todo.createdAt}</TableCell>
+          <TableCell className="text-muted-foreground">{todo.createdBy}</TableCell>
+          <TableCell className="text-right">
+            <div className="flex items-center justify-end gap-2">
+              <Button size="sm" variant="outline" className="gap-2">
+                <TrashIcon />
+                Delete
+              </Button>
+              <EditTodo />
+            </div>
+          </TableCell>
+        </TableRow>
       ))}
-    </div>
+    </tbody>
   )
 }
