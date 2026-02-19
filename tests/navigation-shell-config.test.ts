@@ -33,7 +33,16 @@ describe("portal role navigation", () => {
   it("uses one source of truth across role map entries", () => {
     expect(roleNavigation.tenant.primaryNav).toBe(appWorkspaceNav)
     expect(roleNavigation.roommate.primaryNav).toBe(appWorkspaceNav)
-    expect(roleNavigation.property_manager.primaryNav).toBe(appWorkspaceNav)
-    expect(roleNavigation.admin.primaryNav).toBe(appWorkspaceNav)
+
+    const managerNav = roleNavigation.property_manager.primaryNav
+    const adminNav = roleNavigation.admin.primaryNav
+
+    expect(managerNav).not.toBe(appWorkspaceNav)
+    expect(adminNav).not.toBe(appWorkspaceNav)
+
+    expect(managerNav.slice(0, appWorkspaceNav.length)).toEqual(appWorkspaceNav)
+    expect(adminNav.slice(0, appWorkspaceNav.length)).toEqual(appWorkspaceNav)
+    expect(managerNav.at(-1)?.href).toBe("/dashboard/members")
+    expect(adminNav.at(-1)?.href).toBe("/dashboard/members")
   })
 })

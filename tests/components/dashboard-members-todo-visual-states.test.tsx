@@ -30,33 +30,39 @@ import TodoForm from "@/app/dashboard/todo/components/TodoForm"
 describe("dashboard members/todo visual states", () => {
   it("marks the first member row as active and styles status badges", () => {
     render(
-      <ListOfMembers
-        members={[
-          {
-            name: "Admin",
-            role: "admin",
-            createdAt: "Today",
-            status: "active",
-          },
-          {
-            name: "Former",
-            role: "user",
-            createdAt: "Yesterday",
-            status: "resigned",
-          },
-        ]}
-      />,
+      <table>
+        <ListOfMembers
+          members={[
+            {
+              name: "Admin",
+              role: "admin",
+              createdAt: "Today",
+              status: "active",
+            },
+            {
+              name: "Former",
+              role: "user",
+              createdAt: "Yesterday",
+              status: "resigned",
+            },
+          ]}
+        />
+      </table>,
     )
 
-    const activeRow = screen.getByText("Admin").closest("div")
-    expect(activeRow).toHaveAttribute("data-active", "true")
+    const activeRow = screen.getByText("Admin").closest("tr")
+    expect(activeRow).toHaveClass("bg-muted/40")
 
     expect(screen.getByText("active").className).toContain("text-emerald")
     expect(screen.getByText("resigned").className).toContain("text-red")
   })
 
   it("renders an empty state when members list is empty", () => {
-    render(<ListOfMembers members={[]} />)
+    render(
+      <table>
+        <ListOfMembers members={[]} />
+      </table>,
+    )
 
     expect(screen.getByText("No members have been added yet.")).toBeInTheDocument()
   })
