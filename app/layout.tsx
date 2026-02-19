@@ -32,6 +32,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
             fontSans.variable
           )}
         >
+          <a
+            href="#main-content"
+            className="sr-only z-[100] rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            Skip to main content
+          </a>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -39,14 +45,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
             disableTransitionOnChange
           >
             <AppShell>
-              <div className="flex-1">
+              <main id="main-content" tabIndex={-1} className="flex-1 focus-visible:outline-none">
                 <ErrorBoundary>
                   <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
                 </ErrorBoundary>
                 <Toaster />
                 <Analytics />
                 <SpeedInsights />
-              </div>
+              </main>
             </AppShell>
 
             {/*

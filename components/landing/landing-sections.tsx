@@ -28,6 +28,7 @@ import {
 import SmartLink from "@/components/navigation/SmartLink"
 
 import { LANDING_SECTION_IDS } from "./landing-ids"
+import LazyMount from "./lazy-mount"
 
 const integrationBadges = [
   "Stripe Billing",
