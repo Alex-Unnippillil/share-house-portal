@@ -1,16 +1,26 @@
-import { MaintenanceDashboard } from "@/components/maintenance/maintenance-dashboard";
+import { SectionStack } from "@/components/layouts/layout-primitives"
+import { MaintenanceDashboard } from "@/components/maintenance/maintenance-dashboard"
+import {
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageTitle,
+} from "@/components/ui/page-layout"
 
 export default function MaintenancePage() {
   return (
-    <div className="container max-w-7xl space-y-8 py-12">
-      <header className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Maintenance Requests</h1>
-        <p className="text-base text-muted-foreground sm:text-lg">
-          Submit issues with clear severity and access windows, then track every assignment and status change in a shared timeline.
-        </p>
-      </header>
+    <PageContainer>
+      <PageHeader>
+        <PageTitle>Maintenance Requests</PageTitle>
+        <PageDescription>
+          Submit issues with clear severity and access windows, then track every
+          assignment and status change in a shared timeline.
+        </PageDescription>
+      </PageHeader>
 
-      <MaintenanceDashboard />
-    </div>
-  );
+      <SectionStack>
+        <MaintenanceDashboard />
+      </SectionStack>
+    </PageContainer>
+  )
 }

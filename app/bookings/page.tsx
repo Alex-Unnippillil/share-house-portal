@@ -60,13 +60,13 @@ export default function BookingsPage() {
         <BookingStats />
       </Suspense>
 
-      <Tabs defaultValue="book" className="space-y-6">
+      <Tabs defaultValue="book" className="space-y-stack-lg">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="book">Amenity catalog</TabsTrigger>
           <TabsTrigger value="history">Calendars</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="book" className="space-y-6">
+        <TabsContent value="book" className="space-y-stack-lg">
           {Object.entries(amenitiesByProperty).map(
             ([propertyName, amenities]) => (
               <PageSection key={propertyName}>
@@ -83,15 +83,12 @@ export default function BookingsPage() {
                     const Icon = AMENITY_ICON_MAP[amenity.iconName]
 
                     return (
-                      <Card
-                        key={amenity.id}
-                        className="transition-shadow hover:shadow-md"
-                      >
+                      <Card key={amenity.id} surface="glass" interactive>
                         <CardHeader>
                           <div className="flex items-center space-x-3">
                             <Icon className="size-6 text-primary" />
                             <div>
-                              <CardTitle className="text-lg">
+                              <CardTitle className="text-heading-sm">
                                 {amenity.amenityName}
                               </CardTitle>
                               <CardDescription>
@@ -112,13 +109,13 @@ export default function BookingsPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-6">
+        <TabsContent value="history" className="space-y-stack-lg">
           <BookingHistory />
         </TabsContent>
       </Tabs>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card>
+        <Card surface="elevated" interactive>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Calendar className="size-5 text-primary" />
@@ -126,14 +123,14 @@ export default function BookingsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-label-sm">
+            <CardDescription className="text-body-sm">
               Booking create, reschedule, and cancellation events sync into the
               `bookings` mirror table.
             </CardDescription>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card surface="elevated" interactive>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Tv className="size-5 text-primary" />
@@ -141,14 +138,14 @@ export default function BookingsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-label-sm">
+            <CardDescription className="text-body-sm">
               Policy guardrails validate recurring reservations and check
               overlap before tenants submit bookings.
             </CardDescription>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card surface="elevated" interactive>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <ShieldAlert className="size-5 text-primary" />
@@ -156,7 +153,7 @@ export default function BookingsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-label-sm">
+            <CardDescription className="text-body-sm">
               Tenant and manager calendars display booking status plus
               cancellation eligibility by policy window.
             </CardDescription>

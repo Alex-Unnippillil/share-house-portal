@@ -9,7 +9,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { SectionStack } from "@/components/layouts/layout-primitives"
+import {
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageTitle,
+} from "@/components/ui/page-layout"
 
 import { DocumentsStats } from "./components/documents-stats"
 import { DocumentsWorkspace } from "./components/documents-workspace"
@@ -18,22 +24,19 @@ import { UploadDocumentDialog } from "./components/upload-document-dialog"
 
 export default function DocumentsPage() {
   return (
-    <div className="container max-w-7xl space-y-8 py-8">
-      <header className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Documents
-            </h1>
-            <p className="text-base text-muted-foreground sm:text-lg">
+    <PageContainer>
+      <PageHeader withSeparator={false}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-stack-sm">
+            <PageTitle>Documents</PageTitle>
+            <PageDescription>
               Manage leases, notices, and account files with secure access,
               version history, and audit tracking.
-            </p>
+            </PageDescription>
           </div>
           <UploadDocumentDialog />
         </div>
-        <Separator />
-      </header>
+      </PageHeader>
 
       <Suspense
         fallback={
@@ -54,9 +57,11 @@ export default function DocumentsPage() {
         <DocumentsStats />
       </Suspense>
 
-      <DocumentsWorkspace />
+      <SectionStack>
+        <DocumentsWorkspace />
+      </SectionStack>
 
-      <Card>
+      <Card surface="solid">
         <CardHeader>
           <CardTitle>Policy and signing disclosures</CardTitle>
           <CardDescription>
@@ -64,7 +69,7 @@ export default function DocumentsPage() {
             for compliance and dispute handling.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
+        <CardContent className="space-y-2 text-body-sm text-muted-foreground">
           <p>
             <Link href="/terms" className="underline">
               Terms of Service
@@ -99,71 +104,71 @@ export default function DocumentsPage() {
       </Suspense>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card surface="elevated" interactive>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <FileText className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-body-sm">
                 Secure Storage
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-body-sm">
               Encrypted document storage with access logging for compliance.
             </CardDescription>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card surface="elevated" interactive>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Users className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-body-sm">
                 Multi-Signature
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-body-sm">
               Collect signatures from all tenants and property managers.
             </CardDescription>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card surface="elevated" interactive>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Clock className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-body-sm">
                 Version History
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-body-sm">
               Track document changes with complete audit trails.
             </CardDescription>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card surface="elevated" interactive>
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Upload className="size-5 text-primary" />
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-body-sm">
                 Controlled Sharing
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-body-sm">
               Signed access URLs ensure files are only retrieved through
               verified sessions.
             </CardDescription>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   )
 }
