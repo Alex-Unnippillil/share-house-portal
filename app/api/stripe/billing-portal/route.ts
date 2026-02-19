@@ -1,6 +1,6 @@
-import { createClient } from "@/utils/supabase/server"
 import { NextRequest } from "next/server"
 
+import { requireApiAuth } from "@/lib/api-auth"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import { getAppBaseUrl, getStripe } from "@/lib/stripe"
 
@@ -11,33 +11,37 @@ export async function POST(req: NextRequest) {
     const requestedCustomerId =
       typeof payload?.customerId === "string" ? payload.customerId : undefined
 
-    const supabase = createClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const authContext = await requireApiAuth()
 
-    if (authError || !user) {
+    if (authContext instanceof Response) {
+      return authContext
+    }
+
+    const { supabase, userId } = authContext
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (profileError) {
+      throw profileError
+    }
+
+    const profileCustomerId = profile?.stripe_customer_id ?? undefined
+
+    if (
+      requestedCustomerId &&
+      profileCustomerId &&
+      requestedCustomerId !== profileCustomerId
+    ) {
       return jsonError("AUTH_UNAUTHORIZED", {
-        message: "You must be authenticated to open Billing Portal.",
+        message: "You can only open the Billing Portal for your own account.",
       })
     }
 
-    let customerId = requestedCustomerId
-
-    if (!customerId) {
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("stripe_customer_id")
-        .eq("id", user.id)
-        .maybeSingle()
-
-      if (profileError) {
-        throw profileError
-      }
-
-      customerId = profile?.stripe_customer_id ?? undefined
-    }
+    let customerId = profileCustomerId
 
     if (!customerId) {
       return jsonError("REQUEST_VALIDATION_ERROR", {

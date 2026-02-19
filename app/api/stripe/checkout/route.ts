@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 
+import { requireApiAuth } from "@/lib/api-auth"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
 import { incrementOperationalMetric } from "@/lib/observability/metrics"
@@ -31,6 +32,25 @@ export async function POST(req: NextRequest) {
 
   try {
     const stripe = getStripe()
+    const authContext = await requireApiAuth()
+    if (authContext instanceof Response) {
+      return authContext
+    }
+
+    const { supabase, userId } = authContext
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (profileError) {
+      return jsonError("DATA_FETCH_FAILED", {
+        message: "Unable to load Stripe customer details.",
+        details: { reason: profileError.message },
+      })
+    }
+
     const {
       priceId,
       quantity = 1,
@@ -54,9 +74,25 @@ export async function POST(req: NextRequest) {
 
     const safeMetadata = {
       ...(metadata && typeof metadata === "object" ? metadata : {}),
-      ...(typeof tenantId === "string" ? { tenant_id: tenantId } : {}),
+      tenant_id: userId,
       ...(typeof unitId === "string" ? { unit_id: unitId } : {}),
       payment_mode: normalizedMode,
+    }
+
+    if (
+      typeof customerId === "string" &&
+      customerId.length > 0 &&
+      customerId !== profile?.stripe_customer_id
+    ) {
+      return jsonError("AUTH_UNAUTHORIZED", {
+        message: "The provided customerId does not belong to the authenticated user.",
+      })
+    }
+
+    if (typeof tenantId === "string" && tenantId.length > 0 && tenantId !== userId) {
+      return jsonError("AUTH_UNAUTHORIZED", {
+        message: "The provided tenantId does not match the authenticated user.",
+      })
     }
 
     const sessionConfig = {
@@ -67,10 +103,7 @@ export async function POST(req: NextRequest) {
           quantity: safeQuantity,
         },
       ],
-      customer:
-        typeof customerId === "string" && customerId.length
-          ? customerId
-          : undefined,
+      customer: profile?.stripe_customer_id ?? undefined,
       success_url: `${baseUrl}/payments?status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/payments?status=cancelled`,
       metadata: safeMetadata,

@@ -1,9 +1,16 @@
 import { Resend } from "resend"
 
 import { EmailTemplate } from "@/components/email-template"
+import { requirePrivilegedApiAccess } from "@/lib/api-auth"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 
 export async function POST() {
+  const authContext = await requirePrivilegedApiAccess()
+
+  if (authContext instanceof Response) {
+    return authContext
+  }
+
   const resendApiKey = process.env.RESEND_API_KEY
 
   if (!resendApiKey) {
