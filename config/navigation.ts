@@ -16,6 +16,13 @@ export type RoleNavSection = {
   items: RoleNavItem[]
 }
 
+export type PaletteQuickAction = {
+  id: "maintenance" | "document" | "visitor" | "rent"
+  title: string
+  subtitle: string
+  href: string
+}
+
 type NavigationItem = RoleNavItem & {
   authOnly?: boolean
   roles?: PortalRole[]
@@ -159,6 +166,43 @@ export const docsSidebarNav: SidebarNavItem[] = [
     ],
   },
 ]
+
+export const paletteQuickActions: PaletteQuickAction[] = [
+  {
+    id: "maintenance",
+    title: "Create maintenance request",
+    subtitle: "Report repairs, hazards, or shared-space issues",
+    href: "/maintenance",
+  },
+  {
+    id: "document",
+    title: "Upload document",
+    subtitle: "Add lease files and compliance paperwork",
+    href: "/documents",
+  },
+  {
+    id: "visitor",
+    title: "Log visitor",
+    subtitle: "Register overnight guests and notify roommates",
+    href: "/visitors",
+  },
+  {
+    id: "rent",
+    title: "Pay rent",
+    subtitle: "Open rent payment tools and catch-up balance",
+    href: "/payments",
+  },
+]
+
+export function getCommandPaletteNavigation(role: PortalRole | null | undefined) {
+  const roleConfig = getRoleNavigation(role)
+
+  return {
+    roleLabel: roleConfig.roleLabel,
+    routes: roleConfig.primaryNav.filter((item) => Boolean(item.href)),
+    quickActions: paletteQuickActions,
+  }
+}
 
 export function getRoleNavigation(role: PortalRole | null | undefined): RoleNavigationConfig {
   if (!role) {
