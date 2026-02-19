@@ -1,10 +1,9 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 
 import { roleNavigation, type PortalRole } from "@/config/navigation"
+import { RoleNavList } from "@/components/navigation/role-nav-list"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,21 +23,7 @@ type PortalShellProps = {
   children: React.ReactNode
 }
 
-function isActiveRoute(pathname: string, href: string) {
-  if (href === "/") {
-    return pathname === href
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`)
-}
-
 function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
-  const pathname = usePathname()
-  const navItems = roleNavigation[role].primaryNav.map((item) => ({
-    href: item.href ?? "/",
-    title: item.title,
-  }))
-
   return (
     <>
       <nav
@@ -48,23 +33,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
         <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">
           Navigation
         </p>
-        <ul className="space-y-stack-sm">
-          {navItems.map((item) => (
-            <li key={`${item.href}-${item.title}`}>
-              <Link
-                className={cn(
-                  "block rounded-md px-3 py-2 text-body-sm transition",
-                  isActiveRoute(pathname, item.href)
-                    ? "bg-primary/10 text-foreground"
-                    : "text-foreground hover:bg-muted"
-                )}
-                href={item.href}
-              >
-                {item.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <RoleNavList role={role} compact />
       </nav>
       <div className="border-b p-content-gutter lg:hidden">
         <Sheet>
@@ -78,23 +47,9 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
             <SheetHeader>
               <SheetTitle>{title} Navigation</SheetTitle>
             </SheetHeader>
-            <ul className="mt-stack-lg space-y-stack-sm">
-              {navItems.map((item) => (
-                <li key={`${item.href}-${item.title}`}>
-                  <Link
-                    className={cn(
-                      "block rounded-md px-3 py-2 text-body-sm",
-                      isActiveRoute(pathname, item.href)
-                        ? "bg-primary/10 text-foreground"
-                        : "hover:bg-muted"
-                    )}
-                    href={item.href}
-                  >
-                    {item.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-stack-lg">
+              <RoleNavList role={role} compact />
+            </div>
           </SheetContent>
         </Sheet>
       </div>
