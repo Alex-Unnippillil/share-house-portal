@@ -21,11 +21,11 @@ export default function ListOfMembers({ members }: { members: DashboardMember[] 
                                                 <div>
                                                         <span
                                                                 className={cn(
-                                                                        "rounded-full border-[.5px] px-2 py-1 text-sm capitalize shadow dark:bg-zinc-800",
+                                                                        "rounded-full border-[.5px] px-2 py-1 text-sm capitalize shadow bg-muted",
                                                                         {
-                                                                                "border-green-500 bg-green-200 text-green-600":
+                                                                                "border-payment-paid-border bg-payment-paid-background text-payment-paid-foreground":
                                                                                         member.role === "admin",
-                                                                                "border-zinc-300 bg-yellow-50 px-4 text-yellow-700 dark:border-yellow-700 dark:text-yellow-300":
+                                                                                "border-border bg-booking-pending-background px-4 text-booking-pending-foreground border-booking-pending":
                                                                                         member.role === "user",
                                                                         },
                                                                 )}
@@ -37,11 +37,11 @@ export default function ListOfMembers({ members }: { members: DashboardMember[] 
                                                 <div>
                                                         <span
                                                                 className={cn(
-                                                                        "rounded-full border border-zinc-300 px-2 py-1 text-sm capitalize dark:bg-zinc-800",
+                                                                        "rounded-full border border-border px-2 py-1 text-sm capitalize bg-muted",
                                                                         {
-                                                                                "bg-green-200 px-4 text-green-600 dark:border-green-400":
+                                                                                "border-payment-paid-border bg-payment-paid-background px-4 text-payment-paid-foreground":
                                                                                         member.status === "active",
-                                                                                "bg-red-100 text-red-500 dark:border-red-400 dark:text-red-300":
+                                                                                "border-maintenance-blocked-border bg-maintenance-blocked-background text-maintenance-blocked-foreground":
                                                                                         member.status === "resigned",
                                                                         },
                                                                 )}
