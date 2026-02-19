@@ -20,7 +20,7 @@ const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 
 const menuContentClasses = cn(
   "z-50 min-w-[8rem] overflow-hidden bg-popover p-1 text-popover-foreground",
-  uiLayerTokens.radiusMd,
+  uiLayerTokens.radiusLg,
   uiLayerTokens.surfaceBorder,
   uiLayerTokens.surfaceShadow,
   uiMotionTokens.floating,

@@ -21,7 +21,7 @@ const PopoverContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         "z-50 w-72 bg-popover p-4 text-popover-foreground outline-none",
-        uiLayerTokens.radiusMd,
+        uiLayerTokens.radiusLg,
         uiLayerTokens.surfaceBorder,
         uiLayerTokens.surfaceShadow,
         uiMotionTokens.floating,

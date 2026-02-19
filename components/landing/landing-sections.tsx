@@ -252,7 +252,7 @@ export function HeroSection() {
               {heroHighlights.map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur"
+                  className="surface-glass surface-hover rounded-2xl p-5 text-left"
                 >
                   <div className="flex items-center gap-3">
                     <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -306,12 +306,20 @@ export function HeroSection() {
               <div className="relative space-y-4 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl border border-primary-foreground/20 bg-background/10 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">Next rent cycle</p>
-                    <p className="mt-2 text-2xl font-semibold text-primary-foreground">$4,280 due</p>
-                    <p className="mt-1 text-xs text-primary-foreground/70">4 roommates · 82% already funded</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">
+                      Next rent cycle
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-primary-foreground">
+                      $4,280 due
+                    </p>
+                    <p className="mt-1 text-xs text-primary-foreground/70">
+                      4 roommates · 82% already funded
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-primary-foreground/20 bg-background/10 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">Today&rsquo;s flow</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">
+                      Today&rsquo;s flow
+                    </p>
                     <ul className="mt-3 space-y-2 text-xs text-primary-foreground">
                       <li className="flex items-center gap-2">
                         <CalendarClock className="size-3.5 text-primary" />
@@ -355,7 +363,7 @@ export function HeroSection() {
           {heroMetrics.map((metric) => (
             <div
               key={metric.label}
-              className="flex items-center gap-4 rounded-2xl border border-border/60 bg-background/80 px-6 py-5 text-left shadow-sm backdrop-blur"
+              className="surface-glass flex items-center gap-4 rounded-2xl px-6 py-5 text-left"
             >
               <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <metric.icon className="size-5" aria-hidden="true" />
@@ -391,7 +399,9 @@ export function FeatureGridSection() {
           {portalFeatures.map((feature) => (
             <Card
               key={feature.title}
-              className="flex h-full flex-col border-border/70 bg-card/80 shadow-sm shadow-primary/10 transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg"
+              surface="glass"
+              interactive
+              className="flex h-full flex-col"
             >
               <CardHeader className="space-y-5">
                 <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -438,7 +448,8 @@ export function PersonasSection() {
           {personaPlaybooks.map((persona) => (
             <Card
               key={persona.badge}
-              className="relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur"
+              surface="glass"
+              className="relative h-full overflow-hidden"
             >
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
               <CardHeader className="relative space-y-4">
@@ -557,7 +568,8 @@ export function IntegrationsSection() {
           {integrationHighlights.map((highlight) => (
             <Card
               key={highlight.title}
-              className="h-full border-border/70 bg-background/95 shadow-sm"
+              surface="solid"
+              className="h-full"
             >
               <CardHeader className="space-y-4">
                 <CardTitle className="text-heading-md">
@@ -612,7 +624,7 @@ export function WorkflowSection() {
           {workflowSteps.map((item, index) => (
             <li
               key={item.step}
-              className="relative flex h-full flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-sm"
+              className="relative flex h-full flex-col gap-4 rounded-2xl p-6 surface-solid"
             >
               <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                 {item.step}
@@ -639,7 +651,7 @@ export function FinalCtaSection() {
   return (
     <section id={LANDING_SECTION_IDS.finalCta} className="py-section">
       <div className="layout-content">
-        <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
+        <Card surface="elevated" className="overflow-hidden border-primary/25 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
           <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl space-y-4">
               <h3 className="text-balance text-display-lg">

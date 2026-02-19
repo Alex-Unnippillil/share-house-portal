@@ -54,14 +54,14 @@ export async function SiteHeader() {
               <>
                 <SmartLink
                   href="/auth"
-                  className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "justify-center")}
+                  className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "justify-center focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2")}
                   intent="navigation"
                 >
                   Log in
                 </SmartLink>
                 <SmartLink
                   href="/onboarding"
-                  className={cn(buttonVariants({ size: "sm" }), "justify-center")}
+                  className={cn(buttonVariants({ size: "sm" }), "justify-center focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2")}
                   intent="navigation"
                 >
                   Sign up

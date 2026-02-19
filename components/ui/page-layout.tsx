@@ -5,15 +5,29 @@ import { Separator } from "@/components/ui/separator"
 
 type DivProps = React.HTMLAttributes<HTMLDivElement>
 
+type PageContainerVariant = "default" | "narrow" | "wide" | "dashboard"
+
+const pageContainerVariantClasses: Record<PageContainerVariant, string> = {
+  default: "max-w-7xl",
+  narrow: "max-w-6xl",
+  wide: "max-w-7xl",
+  dashboard: "max-w-7xl",
+}
+
 type HeaderProps = React.HTMLAttributes<HTMLElement> & {
   withSeparator?: boolean
 }
 
-export function PageContainer({ className, ...props }: DivProps) {
+export function PageContainer({
+  className,
+  variant = "default",
+  ...props
+}: DivProps & { variant?: PageContainerVariant }) {
   return (
     <div
       className={cn(
-        "container max-w-7xl space-y-section px-content-gutter py-section",
+        "container space-y-section px-content-gutter py-section",
+        pageContainerVariantClasses[variant],
         className
       )}
       {...props}

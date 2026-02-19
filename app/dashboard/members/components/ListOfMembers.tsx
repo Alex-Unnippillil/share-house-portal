@@ -1,5 +1,7 @@
 import { TrashIcon } from "@radix-ui/react-icons"
 
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
   dashboardEmptyStateClass,
   dashboardStatusBadgeVariants,
@@ -10,7 +12,11 @@ import { TableCell, TableRow } from "@/components/ui/table"
 import { DashboardMember } from "../data"
 import EditMember from "./edit/EditMember"
 
-export default function ListOfMembers({ members }: { members: DashboardMember[] }) {
+export default function ListOfMembers({
+  members,
+}: {
+  members: DashboardMember[]
+}) {
   if (!members.length) {
     return (
       <tbody>
