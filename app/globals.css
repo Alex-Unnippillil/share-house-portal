@@ -31,7 +31,7 @@ body {}
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 222 47% 11%;
-    --radius: 0.625rem;
+    --radius: 0.675rem;
   }
 
   .dark {
@@ -70,36 +70,18 @@ body {}
 
 @layer utilities {
   .app-backdrop {
-    @apply bg-background/90;
-  }
-
-  @supports ((-webkit-backdrop-filter: blur(0)) or (backdrop-filter: blur(0))) {
-    .app-backdrop {
-      @apply bg-background/60 backdrop-blur-xl;
-    }
+    @apply bg-background bg-gradient-to-b from-background via-background to-zinc-100/60 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900/85 supports-[backdrop-filter]:bg-background/75 supports-[backdrop-filter]:dark:bg-zinc-950/75 supports-[backdrop-filter]:backdrop-blur-xl;
   }
 
   .glass-surface {
-    @apply bg-background/85 dark:bg-zinc-950/70;
-  }
-
-  @supports ((-webkit-backdrop-filter: blur(0)) or (backdrop-filter: blur(0))) {
-    .glass-surface {
-      @apply bg-background/70 backdrop-blur-xl dark:bg-zinc-950/55;
-    }
+    @apply bg-background/95 shadow-sm border border-zinc-200/80 dark:bg-zinc-950/90 dark:border-zinc-800/85 supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-zinc-950/60 supports-[backdrop-filter]:backdrop-blur-xl;
   }
 
   .glass-surface-hover {
-    @apply transition-colors hover:bg-background/95 dark:hover:bg-zinc-900/85;
-  }
-
-  @supports ((-webkit-backdrop-filter: blur(0)) or (backdrop-filter: blur(0))) {
-    .glass-surface-hover {
-      @apply hover:bg-background/80 dark:hover:bg-zinc-900/70;
-    }
+    @apply transition-all duration-200 fine:hover:-translate-y-0.5 fine:hover:shadow-md fine:hover:bg-background/95 fine:hover:dark:bg-zinc-900/90 fine:hover:supports-[backdrop-filter]:bg-background/80 fine:hover:supports-[backdrop-filter]:dark:bg-zinc-900/75;
   }
 
   .glass-border {
-    @apply border border-zinc-200/80 dark:border-zinc-800/85;
+    @apply border border-zinc-200/75 dark:border-zinc-800/85 supports-[backdrop-filter]:border-zinc-200/60 supports-[backdrop-filter]:dark:border-zinc-700/70;
   }
 }
