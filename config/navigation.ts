@@ -1,5 +1,8 @@
 import type { MainNavItem, SidebarNavItem } from "@/types/nav"
 
+// Canonical navigation source consumed by SiteHeader/MainNav/MobileNav.
+// Avoid introducing route-specific nav configs outside this module.
+
 export type PortalRole = "tenant" | "roommate" | "property_manager" | "admin"
 export type NavTree = "public" | "tenant" | "property_manager" | "admin"
 export type NavigationDomain = "core" | "operations" | "account"

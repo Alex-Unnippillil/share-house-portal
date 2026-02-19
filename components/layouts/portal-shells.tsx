@@ -1,3 +1,7 @@
+/**
+ * @deprecated Use `SiteHeader` + `MainNav` + `MobileNav` with `PageContainer` instead.
+ * This shell is retained only as a temporary migration bridge for older route surfaces.
+ */
 "use client"
 
 import Link from "next/link"

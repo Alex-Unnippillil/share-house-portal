@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TenantLayoutShell } from "@/components/layouts/portal-shells"
+import { PageContainer } from "@/components/ui/page-layout"
 import { ActivityTimeline } from "@/components/patterns/activity-timeline"
 import { StatusBadge } from "@/components/patterns/status-badge"
 
@@ -28,7 +28,7 @@ const timelineItems = [
 
 export default function DesignSystemPage() {
   return (
-    <TenantLayoutShell>
+    <PageContainer variant="dashboard" className="flex flex-col gap-section py-section">
       <Card>
         <CardHeader>
           <CardTitle className="text-heading-md">
@@ -53,6 +53,6 @@ export default function DesignSystemPage() {
           <ActivityTimeline items={timelineItems} />
         </CardContent>
       </Card>
-    </TenantLayoutShell>
+    </PageContainer>
   )
 }
