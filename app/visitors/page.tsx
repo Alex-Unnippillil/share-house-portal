@@ -8,6 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  PageContainer,
+  PageDescription,
+  PageHeader,
+  PageTitle,
+} from "@/components/ui/page-layout"
 import { ManagerVisitorOversight } from "@/components/visitors/manager-visitor-oversight"
 import { VisitorBookingForm } from "@/components/visitors/visitor-booking-form"
 
@@ -49,16 +55,13 @@ export default async function VisitorsPage() {
   }
 
   return (
-    <div className="container max-w-6xl space-y-8 py-12">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Overnight Visitor Requests
-        </h1>
-        <p className="text-base text-muted-foreground sm:text-lg">
-          Register guests, enforce unit policy constraints, and keep roommates
-          and managers informed.
-        </p>
-      </header>
+    <PageContainer variant="narrow">
+      <PageHeader>
+        <PageTitle>Overnight Visitor Requests</PageTitle>
+        <PageDescription>
+          Register guests, enforce unit policy constraints, and keep roommates and managers informed.
+        </PageDescription>
+      </PageHeader>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <Card>
@@ -119,6 +122,6 @@ export default async function VisitorsPage() {
       </Card>
 
       {isManager ? <ManagerVisitorOversight /> : null}
-    </div>
+    </PageContainer>
   )
 }

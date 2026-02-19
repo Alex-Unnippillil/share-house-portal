@@ -8,7 +8,6 @@ import { roleNavigation, type PortalRole } from "@/config/navigation"
 import { getRoleCue } from "@/lib/role-cues"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PageContainer } from "@/components/ui/page-layout"
 import {
   Sheet,
   SheetContent,
@@ -46,7 +45,7 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
         aria-label="Portal"
       >
         <p className="mb-stack-lg text-label-sm uppercase tracking-wide text-muted-foreground">
-          Navigation
+          Workspace
         </p>
         <ul className="space-y-stack-sm">
           {navItems.map((item) => (
@@ -102,23 +101,21 @@ function ResponsiveNav({ title, role }: { title: string; role: PortalRole }) {
   )
 }
 
-function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
+export function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
   const roleCue = getRoleCue(role)
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b p-content-gutter">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-body-sm focus:shadow">
+        Skip to main content
+      </a>
+      <header className="sticky top-0 z-30 border-b bg-background/95 p-content-gutter backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-display-lg text-foreground">{title}</h1>
+            <p className="text-label-sm uppercase tracking-wide text-muted-foreground">Share House Portal</p>
+            <h1 className="text-heading-lg text-foreground">{title}</h1>
             <p className="text-body-sm text-muted-foreground">{subtitle}</p>
-            <p
-              className={cn(
-                "mt-1 text-xs",
-                roleCue.accentClassName,
-                "role-cue-heading"
-              )}
-            >
+            <p className={cn("mt-1 text-label-sm", roleCue.accentClassName, "role-cue-heading")}>
               {roleCue.contextCopy}
             </p>
           </div>
@@ -127,12 +124,10 @@ function PortalShell({ role, title, subtitle, children }: PortalShellProps) {
           </span>
         </div>
       </header>
-      <div className="flex min-h-[calc(100vh-108px)] flex-col lg:flex-row">
+      <div className="flex min-h-[calc(100vh-120px)] flex-col lg:flex-row">
         <ResponsiveNav title={title} role={role} />
-        <main className="flex-1">
-          <PageContainer variant="dashboard" className="flex flex-col gap-section">
-            {children}
-          </PageContainer>
+        <main id="main-content" className="min-w-0 flex-1 py-section">
+          {children}
         </main>
       </div>
     </div>
