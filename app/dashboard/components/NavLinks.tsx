@@ -34,8 +34,10 @@ export default function NavLinks({ onNavigate, role }: NavLinksProps) {
             href={href}
             intent="navigation"
             className={cn(
-              "flex items-center gap-2 rounded-sm p-2 transition-colors",
-              isActive ? "bg-gray-500 text-white dark:bg-gray-700" : "hover:bg-muted"
+              "flex items-center gap-2 rounded-sm p-2 motion-safe:transition-colors motion-safe:duration-200 motion-reduce:transition-none",
+              isActive
+                ? "bg-primary/90 text-primary-foreground hover:bg-primary"
+                : "text-foreground hover:bg-muted/70"
             )}
           >
             <span className="flex items-center gap-2">
