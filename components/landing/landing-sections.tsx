@@ -1,10 +1,3 @@
-export { FeatureGridSection } from "./sections/feature-grid-section"
-export { FinalCtaSection } from "./sections/final-cta-section"
-export { HeroSection } from "./sections/hero-section"
-export { IntegrationsSection } from "./sections/integrations-section"
-export { PersonasSection } from "./sections/personas-section"
-export { PrismSection } from "./sections/prism-section"
-export { WorkflowSection } from "./sections/workflow-section"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import {
