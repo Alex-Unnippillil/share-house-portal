@@ -4,17 +4,17 @@ This document tracks the performance contract for the `check_amenity_conflicts` 
 
 ## Purpose
 
-The client uses this RPC to validate amenity booking requests before redirecting tenants to the external Cal.com flow. The procedure performs three indexed checks against the `amenity_bookings` table:
+The client uses this RPC to validate amenity booking requests before redirecting tenants to the external Cal.com flow. The procedure performs three indexed checks against the `bookings` table:
 
 - **Range validation** – reject any request where the end time is not after the start time.
 - **Past start guard** – surface a conflict if the requested slot begins in the past.
-- **Conflict detection** – leverage the `amenity_bookings_time_search_idx` GiST index to detect overlapping reservations or bookings that violate the 15 minute buffer window.
+- **Conflict detection** – leverage the `bookings_time_range_gist` GiST index to detect overlapping reservations or bookings that violate the 15 minute buffer window.
 
 The index is defined as:
 
 ```sql
-CREATE INDEX amenity_bookings_time_search_idx
-  ON public.amenity_bookings
+CREATE INDEX bookings_time_range_gist
+  ON public.bookings
   USING gist (amenity_id, tstzrange(start_time, end_time, '[)'));
 ```
 

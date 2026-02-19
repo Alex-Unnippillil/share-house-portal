@@ -53,18 +53,6 @@ export type Database = {
         cancelled_at: string | null
         cancellation_reason: string | null
       }>
-      amenity_bookings: SupabaseTable<{
-        id: string
-        amenity_id: string
-        household_id: string | null
-        created_by: string
-        status: 'pending' | 'confirmed' | 'cancelled'
-        start_time: string
-        end_time: string
-        created_at: string | null
-        updated_at: string | null
-        metadata: Json | null
-      }>
       profiles: SupabaseTable<{
         id: string
         created_at: string | null
