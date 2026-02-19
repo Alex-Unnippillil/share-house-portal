@@ -78,6 +78,7 @@ async function markEventProcessed(
       last_attempt_at: now,
       next_retry_at: null,
     })
+    .eq("provider", "stripe")
     .eq("event_id", eventId)
 }
 
@@ -145,7 +146,7 @@ async function notifyTenantPayment(
 
     await sendInAppNotification({
       userId: tenantId,
-      title: "Payment Successful",
+      title: "Payment update",
       message: `Your payment of ${readableAmount} is now recorded in your receipts.`,
       type: "success",
       actionUrl: "/payments",
