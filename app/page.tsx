@@ -27,6 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import SmartLink from "@/components/navigation/SmartLink"
+import LandingHeader from "@/components/landing/landing-header"
 
 const FeaturePrism = dynamic(() => import("@/components/feature-prism"), {
   ssr: false,
@@ -208,7 +209,9 @@ export default async function IndexPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <section className="relative overflow-hidden border-b">
+      <LandingHeader />
+
+      <section className="relative overflow-hidden border-b" id="top">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background dark:from-primary/15" />
         <div className="container relative mx-auto px-4 py-24 sm:py-32">
@@ -380,7 +383,9 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-20 sm:py-24">
+      <section className="container mx-auto px-4 py-20 sm:py-24"
+        id="features"
+        style={{ scrollMarginTop: "7rem" }}>
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             Shared-house workflows in one tenant portal
@@ -418,7 +423,11 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="border-y border-border/70 bg-muted/10 py-20 sm:py-24">
+      <section
+        className="border-y border-border/70 bg-muted/10 py-20 sm:py-24"
+        id="roles"
+        style={{ scrollMarginTop: "7rem" }}
+      >
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-balance text-display-lg">
@@ -469,7 +478,11 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="border-y border-border/70 bg-muted/20 py-20 sm:py-24">
+      <section
+        className="border-y border-border/70 bg-muted/20 py-20 sm:py-24"
+        id="integrations"
+        style={{ scrollMarginTop: "7rem" }}
+      >
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
             <div className="space-y-6">
@@ -574,7 +587,11 @@ export default async function IndexPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-20 sm:py-24">
+      <section
+        className="container mx-auto px-4 py-20 sm:py-24"
+        id="how-it-works"
+        style={{ scrollMarginTop: "7rem" }}
+      >
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
             How households move into Roomsily
@@ -608,7 +625,7 @@ export default async function IndexPage() {
         </ol>
       </section>
 
-      <section className="pb-24">
+      <section className="pb-24" id="contact" style={{ scrollMarginTop: "7rem" }}>
         <div className="container mx-auto px-4">
           <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-lg">
             <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
