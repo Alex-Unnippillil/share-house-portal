@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
-import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 import {
   Form,
   FormControl,
@@ -23,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
+import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 
 import { createMember } from "../../actions"
 
@@ -73,7 +73,10 @@ export default function MemberForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4 p-2">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full space-y-4 p-2"
+      >
         <FormField
           control={form.control}
           name="email"
@@ -140,9 +143,9 @@ export default function MemberForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem value={role} key={role}>
-                      {role}
+                  {roles.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -160,12 +163,12 @@ export default function MemberForm() {
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select user status" />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {status.map((item) => (
-                    <SelectItem value={item} key={item}>
+                    <SelectItem key={item} value={item}>
                       {item}
                     </SelectItem>
                   ))}
@@ -175,7 +178,7 @@ export default function MemberForm() {
             </FormItem>
           )}
         />
-        <DashboardSubmitButton label="Submit" />
+        <DashboardSubmitButton label="Create" />
       </form>
     </Form>
   )

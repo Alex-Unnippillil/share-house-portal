@@ -22,7 +22,7 @@ export default function SideNav({ role }: SideNavProps) {
   return (
     <SideBar
       role={role}
-      className="dark:bg-gradient-dark hidden flex-1 lg:block"
+      className="hidden flex-1 lg:block dark:bg-gradient-dark"
     />
   )
 }

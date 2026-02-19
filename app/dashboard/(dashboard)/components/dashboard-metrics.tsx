@@ -47,7 +47,7 @@ export async function DashboardMetrics() {
       >
         <div className="flex items-center gap-2">
           <span className="role-cue-dot" aria-hidden="true" />
-          <p className="text-sm font-medium role-cue-heading">
+          <p className={cn("role-cue-heading", "text-sm font-medium")}>
             Performance overview
           </p>
         </div>

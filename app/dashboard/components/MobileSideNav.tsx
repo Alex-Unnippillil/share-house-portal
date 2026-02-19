@@ -45,7 +45,7 @@ export default function MobileSideNav({ role }: { role?: PortalRole | null }) {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="dark:bg-gradient-dark flex border-border/60 bg-background/85 shadow-2xl backdrop-blur-xl"
+        className="flex border-border/60 bg-background/85 shadow-2xl backdrop-blur-xl dark:bg-gradient-dark"
       >
         <SideBar role={role} onNavigate={() => setOpen(false)} />
       </SheetContent>

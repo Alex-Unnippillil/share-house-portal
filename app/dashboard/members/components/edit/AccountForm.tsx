@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
-import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 import {
   Form,
   FormControl,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
+import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 
 const FormSchema = z
   .object({
@@ -47,7 +47,6 @@ export default function AccountForm() {
       ),
     })
   }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4">
