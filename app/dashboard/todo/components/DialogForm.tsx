@@ -1,40 +1,22 @@
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import { ReactNode } from "react"
 
-import React, { ReactNode } from "react";
-import MemberForm from "./TodoForm";
+import { DashboardDialogForm } from "@/app/dashboard/components/dashboard-dialog-form"
 
-export default function DailogForm({
-	Trigger,
-	id,
-	title,
-	form,
-}: {
-	title: string;
-	Trigger: ReactNode;
-	id: string;
-	form: ReactNode;
-}) {
-	return (
-		<Dialog>
-			<DialogTrigger asChild id={id}>
-				{Trigger}
-			</DialogTrigger>
-			<DialogContent className="my-5 sm:max-w-[425px]">
-				<DialogHeader>
-					<DialogTitle>{title}</DialogTitle>
-					<DialogDescription>
-						Make changes to your profile here. Click save when
-					</DialogDescription>
-				</DialogHeader>
-				{form}
-			</DialogContent>
-		</Dialog>
-	);
+type DialogFormProps = {
+  title: string
+  Trigger: ReactNode
+  id: string
+  form: ReactNode
+}
+
+export default function DialogForm({ Trigger, id, title, form }: DialogFormProps) {
+  return (
+    <DashboardDialogForm
+      title={title}
+      description="Provide details and save to update your household todo list."
+      trigger={Trigger}
+      triggerId={id}
+      form={form}
+    />
+  )
 }
