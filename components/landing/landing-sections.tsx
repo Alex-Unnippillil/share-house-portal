@@ -282,7 +282,7 @@ export function HeroSection() {
           </div>
           <div className="relative mx-auto flex w-full max-w-xl justify-center">
             <div className="absolute -inset-10 rounded-[3rem] bg-gradient-to-br from-primary/40 via-primary/10 to-transparent blur-3xl" />
-            <div className="relative w-full overflow-hidden rounded-3xl border border-primary/30 bg-slate-950 text-slate-100 shadow-2xl shadow-primary/20">
+            <div className="relative w-full overflow-hidden rounded-3xl border border-primary/30 bg-gradient-dark text-primary-foreground shadow-2xl shadow-primary/20">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),transparent_55%)]" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.22),transparent_50%)]" />
 
@@ -298,29 +298,21 @@ export function HeroSection() {
                     </p>
                   </div>
                 </div>
-                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                <span className="rounded-full border border-booking-confirmed/40 bg-booking-confirmed/20 px-3 py-1 text-xs font-medium text-booking-confirmed-background">
                   Autopay synced
                 </span>
               </div>
 
               <div className="relative space-y-4 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-300">
-                      Next rent cycle
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-white">
-                      $4,280 due
-                    </p>
-                    <p className="mt-1 text-xs text-slate-300">
-                      4 roommates · 82% already funded
-                    </p>
+                  <div className="rounded-2xl border border-primary-foreground/20 bg-background/10 p-4 backdrop-blur">
+                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">Next rent cycle</p>
+                    <p className="mt-2 text-2xl font-semibold text-primary-foreground">$4,280 due</p>
+                    <p className="mt-1 text-xs text-primary-foreground/70">4 roommates · 82% already funded</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-300">
-                      Today&rsquo;s flow
-                    </p>
-                    <ul className="mt-3 space-y-2 text-xs text-slate-100">
+                  <div className="rounded-2xl border border-primary-foreground/20 bg-background/10 p-4 backdrop-blur">
+                    <p className="text-xs uppercase tracking-[0.16em] text-primary-foreground/70">Today&rsquo;s flow</p>
+                    <ul className="mt-3 space-y-2 text-xs text-primary-foreground">
                       <li className="flex items-center gap-2">
                         <CalendarClock className="size-3.5 text-primary" />
                         Kitchen booking · 6:00–8:00 PM
@@ -337,7 +329,7 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                <div className="rounded-2xl border border-primary-foreground/20 bg-background/10 p-4 backdrop-blur">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-medium text-white">
                       Household health
@@ -346,10 +338,10 @@ export function HeroSection() {
                       All systems normal
                     </p>
                   </div>
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-                    <div className="h-full w-[84%] rounded-full bg-gradient-to-r from-cyan-300 to-primary" />
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-primary-foreground/20">
+                    <div className="h-full w-[84%] rounded-full bg-gradient-to-r from-booking-confirmed-border to-primary" />
                   </div>
-                  <div className="mt-3 grid gap-2 text-xs text-slate-200 sm:grid-cols-3">
+                  <div className="mt-3 grid gap-2 text-xs text-primary-foreground/80 sm:grid-cols-3">
                     <span>Payments: 98%</span>
                     <span>Bookings: No conflicts</span>
                     <span>Maintenance SLA: 2.4h</span>
