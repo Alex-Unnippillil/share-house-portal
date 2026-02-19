@@ -121,6 +121,14 @@ body {
     }
   }
 
+  :target {
+    scroll-margin-top: 7rem;
+  }
+
+  [id] {
+    scroll-margin-top: 7rem;
+  }
+
   * {
     @apply border-border;
   }
