@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { personaPlaybooks } from "../landing-content"
 import { LANDING_SECTION_IDS } from "../landing-ids"
+import { MotionReveal } from "../motion"
 import { LandingSection, SectionHeading } from "../section-primitives"
 
 export function PersonasSection() {
@@ -19,30 +20,29 @@ export function PersonasSection() {
         description="Whether you’re paying rent or overseeing dozens of units, Roomsily gives every role the clarity they need."
       />
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
-        {personaPlaybooks.map((persona) => (
-          <Card
-            key={persona.badge}
-            className="relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur"
-          >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
-            <CardHeader className="relative space-y-4">
-              <Badge variant="secondary" className="w-fit rounded-full bg-primary/10 text-primary">
-                {persona.badge}
-              </Badge>
-              <CardTitle className="text-heading-md">{persona.title}</CardTitle>
-              <CardDescription className="text-base">{persona.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="relative">
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                {persona.points.map((point) => (
-                  <li key={point} className="flex items-start gap-3">
-                    <span className="mt-1 size-2 rounded-full bg-primary" aria-hidden="true" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+        {personaPlaybooks.map((persona, index) => (
+          <MotionReveal key={persona.badge} delay={0.08 * (index + 1)}>
+            <Card className="group relative h-full overflow-hidden border-border/70 bg-background/90 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_70%)]" />
+              <CardHeader className="relative space-y-4">
+                <Badge variant="secondary" className="w-fit rounded-full bg-primary/10 text-primary transition group-hover:bg-primary/20">
+                  {persona.badge}
+                </Badge>
+                <CardTitle className="text-heading-md">{persona.title}</CardTitle>
+                <CardDescription className="text-base">{persona.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="relative">
+                <ul className="space-y-3 text-sm text-muted-foreground">
+                  {persona.points.map((point) => (
+                    <li key={point} className="flex items-start gap-3">
+                      <span className="mt-1 size-2 rounded-full bg-primary" aria-hidden="true" />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </MotionReveal>
         ))}
       </div>
     </LandingSection>

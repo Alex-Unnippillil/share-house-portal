@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site"
 import { heroHighlights, heroMetrics, integrationBadges } from "../landing-content"
 import { BadgeRow, CtaButtonGroup, MetricCard } from "../landing-shared"
 import { LANDING_SECTION_IDS } from "../landing-ids"
+import { MotionReveal } from "../motion"
 import { LandingSection } from "../section-primitives"
 
 export function HeroSection() {
@@ -20,7 +21,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.28),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background dark:from-primary/15" />
       <div className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
-        <div className="space-y-10 text-center lg:text-left">
+        <MotionReveal className="space-y-10 text-center lg:text-left">
           <div className="flex justify-center lg:justify-start">
             <Badge variant="outline" className="rounded-full border-primary/30 bg-primary/10 text-primary">
               Tenant portal crafted for shared homes
@@ -56,10 +57,11 @@ export function HeroSection() {
             ]}
           />
           <div className="grid gap-4 sm:grid-cols-3">
-            {heroHighlights.map((item) => (
-              <div
+            {heroHighlights.map((item, index) => (
+              <MotionReveal
                 key={item.title}
-                className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur"
+                delay={0.06 * (index + 1)}
+                className="rounded-2xl border border-primary/20 bg-background/80 p-5 text-left shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
                   <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -68,15 +70,15 @@ export function HeroSection() {
                   <p className="text-sm font-semibold text-foreground">{item.title}</p>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">{item.description}</p>
-              </div>
+              </MotionReveal>
             ))}
           </div>
           <BadgeRow badges={integrationBadges} label="Works with" />
-        </div>
+        </MotionReveal>
 
-        <div className="relative mx-auto flex w-full max-w-xl justify-center">
+        <MotionReveal delay={0.12} className="relative mx-auto flex w-full max-w-xl justify-center">
           <div className="absolute -inset-10 rounded-[3rem] bg-gradient-to-br from-primary/40 via-primary/10 to-transparent blur-3xl" />
-          <div className="relative w-full overflow-hidden rounded-3xl border border-primary/30 bg-slate-950 text-slate-100 shadow-2xl shadow-primary/20">
+          <div className="relative w-full overflow-hidden rounded-3xl border border-primary/30 bg-slate-950 text-slate-100 shadow-2xl shadow-primary/20 transition duration-300 hover:-translate-y-1">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),transparent_55%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.22),transparent_50%)]" />
             <div className="relative flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
@@ -134,11 +136,13 @@ export function HeroSection() {
               </div>
             </div>
           </div>
-        </div>
+        </MotionReveal>
       </div>
       <div className="relative mt-16 grid gap-4 sm:grid-cols-3">
-        {heroMetrics.map((metric) => (
-          <MetricCard key={metric.label} value={metric.value} label={metric.label} icon={metric.icon} />
+        {heroMetrics.map((metric, index) => (
+          <MotionReveal key={metric.label} delay={0.08 * (index + 1)}>
+            <MetricCard value={metric.value} label={metric.label} icon={metric.icon} />
+          </MotionReveal>
         ))}
       </div>
     </LandingSection>
