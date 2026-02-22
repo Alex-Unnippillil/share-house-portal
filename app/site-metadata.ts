@@ -2,6 +2,26 @@ import type { Metadata, Viewport } from "next"
 
 import { siteConfig } from "@/config/site"
 
+const FALLBACK_APP_URL = "https://www.roomsily"
+
+function resolveMetadataBaseUrl(): URL {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.trim()
+
+  if (!configuredUrl) {
+    return new URL(FALLBACK_APP_URL)
+  }
+
+  const normalizedUrl = /^https?:\/\//i.test(configuredUrl)
+    ? configuredUrl
+    : `https://${configuredUrl}`
+
+  try {
+    return new URL(normalizedUrl)
+  } catch {
+    return new URL(FALLBACK_APP_URL)
+  }
+}
+
 export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
@@ -9,7 +29,7 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   manifest: "/manifest.json",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.roomsily"),
+  metadataBase: resolveMetadataBaseUrl(),
   alternates: {
     canonical: "/",
     languages: {
