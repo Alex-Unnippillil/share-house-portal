@@ -17,10 +17,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { useActiveSection } from "@/components/landing/use-active-section"
 import { LANDING_SECTION_IDS } from "@/components/landing/landing-ids"
+import { useActiveSection } from "@/components/landing/use-active-section"
 
 const navItems = [
+  { id: LANDING_SECTION_IDS.experience, label: "Experience" },
   { id: LANDING_SECTION_IDS.features, label: "Features" },
   { id: LANDING_SECTION_IDS.personas, label: "Roles" },
   { id: LANDING_SECTION_IDS.integrations, label: "Integrations" },
@@ -52,9 +53,14 @@ export default function LandingHeader() {
       return
     }
 
-    const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const shouldReduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
 
-    section.scrollIntoView({ behavior: shouldReduceMotion ? "auto" : "smooth", block: "start" })
+    section.scrollIntoView({
+      behavior: shouldReduceMotion ? "auto" : "smooth",
+      block: "start",
+    })
     window.history.replaceState(null, "", `/#${sectionId}`)
   }
 
@@ -112,7 +118,10 @@ export default function LandingHeader() {
           </Link>
           <Link
             href={siteConfig.links.signup}
-            className={cn(buttonVariants({ size: "sm" }), "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2")}
+            className={cn(
+              buttonVariants({ size: "sm" }),
+              "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            )}
           >
             Start onboarding
           </Link>
@@ -138,7 +147,9 @@ export default function LandingHeader() {
                   <Link
                     href={`/#${item.id}`}
                     onClick={(event) => handleAnchorClick(event, item.id)}
-                    aria-current={activeSection === item.id ? "location" : undefined}
+                    aria-current={
+                      activeSection === item.id ? "location" : undefined
+                    }
                     className={cn(
                       "relative flex min-h-10 items-center rounded-md border-l-2 border-transparent px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                       activeSection === item.id
@@ -155,7 +166,10 @@ export default function LandingHeader() {
               <SheetClose asChild>
                 <Link
                   href={siteConfig.links.signup}
-                  className={cn(buttonVariants({ size: "sm" }), "w-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2")}
+                  className={cn(
+                    buttonVariants({ size: "sm" }),
+                    "w-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  )}
                 >
                   Start onboarding
                 </Link>
