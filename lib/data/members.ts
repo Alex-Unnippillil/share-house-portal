@@ -10,25 +10,46 @@ export type MemberProfile = Pick<
   'id' | 'email' | 'full_name' | 'role' | 'unit_id'
 >;
 
-function handlePostgrestError(error: { message: string } | null, context: string) {
+const ROLE_CACHE_TTL_MS = 30_000;
+const roleCache = new Map<string, { value: MemberRole | null; expiresAt: number }>();
+
+function handlePostgrestError(error: { message: string } | null, context: string): boolean {
   if (error) {
-    throw new Error(`${context}: ${error.message}`);
+    console.warn(`${context}: ${error.message}`);
+    return true;
   }
+
+  return false;
 }
 
 export async function fetchMemberRole(
   client: SupabaseClientLike,
   memberId: string
 ): Promise<MemberRole | null> {
+  const cached = roleCache.get(memberId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
   const { data, error } = await client
     .from('profiles')
     .select('role')
     .eq('id', memberId)
     .maybeSingle();
 
-  handlePostgrestError(error, 'Failed to load member role');
+  if (handlePostgrestError(error, 'Failed to load member role')) {
+    roleCache.delete(memberId);
+    return null;
+  }
 
-  return (data?.role as MemberRole | null | undefined) ?? null;
+  const role = (data?.role as MemberRole | null | undefined) ?? null;
+
+  roleCache.set(memberId, {
+    value: role,
+    expiresAt: Date.now() + ROLE_CACHE_TTL_MS,
+  });
+
+  return role;
 }
 
 export async function fetchMemberProfile(
@@ -41,7 +62,9 @@ export async function fetchMemberProfile(
     .eq('id', memberId)
     .maybeSingle();
 
-  handlePostgrestError(error, 'Failed to load member profile');
+  if (handlePostgrestError(error, 'Failed to load member profile')) {
+    return null;
+  }
 
   if (!data) {
     return null;
@@ -75,7 +98,9 @@ export async function fetchMembersByUnit(
 
   const { data, error } = await query;
 
-  handlePostgrestError(error, 'Failed to load members for unit');
+  if (handlePostgrestError(error, 'Failed to load members for unit')) {
+    return [];
+  }
 
   return (data as MemberProfile[] | null | undefined) ?? [];
 }
