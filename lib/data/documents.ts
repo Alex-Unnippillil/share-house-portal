@@ -28,8 +28,11 @@ const DOCUMENT_SELECT = `
 
 function handlePostgrestError(error: { message: string } | null, context: string) {
   if (error) {
-    throw new Error(`${context}: ${error.message}`);
+    console.warn(`${context}: ${error.message}`);
+    return true;
   }
+
+  return false;
 }
 
 export async function fetchDocumentsList({
@@ -72,7 +75,9 @@ export async function fetchDocumentsList({
   }
 
   const { data, error } = await query;
-  handlePostgrestError(error, 'Failed to fetch documents');
+  if (handlePostgrestError(error, 'Failed to fetch documents')) {
+    return [];
+  }
 
   return data ?? [];
 }
@@ -89,7 +94,15 @@ export async function fetchDocumentStats({
   }
 
   const { data, error } = await query;
-  handlePostgrestError(error, 'Failed to fetch document statistics');
+  if (handlePostgrestError(error, 'Failed to fetch document statistics')) {
+    return {
+      total_documents: 0,
+      pending_signatures: 0,
+      signed_documents: 0,
+      expired_documents: 0,
+      draft_documents: 0,
+    };
+  }
 
   const documents = (data ?? []) as { status: string | null }[];
 

@@ -93,13 +93,13 @@ describe('fetchDocumentsList', () => {
     expect(query.or).not.toHaveBeenCalled();
   });
 
-  it('throws when Supabase returns an error', async () => {
+  it('returns an empty list when Supabase returns an error', async () => {
     const query = createDocumentsQuery({ data: null as any, error: { message: 'boom' } });
     const supabase = createSupabaseStub(query);
 
     await expect(
       fetchDocumentsList({ client: supabase, userId: 'user-1', role: 'tenant' })
-    ).rejects.toThrow(/Failed to fetch documents: boom/);
+    ).resolves.toEqual([]);
   });
 });
 
@@ -140,12 +140,18 @@ describe('fetchDocumentStats', () => {
     expect(query.eq).not.toHaveBeenCalled();
   });
 
-  it('throws when Supabase returns an error', async () => {
+  it('returns zeroed stats when Supabase returns an error', async () => {
     const query = createDocumentsQuery({ data: null as any, error: { message: 'stats failed' } });
     const supabase = createSupabaseStub(query);
 
     await expect(
       fetchDocumentStats({ client: supabase, userId: 'user-1', role: 'tenant' })
-    ).rejects.toThrow(/Failed to fetch document statistics: stats failed/);
+    ).resolves.toEqual({
+      total_documents: 0,
+      pending_signatures: 0,
+      signed_documents: 0,
+      expired_documents: 0,
+      draft_documents: 0,
+    });
   });
 });

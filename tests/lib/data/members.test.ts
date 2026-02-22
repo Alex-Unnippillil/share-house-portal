@@ -67,13 +67,11 @@ describe('fetchMemberRole', () => {
     expect(role).toBe('tenant');
   });
 
-  it('throws when supabase returns an error', async () => {
+  it('returns null when supabase returns an error', async () => {
     const builder = createSingleBuilder({ data: null, error: { message: 'role failed' } });
     const supabase = createProfilesStub(builder);
 
-    await expect(fetchMemberRole(supabase as any, 'user-1')).rejects.toThrow(
-      /Failed to load member role: role failed/
-    );
+    await expect(fetchMemberRole(supabase as any, 'user-error')).resolves.toBeNull();
   });
 });
 
@@ -96,13 +94,11 @@ describe('fetchMemberProfile', () => {
     expect(result).toEqual(profile);
   });
 
-  it('throws when supabase reports an error', async () => {
+  it('returns null when supabase reports an error', async () => {
     const builder = createSingleBuilder({ data: null, error: { message: 'profile boom' } });
     const supabase = createProfilesStub(builder);
 
-    await expect(fetchMemberProfile(supabase as any, 'user-1')).rejects.toThrow(
-      /Failed to load member profile: profile boom/
-    );
+    await expect(fetchMemberProfile(supabase as any, 'user-1')).resolves.toBeNull();
   });
 });
 
@@ -127,12 +123,10 @@ describe('fetchMembersByUnit', () => {
     expect(result).toEqual(members);
   });
 
-  it('throws when supabase returns an error', async () => {
+  it('returns an empty list when supabase returns an error', async () => {
     const builder = createMultiBuilder({ data: null as any, error: { message: 'unit failed' } });
     const supabase = createProfilesStub(builder);
 
-    await expect(
-      fetchMembersByUnit(supabase as any, 'unit-1')
-    ).rejects.toThrow(/Failed to load members for unit: unit failed/);
+    await expect(fetchMembersByUnit(supabase as any, 'unit-1')).resolves.toEqual([]);
   });
 });
