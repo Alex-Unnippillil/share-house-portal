@@ -2,6 +2,8 @@ import type { ReactNode } from "react"
 
 import { cn } from "@/lib/utils"
 
+import { MotionReveal } from "./motion"
+
 type LandingSectionProps = {
   id: string
   headingId: string
@@ -33,11 +35,11 @@ type SectionHeadingProps = {
 
 export function SectionHeading({ id, title, description, className }: SectionHeadingProps) {
   return (
-    <div className={cn("mx-auto max-w-2xl text-center", className)}>
+    <MotionReveal className={cn("mx-auto max-w-2xl text-center", className)}>
       <h2 id={id} className="text-balance text-display-lg">
         {title}
       </h2>
       {description ? <p className="mt-4 text-muted-foreground">{description}</p> : null}
-    </div>
+    </MotionReveal>
   )
 }

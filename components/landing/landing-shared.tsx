@@ -64,7 +64,7 @@ type CtaButtonGroupProps = {
 
 export function CtaButtonGroup({ buttons, className }: CtaButtonGroupProps) {
   return (
-    <div className={cn("flex flex-col gap-4 sm:flex-row", className)}>
+    <div className={cn("flex flex-col gap-4 sm:flex-row [&>*]:w-full sm:[&>*]:w-auto", className)}>
       {buttons.map((button) => {
         const shared = cn(buttonVariants({ variant: button.variant, size: button.size }), button.className)
 

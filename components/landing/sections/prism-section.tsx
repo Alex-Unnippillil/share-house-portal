@@ -3,6 +3,7 @@ import { siteConfig } from "@/config/site"
 
 import { CtaButtonGroup } from "../landing-shared"
 import { LANDING_SECTION_IDS } from "../landing-ids"
+import { MotionReveal } from "../motion"
 import { LandingSection } from "../section-primitives"
 
 export function PrismSection() {
@@ -14,7 +15,7 @@ export function PrismSection() {
       contentClassName="py-20 sm:py-24"
     >
       <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
-        <div className="space-y-6">
+        <MotionReveal className="space-y-6">
           <h2 id="prism-heading" className="text-balance text-display-lg">
             Visualize your household operating system
           </h2>
@@ -54,10 +55,10 @@ export function PrismSection() {
               },
             ]}
           />
-        </div>
-        <div className="relative h-[320px] w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-xl shadow-primary/20 md:h-[420px]">
+        </MotionReveal>
+        <MotionReveal delay={0.12} className="relative h-[280px] w-full overflow-hidden rounded-3xl border border-primary/30 bg-background/80 shadow-xl shadow-primary/20 md:h-[420px]">
           <FeaturePrismLazy fallbackLabel="Calibrating shared-house orbit…" />
-        </div>
+        </MotionReveal>
       </div>
     </LandingSection>
   )
