@@ -7,13 +7,14 @@ const withMDX = require('@next/mdx')()
 // });
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' *.supabase.co googleapis.com;
-  style-src 'self' 'unsafe-inline';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: data: https: http: *.supabase.co *.vercel.live vercel.live googleapis.com;
+  script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' blob: data: https: http: *.supabase.co *.vercel.live vercel.live googleapis.com;
+  style-src 'self' 'unsafe-inline' https:;
   img-src * blob: data:;
   media-src *.supabase.co quantumone.b-cdn.net *.unsplash.com youtube.com;
-  connect-src *;
-  font-src 'self' googleapis.com;
-  frame-src *.supabase.co youtube.com quantumone.b-cdn.net;
+  connect-src * ws: wss:;
+  font-src 'self' data: https: googleapis.com fonts.gstatic.com;
+  frame-src *;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -133,4 +134,3 @@ const nextConfig = {
 
 module.exports = withMDX(nextConfig)
 // module.exports = withPlugins([withPWA, withMDX], nextConfig)
-
