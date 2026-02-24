@@ -55,9 +55,18 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
 
   function runAction(action: () => Promise<{ ok: boolean; message: string }>) {
     startTransition(async () => {
-      const response = await action()
-      setMessage(response.message)
+      try {
+        const response = await action()
+        setMessage(response.message)
+      } catch {
+        setMessage("Something went wrong while saving onboarding details. Please try again.")
+      }
     })
+  }
+
+  function handleAssetUpload(kind: "avatar" | "document", formData: FormData) {
+    formData.set("kind", kind)
+    runAction(() => uploadOnboardingAsset(formData))
   }
 
   return (
@@ -87,9 +96,9 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
           ) : null}
           <form
             className="space-y-2"
-            action={(formData) => {
-              formData.set("kind", "avatar")
-              runAction(() => uploadOnboardingAsset(formData))
+            onSubmit={(event) => {
+              event.preventDefault()
+              handleAssetUpload("avatar", new FormData(event.currentTarget))
             }}
           >
             <Label htmlFor="avatar">Upload avatar</Label>
@@ -99,9 +108,9 @@ export function OnboardingClient({ initialData }: OnboardingClientProps) {
 
           <form
             className="space-y-2"
-            action={(formData) => {
-              formData.set("kind", "document")
-              runAction(() => uploadOnboardingAsset(formData))
+            onSubmit={(event) => {
+              event.preventDefault()
+              handleAssetUpload("document", new FormData(event.currentTarget))
             }}
           >
             <Label htmlFor="document">Upload resident document</Label>
