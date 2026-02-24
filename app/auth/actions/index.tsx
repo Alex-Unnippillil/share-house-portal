@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createSupbaseServerClient } from "@/utils/supaone"
+import { hasSupabasePublicEnv } from "@/utils/supabase/env"
 import type { SignInWithSSO } from "@supabase/supabase-js"
 
 type AuthActionResponse = {
@@ -15,7 +16,7 @@ function missingSupabaseEnvResponse() {
     data: null,
     error: {
       message:
-        "Supabase environment variables are missing. Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+        "Supabase environment variables are missing. Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).",
     },
   } satisfies AuthActionResponse)
 }
@@ -40,10 +41,7 @@ export async function signUpWithEmailAndPassword(data: {
   password: string
   confirm: string
 }) {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
+  if (!hasSupabasePublicEnv()) {
     return missingSupabaseEnvResponse()
   }
 
@@ -71,10 +69,7 @@ export async function signUpWithEmailAndPassword(data: {
 }
 
 export async function requestPasswordReset(email: string) {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
+  if (!hasSupabasePublicEnv()) {
     return missingSupabaseEnvResponse()
   }
 
@@ -95,10 +90,7 @@ export async function requestPasswordReset(email: string) {
 }
 
 export async function updatePassword(newPassword: string) {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
+  if (!hasSupabasePublicEnv()) {
     return missingSupabaseEnvResponse()
   }
 
@@ -115,10 +107,7 @@ export async function loginWithEmailAndPassword(data: {
   email: string
   password: string
 }) {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
+  if (!hasSupabasePublicEnv()) {
     return missingSupabaseEnvResponse()
   }
 
