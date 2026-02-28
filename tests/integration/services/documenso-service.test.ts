@@ -75,4 +75,70 @@ describe("Documenso signing workflow payloads", () => {
     expect(response.success).toBe(false)
     expect(response.error).toContain("temporarily unavailable")
   })
+
+  it("adds the property manager as a CC recipient when provided", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "upload-1", documentDataId: "doc-data-1" }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "env-1",
+            title: "lease-2026",
+            status: "pending",
+            recipients: [
+              {
+                id: "recipient-1",
+                email: "roommate@example.com",
+                role: "SIGNER",
+                token: "token-1",
+                status: "pending",
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ signingUrl: "https://documenso.test/sign/recipient-1" }), {
+          status: 200,
+        })
+      ) as typeof fetch
+
+    global.fetch = fetchMock
+
+    const file = new File(["lease"], "lease.pdf", { type: "application/pdf" })
+
+    await createLeaseSigningRequest({
+      document_id: "lease-2026",
+      file,
+      tenantEmails: ["roommate@example.com"],
+      propertyManagerEmail: "manager@example.com",
+      propertyManagerName: "Casey Manager",
+    })
+
+    const envelopeRequest = fetchMock.mock.calls[1]?.[1]
+    expect(envelopeRequest).toBeDefined()
+    const payload = JSON.parse(String(envelopeRequest?.body)) as {
+      recipients: Array<{ email: string; role: string; name?: string }>
+    }
+
+    expect(payload.recipients).toEqual([
+      {
+        email: "roommate@example.com",
+        name: "roommate",
+        role: "SIGNER",
+        signingOrder: 1,
+      },
+      {
+        email: "manager@example.com",
+        name: "Casey Manager",
+        role: "CC",
+      },
+    ])
+  })
 })

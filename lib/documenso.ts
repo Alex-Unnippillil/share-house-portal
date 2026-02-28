@@ -236,6 +236,8 @@ export async function createLeaseSigningRequest(
     file: File;
     tenantEmails: string[];
     tenantNames?: string[];
+    propertyManagerEmail?: string;
+    propertyManagerName?: string;
   }
 ): Promise<DocumentSigningResponse> {
   try {
@@ -250,8 +252,18 @@ export async function createLeaseSigningRequest(
       signingOrder: index + 1,
     }));
 
-    // Add property manager as CC if needed
-    // TODO: Add property manager email from profile
+    const trimmedPropertyManagerEmail = request.propertyManagerEmail?.trim();
+
+    if (
+      trimmedPropertyManagerEmail
+      && !request.tenantEmails.some((email) => email.trim().toLowerCase() === trimmedPropertyManagerEmail.toLowerCase())
+    ) {
+      recipients.push({
+        email: trimmedPropertyManagerEmail,
+        name: request.propertyManagerName?.trim() || 'Property Manager',
+        role: 'CC',
+      });
+    }
 
     // Create the document envelope
     const docResponse = await documensoService.createDocumentSigningEnvelope({
