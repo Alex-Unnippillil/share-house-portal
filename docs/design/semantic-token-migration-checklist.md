@@ -7,7 +7,7 @@ This checklist maps ad-hoc typography/spacing classes to semantic tokens defined
 | Area                                | Current ad-hoc classes                                   | Semantic token class target           | Notes                                                       |
 | ----------------------------------- | -------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------- |
 | Primary page titles                 | `text-3xl`, `sm:text-4xl`, `font-bold`, `tracking-tight` | `text-display-lg`                     | Standardized through `PageTitle`.                           |
-| Hero display title (marketing only) | `text-4xl`, `sm:text-5xl`, `lg:text-6xl`                 | `text-display-xl`                     | Keep as the one display-only exception tier.                |
+| Entry route title (auth-first) | `text-3xl`                 | `text-display-lg`                     | Used for the focused entry card heading hierarchy.                |
 | Section titles                      | `text-xl`, `text-2xl`, `font-semibold`                   | `text-heading-sm` / `text-heading-md` | Selected per information density.                           |
 | Long-form lead copy                 | `text-base`, `sm:text-lg`                                | `text-body-lg`                        | Applied through `PageDescription`.                          |
 | Supporting body copy                | `text-sm`, `text-base`                                   | `text-body-sm` / `text-body-md`       | Keep compact cards at `text-body-sm`.                       |
@@ -19,7 +19,7 @@ This checklist maps ad-hoc typography/spacing classes to semantic tokens defined
 
 | Route                                | Priority | Status      | Remaining work                                                                                                              |
 | ------------------------------------ | -------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `app/page.tsx`                       | P0       | In progress | Continue converting small utility text (`text-xs`, `text-sm`) in hero badges and timeline items where semantics stay clear. |
+| `app/page.tsx`                       | P0       | In progress | Migrate remaining local utility text in the entry card to semantic heading/body wrappers. |
 | `app/dashboard/(dashboard)/page.tsx` | P0       | Completed   | Grid and stack spacing now use semantic spacing tokens.                                                                     |
 | `app/payments/page.tsx`              | P0       | In progress | Remaining local card internals can be migrated incrementally to `text-body-*` and `text-label-sm`.                          |
 | `app/bookings/page.tsx`              | P0       | In progress | Amenity card title/description sizes should be normalized to `text-heading-sm` + `text-body-sm` in a follow-up.             |

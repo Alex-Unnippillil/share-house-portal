@@ -8,6 +8,7 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 
 - **Multi-tenant Property Management**: Support for multiple roommates sharing rental properties
 - **Role-based Access Control**: Separate workflows for tenants, roommates, property managers, and admins
+- **Auth-First Entry Experience**: Root route directs unauthenticated users to focused sign-in and onboarding actions
 - **Responsive Mobile-First Design**: Optimized for mobile usage with modern UI components
 
 ### 💳 **Payment Management**

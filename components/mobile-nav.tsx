@@ -28,6 +28,7 @@ function isActiveRoute(pathname: string, href: string) {
 
 export function MobileNav({ appName, isAuthenticated, items }: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
+  const homeHref = isAuthenticated ? "/dashboard" : "/auth"
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -41,7 +42,7 @@ export function MobileNav({ appName, isAuthenticated, items }: MobileNavProps) {
         </Button>
       </SheetTrigger>
       <div className="xs:items-center ml-1 gap-4 lg:hidden">
-        <SmartLink href="/" className="inline-flex" intent="navigation">
+        <SmartLink href={homeHref} className="inline-flex" intent="navigation">
           <span className="flex items-center space-x-2">
             <Icons.logo className="size-6" />
             <span className="font-bold">{appName}</span>
@@ -50,7 +51,7 @@ export function MobileNav({ appName, isAuthenticated, items }: MobileNavProps) {
       </div>
 
       <SheetContent side="left" className="pr-0">
-        <MobileLink href="/" className="inline-flex" onOpenChange={setOpen}>
+        <MobileLink href={homeHref} className="inline-flex" onOpenChange={setOpen}>
           <span className="flex items-center">
             <Icons.logo className="mr-1 size-6" />
             <span className="font-bold">{appName}</span>

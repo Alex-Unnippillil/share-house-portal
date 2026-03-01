@@ -8,7 +8,7 @@ export function SiteFooter() {
     <footer className="z-40 border-t">
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4">
-          <SmartLink className="ml-0 inline-flex" href="/" intent="navigation">
+          <SmartLink className="ml-0 inline-flex" href="/auth" intent="navigation">
             <span className="flex items-center gap-2">
               <Icons.logo className="size-6" />
               <div className="flex flex-col leading-tight">
