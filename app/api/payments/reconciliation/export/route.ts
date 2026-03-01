@@ -45,6 +45,18 @@ export async function GET() {
       throw error
     }
 
+    const { data: queuedEvents, error: queuedEventsError } = await supabase
+      .from("webhook_events")
+      .select("event_id, event_type, created_at, error_message, payload")
+      .eq("provider", "stripe")
+      .eq("status", "failed")
+      .ilike("error_message", "%map%tenant%")
+      .order("created_at", { ascending: false })
+
+    if (queuedEventsError) {
+      throw queuedEventsError
+    }
+
     const header = [
       "payment_id",
       "tenant_name",
@@ -57,7 +69,7 @@ export async function GET() {
       "triage_notes",
     ]
 
-    const lines = (data ?? []).map((row) => {
+    const paymentLines = (data ?? []).map((row) => {
       const metadata = (row.metadata ?? {}) as Record<string, unknown>
       return [
         row.id,
@@ -74,7 +86,28 @@ export async function GET() {
         .join(",")
     })
 
-    const csv = [header.join(","), ...lines].join("\n")
+    const queuedEventLines = (queuedEvents ?? []).map((event) => {
+      const payload = (event.payload ?? {}) as Record<string, unknown>
+      const reconciliation = (payload.reconciliation ?? {}) as Record<string, unknown>
+
+      return [
+        event.event_id,
+        "Unmapped Stripe event",
+        "0",
+        "USD",
+        "unmapped",
+        event.event_type,
+        event.created_at ?? "",
+        typeof reconciliation.triage_status === "string" ? reconciliation.triage_status : "open",
+        typeof reconciliation.triage_notes === "string"
+          ? reconciliation.triage_notes
+          : (event.error_message ?? ""),
+      ]
+        .map((value) => escapeCsv(value))
+        .join(",")
+    })
+
+    const csv = [header.join(","), ...queuedEventLines, ...paymentLines].join("\n")
 
     return new Response(csv, {
       headers: {

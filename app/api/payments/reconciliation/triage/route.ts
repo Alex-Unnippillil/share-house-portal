@@ -30,6 +30,7 @@ export async function PATCH(req: Request) {
 
     const payload = await req.json().catch(() => null)
     const paymentId = typeof payload?.paymentId === "string" ? payload.paymentId : null
+    const recordType = payload?.recordType === "webhook_event" ? "webhook_event" : "rent_payment"
     const triageStatus =
       typeof payload?.triageStatus === "string" ? payload.triageStatus : "open"
     const triageNotes =
@@ -39,6 +40,46 @@ export async function PATCH(req: Request) {
       return jsonError("REQUEST_VALIDATION_ERROR", {
         message: "paymentId and a valid triageStatus are required.",
       })
+    }
+
+    if (recordType === "webhook_event") {
+      const { data: eventRow, error: eventError } = await supabase
+        .from("webhook_events")
+        .select("payload")
+        .eq("provider", "stripe")
+        .eq("event_id", paymentId)
+        .single()
+
+      if (eventError) {
+        throw eventError
+      }
+
+      const existingPayload = (eventRow.payload ?? {}) as Record<string, unknown>
+      const existingReconciliation =
+        (existingPayload.reconciliation ?? {}) as Record<string, unknown>
+
+      const { error: updateError } = await supabase
+        .from("webhook_events")
+        .update({
+          payload: {
+            ...existingPayload,
+            reconciliation: {
+              ...existingReconciliation,
+              triage_status: triageStatus,
+              triage_notes: triageNotes,
+              triage_updated_by: user.id,
+              triage_updated_at: new Date().toISOString(),
+            },
+          },
+        })
+        .eq("provider", "stripe")
+        .eq("event_id", paymentId)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      return Response.json({ ok: true })
     }
 
     const { data: payment, error: paymentError } = await supabase

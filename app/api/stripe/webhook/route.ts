@@ -10,6 +10,84 @@ import { isLikelyTransientError, RetryExhaustedError, retryWithBackoff } from "@
 import { getStripe } from "@/lib/stripe"
 import type { Database, Json, TablesInsert } from "@/lib/supabase"
 
+class UnmappedPaymentEventError extends Error {
+  eventId: string
+  eventType: string
+  auditDetail: Record<string, string | null>
+
+  constructor(params: {
+    eventId: string
+    eventType: string
+    reason: string
+    auditDetail: Record<string, string | null>
+  }) {
+    super(params.reason)
+    this.name = "UnmappedPaymentEventError"
+    this.eventId = params.eventId
+    this.eventType = params.eventType
+    this.auditDetail = params.auditDetail
+  }
+}
+
+function isUuid(value: string | null | undefined): value is string {
+  if (!value) {
+    return false
+  }
+
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+async function lookupTenantFromStripeMappings(
+  supabase: SupabaseClient<Database>,
+  identifiers: { stripeSubscriptionId?: string | null; stripeCustomerId?: string | null }
+) {
+  if (identifiers.stripeSubscriptionId) {
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("user_id")
+      .eq("stripe_subscription_id", identifiers.stripeSubscriptionId)
+      .maybeSingle()
+
+    if (isUuid(data?.user_id)) {
+      return data.user_id
+    }
+  }
+
+  if (identifiers.stripeCustomerId) {
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("user_id")
+      .eq("stripe_customer_id", identifiers.stripeCustomerId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (isUuid(data?.user_id)) {
+      return data.user_id
+    }
+  }
+
+  return null
+}
+
+async function resolveTenantId(
+  supabase: SupabaseClient<Database>,
+  options: {
+    tenantIdFromMetadata?: string | null
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+  }
+) {
+  if (isUuid(options.tenantIdFromMetadata)) {
+    return options.tenantIdFromMetadata
+  }
+
+  return lookupTenantFromStripeMappings(supabase, {
+    stripeCustomerId: options.stripeCustomerId,
+    stripeSubscriptionId: options.stripeSubscriptionId,
+  })
+}
+
 function createSupabaseAdminClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -80,6 +158,42 @@ async function markEventProcessed(
     })
     .eq("provider", "stripe")
     .eq("event_id", eventId)
+}
+
+async function queueUnmappedPaymentEvent(
+  supabase: SupabaseClient<Database>,
+  params: {
+    eventId: string
+    eventType: string
+    reason: string
+    auditDetail: Record<string, string | null>
+    correlationId: string
+  }
+) {
+  const now = new Date().toISOString()
+
+  await supabase
+    .from("webhook_events")
+    .update({
+      status: "failed",
+      error_message: params.reason,
+      processed_at: now,
+      last_attempt_at: now,
+      payload: {
+        reconciliation: {
+          actionable: true,
+          triage_status: "open",
+          triage_notes: "",
+          queue_reason: "unmapped_payment_event",
+          webhook_event_type: params.eventType,
+          queued_at: now,
+          correlation_id: params.correlationId,
+          ...params.auditDetail,
+        },
+      },
+    })
+    .eq("provider", "stripe")
+    .eq("event_id", params.eventId)
 }
 
 async function upsertRentPayment(
@@ -158,7 +272,8 @@ async function notifyTenantPayment(
 
 async function handleCheckoutSessionCompleted(
   supabase: SupabaseClient<Database>,
-  session: Stripe.Checkout.Session
+  session: Stripe.Checkout.Session,
+  event: Stripe.Event
 ) {
   const stripe = getStripe()
   const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
@@ -175,13 +290,30 @@ async function handleCheckoutSessionCompleted(
       ? fullSession.payment_intent
       : fullSession.payment_intent?.id
 
-  const tenantId = fullSession.metadata?.tenant_id
+  const tenantId = await resolveTenantId(supabase, {
+    tenantIdFromMetadata: fullSession.metadata?.tenant_id,
+    stripeCustomerId: typeof fullSession.customer === "string" ? fullSession.customer : null,
+  })
   const unitId = fullSession.metadata?.unit_id
   const paymentStatus = fullSession.payment_status ?? session.payment_status
   const amount = parseAmountInMajorUnits(lineItem?.amount_total ?? fullSession.amount_total)
 
+  if (!tenantId) {
+    throw new UnmappedPaymentEventError({
+      eventId: event.id,
+      eventType: event.type,
+      reason: "Unable to map checkout session payment to tenant.",
+      auditDetail: {
+        stripe_customer_id: typeof fullSession.customer === "string" ? fullSession.customer : null,
+        stripe_subscription_id: null,
+        metadata_tenant_id: fullSession.metadata?.tenant_id ?? null,
+        session_id: fullSession.id,
+      },
+    })
+  }
+
   const paymentData: TablesInsert<"rent_payments"> = {
-    user_id: tenantId || "00000000-0000-0000-0000-000000000000",
+    user_id: tenantId,
     stripe_payment_intent_id: paymentIntentId,
     stripe_customer_id: typeof fullSession.customer === "string" ? fullSession.customer : null,
     amount,
@@ -219,7 +351,8 @@ function normalizeSubscriptionStatus(
 
 async function handleInvoicePaymentSucceeded(
   supabase: SupabaseClient<Database>,
-  invoice: Stripe.Invoice
+  invoice: Stripe.Invoice,
+  event: Stripe.Event
 ) {
   const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id
 
@@ -230,12 +363,30 @@ async function handleInvoicePaymentSucceeded(
   const stripe = getStripe()
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-  const tenantId = subscription.metadata?.tenant_id
+  const tenantId = await resolveTenantId(supabase, {
+    tenantIdFromMetadata: subscription.metadata?.tenant_id,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : null,
+  })
   const unitId = subscription.metadata?.unit_id
   const amount = parseAmountInMajorUnits(invoice.amount_paid)
 
+  if (!tenantId) {
+    throw new UnmappedPaymentEventError({
+      eventId: event.id,
+      eventType: event.type,
+      reason: "Unable to map recurring payment success to tenant.",
+      auditDetail: {
+        stripe_customer_id: typeof invoice.customer === "string" ? invoice.customer : null,
+        stripe_subscription_id: subscription.id,
+        metadata_tenant_id: subscription.metadata?.tenant_id ?? null,
+        invoice_id: invoice.id,
+      },
+    })
+  }
+
   const paymentData: TablesInsert<"rent_payments"> = {
-    user_id: tenantId || "00000000-0000-0000-0000-000000000000",
+    user_id: tenantId,
     stripe_customer_id: typeof invoice.customer === "string" ? invoice.customer : null,
     stripe_subscription_id: subscription.id,
     amount,
@@ -278,7 +429,8 @@ async function handleInvoicePaymentSucceeded(
 
 async function handleInvoicePaymentFailed(
   supabase: SupabaseClient<Database>,
-  invoice: Stripe.Invoice
+  invoice: Stripe.Invoice,
+  event: Stripe.Event
 ) {
   const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id
 
@@ -288,10 +440,28 @@ async function handleInvoicePaymentFailed(
 
   const stripe = getStripe()
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-  const tenantId = subscription.metadata?.tenant_id
+  const tenantId = await resolveTenantId(supabase, {
+    tenantIdFromMetadata: subscription.metadata?.tenant_id,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : null,
+  })
+
+  if (!tenantId) {
+    throw new UnmappedPaymentEventError({
+      eventId: event.id,
+      eventType: event.type,
+      reason: "Unable to map recurring payment failure to tenant.",
+      auditDetail: {
+        stripe_customer_id: typeof invoice.customer === "string" ? invoice.customer : null,
+        stripe_subscription_id: subscription.id,
+        metadata_tenant_id: subscription.metadata?.tenant_id ?? null,
+        invoice_id: invoice.id,
+      },
+    })
+  }
 
   const failedPayment: TablesInsert<"rent_payments"> = {
-    user_id: tenantId || "00000000-0000-0000-0000-000000000000",
+    user_id: tenantId,
     stripe_customer_id: typeof invoice.customer === "string" ? invoice.customer : null,
     stripe_subscription_id: subscription.id,
     amount: parseAmountInMajorUnits(invoice.amount_due),
@@ -317,10 +487,18 @@ async function handleSubscriptionCreated(
   supabase: SupabaseClient<Database>,
   subscription: Stripe.Subscription
 ) {
-  const tenantId = subscription.metadata?.tenant_id
+  const tenantId = await resolveTenantId(supabase, {
+    tenantIdFromMetadata: subscription.metadata?.tenant_id,
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : null,
+  })
+
+  if (!tenantId) {
+    return
+  }
 
   await supabase.from("subscriptions").upsert({
-    user_id: tenantId || "00000000-0000-0000-0000-000000000000",
+    user_id: tenantId,
     stripe_subscription_id: subscription.id,
     stripe_customer_id: typeof subscription.customer === "string" ? subscription.customer : null,
     status: normalizeSubscriptionStatus(subscription.status),
@@ -404,13 +582,13 @@ function recordStripePaymentMetric(outcome: "success" | "failure", eventType: st
 async function processStripeEvent(supabase: SupabaseClient<Database>, event: Stripe.Event) {
   switch (event.type) {
     case "checkout.session.completed":
-      await handleCheckoutSessionCompleted(supabase, event.data.object as Stripe.Checkout.Session)
+      await handleCheckoutSessionCompleted(supabase, event.data.object as Stripe.Checkout.Session, event)
       break
     case "invoice.payment_succeeded":
-      await handleInvoicePaymentSucceeded(supabase, event.data.object as Stripe.Invoice)
+      await handleInvoicePaymentSucceeded(supabase, event.data.object as Stripe.Invoice, event)
       break
     case "invoice.payment_failed":
-      await handleInvoicePaymentFailed(supabase, event.data.object as Stripe.Invoice)
+      await handleInvoicePaymentFailed(supabase, event.data.object as Stripe.Invoice, event)
       break
     case "customer.subscription.created":
       await handleSubscriptionCreated(supabase, event.data.object as Stripe.Subscription)
@@ -568,6 +746,37 @@ export async function POST(req: Request) {
       headers: { "x-correlation-id": correlationId },
     })
   } catch (err) {
+    if (err instanceof UnmappedPaymentEventError) {
+      logger.warn("stripe_webhook_unmapped_payment_event", {
+        eventName: err.eventType,
+        stripeEventId: err.eventId,
+        lifecyclePhase: "webhook.reconciliation_queue",
+        ...err.auditDetail,
+      })
+
+      incrementOperationalMetric("unmapped_payment_events_total", {
+        source: "stripe_webhook",
+        provider: "stripe",
+        eventType: err.eventType,
+        reason: "tenant_mapping_missing",
+        correlationId,
+        severity: "warning",
+      })
+
+      await queueUnmappedPaymentEvent(supabase, {
+        eventId: err.eventId,
+        eventType: err.eventType,
+        reason: err.message,
+        auditDetail: err.auditDetail,
+        correlationId,
+      })
+
+      return new Response("ok", {
+        status: 200,
+        headers: { "x-correlation-id": correlationId },
+      })
+    }
+
     const message = err instanceof Error ? err.message : "Unexpected webhook processing error"
     const exhausted = err instanceof RetryExhaustedError
 
