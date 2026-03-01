@@ -1,6 +1,7 @@
 import "server-only"
 import { cache } from "react"
 import { readUserSession } from "@/utils/actions"
+import { hasSupabasePublicEnv } from "@/utils/supabase/env"
 
 import { normalizePortalRole } from "@/lib/role-cues"
 
@@ -41,11 +42,33 @@ import type {
   WelcomeMessage,
 } from "./types"
 
-const dashboardDataSource = process.env.DASHBOARD_DATA_SOURCE ?? "mock"
+function resolveDashboardDataSource() {
+  if (process.env.DASHBOARD_DATA_SOURCE) {
+    return process.env.DASHBOARD_DATA_SOURCE
+  }
+
+  return process.env.NODE_ENV === "development" ? "mock" : "production"
+}
+
+const dashboardDataSource = resolveDashboardDataSource()
 
 const usingMockData = dashboardDataSource.toLowerCase() === "mock"
 
+function ensureProductionDataReady() {
+  if (usingMockData || process.env.NODE_ENV === "development") {
+    return
+  }
+
+  if (!hasSupabasePublicEnv()) {
+    throw new Error(
+      "Dashboard production data requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)."
+    )
+  }
+}
+
 async function fetchWelcomeMessage(): Promise<WelcomeMessage> {
+  ensureProductionDataReady()
+
   return usingMockData
     ? fetchMockWelcomeMessage()
     : fetchProductionWelcomeMessage()
@@ -70,6 +93,8 @@ export function loadWelcomeMessageUncached() {
 }
 
 async function fetchRentSummary(): Promise<RentSummary> {
+  ensureProductionDataReady()
+
   return usingMockData ? fetchMockRentSummary() : fetchProductionRentSummary()
 }
 
@@ -80,6 +105,8 @@ export function loadRentSummaryUncached() {
 }
 
 async function fetchRecentDocuments(): Promise<DocumentSummary[]> {
+  ensureProductionDataReady()
+
   return usingMockData
     ? fetchMockRecentDocuments()
     : fetchProductionRecentDocuments()
@@ -92,6 +119,8 @@ export function loadRecentDocumentsUncached() {
 }
 
 async function fetchRoommateUpdates(): Promise<RoommateUpdate[]> {
+  ensureProductionDataReady()
+
   return usingMockData
     ? fetchMockRoommateUpdates()
     : fetchProductionRoommateUpdates()
@@ -104,6 +133,8 @@ export function loadRoommateUpdatesUncached() {
 }
 
 async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
+  ensureProductionDataReady()
+
   return usingMockData
     ? fetchMockDashboardMetrics()
     : fetchProductionDashboardMetrics()
@@ -116,6 +147,8 @@ export function loadDashboardMetricsUncached() {
 }
 
 async function fetchQuickActions(): Promise<QuickAction[]> {
+  ensureProductionDataReady()
+
   return usingMockData ? fetchMockQuickActions() : fetchProductionQuickActions()
 }
 
@@ -126,6 +159,8 @@ export function loadQuickActionsUncached() {
 }
 
 async function fetchUpcomingBookings(): Promise<UpcomingBooking[]> {
+  ensureProductionDataReady()
+
   return usingMockData
     ? fetchMockUpcomingBookings()
     : fetchProductionUpcomingBookings()
@@ -138,6 +173,8 @@ export function loadUpcomingBookingsUncached() {
 }
 
 async function fetchMaintenanceTickets(): Promise<MaintenanceTicket[]> {
+  ensureProductionDataReady()
+
   return usingMockData
     ? fetchMockMaintenanceTickets()
     : fetchProductionMaintenanceTickets()
@@ -150,6 +187,8 @@ export function loadMaintenanceTicketsUncached() {
 }
 
 async function fetchFloorplanWorkspace(): Promise<FloorplanWorkspace> {
+  ensureProductionDataReady()
+
   return usingMockData
     ? fetchMockFloorplanWorkspace()
     : fetchProductionFloorplanWorkspace()
