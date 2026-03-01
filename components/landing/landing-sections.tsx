@@ -45,21 +45,21 @@ const heroMetrics = [
 
 const heroHighlights = [
   {
-    title: "Autopay everyone trusts",
+    title: "Simple rent payments",
     description:
-      "Stripe splits rent automatically, nudges late roommates, and stores a transparent receipt history.",
+      "Track and pay rent with clear reminders and receipts for every roommate.",
     icon: Wallet,
   },
   {
-    title: "Bookings without friction",
+    title: "Easy amenity booking",
     description:
-      "Roommates tap a Cal.com link to hold the kitchen, parking, or gaming nook with real-time conflict checks.",
+      "Reserve kitchen, parking, and shared spaces without double-booking.",
     icon: CalendarClock,
   },
   {
-    title: "Signal over noise",
+    title: "Clear house updates",
     description:
-      "Threads, polls, and visitor approvals surface the updates that matter so every roommate stays in sync.",
+      "Post updates, votes, and guest requests so the whole home stays aligned.",
     icon: BellRing,
   },
 ]
@@ -213,12 +213,10 @@ export function HeroSection() {
             </div>
             <div className="space-y-6">
               <h1 className="text-balance text-display-xl">
-                Modern operations for every roommate and property manager
+                Shared-home essentials in one simple portal
               </h1>
               <p className="mx-auto max-w-2xl text-body-lg text-muted-foreground lg:mx-0">
-                Roomsily brings autopay, bookings, documents, and updates into
-                an intuitive workspace that keeps households aligned without the
-                group-chat chaos.
+                Pay rent, book shared spaces, and keep everyone updated from a single, easy dashboard.
               </p>
             </div>
             <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
@@ -606,11 +604,10 @@ export function WorkflowSection() {
       <div className="layout-content">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-display-lg">
-            How households move into Roomsily
+            How it works
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Guided onboarding and contextual tips remove the friction from
-            getting every roommate connected.
+            Set up your home in minutes and keep day-to-day tasks easy to manage.
           </p>
         </div>
         <ol className="relative mt-12 grid gap-6 md:grid-cols-4">
@@ -648,11 +645,10 @@ export function FinalCtaSection() {
           <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl space-y-4">
               <h3 className="text-balance text-display-lg">
-                Ready to centre your shared household around clarity?
+                Ready to simplify shared living?
               </h3>
               <p className="text-body-md text-muted-foreground">
-                Launch Roomsily with guided onboarding and give every roommate
-                one place to handle payments, bookings, and documents.
+                Give roommates one place for payments, bookings, and important updates.
               </p>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -674,7 +670,7 @@ export function FinalCtaSection() {
                 )}
                 intent="passive"
               >
-                <span>Talk with us</span>
+                <span>Contact us</span>
               </SmartLink>
             </div>
           </CardContent>
