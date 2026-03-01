@@ -32,6 +32,9 @@ jobs:
       - name: Validate Tailwind config source
         run: pnpm check:tailwind-config
 
+      - name: Validate legal content placeholders
+        run: pnpm check:legal-content
+
       - name: Lint
         run: pnpm lint
 
