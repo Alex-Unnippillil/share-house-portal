@@ -50,6 +50,10 @@ export function AssistPanelShell({ children }: AssistPanelShellProps) {
   const [open, setOpen] = useState(true)
 
   const content = useMemo(() => {
+    if (!pathname) {
+      return assistContentMap.default
+    }
+
     const matchedKey = Object.keys(assistContentMap).find(
       (candidate) => candidate !== "default" && pathname.startsWith(candidate)
     )
