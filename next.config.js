@@ -5,10 +5,29 @@ const withMDX = require('@next/mdx')()
 // const withPWA = require("@ducanh2912/next-pwa").default({
 //   dest: "public",
 // });
+
+const isDev = process.env.NODE_ENV !== 'production'
+
+const scriptSrc = [
+  "'self'",
+  'blob:',
+  'data:',
+  'https:',
+  'http:',
+  '*.supabase.co',
+  '*.vercel.live',
+  'vercel.live',
+  'googleapis.com',
+]
+
+if (isDev) {
+  scriptSrc.push("'unsafe-inline'", "'unsafe-eval'")
+}
+
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: data: https: http: *.supabase.co *.vercel.live vercel.live googleapis.com;
-  script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' blob: data: https: http: *.supabase.co *.vercel.live vercel.live googleapis.com;
+  script-src ${scriptSrc.join(' ')};
+  script-src-elem ${scriptSrc.join(' ')};
   style-src 'self' 'unsafe-inline' https:;
   img-src * blob: data:;
   media-src *.supabase.co quantumone.b-cdn.net *.unsplash.com youtube.com;
@@ -70,8 +89,8 @@ const nextConfig = {
   experimental: {
     mdxRs: true,
   },
-    images : {
-      remotePatterns: [
+  images: {
+    remotePatterns: [
       {
         protocol: 'https',
         hostname: 'quantumone.b-cdn.net',
@@ -111,25 +130,22 @@ const nextConfig = {
       },
 
       {
-
         protocol: 'https',
         hostname: 'api.web3modal.com',
         port: '',
-      
       },
     ],
   },
-   async headers() {
-      return [
-        {
-          source: '/(.*)',
-          headers: securityHeaders,
-        },
-      ]
-    },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+    ]
+  },
 
-
-   pageExtensions: ['ts', 'tsx', 'mdx', 'js', 'jsx', 'rs'],
+  pageExtensions: ['ts', 'tsx', 'mdx', 'js', 'jsx'],
 }
 
 module.exports = withMDX(nextConfig)
