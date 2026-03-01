@@ -6,6 +6,7 @@ export type OperationalMetricName =
   | "payment_failures_total"
   | "booking_conflicts_total"
   | "webhook_failures_total"
+  | "unmapped_payment_events_total"
   | "maintenance_sla_met_total"
   | "maintenance_sla_breaches_total"
   | "message_moderation_actions_total"
@@ -18,7 +19,7 @@ export interface MetricTags {
   correlationId?: string
   tenantId?: string
   unitId?: string
-  severity?: "critical" | "high" | "medium" | "low"
+  severity?: "critical" | "high" | "medium" | "low" | "warning"
   [key: string]: string | number | boolean | undefined
 }
 
