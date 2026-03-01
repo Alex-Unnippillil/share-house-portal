@@ -48,7 +48,7 @@ export async function SiteHeader() {
         Skip to content
       </a>
       <div className="container flex h-16 items-center justify-between gap-4">
-        <MainNav appName={siteConfig.name} items={navItems} />
+        <MainNav appName={siteConfig.name} items={navItems} homeHref={isAuthenticated ? "/dashboard" : "/auth"} />
         <MobileNav appName={siteConfig.name} isAuthenticated={isAuthenticated} items={navItems} />
         <div className="flex flex-1 items-center justify-end gap-4">
           <div className="hidden items-center gap-2 lg:flex">

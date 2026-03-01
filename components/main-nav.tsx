@@ -17,6 +17,7 @@ type MainNavEntry = NavItem & {
 interface MainNavProps {
   appName: string
   items?: MainNavEntry[]
+  homeHref?: string
 }
 
 
@@ -28,13 +29,13 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function MainNav({ appName, items }: MainNavProps) {
+export function MainNav({ appName, items, homeHref = "/auth" }: MainNavProps) {
   const pathname = usePathname()
 
   return (
     <div className="mr-2 hidden gap-4 lg:flex lg:gap-8">
       <SmartLink
-        href="/"
+        href={homeHref}
         className="inline-flex rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         intent="navigation"
       >
