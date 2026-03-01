@@ -245,7 +245,7 @@ export async function createLeaseSigningRequest(
     const uploadResponse = await documensoService.uploadDocument(request.file);
 
     // Create recipients from tenant emails
-    const recipients = request.tenantEmails.map((email, index) => ({
+    const recipients: DocumensoCreateDocumentRequest['recipients'] = request.tenantEmails.map((email, index) => ({
       email,
       name: request.tenantNames?.[index] || email.split('@')[0],
       role: 'SIGNER' as const,
