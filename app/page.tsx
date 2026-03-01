@@ -3,6 +3,7 @@ import { readUserSession } from "@/utils/actions"
 
 import LandingHeader from "@/components/landing/landing-header"
 import {
+  ExperienceSection,
   FeatureGridSection,
   FinalCtaSection,
   HeroSection,
@@ -26,6 +27,7 @@ export default async function IndexPage() {
       <main id="main-content" tabIndex={-1} className="focus:outline-none">
         <SectionStack className="pb-section">
           <HeroSection />
+          <ExperienceSection />
           <FeatureGridSection />
           <PersonasSection />
           <PrismSection />

@@ -1,12 +1,11 @@
 import Link from "next/link"
-
-import FeaturePrismLazy from "@/components/feature-prism-lazy"
 import {
   BellRing,
   CalendarClock,
   FileText,
   ListChecks,
   MessageSquare,
+  MonitorSmartphone,
   PiggyBank,
   ShieldCheck,
   Sparkles,
@@ -25,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import FeaturePrismLazy from "@/components/feature-prism-lazy"
 import SmartLink from "@/components/navigation/SmartLink"
 
 import { LANDING_SECTION_IDS } from "./landing-ids"
@@ -61,6 +61,29 @@ const heroHighlights = [
     description:
       "Threads, polls, and visitor approvals surface the updates that matter so every roommate stays in sync.",
     icon: BellRing,
+  },
+]
+
+const experienceHighlights = [
+  {
+    title: "Mobile rhythm for roommates",
+    description:
+      "Fast thumb-first actions keep shared living simple: pay rent, approve visitors, and claim amenities in seconds.",
+    points: [
+      "Persistent daily snapshot with payment status and next reservations",
+      "One-tap quick actions for bookings, polls, and maintenance updates",
+      "Readable cards and spacing tuned for small screens and busy schedules",
+    ],
+  },
+  {
+    title: "Desktop clarity for managers",
+    description:
+      "Larger layouts surface portfolio-level context for landlords and property managers without overwhelming tenants.",
+    points: [
+      "Split panels for ledger reconciliation, document workflows, and requests",
+      "Audit-friendly timelines with role-aware controls for each property",
+      "Reference-inspired visual hierarchy focused on scannability and trust",
+    ],
   },
 ]
 
@@ -375,6 +398,58 @@ export function HeroSection() {
   )
 }
 
+export function ExperienceSection() {
+  return (
+    <section
+      id={LANDING_SECTION_IDS.experience}
+      className="border-b border-border/70 bg-muted/20 py-section"
+    >
+      <div className="layout-content">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-balance text-display-lg">
+            Crafted for mobile roommates and desktop operators
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            The landing experience combines lightweight mobile flows and
+            information-rich desktop layouts inspired by best-in-class SaaS
+            products.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+          {experienceHighlights.map((item, index) => (
+            <Card key={item.title} surface="glass" className="h-full">
+              <CardHeader className="space-y-4">
+                <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <MonitorSmartphone className="size-5" aria-hidden="true" />
+                </span>
+                <CardTitle className="text-heading-md">{item.title}</CardTitle>
+                <CardDescription className="text-base">
+                  {item.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 text-sm text-muted-foreground">
+                  {item.points.map((point) => (
+                    <li key={point} className="flex items-start gap-2">
+                      <span className="mt-1 size-2 rounded-full bg-primary" />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-6 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  {index === 0
+                    ? "Optimized for tenants, roommates, and people living together"
+                    : "Optimized for landlords and property managers"}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function FeatureGridSection() {
   return (
     <section id={LANDING_SECTION_IDS.features} className="py-section">
@@ -559,11 +634,7 @@ export function IntegrationsSection() {
       <div className="layout-content">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           {integrationHighlights.map((highlight) => (
-            <Card
-              key={highlight.title}
-              surface="solid"
-              className="h-full"
-            >
+            <Card key={highlight.title} surface="solid" className="h-full">
               <CardHeader className="space-y-4">
                 <CardTitle className="text-heading-md">
                   {highlight.title}
@@ -644,7 +715,10 @@ export function FinalCtaSection() {
   return (
     <section id={LANDING_SECTION_IDS.finalCta} className="py-section">
       <div className="layout-content">
-        <Card surface="elevated" className="overflow-hidden border-primary/25 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
+        <Card
+          surface="elevated"
+          className="overflow-hidden border-primary/25 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent"
+        >
           <CardContent className="flex flex-col gap-8 px-8 py-12 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl space-y-4">
               <h3 className="text-balance text-display-lg">
