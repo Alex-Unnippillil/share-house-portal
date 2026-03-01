@@ -111,6 +111,7 @@ export async function loadReceiptHistory(): Promise<PaymentReceiptHistoryEntry[]
 
 export interface ReconciliationPaymentItem {
   id: string
+  recordType: "rent_payment" | "webhook_event"
   tenantName: string
   amount: number
   currency: string
@@ -120,6 +121,7 @@ export interface ReconciliationPaymentItem {
   receiptUrl: string | null
   triageStatus: "open" | "investigating" | "resolved"
   triageNotes: string | null
+  auditDetail: string | null
 }
 
 export interface ReconciliationDashboardData {
@@ -171,6 +173,7 @@ export async function loadReconciliationDashboardData(): Promise<ReconciliationD
 
     return {
       id: payment.id,
+      recordType: "rent_payment",
       tenantName: payment.payer_name ?? "Unassigned tenant",
       amount: payment.amount,
       currency: payment.currency,
@@ -181,10 +184,46 @@ export async function loadReconciliationDashboardData(): Promise<ReconciliationD
       triageStatus,
       triageNotes:
         typeof metadata.triage_notes === "string" ? metadata.triage_notes : null,
+      auditDetail: null,
     }
   })
 
-  return { canManagePayments, failedPayments }
+  const { data: queuedEvents } = await supabase
+    .from("webhook_events")
+    .select("event_id, event_type, created_at, error_message, payload")
+    .eq("provider", "stripe")
+    .eq("status", "failed")
+    .ilike("error_message", "%map%tenant%")
+    .order("created_at", { ascending: false })
+    .limit(200)
+
+  const unmappedEvents: ReconciliationPaymentItem[] = (queuedEvents ?? []).map((event) => {
+    const payload = (event.payload ?? {}) as Record<string, unknown>
+    const reconciliation = (payload.reconciliation ?? {}) as Record<string, unknown>
+    const triageStatus =
+      reconciliation.triage_status === "investigating" ||
+      reconciliation.triage_status === "resolved"
+        ? reconciliation.triage_status
+        : "open"
+
+    return {
+      id: event.event_id,
+      recordType: "webhook_event",
+      tenantName: "Unmapped Stripe event",
+      amount: 0,
+      currency: "USD",
+      status: "unmapped",
+      description: event.event_type,
+      processedAt: event.created_at,
+      receiptUrl: null,
+      triageStatus,
+      triageNotes:
+        typeof reconciliation.triage_notes === "string" ? reconciliation.triage_notes : null,
+      auditDetail: typeof event.error_message === "string" ? event.error_message : null,
+    }
+  })
+
+  return { canManagePayments, failedPayments: [...unmappedEvents, ...failedPayments] }
 }
 
 export async function loadRoommateLedgers(): Promise<RoommateLedger[]> {

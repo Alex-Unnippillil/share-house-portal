@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const constructEvent = vi.fn()
 const retrieveCheckoutSession = vi.fn()
+const retrieveSubscription = vi.fn()
 const sendEmailNotification = vi.fn()
 const sendInAppNotification = vi.fn()
 const createClient = vi.fn()
 const mockHeadersGet = vi.fn()
+const incrementOperationalMetric = vi.fn()
 
 vi.mock("next/headers", () => ({
   headers: async () => ({
@@ -23,6 +25,9 @@ vi.mock("@/lib/stripe", () => ({
         retrieve: retrieveCheckoutSession,
       },
     },
+    subscriptions: {
+      retrieve: retrieveSubscription,
+    },
   }),
 }))
 
@@ -35,6 +40,10 @@ vi.mock("@/lib/notifications", () => ({
   sendInAppNotification,
 }))
 
+vi.mock("@/lib/observability/metrics", () => ({
+  incrementOperationalMetric,
+}))
+
 describe("POST /api/stripe/webhook", () => {
   beforeEach(() => {
     vi.resetModules()
@@ -45,35 +54,83 @@ describe("POST /api/stripe/webhook", () => {
     mockHeadersGet.mockReturnValue("sig_123")
   })
 
-  function createSupabaseMock() {
-    const insert = vi.fn().mockResolvedValue({ data: null, error: null })
-    const single = vi.fn().mockResolvedValue({
-      data: { full_name: "Taylor Tenant", email: "tenant@example.com" },
-      error: null,
-    })
+  function createSupabaseMock(options?: {
+    mappedTenantId?: string | null
+    profileEmail?: string | null
+  }) {
+    const mappedTenantId = options?.mappedTenantId ?? null
+    const profileEmail = options?.profileEmail ?? "tenant@example.com"
+
+    const rentPaymentsInsert = vi.fn().mockResolvedValue({ data: null, error: null })
+    const rentPaymentsUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
+    const webhookEventsInsert = vi.fn().mockResolvedValue({ data: null, error: null })
 
     const updateEqEventId = vi.fn().mockResolvedValue({ data: null, error: null })
     const updateEqProvider = vi.fn(() => ({ eq: updateEqEventId }))
     const update = vi.fn(() => ({ eq: updateEqProvider }))
 
+    const subscriptionsMaybeSingle = vi.fn().mockResolvedValue({
+      data: mappedTenantId ? { user_id: mappedTenantId } : null,
+      error: null,
+    })
+
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single })) })) }
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: { full_name: "Taylor Tenant", email: profileEmail },
+                error: null,
+              }),
+            })),
+          })),
+        }
+      }
+
+      if (table === "subscriptions") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: subscriptionsMaybeSingle,
+              order: vi.fn(() => ({ limit: vi.fn(() => ({ maybeSingle: subscriptionsMaybeSingle })) })),
+            })),
+          })),
+          upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+          update,
+        }
+      }
+
+      if (table === "webhook_events") {
+        return {
+          insert: webhookEventsInsert,
+          update,
+        }
+      }
+
+      if (table === "rent_payments") {
+        return {
+          insert: rentPaymentsInsert,
+          upsert: rentPaymentsUpsert,
+          update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) })),
+          select: vi.fn(() => ({
+            contains: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })),
+          })),
+        }
       }
 
       return {
-        insert,
+        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
         update,
-        select: vi.fn(() => ({ contains: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null }) })) })),
-        upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+        select: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
       }
     })
 
     createClient.mockReturnValue({ from })
 
     return {
-      insert,
-      update,
+      rentPaymentsInsert,
+      webhookEventsInsert,
       updateEqProvider,
       updateEqEventId,
     }
@@ -94,7 +151,9 @@ describe("POST /api/stripe/webhook", () => {
   })
 
   it("persists checkout payments and dispatches notifications", async () => {
-    const { insert } = createSupabaseMock()
+    const { rentPaymentsInsert } = createSupabaseMock({
+      mappedTenantId: "11111111-1111-4111-8111-111111111111",
+    })
 
     constructEvent.mockReturnValue({
       id: "evt_123",
@@ -115,7 +174,7 @@ describe("POST /api/stripe/webhook", () => {
       mode: "payment",
       payment_status: "paid",
       customer: "cus_123",
-      metadata: { tenant_id: "tenant-1", unit_id: "unit-1" },
+      metadata: { tenant_id: "11111111-1111-4111-8111-111111111111", unit_id: "unit-1" },
       line_items: {
         data: [
           {
@@ -138,7 +197,7 @@ describe("POST /api/stripe/webhook", () => {
     )
 
     expect(response.status).toBe(200)
-    expect(insert).toHaveBeenCalled()
+    expect(rentPaymentsInsert).toHaveBeenCalled()
     expect(sendEmailNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "tenant@example.com",
@@ -147,8 +206,63 @@ describe("POST /api/stripe/webhook", () => {
     )
     expect(sendInAppNotification).toHaveBeenCalledWith(
       expect.objectContaining({
-        userId: "tenant-1",
+        userId: "11111111-1111-4111-8111-111111111111",
         title: "Payment update",
+      })
+    )
+  })
+
+  it("queues unmapped checkout events when metadata and mapping are missing", async () => {
+    const { rentPaymentsInsert, updateEqProvider, updateEqEventId } = createSupabaseMock()
+
+    constructEvent.mockReturnValue({
+      id: "evt_missing_map",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_missing",
+          payment_intent: "pi_missing",
+          customer: "cus_missing",
+          payment_status: "paid",
+        },
+      },
+    })
+
+    retrieveCheckoutSession.mockResolvedValue({
+      id: "cs_test_missing",
+      mode: "payment",
+      payment_status: "paid",
+      customer: "cus_missing",
+      metadata: {},
+      line_items: {
+        data: [
+          {
+            amount_total: 150000,
+            currency: "usd",
+            description: "September rent",
+            price: { nickname: "Rent" },
+          },
+        ],
+      },
+    })
+
+    const { POST } = await import("@/app/api/stripe/webhook/route")
+
+    const response = await POST(
+      new Request("http://localhost/api/stripe/webhook", {
+        method: "POST",
+        body: JSON.stringify({ id: "evt_missing_map" }),
+      })
+    )
+
+    expect(response.status).toBe(200)
+    expect(rentPaymentsInsert).not.toHaveBeenCalled()
+    expect(updateEqProvider).toHaveBeenCalledWith("provider", "stripe")
+    expect(updateEqEventId).toHaveBeenCalledWith("event_id", "evt_missing_map")
+    expect(incrementOperationalMetric).toHaveBeenCalledWith(
+      "unmapped_payment_events_total",
+      expect.objectContaining({
+        reason: "tenant_mapping_missing",
       })
     )
   })

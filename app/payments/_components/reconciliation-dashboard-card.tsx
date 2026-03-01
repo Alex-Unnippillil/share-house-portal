@@ -59,6 +59,7 @@ export function ReconciliationDashboardCard({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          recordType: failedPayments.find((item) => item.id === paymentId)?.recordType ?? "rent_payment",
           paymentId,
           triageStatus: statusById[paymentId] ?? "open",
           triageNotes: notesById[paymentId] ?? "",
@@ -103,6 +104,9 @@ export function ReconciliationDashboardCard({
                     <p className="text-xs text-muted-foreground">
                       {payment.description ?? "Rent payment"}
                     </p>
+                    {payment.auditDetail ? (
+                      <p className="text-xs text-destructive">{payment.auditDetail}</p>
+                    ) : null}
                     {payment.processedAt ? (
                       <p className="text-xs text-muted-foreground">
                         {formatDistanceToNowStrict(new Date(payment.processedAt), {
