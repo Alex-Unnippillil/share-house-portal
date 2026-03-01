@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { format } from "date-fns"
+import { differenceInCalendarDays, format, isWeekend } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -102,6 +103,31 @@ export function VisitorBookingForm() {
       })),
     [unitMembers]
   )
+
+  const arrivalDate = form.watch("arrivalDate")
+  const departureDate = form.watch("departureDate")
+
+  const staySummary = useMemo(() => {
+    if (!arrivalDate || !departureDate) {
+      return {
+        totalNights: null,
+        includesWeekend: false,
+        exceedsPolicy: false,
+      }
+    }
+
+    const totalNights = differenceInCalendarDays(departureDate, arrivalDate)
+    const dayCount = Math.max(totalNights, 0)
+    const includesWeekend = Array.from({ length: dayCount }).some((_, index) =>
+      isWeekend(new Date(arrivalDate.getFullYear(), arrivalDate.getMonth(), arrivalDate.getDate() + index))
+    )
+
+    return {
+      totalNights,
+      includesWeekend,
+      exceedsPolicy: totalNights > 3,
+    }
+  }, [arrivalDate, departureDate])
 
   const onSubmit = async (data: VisitorBookingFormData) => {
     setIsSubmitting(true)
@@ -278,6 +304,27 @@ export function VisitorBookingForm() {
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="rounded-lg border bg-muted/40 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium">Policy preview</p>
+            {staySummary.totalNights !== null ? (
+              <Badge variant={staySummary.exceedsPolicy ? "destructive" : "secondary"}>
+                {staySummary.totalNights} night{staySummary.totalNights === 1 ? "" : "s"}
+              </Badge>
+            ) : (
+              <Badge variant="outline">Pick dates to evaluate</Badge>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Stays over 3 nights are routed for manager review. Weekend stays can trigger additional quiet-hour reminders.
+          </p>
+          {staySummary.includesWeekend ? (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              This request includes Friday/Saturday nights. Notify roommates early to avoid scheduling conflicts.
+            </p>
+          ) : null}
         </div>
 
         <FormField
