@@ -45,9 +45,10 @@ export const appWorkspaceNav: RoleNavItem[] = [
   { title: "Visitors", href: "/visitors", icon: "visitors", domain: "account", subtitle: "Overnight guest log" },
 ]
 
-export const publicNav: MainNavItem[] = [
-  { title: "Sign in", href: "/auth", icon: "home" },
-  { title: "Start onboarding", href: "/onboarding", icon: "users" },
+export const publicNav: NavigationItem[] = [
+  { title: "Home", href: "/", icon: "home" },
+  { title: "Sign in", href: "/auth", icon: "home", authOnly: true },
+  { title: "Start onboarding", href: "/onboarding", icon: "users", authOnly: true },
   { title: "Contact", href: "/contact", icon: "phone" },
 ]
 
@@ -144,6 +145,10 @@ export function getNavigationItems(
 
   return navigationConfig[tree].filter((item) => {
     if (!options.includeDisabled && item.disabled) {
+      return false
+    }
+
+    if (tree === "public" && options.role === "public" && item.authOnly) {
       return false
     }
 
