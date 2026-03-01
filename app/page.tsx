@@ -6,9 +6,6 @@ import {
   FeatureGridSection,
   FinalCtaSection,
   HeroSection,
-  IntegrationsSection,
-  PersonasSection,
-  PrismSection,
   WorkflowSection,
 } from "@/components/landing/landing-sections"
 import { AppShell, SectionStack } from "@/components/layouts/layout-primitives"
@@ -27,9 +24,6 @@ export default async function IndexPage() {
         <SectionStack className="pb-section">
           <HeroSection />
           <FeatureGridSection />
-          <PersonasSection />
-          <PrismSection />
-          <IntegrationsSection />
           <WorkflowSection />
           <FinalCtaSection />
         </SectionStack>
