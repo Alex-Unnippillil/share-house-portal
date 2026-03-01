@@ -6,7 +6,13 @@ export interface LogContext {
   component?: string
   requestId?: string
   correlationId?: string
-  lifecyclePhase?: "request.received" | "request.completed" | "webhook.received" | "webhook.processed" | "webhook.failed"
+  lifecyclePhase?:
+    | "request.received"
+    | "request.completed"
+    | "webhook.received"
+    | "webhook.processed"
+    | "webhook.reconciliation_queue"
+    | "webhook.failed"
   actorId?: string
   tenantId?: string
   unitId?: string
