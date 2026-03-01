@@ -122,11 +122,20 @@ function buildFallbackFloorplanWorkspace(currentUserId: string, currentUserRole:
   }
 }
 
-export async function fetchProductionWelcomeMessage(): Promise<WelcomeMessage> {
+async function getCurrentUserId() {
   const supabase = await createSupbaseServerClientReadOnly()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  return {
+    supabase,
+    user,
+  }
+}
+
+export async function fetchProductionWelcomeMessage(): Promise<WelcomeMessage> {
+  const { user } = await getCurrentUserId()
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? DEFAULT_USER_NAME
 
@@ -145,10 +154,7 @@ export async function fetchProductionWelcomeMessage(): Promise<WelcomeMessage> {
 }
 
 export async function fetchProductionRentSummary(): Promise<RentSummary> {
-  const supabase = await createSupbaseServerClientReadOnly()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user } = await getCurrentUserId()
 
   if (!user) {
     return getInitialRentSummary()
@@ -182,10 +188,7 @@ export async function fetchProductionRentSummary(): Promise<RentSummary> {
 }
 
 export async function fetchProductionRecentDocuments(): Promise<DocumentSummary[]> {
-  const supabase = await createSupbaseServerClientReadOnly()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user } = await getCurrentUserId()
 
   if (!user) {
     return []
@@ -298,6 +301,47 @@ export async function fetchProductionDashboardMetrics(): Promise<DashboardMetric
 }
 
 export async function fetchProductionQuickActions(): Promise<QuickAction[]> {
+  const { supabase, user } = await getCurrentUserId()
+
+  if (!user) {
+    return [
+      {
+        id: "amenity",
+        label: "Reserve amenity",
+        description: "Book kitchen, TV room, parking, and more",
+        href: "/bookings",
+      },
+      {
+        id: "visitor",
+        label: "Register visitor",
+        description: "Submit overnight guest stay details",
+        href: "/visitors",
+      },
+    ]
+  }
+
+  const [pendingDocuments, pendingBookings, pendingMaintenance] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", user.id)
+      .eq("status", "pending_signature"),
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", user.id)
+      .eq("status", "pending"),
+    supabase
+      .from("maintenance_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("created_by", user.id)
+      .not("status", "in", "(resolved,cancelled,completed)"),
+  ])
+
+  const needsDocumentReview = Boolean(pendingDocuments.count)
+  const hasPendingBooking = Boolean(pendingBookings.count)
+  const hasOpenMaintenance = Boolean(pendingMaintenance.count)
+
   return [
     {
       id: "payments",
@@ -307,24 +351,27 @@ export async function fetchProductionQuickActions(): Promise<QuickAction[]> {
     },
     {
       id: "amenity",
-      label: "Reserve amenity",
-      description: "Book kitchen, TV room, parking, and more",
+      label: hasPendingBooking ? "Review booking" : "Reserve amenity",
+      description: hasPendingBooking
+        ? "Pending amenity request needs confirmation"
+        : "Book kitchen, TV room, parking, and more",
       href: "/bookings",
     },
     {
-      id: "visitor",
-      label: "Register visitor",
-      description: "Submit overnight guest stay details",
-      href: "/visitors",
+      id: needsDocumentReview ? "documents" : "visitor",
+      label: needsDocumentReview ? "Sign lease docs" : "Register visitor",
+      description: needsDocumentReview
+        ? "A document is waiting for your signature"
+        : hasOpenMaintenance
+          ? "Track existing maintenance requests"
+          : "Submit overnight guest stay details",
+      href: needsDocumentReview ? "/documents" : hasOpenMaintenance ? "/maintenance" : "/visitors",
     },
   ]
 }
 
 export async function fetchProductionUpcomingBookings(): Promise<UpcomingBooking[]> {
-  const supabase = await createSupbaseServerClientReadOnly()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user } = await getCurrentUserId()
 
   if (!user) {
     return []
@@ -357,10 +404,7 @@ export async function fetchProductionUpcomingBookings(): Promise<UpcomingBooking
 }
 
 export async function fetchProductionMaintenanceTickets(): Promise<MaintenanceTicket[]> {
-  const supabase = await createSupbaseServerClientReadOnly()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user } = await getCurrentUserId()
 
   if (!user) {
     return []
@@ -398,10 +442,7 @@ export async function fetchProductionMaintenanceTickets(): Promise<MaintenanceTi
 }
 
 export async function fetchProductionFloorplanWorkspace(): Promise<FloorplanWorkspace> {
-  const supabase = await createSupbaseServerClientReadOnly()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { supabase, user } = await getCurrentUserId()
 
   if (!user) {
     return buildFallbackFloorplanWorkspace("", "tenant")
