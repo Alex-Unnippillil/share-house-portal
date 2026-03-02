@@ -20,6 +20,8 @@ import {
 } from "./components/skeletons"
 import { UpcomingBookingsCard } from "./components/upcoming-bookings-card"
 
+export const dynamic = "force-dynamic"
+
 export default function DashboardPage() {
   return (
     <SectionStack>
