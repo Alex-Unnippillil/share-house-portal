@@ -52,24 +52,37 @@ function resolveDashboardDataSource() {
 
 const dashboardDataSource = resolveDashboardDataSource()
 
-const usingMockData = dashboardDataSource.toLowerCase() === "mock"
+const requestedMockData = dashboardDataSource.toLowerCase() === "mock"
 
-function ensureProductionDataReady() {
-  if (usingMockData || process.env.NODE_ENV === "development") {
-    return
+let hasLoggedMissingSupabaseWarning = false
+
+function shouldUseMockData() {
+  if (requestedMockData || process.env.NODE_ENV === "development") {
+    return true
   }
 
   if (!hasSupabasePublicEnv()) {
-    throw new Error(
-      "Dashboard production data requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)."
-    )
+    if (!hasLoggedMissingSupabaseWarning) {
+      console.warn(
+        "Dashboard production data requested without Supabase public environment variables. Falling back to mock data."
+      )
+      hasLoggedMissingSupabaseWarning = true
+    }
+
+    return true
   }
+
+  return false
+}
+
+function ensureProductionDataReady() {
+  shouldUseMockData()
 }
 
 async function fetchWelcomeMessage(): Promise<WelcomeMessage> {
   ensureProductionDataReady()
 
-  return usingMockData
+  return shouldUseMockData()
     ? fetchMockWelcomeMessage()
     : fetchProductionWelcomeMessage()
 }
@@ -95,7 +108,7 @@ export function loadWelcomeMessageUncached() {
 async function fetchRentSummary(): Promise<RentSummary> {
   ensureProductionDataReady()
 
-  return usingMockData ? fetchMockRentSummary() : fetchProductionRentSummary()
+  return shouldUseMockData() ? fetchMockRentSummary() : fetchProductionRentSummary()
 }
 
 export const getRentSummary = cache(fetchRentSummary)
@@ -107,7 +120,7 @@ export function loadRentSummaryUncached() {
 async function fetchRecentDocuments(): Promise<DocumentSummary[]> {
   ensureProductionDataReady()
 
-  return usingMockData
+  return shouldUseMockData()
     ? fetchMockRecentDocuments()
     : fetchProductionRecentDocuments()
 }
@@ -121,7 +134,7 @@ export function loadRecentDocumentsUncached() {
 async function fetchRoommateUpdates(): Promise<RoommateUpdate[]> {
   ensureProductionDataReady()
 
-  return usingMockData
+  return shouldUseMockData()
     ? fetchMockRoommateUpdates()
     : fetchProductionRoommateUpdates()
 }
@@ -135,7 +148,7 @@ export function loadRoommateUpdatesUncached() {
 async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
   ensureProductionDataReady()
 
-  return usingMockData
+  return shouldUseMockData()
     ? fetchMockDashboardMetrics()
     : fetchProductionDashboardMetrics()
 }
@@ -149,7 +162,7 @@ export function loadDashboardMetricsUncached() {
 async function fetchQuickActions(): Promise<QuickAction[]> {
   ensureProductionDataReady()
 
-  return usingMockData ? fetchMockQuickActions() : fetchProductionQuickActions()
+  return shouldUseMockData() ? fetchMockQuickActions() : fetchProductionQuickActions()
 }
 
 export const getQuickActions = cache(fetchQuickActions)
@@ -161,7 +174,7 @@ export function loadQuickActionsUncached() {
 async function fetchUpcomingBookings(): Promise<UpcomingBooking[]> {
   ensureProductionDataReady()
 
-  return usingMockData
+  return shouldUseMockData()
     ? fetchMockUpcomingBookings()
     : fetchProductionUpcomingBookings()
 }
@@ -175,7 +188,7 @@ export function loadUpcomingBookingsUncached() {
 async function fetchMaintenanceTickets(): Promise<MaintenanceTicket[]> {
   ensureProductionDataReady()
 
-  return usingMockData
+  return shouldUseMockData()
     ? fetchMockMaintenanceTickets()
     : fetchProductionMaintenanceTickets()
 }
@@ -189,7 +202,7 @@ export function loadMaintenanceTicketsUncached() {
 async function fetchFloorplanWorkspace(): Promise<FloorplanWorkspace> {
   ensureProductionDataReady()
 
-  return usingMockData
+  return shouldUseMockData()
     ? fetchMockFloorplanWorkspace()
     : fetchProductionFloorplanWorkspace()
 }
