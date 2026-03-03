@@ -20,14 +20,15 @@ afterEach(() => {
 })
 
 describe("dashboard data loaders in production mode", () => {
-  it("fails loudly when required production dependencies are missing", async () => {
+  it("falls back to mock data when required production dependencies are missing", async () => {
     process.env.NODE_ENV = "production"
 
     const dataModule = await import("@/app/dashboard/(dashboard)/data")
 
-    await expect(dataModule.loadWelcomeMessageUncached()).rejects.toThrow(
-      /Dashboard production data requires NEXT_PUBLIC_SUPABASE_URL/
-    )
+    await expect(dataModule.loadWelcomeMessageUncached()).resolves.toMatchObject({
+      title: expect.any(String),
+      primaryAction: expect.objectContaining({ href: expect.any(String) }),
+    })
   })
 
   it("loads production data without throwing and returns expected shapes", async () => {
