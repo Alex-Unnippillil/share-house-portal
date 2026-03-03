@@ -53,21 +53,70 @@ function resolveDashboardDataSource() {
 const dashboardDataSource = resolveDashboardDataSource()
 
 const usingMockData = dashboardDataSource.toLowerCase() === "mock"
+let hasLoggedDashboardDataConfigError = false
 
-function ensureProductionDataReady() {
-  if (usingMockData || process.env.NODE_ENV === "development") {
-    return
-  }
+function getFallbackRentSummary(): RentSummary {
+  const nextDueDate = new Date()
+  nextDueDate.setDate(1)
+  nextDueDate.setMonth(nextDueDate.getMonth() + 1)
 
-  if (!hasSupabasePublicEnv()) {
-    throw new Error(
-      "Dashboard production data requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)."
-    )
+  return {
+    amount: 0,
+    dueDate: nextDueDate.toISOString().slice(0, 10),
+    autopayEnabled: false,
+    balance: 0,
+    lastPaymentDate: "",
+    status: "paid",
   }
 }
 
+function getFallbackFloorplanWorkspace(): FloorplanWorkspace {
+  return {
+    floorplanId: "fallback-floorplan",
+    floorplanName: "Unit floorplan",
+    propertyId: "",
+    unitId: "",
+    svgMarkup:
+      '<svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Floorplan coming soon"><rect width="100" height="60" fill="#0f172a" /><text x="50" y="32" text-anchor="middle" fill="#e2e8f0" font-size="6">Floorplan not uploaded yet</text></svg>',
+    currentVersion: 1,
+    currentUserId: "",
+    currentUserRole: "tenant",
+    roommates: [],
+    annotations: [],
+    annotationHistory: [],
+  }
+}
+
+function ensureProductionDataReady() {
+  if (usingMockData || process.env.NODE_ENV === "development") {
+    return true
+  }
+
+  if (!hasSupabasePublicEnv()) {
+    if (!hasLoggedDashboardDataConfigError) {
+      console.error(
+        "Dashboard production data requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)."
+      )
+      hasLoggedDashboardDataConfigError = true
+    }
+
+    return false
+  }
+
+  return true
+}
+
 async function fetchWelcomeMessage(): Promise<WelcomeMessage> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return {
+      title: "Welcome back",
+      subtitle: "Finish environment setup to load your live dashboard data.",
+      primaryAction: {
+        href: "/dashboard/operations",
+        label: "Open operations",
+      },
+    }
+  }
 
   return usingMockData
     ? fetchMockWelcomeMessage()
@@ -93,7 +142,9 @@ export function loadWelcomeMessageUncached() {
 }
 
 async function fetchRentSummary(): Promise<RentSummary> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return getFallbackRentSummary()
+  }
 
   return usingMockData ? fetchMockRentSummary() : fetchProductionRentSummary()
 }
@@ -105,7 +156,9 @@ export function loadRentSummaryUncached() {
 }
 
 async function fetchRecentDocuments(): Promise<DocumentSummary[]> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return []
+  }
 
   return usingMockData
     ? fetchMockRecentDocuments()
@@ -119,7 +172,9 @@ export function loadRecentDocumentsUncached() {
 }
 
 async function fetchRoommateUpdates(): Promise<RoommateUpdate[]> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return []
+  }
 
   return usingMockData
     ? fetchMockRoommateUpdates()
@@ -133,7 +188,9 @@ export function loadRoommateUpdatesUncached() {
 }
 
 async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return []
+  }
 
   return usingMockData
     ? fetchMockDashboardMetrics()
@@ -147,7 +204,9 @@ export function loadDashboardMetricsUncached() {
 }
 
 async function fetchQuickActions(): Promise<QuickAction[]> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return []
+  }
 
   return usingMockData ? fetchMockQuickActions() : fetchProductionQuickActions()
 }
@@ -159,7 +218,9 @@ export function loadQuickActionsUncached() {
 }
 
 async function fetchUpcomingBookings(): Promise<UpcomingBooking[]> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return []
+  }
 
   return usingMockData
     ? fetchMockUpcomingBookings()
@@ -173,7 +234,9 @@ export function loadUpcomingBookingsUncached() {
 }
 
 async function fetchMaintenanceTickets(): Promise<MaintenanceTicket[]> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return []
+  }
 
   return usingMockData
     ? fetchMockMaintenanceTickets()
@@ -187,7 +250,9 @@ export function loadMaintenanceTicketsUncached() {
 }
 
 async function fetchFloorplanWorkspace(): Promise<FloorplanWorkspace> {
-  ensureProductionDataReady()
+  if (!ensureProductionDataReady()) {
+    return getFallbackFloorplanWorkspace()
+  }
 
   return usingMockData
     ? fetchMockFloorplanWorkspace()
