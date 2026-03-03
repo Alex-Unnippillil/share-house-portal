@@ -4,39 +4,39 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 
 ## Features
 
-### 🏠 **Core Functionality**
+### **Core Functionality**
 
 - **Multi-tenant Property Management**: Support for multiple roommates sharing rental properties
 - **Role-based Access Control**: Separate workflows for tenants, roommates, property managers, and admins
 - **Auth-First Entry Experience**: Root route directs unauthenticated users to focused sign-in and onboarding actions
 - **Responsive Mobile-First Design**: Optimized for mobile usage with modern UI components
 
-### 💳 **Payment Management**
+### **Payment Management**
 
 - **Stripe Integration**: Secure rent payments with autopay functionality
 - **Subscription Support**: Recurring rent payments with configurable billing cycles
 - **Payment Receipts**: Automatic receipt generation and email notifications
 - **Financial Tracking**: Complete payment history and reconciliation tools
 
-### 📅 **Amenity Bookings**
+### **Amenity Bookings**
 
 - **Shared Space Scheduling**: Book kitchen, TV room, PlayStation, parking spots, and shared computers
 - **Cal.com Integration**: Self-hosted calendar system with double-booking prevention
 - **Conflict Detection**: Smart scheduling to prevent overlapping reservations
 
-### 📄 **Document Management**
+### **Document Management**
 
 - **Documenso Integration**: Secure document signing and storage
 - **Lease Agreements**: Digital lease management with version history
 - **Audit Trails**: Complete document access logging for compliance
 
-### 💬 **Communication**
+### **Communication**
 
 - **Realtime Messaging**: Roommate-to-roommate communication with threads
 - **Notifications**: In-app and email notifications for important events
 - **Maintenance Requests**: Issue tracking and resolution workflow
 
-### 🏢 **Admin Features**
+### **Admin Features**
 
 - **Property Management**: Multi-unit property administration
 - **Visitor Logs**: Overnight guest tracking and approval workflows
@@ -104,11 +104,7 @@ Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](
 - `main` should be protected with required checks and no direct pushes.
 - See [`docs/engineering/branch-protection.md`](docs/engineering/branch-protection.md) for policy details.
 
-## Operations & Reliability
 
-Review the [Performance & Availability Playbook](docs/perf/playbook.md) for service level objectives, monitoring dashboards, alert channels, and rollback procedures across Next.js, Supabase, and Stripe integrations.
-
-Layout and responsiveness reviews should follow the [`docs/design-qa-checklist.md`](docs/design-qa-checklist.md) checklist before merge.
 
 ## Project Structure
 
@@ -127,14 +123,3 @@ Layout and responsiveness reviews should follow the [`docs/design-qa-checklist.m
 └── utils/                 # Helper functions
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
