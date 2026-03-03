@@ -9,6 +9,7 @@ DECLARE
   missing_fk_count integer;
   missing_unique_count integer;
   missing_enum_count integer;
+  missing_exclusion_count integer;
   orphan_count bigint;
 BEGIN
   WITH expected_fks AS (
@@ -103,6 +104,23 @@ BEGIN
 
   IF missing_enum_count > 0 THEN
     RAISE EXCEPTION 'Enum coverage mismatch detected for % enum type(s)', missing_enum_count;
+  END IF;
+
+  SELECT count(*)
+  INTO missing_exclusion_count
+  FROM (VALUES
+    ('bookings', 'bookings_no_overlapping_active_slots')
+  ) AS expected_exclusion(table_name, constraint_name)
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conname = expected_exclusion.constraint_name
+      AND c.conrelid = format('public.%s', expected_exclusion.table_name)::regclass
+      AND c.contype = 'x'
+  );
+
+  IF missing_exclusion_count > 0 THEN
+    RAISE EXCEPTION 'Missing % expected exclusion constraints', missing_exclusion_count;
   END IF;
 
   SELECT
