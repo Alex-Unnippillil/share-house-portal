@@ -67,6 +67,12 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 
 See the full multi-environment contract in [`docs/engineering/environment-contract.md`](docs/engineering/environment-contract.md). For local development, copy the required values into `.env.local`.
 
+#### Dashboard data source modes (local)
+
+- **DB mode (default when Supabase env is present):** if `NEXT_PUBLIC_SUPABASE_URL` and one of `NEXT_PUBLIC_SUPABASE_ANON_KEY`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set, the dashboard uses production-backed loaders by default.
+- **Mock mode (explicit opt-in):** set `DASHBOARD_DATA_SOURCE=mock` to force mock dashboard data.
+- When mock mode is enabled, startup logs a warning to reduce accidental use.
+
 ### Database Setup
 
 Run the Supabase migrations to set up the required database tables:
@@ -122,4 +128,3 @@ Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](
 ├── types/                 # TypeScript type definitions
 └── utils/                 # Helper functions
 ```
-

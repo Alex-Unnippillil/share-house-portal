@@ -20,13 +20,192 @@ afterEach(() => {
 })
 
 describe("dashboard data loaders in production mode", () => {
-  it("fails loudly when required production dependencies are missing", async () => {
+  it("falls back to mock data when Supabase public env vars are missing", async () => {
     process.env.NODE_ENV = "production"
 
     const dataModule = await import("@/app/dashboard/(dashboard)/data")
 
-    await expect(dataModule.loadWelcomeMessageUncached()).rejects.toThrow(
-      /Dashboard production data requires NEXT_PUBLIC_SUPABASE_URL/
+    await expect(dataModule.loadWelcomeMessageUncached()).resolves.toMatchObject({
+      title: expect.any(String),
+      primaryAction: expect.objectContaining({ href: expect.any(String) }),
+    })
+  })
+
+  it("defaults to production data whenever Supabase public env vars are present", async () => {
+    process.env.NODE_ENV = "development"
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co"
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key"
+
+    const fetchProductionWelcomeMessage = vi.fn(async () => ({
+      title: "Welcome back, Taylor",
+      subtitle: "From production",
+      primaryAction: { href: "/payments", label: "Pay now" },
+    }))
+
+    const fetchMockWelcomeMessage = vi.fn(async () => ({
+      title: "Mock welcome",
+      subtitle: "Mock",
+      primaryAction: { href: "/mock", label: "Mock" },
+    }))
+
+    vi.doMock("@/app/dashboard/(dashboard)/production-data", () => ({
+      fetchProductionWelcomeMessage,
+      fetchProductionRentSummary: vi.fn(async () => ({
+        amount: 1200,
+        dueDate: "2026-01-01",
+        autopayEnabled: true,
+        balance: 0,
+        lastPaymentDate: "2025-12-01",
+        status: "paid",
+      })),
+      fetchProductionRecentDocuments: vi.fn(async () => []),
+      fetchProductionRoommateUpdates: vi.fn(async () => []),
+      fetchProductionDashboardMetrics: vi.fn(async () => []),
+      fetchProductionQuickActions: vi.fn(async () => []),
+      fetchProductionUpcomingBookings: vi.fn(async () => []),
+      fetchProductionMaintenanceTickets: vi.fn(async () => []),
+      fetchProductionFloorplanWorkspace: vi.fn(async () => ({
+        floorplanId: "fp-1",
+        floorplanName: "Unit A",
+        propertyId: "prop-1",
+        unitId: "unit-1",
+        svgMarkup: "<svg></svg>",
+        currentVersion: 1,
+        currentUserId: "user-1",
+        currentUserRole: "tenant",
+        roommates: [],
+        annotations: [],
+        annotationHistory: [],
+      })),
+    }))
+
+    vi.doMock("@/app/dashboard/(dashboard)/mock-data", () => ({
+      fetchMockWelcomeMessage,
+      fetchMockRentSummary: vi.fn(async () => ({
+        amount: 1200,
+        dueDate: "2026-01-01",
+        autopayEnabled: false,
+        balance: 0,
+        lastPaymentDate: "2025-12-01",
+        status: "paid",
+      })),
+      fetchMockRecentDocuments: vi.fn(async () => []),
+      fetchMockRoommateUpdates: vi.fn(async () => []),
+      fetchMockDashboardMetrics: vi.fn(async () => []),
+      fetchMockQuickActions: vi.fn(async () => []),
+      fetchMockUpcomingBookings: vi.fn(async () => []),
+      fetchMockMaintenanceTickets: vi.fn(async () => []),
+      fetchMockFloorplanWorkspace: vi.fn(async () => ({
+        floorplanId: "fp-1",
+        floorplanName: "Unit A",
+        propertyId: "prop-1",
+        unitId: "unit-1",
+        svgMarkup: "<svg></svg>",
+        currentVersion: 1,
+        currentUserId: "user-1",
+        currentUserRole: "tenant",
+        roommates: [],
+        annotations: [],
+        annotationHistory: [],
+      })),
+    }))
+
+    const dataModule = await import("@/app/dashboard/(dashboard)/data")
+
+    await dataModule.loadWelcomeMessageUncached()
+
+    expect(fetchProductionWelcomeMessage).toHaveBeenCalledTimes(1)
+    expect(fetchMockWelcomeMessage).not.toHaveBeenCalled()
+  })
+
+  it("uses mock data only when DASHBOARD_DATA_SOURCE=mock and logs a warning", async () => {
+    process.env.NODE_ENV = "production"
+    process.env.DASHBOARD_DATA_SOURCE = "mock"
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+
+    const fetchMockWelcomeMessage = vi.fn(async () => ({
+      title: "Mock welcome",
+      subtitle: "Mock",
+      primaryAction: { href: "/mock", label: "Mock" },
+    }))
+
+    const fetchProductionWelcomeMessage = vi.fn(async () => ({
+      title: "Welcome back, Taylor",
+      subtitle: "From production",
+      primaryAction: { href: "/payments", label: "Pay now" },
+    }))
+
+    vi.doMock("@/app/dashboard/(dashboard)/mock-data", () => ({
+      fetchMockWelcomeMessage,
+      fetchMockRentSummary: vi.fn(async () => ({
+        amount: 1200,
+        dueDate: "2026-01-01",
+        autopayEnabled: false,
+        balance: 0,
+        lastPaymentDate: "2025-12-01",
+        status: "paid",
+      })),
+      fetchMockRecentDocuments: vi.fn(async () => []),
+      fetchMockRoommateUpdates: vi.fn(async () => []),
+      fetchMockDashboardMetrics: vi.fn(async () => []),
+      fetchMockQuickActions: vi.fn(async () => []),
+      fetchMockUpcomingBookings: vi.fn(async () => []),
+      fetchMockMaintenanceTickets: vi.fn(async () => []),
+      fetchMockFloorplanWorkspace: vi.fn(async () => ({
+        floorplanId: "fp-1",
+        floorplanName: "Unit A",
+        propertyId: "prop-1",
+        unitId: "unit-1",
+        svgMarkup: "<svg></svg>",
+        currentVersion: 1,
+        currentUserId: "user-1",
+        currentUserRole: "tenant",
+        roommates: [],
+        annotations: [],
+        annotationHistory: [],
+      })),
+    }))
+
+    vi.doMock("@/app/dashboard/(dashboard)/production-data", () => ({
+      fetchProductionWelcomeMessage,
+      fetchProductionRentSummary: vi.fn(async () => ({
+        amount: 1200,
+        dueDate: "2026-01-01",
+        autopayEnabled: true,
+        balance: 0,
+        lastPaymentDate: "2025-12-01",
+        status: "paid",
+      })),
+      fetchProductionRecentDocuments: vi.fn(async () => []),
+      fetchProductionRoommateUpdates: vi.fn(async () => []),
+      fetchProductionDashboardMetrics: vi.fn(async () => []),
+      fetchProductionQuickActions: vi.fn(async () => []),
+      fetchProductionUpcomingBookings: vi.fn(async () => []),
+      fetchProductionMaintenanceTickets: vi.fn(async () => []),
+      fetchProductionFloorplanWorkspace: vi.fn(async () => ({
+        floorplanId: "fp-1",
+        floorplanName: "Unit A",
+        propertyId: "prop-1",
+        unitId: "unit-1",
+        svgMarkup: "<svg></svg>",
+        currentVersion: 1,
+        currentUserId: "user-1",
+        currentUserRole: "tenant",
+        roommates: [],
+        annotations: [],
+        annotationHistory: [],
+      })),
+    }))
+
+    const dataModule = await import("@/app/dashboard/(dashboard)/data")
+
+    await dataModule.loadWelcomeMessageUncached()
+
+    expect(fetchMockWelcomeMessage).toHaveBeenCalledTimes(1)
+    expect(fetchProductionWelcomeMessage).not.toHaveBeenCalled()
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[dashboard] Mock dashboard data enabled via DASHBOARD_DATA_SOURCE=mock. Remove the override to use production-backed data."
     )
   })
 

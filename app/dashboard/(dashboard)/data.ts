@@ -43,19 +43,25 @@ import type {
 } from "./types"
 
 function resolveDashboardDataSource() {
-  if (process.env.DASHBOARD_DATA_SOURCE) {
-    return process.env.DASHBOARD_DATA_SOURCE
+  if (process.env.DASHBOARD_DATA_SOURCE?.toLowerCase() === "mock") {
+    return "mock"
   }
 
-  return process.env.NODE_ENV === "development" ? "mock" : "production"
+  return hasSupabasePublicEnv() ? "production" : "mock"
 }
 
 const dashboardDataSource = resolveDashboardDataSource()
 
 const usingMockData = dashboardDataSource.toLowerCase() === "mock"
 
+if (usingMockData) {
+  console.warn(
+    "[dashboard] Mock dashboard data enabled via DASHBOARD_DATA_SOURCE=mock. Remove the override to use production-backed data."
+  )
+}
+
 function ensureProductionDataReady() {
-  if (usingMockData || process.env.NODE_ENV === "development") {
+  if (usingMockData) {
     return
   }
 
