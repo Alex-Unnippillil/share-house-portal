@@ -69,11 +69,40 @@ See the full multi-environment contract in [`docs/engineering/environment-contra
 
 ### Database Setup
 
-Run the Supabase migrations to set up the required database tables:
+Database workflows assume a local Supabase stack and Postgres client tooling are available.
+
+Prerequisites:
+
+- Supabase CLI installed and authenticated
+- Local Supabase services started (`supabase start`)
+- `psql` available in your shell
+- Optional: `SUPABASE_DB_URL` set if your local database is not on the default `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
+
+Run the bootstrap script to push migrations, apply demo seed data, and print row-count sanity checks:
 
 ```bash
-# Apply database migrations (requires Supabase CLI)
-supabase db push
+# Applies migrations, runs supabase/demo/seed.sql, and prints counts
+pnpm db:bootstrap
+```
+
+Expected output (example):
+
+```text
+[1/3] Applying latest Supabase migrations with 'supabase db push'
+[2/3] Applying demo seed data from supabase/demo/seed.sql
+[3/3] Sanity-check row counts
+  - profiles:      6
+  - units:         2
+  - rent_payments: 10
+  - bookings:      8
+
+Database bootstrap complete.
+```
+
+After bootstrapping, validate that dashboard production query dependencies are still present:
+
+```bash
+pnpm db:check-dashboard-schema
 ```
 
 ### Development
@@ -122,4 +151,3 @@ Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](
 ├── types/                 # TypeScript type definitions
 └── utils/                 # Helper functions
 ```
-
