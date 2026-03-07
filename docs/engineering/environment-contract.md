@@ -52,6 +52,22 @@ Expected behavior:
 - Calls to Supabase env resolvers throw explicit configuration errors when required values are missing.
 - There are no fallback placeholder values for Supabase URL or public key resolution.
 
+## Dashboard Data Source Modes (Local Development)
+
+The dashboard supports two local development modes:
+
+1. **DB mode (default when env present)**
+   - Default behavior when Supabase public env vars are present.
+   - Required env:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - one of `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - With these values set, dashboard loaders resolve to production-backed data automatically.
+
+2. **Mock mode (explicit opt-in)**
+   - Enable only by setting `DASHBOARD_DATA_SOURCE=mock`.
+   - Intended for UI iteration when DB-backed data is unavailable.
+   - App startup emits a warning log when mock mode is active to prevent accidental long-term use.
+
 ## Webhook Secret Contract
 
 | Service | Variable | Endpoint | Rotation Guidance |
