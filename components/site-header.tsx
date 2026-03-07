@@ -10,7 +10,7 @@ import { siteConfig } from "@/config/site"
 import { fetchMemberRole } from "@/lib/data/members"
 import { cn } from "@/lib/utils"
 import { readUserSession } from "@/utils/actions"
-import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import { createClient } from "@/utils/supabase/server"
 
 export async function SiteHeader() {
   const {
@@ -21,7 +21,7 @@ export async function SiteHeader() {
   let role: PortalRole | null = null
   if (session?.user?.id) {
     try {
-      const supabase = await createSupbaseServerClientReadOnly()
+      const supabase = await createClient()
       const resolvedRole = await fetchMemberRole(supabase as any, session.user.id)
       if (
         resolvedRole === "tenant" ||

@@ -1,6 +1,6 @@
 "use server"
 
-import { createSupbaseServerClient } from "@/utils/supaone"
+import { createActionClient } from "@/utils/supabase/actions"
 import { Resend } from "resend"
 
 export interface NotificationData {
@@ -88,7 +88,7 @@ class NotificationService {
 
   async sendInAppNotification(notification: InAppNotification) {
     try {
-      const supabase = await createSupbaseServerClient()
+      const supabase = await createActionClient()
 
       const { data, error } = await (supabase as any)
         .from("notifications")
@@ -140,7 +140,7 @@ class NotificationService {
 
   private async storeEmailNotification(notification: NotificationData) {
     try {
-      const supabase = await createSupbaseServerClient()
+      const supabase = await createActionClient()
 
       await (supabase as any).from("email_notifications").insert({
         user_id: notification.userId,
