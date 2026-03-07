@@ -8,11 +8,27 @@ export type DependencyHealth = {
   message: string
 }
 
+export type CoreDependencyName = 'app' | 'supabase'
+
+export type CoreDependencyHealth = {
+  name: CoreDependencyName
+  status: DependencyStatus
+  message: string
+}
+
+export type OptionalDependencyHealth = DependencyHealth
+
+export type ReadinessSummary = {
+  status: DependencyStatus
+  core: CoreDependencyHealth[]
+  optional: OptionalDependencyHealth[]
+}
 
 const PROBE_TIMEOUT_MS = 2_000
 const HEALTH_CACHE_TTL_MS = 15_000
 
-let cachedDependencyHealth: { value: DependencyHealth[]; expiresAt: number } | null = null
+let cachedCoreHealth: { value: CoreDependencyHealth[]; expiresAt: number } | null = null
+let cachedOptionalHealth: { value: OptionalDependencyHealth[]; expiresAt: number } | null = null
 
 function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
@@ -98,6 +114,14 @@ async function runProbe(
   }
 }
 
+function getAppProcessHealth(): CoreDependencyHealth {
+  return {
+    name: 'app',
+    status: 'healthy',
+    message: 'application process is running',
+  }
+}
+
 async function probeSupabase(): Promise<DependencyHealth> {
   return runProbe('supabase', ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'], () => {
     const baseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!)
@@ -152,13 +176,15 @@ async function probeDocumenso(): Promise<DependencyHealth> {
   }))
 }
 
-export async function getDependencyHealth(): Promise<DependencyHealth[]> {
-  if (cachedDependencyHealth && cachedDependencyHealth.expiresAt > Date.now()) {
-    return cachedDependencyHealth.value
+export async function getCoreDependencyHealth(): Promise<CoreDependencyHealth[]> {
+  if (cachedCoreHealth && cachedCoreHealth.expiresAt > Date.now()) {
+    return cachedCoreHealth.value
   }
 
-  const value = await Promise.all([probeSupabase(), probeStripe(), probeCalcom(), probeDocumenso()])
-  cachedDependencyHealth = {
+  const [supabase] = await Promise.all([probeSupabase()])
+  const value: CoreDependencyHealth[] = [getAppProcessHealth(), supabase]
+
+  cachedCoreHealth = {
     value,
     expiresAt: Date.now() + HEALTH_CACHE_TTL_MS,
   }
@@ -166,17 +192,51 @@ export async function getDependencyHealth(): Promise<DependencyHealth[]> {
   return value
 }
 
-export function clearDependencyHealthCacheForTests() {
-  cachedDependencyHealth = null
+export async function getOptionalDependencyHealth(): Promise<OptionalDependencyHealth[]> {
+  if (cachedOptionalHealth && cachedOptionalHealth.expiresAt > Date.now()) {
+    return cachedOptionalHealth.value
+  }
+
+  const value = await Promise.all([probeStripe(), probeCalcom(), probeDocumenso()])
+  cachedOptionalHealth = {
+    value,
+    expiresAt: Date.now() + HEALTH_CACHE_TTL_MS,
+  }
+
+  return value
 }
 
-export async function getReadinessSummary() {
-  const dependencies = await getDependencyHealth()
+export async function getDependencyHealth(): Promise<DependencyHealth[]> {
+  const [core, optional] = await Promise.all([
+    getCoreDependencyHealth(),
+    getOptionalDependencyHealth(),
+  ])
+
+  return [...core, ...optional]
+}
+
+export function clearDependencyHealthCacheForTests() {
+  cachedCoreHealth = null
+  cachedOptionalHealth = null
+}
+
+function summarizeStatus(dependencies: Array<{ status: DependencyStatus }>): DependencyStatus {
   const hasDown = dependencies.some((dependency) => dependency.status === 'down')
+  if (hasDown) {
+    return 'down'
+  }
+
   const hasDegraded = dependencies.some((dependency) => dependency.status === 'degraded')
+  return hasDegraded ? 'degraded' : 'healthy'
+}
+
+export async function getReadinessSummary(options?: { includeOptional?: boolean }): Promise<ReadinessSummary> {
+  const core = await getCoreDependencyHealth()
+  const optional = options?.includeOptional ? await getOptionalDependencyHealth() : []
 
   return {
-    status: hasDown ? 'down' : hasDegraded ? 'degraded' : 'healthy',
-    dependencies,
+    status: summarizeStatus(core),
+    core,
+    optional,
   }
 }

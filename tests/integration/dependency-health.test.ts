@@ -28,20 +28,30 @@ afterEach(() => {
 })
 
 describe('dependency health probes', () => {
-  it('reports healthy providers with response status in message', async () => {
+  it('reports healthy core and optional providers with response status in message', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ status: 200 })
     vi.stubGlobal('fetch', fetchMock)
 
-    const { getDependencyHealth, getReadinessSummary, clearDependencyHealthCacheForTests } = await loadModule()
+    const {
+      getCoreDependencyHealth,
+      getOptionalDependencyHealth,
+      getReadinessSummary,
+      clearDependencyHealthCacheForTests,
+    } = await loadModule()
     clearDependencyHealthCacheForTests()
 
-    const dependencies = await getDependencyHealth()
-    const summary = await getReadinessSummary()
+    const core = await getCoreDependencyHealth()
+    const optional = await getOptionalDependencyHealth()
+    const summary = await getReadinessSummary({ includeOptional: true })
 
     expect(fetchMock).toHaveBeenCalledTimes(4)
     expect(summary.status).toBe('healthy')
-    expect(dependencies.every((dependency) => dependency.status === 'healthy')).toBe(true)
-    expect(dependencies[0]?.message).toContain('response status=200')
+    expect(core).toEqual([
+      { name: 'app', status: 'healthy', message: 'application process is running' },
+      { name: 'supabase', status: 'healthy', message: 'probe succeeded; response status=200' },
+    ])
+    expect(optional.every((dependency) => dependency.status === 'healthy')).toBe(true)
+    expect(summary.optional[0]?.message).toContain('response status=200')
   })
 
   it('classifies timeout failures as down', async () => {
@@ -59,10 +69,10 @@ describe('dependency health probes', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    const { getDependencyHealth, clearDependencyHealthCacheForTests } = await loadModule()
+    const { getOptionalDependencyHealth, clearDependencyHealthCacheForTests } = await loadModule()
     clearDependencyHealthCacheForTests()
 
-    const pending = getDependencyHealth()
+    const pending = getOptionalDependencyHealth()
     await vi.advanceTimersByTimeAsync(2_100)
     const dependencies = await pending
     const stripe = dependencies.find((dependency) => dependency.name === 'stripe')
@@ -81,15 +91,18 @@ describe('dependency health probes', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    const { getDependencyHealth, clearDependencyHealthCacheForTests } = await loadModule()
+    const { getOptionalDependencyHealth, getReadinessSummary, clearDependencyHealthCacheForTests } = await loadModule()
     clearDependencyHealthCacheForTests()
 
-    const first = await getDependencyHealth()
-    const second = await getDependencyHealth()
+    const first = await getOptionalDependencyHealth()
+    const second = await getOptionalDependencyHealth()
+    const summary = await getReadinessSummary()
     const calcom = first.find((dependency) => dependency.name === 'calcom')
 
     expect(calcom).toMatchObject({ status: 'degraded' })
     expect(calcom?.message).toContain('authentication failed')
+    expect(summary.status).toBe('healthy')
+    expect(summary.optional).toEqual([])
     expect(second).toEqual(first)
     expect(fetchMock).toHaveBeenCalledTimes(4)
   })
