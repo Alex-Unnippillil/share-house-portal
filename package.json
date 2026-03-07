@@ -32,7 +32,9 @@
     "check:component-files": "node scripts/check-component-filenames.mjs",
     "check:tailwind-config": "node scripts/check-tailwind-config.mjs",
     "js:budget": "node scripts/check-js-size.mjs",
-    "check:legal-content": "node scripts/check-legal-content.mjs"
+    "check:legal-content": "node scripts/check-legal-content.mjs",
+    "check:supabase-types": "node scripts/check-supabase-types.mjs",
+    "ci:guard": "pnpm check:supabase-types"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
