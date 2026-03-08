@@ -73,7 +73,7 @@ export function RoommateLedger({ ledgers }: RoommateLedgerProps) {
         <CardTitle>Roomsily ledger</CardTitle>
         <CardDescription>
           Track individual roommate contributions alongside property manager
-          adjustments for a shared source of truth.
+          adjustments to maintain full transparency.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-10">
