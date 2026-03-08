@@ -14,6 +14,11 @@ type SupabaseTable<Row extends Record<string, unknown>> = {
   Relationships: never[]
 }
 
+type SupabaseView<Row extends Record<string, unknown>> = {
+  Row: Row
+  Relationships: never[]
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -449,7 +454,22 @@ export type Database = {
         updated_at: string | null
       }>
     }
-    Views: Record<string, never>
+    Views: {
+      tenant_balance_mv: SupabaseView<{
+        tenant_id: string
+        month: string
+        currency: string
+        payment_count: number
+        gross_amount: number
+        succeeded_amount: number
+        pending_amount: number
+        failed_amount: number
+        net_amount: number
+        latest_status: string | null
+        last_payment_amount: number | null
+        last_payment_at: string | null
+      }>
+    }
     Functions: {
       check_amenity_conflicts: {
         Args: {
