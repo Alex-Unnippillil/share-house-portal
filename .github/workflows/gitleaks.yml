@@ -1,0 +1,53 @@
+name: gitleaks secret scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    name: Scan for secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          tmpdir=$(mktemp -d)
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_linux_x64.tar.gz | tar -xz -C "$tmpdir"
+          sudo install -m 755 "$tmpdir/gitleaks" /usr/local/bin/gitleaks
+
+      - name: Run gitleaks
+        id: gitleaks
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          if gitleaks detect --source . --report-format sarif --report-path gitleaks.sarif --redact; then
+            echo "exit_code=0" >> "$GITHUB_OUTPUT"
+          else
+            exit_code=$?
+            echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+            exit "${exit_code}"
+          fi
+
+      - name: Upload SARIF report
+        if: always() && hashFiles('gitleaks.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks.sarif
+
+      - name: Fail if gitleaks detected secrets
+        if: steps.gitleaks.outputs.exit_code != '0'
+        run: |
+          echo "gitleaks detected potential secrets. Review the SARIF report in the code scanning alerts for details." >&2
+          exit 1
