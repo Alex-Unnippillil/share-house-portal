@@ -132,3 +132,46 @@ export interface RoommateLedger {
   startingBalance: number
   entries: LedgerEntry[]
 }
+
+export interface BillingProrationLineItem {
+  id: string
+  description: string
+  amount: number
+  isProration: boolean
+  periodStart?: string
+  periodEnd?: string
+}
+
+export interface BillingProrationPreview {
+  currency: string
+  subtotal: number
+  total: number
+  prorationAmount: number
+  nextInvoiceDate: string
+  lineItems: BillingProrationLineItem[]
+}
+
+export interface BillingCreditBalanceSummary {
+  currency: string
+  customerBalance: number
+  cashBalance: number
+  totalAvailable: number
+}
+
+export type BillingReconciliationDirection = "charge" | "credit"
+export type BillingReconciliationSource = "proration" | "credit_balance"
+
+export interface BillingReconciliationLogEntry {
+  id: string
+  occurredAt: string
+  description: string
+  amount: number
+  direction: BillingReconciliationDirection
+  source: BillingReconciliationSource
+}
+
+export interface BillingPreview {
+  proration: BillingProrationPreview
+  credits: BillingCreditBalanceSummary
+  reconciliationLog: BillingReconciliationLogEntry[]
+}
