@@ -1,0 +1,20 @@
+name: share-house-portal-codeql
+packs:
+  javascript:
+    - codeql/javascript-queries
+    - codeql/javascript-experimental-web
+queries:
+  - uses: codeql/javascript-queries#security-extended
+  - uses: codeql/javascript-queries#security-and-quality
+paths:
+  - app
+  - components
+  - hooks
+  - lib
+  - middleware.ts
+  - scripts
+  - utils
+paths-ignore:
+  - node_modules
+  - tests
+  - public
