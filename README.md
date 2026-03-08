@@ -141,6 +141,23 @@ Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](
 
 
 
+### Health Checks
+
+The portal exposes dedicated health endpoints for infrastructure probes and uptime monitoring:
+
+- `GET /api/health/liveness` returns process metrics (PID, uptime, RSS memory) and always responds with HTTP 200 when the runtime is reachable.
+- `GET /api/health/readiness` verifies Supabase connectivity, Stripe webhook configuration, Resend, Documenso, and Cal.com credentials. The endpoint responds with HTTP 200 for `pass`/`warn` states and HTTP 503 when any critical dependency fails.
+
+Both endpoints return a JSON payload with [`pass` | `warn` | `fail`] statuses per component. See [docs/engineering/health-checks.md](docs/engineering/health-checks.md) for the full schema and troubleshooting guidance.
+
+#### Deployment probe configuration
+
+| Platform | Liveness probe | Readiness probe | Notes |
+| --- | --- | --- | --- |
+| **Vercel** | `https://<deployment>/api/health/liveness` | `https://<deployment>/api/health/readiness` | Configure as [Uptime Monitors](https://vercel.com/docs/observability/monitors) or project health checks; readiness returning 503 will block traffic promotion. |
+| **Kubernetes** | `httpGet: { path: /api/health/liveness, port: 3000 }` | `httpGet: { path: /api/health/readiness, port: 3000 }` | Recommended probe thresholds: `initialDelaySeconds: 10`, `periodSeconds: 15`, `failureThreshold: 3`. |
+| **Docker Compose** | `healthcheck: ["CMD", "curl", "-f", "http://localhost:3000/api/health/liveness"]` | Use `curl http://localhost:3000/api/health/readiness` in orchestrator scripts before routing traffic. | Gate reverse-proxy enablement on a 200 response from readiness to avoid 503s during boot. |
+
 ## Project Structure
 
 ```
