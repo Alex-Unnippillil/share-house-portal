@@ -8,10 +8,12 @@ import { createClient } from "@/utils/supa-server-actions";
 import { redirect } from "next/navigation";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { type User } from '@supabase/supabase-js'
+import { ensureCsrfToken } from "@/utils/csrf"
 
 export default async function ContactPage() {
   const cookieStore = cookies()
-  const supabase = createClient(cookieStore)  
+  const supabase = createClient(cookieStore)
+  const csrfToken = ensureCsrfToken(cookieStore)
 
 
   const { data, error } = await supabase.auth.getUser()
@@ -51,7 +53,7 @@ export default async function ContactPage() {
                 .
               </p>
             </div>
-                        <Contact/>
+                        <Contact csrfToken={csrfToken}/>
                 </div>
                </div>
         );
