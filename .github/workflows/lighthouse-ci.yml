@@ -58,17 +58,41 @@ if (!fs.existsSync(manifestPath) || !summaryPath) {
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 const toPercent = (value) =>
   typeof value === 'number' ? `${Math.round(value * 100)}%` : '—';
+const resolveReportPath = (reportPath) =>
+  path.isAbsolute(reportPath) ? reportPath : path.join(process.cwd(), reportPath);
+const getInpValue = (entry) => {
+  if (!entry.jsonPath) return '—';
+
+  const reportPath = resolveReportPath(entry.jsonPath);
+  if (!fs.existsSync(reportPath)) return '—';
+
+  try {
+    const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+    const audit =
+      report?.audits?.['interaction-to-next-paint'] ||
+      report?.audits?.['experimental-interaction-to-next-paint'];
+
+    if (audit && typeof audit.numericValue === 'number') {
+      return `${Math.round(audit.numericValue)}`;
+    }
+  } catch (error) {
+    return '—';
+  }
+
+  return '—';
+};
 
 const lines = [];
 lines.push('# Lighthouse results');
 lines.push('');
-lines.push('| URL | Performance | Accessibility | Best Practices | SEO |');
-lines.push('| --- | --- | --- | --- | --- |');
+lines.push('| URL | Performance | Accessibility | Best Practices | SEO | INP (ms) |');
+lines.push('| --- | --- | --- | --- | --- | --- |');
 
 for (const entry of manifest) {
   const summary = entry.summary || {};
+  const inp = getInpValue(entry);
   lines.push(
-    `| ${entry.url} | ${toPercent(summary.performance)} | ${toPercent(summary.accessibility)} | ${toPercent(summary['best-practices'])} | ${toPercent(summary.seo)} |`,
+    `| ${entry.url} | ${toPercent(summary.performance)} | ${toPercent(summary.accessibility)} | ${toPercent(summary['best-practices'])} | ${toPercent(summary.seo)} | ${inp} |`,
   );
 }
 
