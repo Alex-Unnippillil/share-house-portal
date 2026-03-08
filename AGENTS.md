@@ -110,6 +110,7 @@
 - Audit logs for admin actions (document downloads, booking overrides, message moderation).
 - Stripe PCI compliance handled via Checkout/Billing Portal; never store raw card data.
 - Implement data retention policy for visitor logs per local regulations.
+- Follow the [Security Operations Playbook](docs/security/playbook.md) for incident response, on-call protocol, and credential rotation checklists.
 
 ## Roadmap Milestones
 1. **MVP Foundations**: Auth, dashboard shell, tenant profiles, Supabase schema.
