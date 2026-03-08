@@ -89,7 +89,7 @@ const router = useRouter();
                                                         <FormItem>
                                                                 <FormLabel>Name</FormLabel>
                                                                 <FormControl>
-                                                                        <Input placeholder="Satoshi Nakamoto" {...field} />
+                                                                        <Input placeholder="Alex Unni" {...field} />
                                                                 </FormControl>
 
                                                                 <FormMessage />
