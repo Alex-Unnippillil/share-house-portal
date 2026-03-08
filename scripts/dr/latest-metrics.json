@@ -1,0 +1,83 @@
+{
+  "gameDay": {
+    "label": "Q3 2024 Resilience Drill",
+    "owner": "SRE Rotation",
+    "timezone": "UTC",
+    "start": "2024-07-15T16:00:00.000Z"
+  },
+  "generatedAt": "2025-09-24T05:27:14.667Z",
+  "scenarios": [
+    {
+      "service": "supabase",
+      "title": "Supabase regional outage",
+      "owner": "Platform Engineering",
+      "scheduledStart": "2024-07-15T16:00:00.000Z",
+      "scheduledEnd": "2024-07-15T16:40:00.000Z",
+      "targetRTO": 30,
+      "actualRTO": 26,
+      "rtoGapMinutes": -4,
+      "rtoMet": true,
+      "targetRPO": 5,
+      "actualRPO": 4,
+      "rpoGapMinutes": -1,
+      "rpoMet": true,
+      "improvementBacklog": [
+        "Automate Supabase replica promotion via CI workflow",
+        "Add credential rotation script post-failover"
+      ],
+      "successCriteria": [
+        "Read/write operations succeed against promoted region",
+        "Realtime subscriptions deliver messages within 2 minutes",
+        "On-call completes incident comms runbook"
+      ]
+    },
+    {
+      "service": "stripe",
+      "title": "Stripe API degraded performance",
+      "owner": "Payments Squad",
+      "scheduledStart": "2024-07-15T17:00:00.000Z",
+      "scheduledEnd": "2024-07-15T17:35:00.000Z",
+      "targetRTO": 15,
+      "actualRTO": 22,
+      "rtoGapMinutes": 7,
+      "rtoMet": false,
+      "targetRPO": 5,
+      "actualRPO": 2,
+      "rpoGapMinutes": -3,
+      "rpoMet": true,
+      "improvementBacklog": [
+        "Script webhook replay + verification to cut manual effort",
+        "Pre-stage backup API keys for faster credential swap"
+      ],
+      "successCriteria": [
+        "Backup Stripe account processes test payment",
+        "Finance notified with manual collection instructions",
+        "Pending invoices tagged for automatic replay"
+      ]
+    },
+    {
+      "service": "calcom",
+      "title": "Cal.com hosted outage",
+      "owner": "Tenant Experience",
+      "scheduledStart": "2024-07-15T18:00:00.000Z",
+      "scheduledEnd": "2024-07-15T18:30:00.000Z",
+      "targetRTO": 25,
+      "actualRTO": 18,
+      "rtoGapMinutes": -7,
+      "rtoMet": true,
+      "targetRPO": 10,
+      "actualRPO": 12,
+      "rpoGapMinutes": 2,
+      "rpoMet": false,
+      "improvementBacklog": [
+        "Increase Cal.com backup cadence to every 5 minutes",
+        "Add incremental sync job to reduce restore lag"
+      ],
+      "successCriteria": [
+        "Cached availability served within 5 minutes",
+        "Cal.com self-hosted instance online",
+        "Bookings reconciled with no double-bookings"
+      ]
+    }
+  ]
+}
