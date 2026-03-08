@@ -215,6 +215,179 @@ export const getStringFromBuffer = (buffer: ArrayBuffer) =>
     .map(b => b.toString(16).padStart(2, '0'))
     .join('')
 
+const DEFAULT_REDACTED_KEYS = [
+  "authorization",
+  "token",
+  "secret",
+  "password",
+  "key",
+  "credential",
+  "signature",
+  "session",
+  "cookie",
+  "ssn",
+  "card",
+  "account",
+  "routing",
+  "dob",
+  "pin",
+  "fingerprint",
+] as const
+
+const DEFAULT_MASK_CHARACTER = "•"
+
+const NORMALIZE_KEY_REGEX = /[^a-z0-9]/gi
+
+const normalizeKey = (key: string) => key.trim().toLowerCase()
+
+const tokenizeKey = (key: string) =>
+  key
+    .toLowerCase()
+    .split(NORMALIZE_KEY_REGEX)
+    .filter(Boolean)
+
+const shouldRedactKey = (
+  key: string,
+  sensitiveKeys: Set<string>,
+  includePartialMatches: boolean
+) => {
+  const normalized = normalizeKey(key)
+  if (sensitiveKeys.has(normalized)) {
+    return true
+  }
+
+  const sanitized = normalized.replace(NORMALIZE_KEY_REGEX, "")
+  if (sanitized && sensitiveKeys.has(sanitized)) {
+    return true
+  }
+
+  if (!includePartialMatches) {
+    return false
+  }
+
+  const tokens = tokenizeKey(key)
+  return tokens.some((token) => sensitiveKeys.has(token))
+}
+
+export type MaskSensitiveStringOptions = {
+  maskChar?: string
+  visibleStart?: number
+  visibleEnd?: number
+}
+
+export function maskSensitiveString(
+  value: string,
+  options?: MaskSensitiveStringOptions
+): string {
+  const maskChar = options?.maskChar ?? DEFAULT_MASK_CHARACTER
+  const visibleStart = Math.max(0, options?.visibleStart ?? 2)
+  const visibleEnd = Math.max(0, options?.visibleEnd ?? 2)
+
+  if (value.length === 0) {
+    return ""
+  }
+
+  const totalVisible = visibleStart + visibleEnd
+  if (value.length <= totalVisible) {
+    return maskChar.repeat(value.length)
+  }
+
+  const start = value.slice(0, visibleStart)
+  const end = value.slice(value.length - visibleEnd)
+  const maskLength = Math.max(0, value.length - totalVisible)
+
+  return `${start}${maskChar.repeat(maskLength)}${end}`
+}
+
+export type RedactSensitiveValuesOptions = {
+  keys?: string[]
+  maskChar?: string
+  visibleStart?: number
+  visibleEnd?: number
+  includePartialMatches?: boolean
+}
+
+const REDACTED_PLACEHOLDER = "[REDACTED]"
+
+const maskUnknownValue = (
+  value: unknown,
+  options: Required<Omit<RedactSensitiveValuesOptions, "keys" | "includePartialMatches">>
+) => {
+  if (typeof value === "string") {
+    return maskSensitiveString(value, options)
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return maskSensitiveString(String(value), options)
+  }
+
+  if (value === null || value === undefined) {
+    return REDACTED_PLACEHOLDER
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => maskUnknownValue(item, options))
+  }
+
+  return REDACTED_PLACEHOLDER
+}
+
+export function redactSensitiveValues<T>(
+  input: T,
+  options?: RedactSensitiveValuesOptions
+): T {
+  const sensitiveKeys = new Set(
+    (options?.keys ?? DEFAULT_REDACTED_KEYS).map((key) => normalizeKey(key))
+  )
+  const maskChar = options?.maskChar ?? DEFAULT_MASK_CHARACTER
+  const visibleStart = options?.visibleStart ?? 2
+  const visibleEnd = options?.visibleEnd ?? 2
+  const includePartialMatches = options?.includePartialMatches ?? true
+
+  const seen = new WeakMap<object, unknown>()
+
+  const visit = (value: unknown, parentKey?: string): unknown => {
+    if (Array.isArray(value)) {
+      return value.map((item) => visit(item, parentKey))
+    }
+
+    if (value && typeof value === "object") {
+      if (seen.has(value as object)) {
+        return seen.get(value as object) as unknown
+      }
+
+      const clone: Record<string, unknown> = {}
+      seen.set(value as object, clone)
+
+      for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+        if (shouldRedactKey(key, sensitiveKeys, includePartialMatches)) {
+          clone[key] = maskUnknownValue(nested, {
+            maskChar,
+            visibleStart,
+            visibleEnd,
+          })
+        } else {
+          clone[key] = visit(nested, key)
+        }
+      }
+
+      return clone
+    }
+
+    if (parentKey && shouldRedactKey(parentKey, sensitiveKeys, includePartialMatches)) {
+      return maskUnknownValue(value, {
+        maskChar,
+        visibleStart,
+        visibleEnd,
+      })
+    }
+
+    return value
+  }
+
+  return visit(input) as T
+}
+
 export enum ResultCode {
   InvalidCredentials = 'INVALID_CREDENTIALS',
   InvalidSubmission = 'INVALID_SUBMISSION',
