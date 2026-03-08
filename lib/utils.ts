@@ -201,6 +201,14 @@ export const formatNumber = (value: number) =>
     currency: 'USD'
   }).format(value)
 
+export const formatCurrencyFromCents = (valueInCents: number, currency = 'USD') =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(valueInCents / 100)
+
 export const runAsyncFnWithoutBlocking = (
   fn: (...args: any) => Promise<any>
 ) => {
