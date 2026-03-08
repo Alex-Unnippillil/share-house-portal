@@ -217,6 +217,26 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         totalAmount: 30,
       },
     ],
+    attachments: [
+      {
+        id: "avery_wifi_credit_note",
+        label: "Wi-Fi outage credit",
+        type: "note",
+        description:
+          "Documented partial credit after ISP outage disrupted service for two days.",
+        uploadedBy: "Avery Chen",
+        uploadedAt: "2024-06-02T15:42:00Z",
+      },
+      {
+        id: "avery_maintenance_invoice",
+        label: "Maintenance invoice.pdf",
+        type: "document",
+        description: "Vendor invoice for shared HVAC tune-up",
+        url: "https://receipts.roomsily.dev/docs/maintenance_invoice_june.pdf",
+        uploadedBy: "Morgan Ellis",
+        uploadedAt: "2024-06-02T16:05:00Z",
+      },
+    ],
   },
   {
     id: "rcpt_jordan_2024_05",
@@ -249,6 +269,25 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         totalAmount: 80,
       },
     ],
+    attachments: [
+      {
+        id: "jordan_catchup_context",
+        label: "Manager note",
+        type: "note",
+        description: "Explains payment split after roommate travel delay.",
+        uploadedBy: "Morgan Ellis",
+        uploadedAt: "2024-05-13T10:12:00Z",
+      },
+      {
+        id: "jordan_parking_receipt",
+        label: "Parking permit renewal.jpg",
+        type: "photo",
+        description: "Snapshot of new parking decal for dispute record.",
+        url: "https://receipts.roomsily.dev/docs/parking_permit_may.jpg",
+        uploadedBy: "Jordan Blake",
+        uploadedAt: "2024-05-13T10:32:00Z",
+      },
+    ],
   },
   {
     id: "rcpt_priya_2024_04",
@@ -273,6 +312,17 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         totalAmount: 1260,
       },
     ],
+    attachments: [
+      {
+        id: "priya_tax_letter",
+        label: "Tax preparation summary.pdf",
+        type: "document",
+        description: "Auto-generated PDF for CPA reimbursement request.",
+        url: "https://receipts.roomsily.dev/docs/priya_tax_summary_april.pdf",
+        uploadedBy: "Priya Desai",
+        uploadedAt: "2024-05-02T18:20:00Z",
+      },
+    ],
   },
   {
     id: "rcpt_unit_refund_2024_03",
@@ -293,6 +343,16 @@ export const receiptHistory: PaymentReceiptHistoryEntry[] = [
         unitAmount: -60,
         totalAmount: -60,
 
+      },
+    ],
+    attachments: [
+      {
+        id: "unit_refund_note",
+        label: "Refund authorization",
+        type: "note",
+        description: "Accounting approved duplicate charge reversal on Mar 18.",
+        uploadedBy: "Morgan Ellis",
+        uploadedAt: "2024-03-18T22:08:00Z",
       },
     ],
   },

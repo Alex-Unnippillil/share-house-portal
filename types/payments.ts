@@ -87,6 +87,18 @@ export interface PaymentReceiptLineItem {
   totalAmount: number
 }
 
+export type PaymentReceiptAttachmentType = "note" | "document" | "photo"
+
+export interface PaymentReceiptAttachment {
+  id: string
+  label: string
+  type: PaymentReceiptAttachmentType
+  uploadedBy: string
+  uploadedAt: string
+  url?: string
+  description?: string
+}
+
 export interface PaymentReceiptHistoryEntry {
   id: string
   issuedTo: string
@@ -101,6 +113,7 @@ export interface PaymentReceiptHistoryEntry {
   invoiceUrl?: string
   memo?: string
   lineItems: PaymentReceiptLineItem[]
+  attachments?: PaymentReceiptAttachment[]
 
 }
 
