@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
-import { fetchMemberRole } from '@/lib/data/members';
+import { fetchMemberRole, fetchMemberProfile, fetchMembersByUnit } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
 import {
   Document,
@@ -341,37 +341,162 @@ export async function createSigningRequestAction(
     // Upload file to Documenso to obtain documentDataId
     const uploadResult = await documensoService.uploadDocument(file);
 
-    // Get tenant emails for lease documents
-    let tenantEmails = [validatedData.signer_email];
-    let tenantNames = [validatedData.signer_name];
-    let tenantProfiles: { id: string; email: string | null; full_name: string | null }[] = [];
+    // Determine recipients (tenants, property managers, and manual entries)
+    type RecipientCandidate = {
+      email: string;
+      name?: string | null;
+      profileId?: string;
+      group: 'custom' | 'tenant' | 'property_manager';
+    };
+
+    const recipientMap = new Map<string, RecipientCandidate>();
+
+    const addRecipient = (candidate: RecipientCandidate) => {
+      const sanitizedEmail = candidate.email?.trim();
+      if (!sanitizedEmail) {
+        return;
+      }
+
+      const key = sanitizedEmail.toLowerCase();
+      const existing = recipientMap.get(key);
+
+      if (!existing || (candidate.profileId && !existing.profileId)) {
+        recipientMap.set(key, {
+          ...candidate,
+          email: sanitizedEmail,
+        });
+      }
+    };
+
+    if (validatedData.signer_email) {
+      addRecipient({
+        email: validatedData.signer_email,
+        name: validatedData.signer_name,
+        group: 'custom',
+      });
+    }
+
+    let tenantProfiles: {
+      id: string;
+      email: string | null;
+      full_name: string | null;
+      unit_id: string | null;
+    }[] = [];
+    let associatedUnitId: string | null = document.unit_id ?? null;
+    let leaseLandlord: { email: string | null; name: string | null } | null = null;
 
     if (document.document_type === 'lease') {
       const { data: lease } = await (supabase as any)
         .from('leases')
-        .select('tenant_ids')
+        .select('tenant_ids, landlord_email, landlord_name')
         .eq('document_id', document.id)
         .single();
 
       if (lease) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, email, full_name')
+          .select('id, email, full_name, unit_id')
           .in('id', lease.tenant_ids);
 
         tenantProfiles = profiles || [];
-        tenantEmails = tenantProfiles.map(p => p.email || '').filter(Boolean);
-        tenantNames = tenantProfiles.map(p => p.full_name || '');
+        for (const profile of tenantProfiles) {
+          if (profile.email) {
+            addRecipient({
+              email: profile.email,
+              name: profile.full_name,
+              profileId: profile.id,
+              group: 'tenant',
+            });
+          }
+        }
+
+        associatedUnitId = associatedUnitId ?? tenantProfiles.find(p => p.unit_id)?.unit_id ?? null;
+        leaseLandlord = {
+          email: lease.landlord_email,
+          name: lease.landlord_name,
+        };
       }
+    }
+
+    if (!associatedUnitId && document.tenant_id) {
+      const tenantProfile = await fetchMemberProfile(typedSupabase, document.tenant_id);
+      associatedUnitId = tenantProfile?.unit_id ?? null;
+    }
+
+    if (associatedUnitId) {
+      const propertyManagers = await fetchMembersByUnit(typedSupabase, associatedUnitId, {
+        roles: ['property_manager', 'admin'],
+      });
+
+      for (const manager of propertyManagers) {
+        if (!manager.email) continue;
+        addRecipient({
+          email: manager.email,
+          name: manager.full_name,
+          profileId: manager.id,
+          group: 'property_manager',
+        });
+      }
+    }
+
+    if (leaseLandlord?.email) {
+      addRecipient({
+        email: leaseLandlord.email,
+        name: leaseLandlord.name,
+        group: 'property_manager',
+      });
+    }
+
+    const recipientsNeedingLookup = Array.from(recipientMap.values()).filter(
+      recipient => !recipient.profileId
+    );
+
+    if (recipientsNeedingLookup.length > 0) {
+      const lookupEmails = recipientsNeedingLookup
+        .map(recipient => recipient.email?.toLowerCase())
+        .filter((email): email is string => Boolean(email));
+
+      if (lookupEmails.length > 0) {
+        const { data: lookupProfiles } = await supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .in('email', lookupEmails);
+
+        for (const profile of lookupProfiles ?? []) {
+          const key = profile.email?.toLowerCase();
+          if (!key || !profile.id) continue;
+          const existing = recipientMap.get(key);
+          if (existing && !existing.profileId) {
+            recipientMap.set(key, {
+              ...existing,
+              profileId: profile.id,
+              name: existing.name ?? profile.full_name,
+            });
+          }
+        }
+      }
+    }
+
+    const recipientsList = Array.from(recipientMap.values()).sort((a, b) => {
+      const order: Record<RecipientCandidate['group'], number> = {
+        custom: 0,
+        tenant: 1,
+        property_manager: 2,
+      };
+      return order[a.group] - order[b.group];
+    });
+
+    if (recipientsList.length === 0) {
+      return { success: false, error: 'No valid recipients found for this signing request.' };
     }
 
     // Create signing request via Documenso
     const signingResult = await documensoService.createDocumentSigningEnvelope({
       title: document.title,
       documentDataId: uploadResult.documentDataId,
-      recipients: tenantEmails.map((email, index) => ({
-        email,
-        name: tenantNames[index] || email.split('@')[0],
+      recipients: recipientsList.map((recipient, index) => ({
+        email: recipient.email,
+        name: recipient.name || recipient.email.split('@')[0],
         role: 'SIGNER' as const,
         signingOrder: index + 1,
       })),
@@ -395,37 +520,27 @@ export async function createSigningRequestAction(
       .eq('id', document.id);
 
     // Create signature records with signer_id mapping
-    const emailToProfileId = new Map<string, string>();
-    if (tenantProfiles.length === 0) {
-      // Fallback: try to resolve signer from provided email
-      const { data: maybeProfile } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('email', validatedData.signer_email)
-        .single();
-      if (maybeProfile?.id && maybeProfile.email) {
-        emailToProfileId.set(maybeProfile.email, maybeProfile.id);
-      }
-    } else {
-      for (const p of tenantProfiles) {
-        if (p.email && p.id) emailToProfileId.set(p.email, p.id);
-      }
-    }
+    const recipientsByEmail = new Map(
+      recipientsList
+        .filter(recipient => recipient.profileId)
+        .map(recipient => [recipient.email.toLowerCase(), recipient])
+    );
 
     for (const recipient of signingResult.recipients) {
-      const signerId = emailToProfileId.get(recipient.email);
-      if (!signerId) {
+      const matched = recipientsByEmail.get(recipient.email.toLowerCase());
+      if (!matched?.profileId) {
         continue; // skip recipients we cannot map to a user
       }
       await supabase
         .from('document_signatures')
         .insert({
           document_id: document.id,
-          signer_id: signerId,
+          signer_id: matched.profileId,
           signer_email: recipient.email,
-          signer_name: recipient.name || null,
+          signer_name: recipient.name || matched.name || null,
           status: 'pending',
           documenso_signature_id: recipient.id,
+          signing_order: recipient.signingOrder ?? undefined,
         });
     }
 
@@ -433,7 +548,10 @@ export async function createSigningRequestAction(
     await supabase.rpc('log_document_access', {
       p_document_id: document.id,
       p_action: 'signing_request_created',
-      p_metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
+      p_metadata: {
+        envelope_id: signingResult.id,
+        recipients: recipientsList.map(recipient => recipient.email),
+      }
     });
 
     revalidatePath('/documents');
