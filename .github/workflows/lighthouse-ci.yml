@@ -1,8 +1,8 @@
 name: Lighthouse CI
 
 on:
-  deployment_status:
-    types: [success]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       preview-url:
@@ -13,9 +13,11 @@ jobs:
   audit:
     name: Run Lighthouse checks
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'deployment_status' && !github.event.deployment.production_environment) }}
-    env:
-      PREVIEW_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.preview-url || github.event.deployment_status.target_url || '' }}
+    permissions:
+      contents: read
+      deployments: read
+      pull-requests: write
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +28,75 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Wait for preview deployment
+        if: github.event_name == 'pull_request'
+        id: wait_preview
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
+            const {owner, repo} = context.repo;
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed('No pull request found in context.');
+              return;
+            }
+
+            const sha = pr.head.sha;
+            const timeoutMs = 20 * 60 * 1000;
+            const pollIntervalMs = 15000;
+            const deadline = Date.now() + timeoutMs;
+
+            while (Date.now() < deadline) {
+              const deployments = await github.paginate(
+                github.rest.repos.listDeployments,
+                {
+                  owner,
+                  repo,
+                  sha,
+                  per_page: 100,
+                }
+              );
+
+              deployments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+              for (const deployment of deployments) {
+                if (deployment.production_environment) continue;
+
+                const {data: statuses} = await github.rest.repos.listDeploymentStatuses({
+                  owner,
+                  repo,
+                  deployment_id: deployment.id,
+                  per_page: 100,
+                });
+
+                const successStatus = statuses.find(
+                  status => status.state === 'success' && status.target_url
+                );
+
+                if (successStatus) {
+                  core.info(
+                    `Using preview URL from deployment ${deployment.id}: ${successStatus.target_url}`
+                  );
+                  core.setOutput('preview-url', successStatus.target_url);
+                  return;
+                }
+              }
+
+              core.info('Preview deployment not ready yet, waiting 15 seconds before retrying...');
+              await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+            }
+
+            core.setFailed('Timed out waiting for a successful preview deployment.');
+
+      - name: Set preview URL (pull request)
+        if: github.event_name == 'pull_request'
+        run: echo "PREVIEW_URL=${{ steps.wait_preview.outputs.preview-url }}" >> "$GITHUB_ENV"
+
+      - name: Set preview URL (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "PREVIEW_URL=${{ inputs.preview-url }}" >> "$GITHUB_ENV"
+
       - name: Validate preview URL
         run: |
           if [ -z "${PREVIEW_URL}" ]; then
@@ -35,10 +106,23 @@ jobs:
         env:
           PREVIEW_URL: ${{ env.PREVIEW_URL }}
 
+      - name: Cache Lighthouse CI data
+        uses: actions/cache@v4
+        with:
+          path: .lighthouseci
+          key: ${{ runner.os }}-lhci-${{ github.head_ref || github.ref_name }}
+          restore-keys: |
+            ${{ runner.os }}-lhci-
+
       - name: Run Lighthouse CI
+        id: lhci
         env:
           LHCI_PREVIEW_BASE_URL: ${{ env.PREVIEW_URL }}
         run: pnpm dlx @lhci/cli@0.13.x autorun
+
+      - name: Capture Lighthouse outcome
+        if: always()
+        run: echo "LHCI_OUTCOME=${{ steps.lhci.outcome }}" >> "$GITHUB_ENV"
 
       - name: Summarize Lighthouse scores
         if: always()
@@ -80,6 +164,122 @@ SUMMARY
           else
             echo "Lighthouse reports were not generated." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Comment with Lighthouse results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const marker = '<!-- lhci-report -->';
+            const manifestPath = path.join(process.cwd(), 'artifacts', 'lighthouse', 'manifest.json');
+
+            if (!fs.existsSync(manifestPath)) {
+              core.info('Manifest not found, skipping PR comment.');
+              return;
+            }
+
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            const assertionPath = path.join(process.cwd(), '.lighthouseci', 'assertion-results.json');
+            let assertionResults = [];
+            if (fs.existsSync(assertionPath)) {
+              try {
+                const parsed = JSON.parse(fs.readFileSync(assertionPath, 'utf8'));
+                if (Array.isArray(parsed)) assertionResults = parsed;
+              } catch (error) {
+                core.warning(`Failed to parse assertion results: ${error.message}`);
+              }
+            }
+
+            const failing = assertionResults.filter(
+              result => result && result.level === 'error' && result.passed === false
+            );
+            const warnings = assertionResults.filter(
+              result => result && result.level === 'warn' && result.passed === false
+            );
+
+            const toPercent = value =>
+              typeof value === 'number' ? `${Math.round(value * 100)}%` : '—';
+
+            const tableLines = [
+              '| URL | Performance | Accessibility | Best Practices | SEO |',
+              '| --- | --- | --- | --- | --- |',
+              ...manifest.map(entry => {
+                const summary = entry.summary || {};
+                return `| ${entry.url} | ${toPercent(summary.performance)} | ${toPercent(summary.accessibility)} | ${toPercent(summary['best-practices'])} | ${toPercent(summary.seo)} |`;
+              }),
+            ];
+
+            const outcome = process.env.LHCI_OUTCOME || 'success';
+            const statusEmoji = outcome === 'success' ? '✅' : outcome === 'failure' ? '❌' : '⚠️';
+            const statusText =
+              outcome === 'failure'
+                ? 'Lighthouse budgets or assertions failed.'
+                : 'Lighthouse budgets and assertions passed.';
+
+            let body = `${marker}\n## Lighthouse CI report\n\n${statusEmoji} **${statusText}**\n\n${tableLines.join('\n')}\n`;
+
+            const formatAssertion = result => {
+              const lines = [];
+              const assertionId = result.auditProperty
+                ? `${result.auditId}.${result.auditProperty}`
+                : result.auditId || result.name;
+              const displayName = result.auditTitle || result.name || assertionId;
+              lines.push(`- **${displayName}** (${assertionId || 'assertion'}) on ${result.url || 'unknown URL'}`);
+              const expected = result.operator ? `${result.operator} ${result.expected}` : `${result.expected}`;
+              const actual = result.actual !== undefined ? result.actual : 'n/a';
+              lines.push(`  - expected: ${expected}`);
+              lines.push(`  - actual: ${actual}`);
+              if (result.message) {
+                lines.push(`  - note: ${result.message}`);
+              }
+              return lines.join('\n');
+            };
+
+            if (failing.length) {
+              body += `\n### Failing checks\n${failing.map(formatAssertion).join('\n')}\n`;
+            }
+
+            if (warnings.length) {
+              body += `\n### Warnings\n${warnings.map(formatAssertion).join('\n')}\n`;
+            }
+
+            body += `\n<sub>HTML reports are available in the workflow artifacts.</sub>\n`;
+
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) {
+              core.info('No pull request number found; skipping comment.');
+              return;
+            }
+
+            const {owner, repo} = context.repo;
+            const existingComments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+
+            const previous = existingComments.find(
+              comment => comment.body && comment.body.includes(marker)
+            );
+
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
 
       - name: Upload Lighthouse reports
         if: always() && hashFiles('artifacts/lighthouse/*.html') != ''
