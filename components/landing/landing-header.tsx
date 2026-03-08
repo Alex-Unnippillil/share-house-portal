@@ -1,6 +1,6 @@
 "use client"
 
-import type { MouseEvent } from "react"
+import { useEffect, useState, type MouseEvent } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
@@ -31,6 +31,32 @@ export default function LandingHeader() {
   const activeSection = useActiveSection({
     sectionIds: navItems.map((item) => item.id),
   })
+  const [scrolled, setScrolled] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const nextScrolled = window.scrollY > 10
+      setScrolled(nextScrolled)
+
+      const documentElement = document.documentElement
+      const scrollable = documentElement.scrollHeight - window.innerHeight
+      if (scrollable <= 0) {
+        setScrollProgress(0)
+        return
+      }
+
+      const progress = Math.min(1, Math.max(0, window.scrollY / scrollable))
+      setScrollProgress(progress)
+    }
+
+    handleScroll()
+    window.addEventListener("scroll", handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
 
   const handleAnchorClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -54,7 +80,18 @@ export default function LandingHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+    <header
+      className={cn(
+        "sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl transition duration-300",
+        scrolled && "border-border/80 bg-background/95 shadow-sm"
+      )}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-primary/10" aria-hidden="true">
+        <span
+          className="block h-full bg-gradient-to-r from-primary/50 via-primary to-primary/50 transition-[width] duration-150"
+          style={{ width: `${scrollProgress * 100}%` }}
+        />
+      </div>
       <a
         href="#main-content"
         className="sr-only z-50 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -70,7 +107,7 @@ export default function LandingHeader() {
         </Link>
 
         <nav
-          className="hidden items-center gap-1 rounded-lg border border-border/60 bg-background/80 p-1 md:flex"
+          className="hidden items-center gap-1 rounded-xl border border-border/60 bg-background/80 p-1 md:flex"
           aria-label="Landing sections"
         >
           {navItems.map((item) => {
@@ -83,7 +120,7 @@ export default function LandingHeader() {
                 onClick={(event) => handleAnchorClick(event, item.id)}
                 aria-current={isActive ? "location" : undefined}
                 className={cn(
-                  "relative rounded-md px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                  "relative rounded-lg px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isActive
                     ? "bg-primary/10 text-primary after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-primary"
                     : "text-muted-foreground hover:text-foreground"
