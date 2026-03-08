@@ -1,0 +1,50 @@
+name: Docker Image
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: share-house-portal:ci
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: ${{ env.IMAGE_NAME }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=https://example-project.supabase.co
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=example-anon-key
+            SUPABASE_SERVICE_ROLE_KEY=example-service-role-key
+            STRIPE_SECRET_KEY=sk_test_example_secret
+            STRIPE_WEBHOOK_SECRET=whsec_example_secret
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_example_key
+
+      - name: Trivy vulnerability scan
+        if: secrets.ENABLE_IMAGE_SCAN == 'true'
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}
+          format: table
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
