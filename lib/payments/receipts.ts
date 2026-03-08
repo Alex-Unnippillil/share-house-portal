@@ -2,6 +2,7 @@ import { roundToCurrency } from "./currency"
 import type {
   PaymentReceiptHistoryEntry,
   PaymentReceiptLineItem,
+  PaymentReceiptTaxBreakdown,
 } from "@/types/payments"
 
 const reimbursableCategories: PaymentReceiptLineItem["category"][] = [
@@ -67,6 +68,9 @@ export function createPaymentHistoryCsv(
     "Memo",
     "Receipt URL",
     "Invoice URL",
+    "Tax Amount",
+    "Tax Rate",
+    "Tax Details",
   ]
 
   const rows = receipts.map((receipt) => {
@@ -76,6 +80,14 @@ export function createPaymentHistoryCsv(
         return `${item.description} [${item.category}] ${formattedAmount}`
       })
       .join(" | ")
+
+    const formattedTaxAmount =
+      receipt.taxAmount != null ? receipt.taxAmount.toFixed(2) : ""
+
+    const formattedTaxRate =
+      receipt.taxRate != null ? `${(receipt.taxRate * 100).toFixed(2)}%` : ""
+
+    const formattedTaxDetails = formatTaxDetails(receipt.taxDetails)
 
     return [
       receipt.id,
@@ -91,6 +103,9 @@ export function createPaymentHistoryCsv(
       receipt.memo ?? "",
       receipt.receiptUrl,
       receipt.invoiceUrl ?? "",
+      formattedTaxAmount,
+      formattedTaxRate,
+      formattedTaxDetails,
     ]
   })
 
@@ -103,4 +118,35 @@ export function createPaymentHistoryCsv(
       .join(",")
 
   return [headers, ...rows].map((row) => toCsvRow(row)).join("\n")
+}
+
+const formatTaxDetails = (
+  details: PaymentReceiptHistoryEntry["taxDetails"],
+): string => {
+  if (!details) {
+    return ""
+  }
+
+  if (Array.isArray(details)) {
+    const entries = details as PaymentReceiptTaxBreakdown[]
+    return entries
+      .map((entry) => {
+        const parts = [entry.label]
+        if (entry.jurisdiction) {
+          parts.push(`(${entry.jurisdiction})`)
+        }
+        if (entry.rate != null) {
+          parts.push(`${(entry.rate * 100).toFixed(2)}%`)
+        }
+        parts.push(entry.amount.toFixed(2))
+        return parts.join(" ")
+      })
+      .join(" | ")
+  }
+
+  try {
+    return JSON.stringify(details)
+  } catch (error) {
+    return ""
+  }
 }

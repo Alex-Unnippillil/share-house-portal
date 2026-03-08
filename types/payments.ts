@@ -87,6 +87,18 @@ export interface PaymentReceiptLineItem {
   totalAmount: number
 }
 
+export interface PaymentReceiptTaxBreakdown {
+  label: string
+  amount: number
+  rate?: number
+  jurisdiction?: string
+}
+
+export type PaymentReceiptTaxDetails =
+  | PaymentReceiptTaxBreakdown[]
+  | Record<string, unknown>
+  | null;
+
 export interface PaymentReceiptHistoryEntry {
   id: string
   issuedTo: string
@@ -101,7 +113,9 @@ export interface PaymentReceiptHistoryEntry {
   invoiceUrl?: string
   memo?: string
   lineItems: PaymentReceiptLineItem[]
-
+  taxAmount?: number | null
+  taxRate?: number | null
+  taxDetails?: PaymentReceiptTaxDetails
 }
 
 export type LedgerActorRole = "roommate" | "property_manager"
