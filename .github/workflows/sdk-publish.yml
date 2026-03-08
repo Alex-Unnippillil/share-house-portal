@@ -1,0 +1,154 @@
+name: Publish SDKs
+
+on:
+  push:
+    tags:
+      - 'api/v*.*.*'
+
+jobs:
+  prepare:
+    name: Determine release version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: Extract version from tag
+        id: extract
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [[ "$tag" =~ ^api/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tag '$tag' is not a valid API release tag (expected api/v<semver>)." >&2
+            exit 1
+          fi
+
+  publish_typescript:
+    name: Publish TypeScript SDK
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@sharehouse-portal'
+      - name: Check if npm version already exists
+        id: npm_version_check
+        working-directory: sdk/typescript
+        shell: bash
+        run: |
+          if npm view @sharehouse-portal/sdk@${PACKAGE_VERSION} version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Sync package version from tag
+        if: steps.npm_version_check.outputs.exists == 'false'
+        working-directory: sdk/typescript
+        run: pnpm pkg set version=${PACKAGE_VERSION}
+      - name: Publish package to npm
+        if: steps.npm_version_check.outputs.exists == 'false'
+        working-directory: sdk/typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --no-git-checks --access public
+
+  publish_python:
+    name: Publish Python SDK
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build setuptools-scm
+      - name: Build distribution artifacts
+        working-directory: sdk/python
+        run: python -m build
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.8.6
+        with:
+          packages-dir: sdk/python/dist
+          skip-existing: true
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  smoke_tests:
+    name: Smoke test published SDKs
+    needs:
+      - publish_typescript
+      - publish_python
+      - prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Verify npm distribution
+        shell: bash
+        run: |
+          mkdir npm-smoke
+          cd npm-smoke
+          pnpm init -y
+          success="false"
+          for attempt in {1..5}; do
+            if pnpm add @sharehouse-portal/sdk@${PACKAGE_VERSION}; then
+              success="true"
+              break
+            fi
+            echo "npm install attempt ${attempt} failed, retrying..."
+            sleep 5
+          done
+          if [[ "$success" != "true" ]]; then
+            echo "Failed to install @sharehouse-portal/sdk@${PACKAGE_VERSION} from npm." >&2
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify PyPI distribution
+        shell: bash
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          success="false"
+          for attempt in {1..5}; do
+            if pip install share-house-portal-sdk==${PACKAGE_VERSION}; then
+              success="true"
+              break
+            fi
+            echo "pip install attempt ${attempt} failed, retrying..."
+            sleep 5
+          done
+          if [[ "$success" != "true" ]]; then
+            echo "Failed to install share-house-portal-sdk==${PACKAGE_VERSION} from PyPI." >&2
+            exit 1

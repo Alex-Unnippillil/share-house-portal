@@ -1,0 +1,23 @@
+{
+  "name": "@sharehouse-portal/sdk",
+  "version": "0.0.0",
+  "description": "TypeScript SDK for the Share House Portal API.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/share-house-portal/share-house-portal.git",
+    "directory": "sdk/typescript"
+  },
+  "keywords": [
+    "share-house-portal",
+    "sdk",
+    "api"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false
+}

@@ -19,6 +19,8 @@
 # misc
 .DS_Store
 *.pem
+sdk/python/dist/
+sdk/python/src/*.egg-info/
 
 # debug
 npm-debug.log*
