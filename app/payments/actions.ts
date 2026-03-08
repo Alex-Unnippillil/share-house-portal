@@ -10,7 +10,11 @@ import {
   generateMockPaymentIntentId,
 } from "@/lib/payments/catch-up"
 import { formatCurrency, roundToCurrency } from "@/lib/payments/currency"
-import type { CatchUpPaymentSubmissionResult } from "@/types/payments"
+import type {
+  CatchUpCharge,
+  CatchUpPaymentInvoiceSettlement,
+  CatchUpPaymentSubmissionResult,
+} from "@/types/payments"
 
 import { loadCatchUpBalances } from "./loaders"
 
@@ -60,6 +64,29 @@ export async function submitCatchUpPayment(
     calculateOutstanding(updatedCharges),
   )
 
+  const groupChargesByInvoice = (
+    charges: CatchUpCharge[],
+  ): Map<string, { invoiceNumber: string; charges: CatchUpCharge[] }> => {
+    const invoiceMap = new Map<
+      string,
+      { invoiceNumber: string; charges: CatchUpCharge[] }
+    >()
+
+    for (const charge of charges) {
+      const invoiceId = charge.invoiceId ?? charge.id
+      const invoiceNumber = charge.invoiceNumber ?? charge.description
+      const current = invoiceMap.get(invoiceId) ?? {
+        invoiceNumber,
+        charges: [],
+      }
+
+      current.charges.push(charge)
+      invoiceMap.set(invoiceId, current)
+    }
+
+    return invoiceMap
+  }
+
   const allocationDetails = allocations.map((allocation) => {
     const originalCharge = balance.charges.find(
       (charge) => charge.id === allocation.chargeId,
@@ -78,8 +105,64 @@ export async function submitCatchUpPayment(
       remainingBalance: roundToCurrency(
         updatedCharge?.outstandingAmount ?? 0,
       ),
+      invoiceId: originalCharge?.invoiceId ?? allocation.chargeId,
+      invoiceNumber: originalCharge?.invoiceNumber ?? originalCharge?.description ?? "Charge",
+      isPropertyManagerAdjustment: Boolean(
+        originalCharge?.isPropertyManagerAdjustment,
+      ),
     }
   })
+
+  const invoiceGroups = groupChargesByInvoice(balance.charges)
+  const updatedChargeMap = new Map(
+    updatedCharges.map((charge) => [charge.id, charge] as const),
+  )
+
+  const invoiceSettlements: CatchUpPaymentInvoiceSettlement[] = []
+
+  for (const [invoiceId, { invoiceNumber, charges }] of invoiceGroups) {
+    const appliedAmount = allocations
+      .filter((allocation) =>
+        charges.some((charge) => charge.id === allocation.chargeId),
+      )
+      .reduce((sum, allocation) => sum + allocation.amount, 0)
+
+    if (appliedAmount <= 0) {
+      continue
+    }
+
+    const previousOutstanding = charges.reduce(
+      (sum, charge) => sum + charge.outstandingAmount,
+      0,
+    )
+    const remainingBalance = charges.reduce((sum, charge) => {
+      const updatedCharge = updatedChargeMap.get(charge.id)
+      return sum + (updatedCharge?.outstandingAmount ?? charge.outstandingAmount)
+    }, 0)
+
+    const normalizedPrevious = roundToCurrency(previousOutstanding)
+    const normalizedApplied = roundToCurrency(appliedAmount)
+    const normalizedRemaining = roundToCurrency(remainingBalance)
+
+    const coveragePercentage =
+      normalizedPrevious > 0
+        ? Math.min(
+            100,
+            Math.round((normalizedApplied / normalizedPrevious) * 1000) / 10,
+          )
+        : 0
+
+    invoiceSettlements.push({
+      invoiceId,
+      invoiceNumber,
+      appliedAmount: normalizedApplied,
+      previousOutstanding: normalizedPrevious,
+      remainingBalance: normalizedRemaining,
+      chargeCount: charges.length,
+      coveragePercentage,
+      fullyCovered: normalizedRemaining === 0,
+    })
+  }
 
   const recipients = [balance.contacts.primary]
   if (includePropertyManager && balance.contacts.propertyManager) {
@@ -87,6 +170,20 @@ export async function submitCatchUpPayment(
   }
 
   const sanitizedNote = note && note.trim().length > 0 ? note.trim() : undefined
+
+  const propertyManagerAdjustments = allocationDetails
+    .filter(
+      (allocation) =>
+        allocation.isPropertyManagerAdjustment && balance.contacts.propertyManager,
+    )
+    .map((allocation) => ({
+      chargeId: allocation.chargeId,
+      description: allocation.description,
+      amount: allocation.amount,
+      remainingBalance: allocation.remainingBalance,
+      invoiceNumber: allocation.invoiceNumber,
+      manager: balance.contacts.propertyManager!,
+    }))
 
   return {
     paymentIntentId: generateMockPaymentIntentId(),
@@ -100,5 +197,7 @@ export async function submitCatchUpPayment(
     autopayStatus: balance.autopayStatus,
     autopayDay: balance.autopayDay,
     note: sanitizedNote,
+    invoiceSettlements,
+    propertyManagerAdjustments,
   }
 }
