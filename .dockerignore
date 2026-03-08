@@ -1,0 +1,12 @@
+node_modules
+.pnpm-store
+.next
+.git
+.github
+Dockerfile
+.dockerignore
+.env*
+*.log
+coverage
+.supabase
+supabase/.temp

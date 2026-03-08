@@ -1,0 +1,194 @@
+name: Container security scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      severity-threshold:
+        description: 'Minimum severity that fails the workflow (UNKNOWN, LOW, MEDIUM, HIGH, CRITICAL)'
+        required: false
+        default: CRITICAL
+
+jobs:
+  scan:
+    name: Build & scan container image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: roomsily-app
+      TRIVY_VERSION: 0.49.1
+      TRIVY_SEVERITY_THRESHOLD: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs['severity-threshold'] || vars.TRIVY_SEVERITY_THRESHOLD || secrets.TRIVY_SEVERITY_THRESHOLD || 'CRITICAL' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare environment
+        run: |
+          echo "IMAGE_REF=${IMAGE_NAME}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "REPORT_DIR=${GITHUB_WORKSPACE}/artifacts/trivy" >> "$GITHUB_ENV"
+          echo "TRIVY_CACHE_DIR=${RUNNER_TEMP}/trivy-cache" >> "$GITHUB_ENV"
+          mkdir -p "${GITHUB_WORKSPACE}/artifacts/trivy"
+          mkdir -p "${RUNNER_TEMP}/trivy-cache"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build application image
+        run: |
+          docker build \
+            --tag "$IMAGE_REF" \
+            .
+
+      - name: Run Trivy image scan
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${TRIVY_CACHE_DIR}:/root/.cache/trivy" \
+            -v "${REPORT_DIR}:/trivy" \
+            aquasec/trivy:${TRIVY_VERSION} image "$IMAGE_REF" \
+              --format json \
+              --output /trivy/image-vulnerabilities.json \
+              --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+              --scanners vuln \
+              --no-progress
+
+      - name: Generate SBOM
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${TRIVY_CACHE_DIR}:/root/.cache/trivy" \
+            -v "${REPORT_DIR}:/trivy" \
+            aquasec/trivy:${TRIVY_VERSION} sbom "$IMAGE_REF" \
+              --format cyclonedx \
+              --output /trivy/sbom.cdx \
+              --no-progress
+
+      - name: Scan generated SBOM
+        run: |
+          docker run --rm \
+            -v "${TRIVY_CACHE_DIR}:/root/.cache/trivy" \
+            -v "${REPORT_DIR}:/trivy" \
+            aquasec/trivy:${TRIVY_VERSION} sbom \
+              --input /trivy/sbom.cdx \
+              --format json \
+              --output /trivy/sbom-vulnerabilities.json \
+              --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+              --no-progress
+
+      - name: Enforce severity threshold
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const severityOrder = ['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+          const threshold = (process.env.TRIVY_SEVERITY_THRESHOLD || 'CRITICAL').toUpperCase();
+          const thresholdIndex = severityOrder.indexOf(threshold);
+
+          if (thresholdIndex === -1) {
+            console.error(`Unsupported severity threshold: ${threshold}`);
+            process.exit(1);
+          }
+
+          const reportDir = process.env.REPORT_DIR;
+          const reports = [
+            { file: 'image-vulnerabilities.json', label: 'image scan' },
+            { file: 'sbom-vulnerabilities.json', label: 'SBOM scan' },
+          ];
+
+          const violations = [];
+          const totals = {
+            UNKNOWN: 0,
+            LOW: 0,
+            MEDIUM: 0,
+            HIGH: 0,
+            CRITICAL: 0,
+          };
+
+          for (const report of reports) {
+            const filePath = path.join(reportDir, report.file);
+            if (!fs.existsSync(filePath)) {
+              console.warn(`Report not found: ${filePath}`);
+              continue;
+            }
+
+            const payload = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            const results = Array.isArray(payload.Results)
+              ? payload.Results
+              : payload.Results
+                ? [payload.Results]
+                : [];
+
+            for (const result of results) {
+              const vulnerabilities = Array.isArray(result.Vulnerabilities)
+                ? result.Vulnerabilities
+                : [];
+
+              for (const vuln of vulnerabilities) {
+                const severity = (vuln.Severity || '').toUpperCase();
+                if (!severityOrder.includes(severity)) {
+                  continue;
+                }
+
+                totals[severity] += 1;
+
+                if (severityOrder.indexOf(severity) >= thresholdIndex) {
+                  violations.push({
+                    source: report.label,
+                    id: vuln.VulnerabilityID || 'unknown',
+                    pkg: vuln.PkgName || 'unknown',
+                    severity,
+                  });
+                }
+              }
+            }
+          }
+
+          const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+          if (summaryPath) {
+            const lines = [];
+            lines.push('# Trivy vulnerability summary');
+            lines.push('');
+            lines.push(`**Severity threshold:** ${threshold}`);
+            lines.push('');
+            lines.push('| Severity | Count |');
+            lines.push('| --- | ---: |');
+            for (const level of severityOrder) {
+              lines.push(`| ${level} | ${totals[level] || 0} |`);
+            }
+            lines.push('');
+            lines.push('Reports saved to the attached artifacts.');
+            fs.appendFileSync(summaryPath, `${lines.join('\n')}\n`);
+          }
+
+          if (violations.length > 0) {
+            console.error(`Found ${violations.length} vulnerabilities at or above ${threshold}:`);
+            for (const violation of violations.slice(0, 20)) {
+              console.error(`- [${violation.severity}] ${violation.id} in ${violation.pkg} (${violation.source})`);
+            }
+            if (violations.length > 20) {
+              console.error(`...and ${violations.length - 20} more`);
+            }
+            process.exit(1);
+          }
+
+          console.log(`No vulnerabilities found at or above ${threshold}.`);
+          NODE
+        env:
+          REPORT_DIR: ${{ env.REPORT_DIR }}
+          TRIVY_SEVERITY_THRESHOLD: ${{ env.TRIVY_SEVERITY_THRESHOLD }}
+
+      - name: Upload Trivy scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-${{ github.sha }}
+          path: ${{ env.REPORT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean up local image
+        if: always()
+        run: docker image rm "$IMAGE_REF" || true
