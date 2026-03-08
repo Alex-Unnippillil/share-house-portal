@@ -47,6 +47,7 @@ interface PaymentFeedEvent {
 }
 
 const MAX_FEED_EVENTS = 20
+const LIVE_FEED_EVENT_LIMIT = 3
 
 function safeParseDate(value: string): string {
   try {
@@ -259,6 +260,11 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
     }
   }, [roommateLookup])
 
+  const displayEvents = useMemo(
+    () => events.slice(0, LIVE_FEED_EVENT_LIMIT),
+    [events],
+  )
+
   return (
     <Card>
       <CardHeader>
@@ -286,24 +292,31 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
             return (
               <div
                 key={status.roommateId}
-                className="flex flex-wrap items-start justify-between gap-3 rounded-lg border bg-muted/20 p-4"
+                className="flex flex-wrap items-start justify-between gap-4 rounded-lg border bg-muted/20 p-4"
               >
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{status.roommateName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {status.unitLabel} · {describeAutopayStatus(status.autopayStatus, status.autopayDay)}
-                  </p>
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">{status.roommateName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {status.unitLabel} · {describeAutopayStatus(status.autopayStatus, status.autopayDay)}
+                    </p>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Last payment {lastPaymentLabel} · {formatCurrency(status.lastPaymentAmount, status.currency)}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="flex flex-col items-end gap-2 text-right">
                   <Badge variant={AUTOPAY_STATUS_BADGES[status.autopayStatus].variant}>
                     {AUTOPAY_STATUS_BADGES[status.autopayStatus].label}
                   </Badge>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Outstanding {formatCurrency(status.outstanding, status.currency)}
-                  </p>
+                  <div>
+                    <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                      Outstanding
+                    </p>
+                    <p className="text-sm font-semibold">
+                      {formatCurrency(status.outstanding, status.currency)}
+                    </p>
+                  </div>
                 </div>
               </div>
             )
@@ -313,16 +326,18 @@ export function PaymentStatusFeed({ balances }: PaymentStatusFeedProps) {
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-medium">Live status updates</h3>
-            <span className="text-xs text-muted-foreground">Latest {events.length} events</span>
+            <span className="text-xs text-muted-foreground">
+              Latest {displayEvents.length} events
+            </span>
           </div>
           <ScrollArea className="h-64 rounded-lg border">
             <div className="space-y-3 p-4">
-              {events.length === 0 ? (
+              {displayEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Stripe events will appear here the moment payments are processed.
                 </p>
               ) : (
-                events.map((event, index) => (
+                displayEvents.map((event, index) => (
                   <div key={`${event.id}-${index}`} className="space-y-2 rounded-md border bg-background/80 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
