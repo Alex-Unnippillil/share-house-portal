@@ -1,0 +1,68 @@
+name: Preview Smoke Test
+
+on:
+  deployment_status:
+    types:
+      - success
+
+jobs:
+  smoke:
+    name: Verify preview deployment routes
+    if: ${{ github.event.deployment_status.state == 'success' && contains(toLower(github.event.deployment.environment || ''), 'preview') }}
+    runs-on: ubuntu-latest
+    env:
+      PREVIEW_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure preview URL is available
+        run: |
+          if [ -z "${PREVIEW_URL}" ]; then
+            echo "::error ::No preview URL found on deployment status event."
+            exit 1
+          fi
+
+      - name: Run smoke checks for core routes
+        run: |
+          routes=$(node -e "const { coreRoutes } = require('./.lighthouserc.js'); console.log(coreRoutes.join(' '));")
+          if [ -z "${routes}" ]; then
+            echo "::error ::No routes found in .lighthouserc.js"
+            exit 1
+          fi
+
+          echo "Preview base URL: ${PREVIEW_URL}"
+          failed_routes=()
+
+          for route in ${routes}; do
+            url="${PREVIEW_URL%/}${route}"
+            echo "Requesting ${url}"
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${url}")
+            if [ "${status}" != "200" ]; then
+              echo "::error ::${route} returned HTTP ${status}"
+              failed_routes+=("${route}:${status}")
+            else
+              echo "${route} -> ${status}"
+            fi
+          done
+
+          if [ "${#failed_routes[@]}" -ne 0 ]; then
+            {
+              echo "## Preview smoke test failures"
+              echo ""
+              echo "| Route | Status |"
+              echo "| --- | --- |"
+              for entry in "${failed_routes[@]}"; do
+                route_name="${entry%%:*}"
+                status_code="${entry##*:}"
+                echo "| ${route_name} | ${status_code} |"
+              done
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          else
+            {
+              echo "## Preview smoke test"
+              echo ""
+              echo "All routes responded with HTTP 200."
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
