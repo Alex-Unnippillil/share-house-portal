@@ -1,0 +1,37 @@
+---
+title: Tenant Onboarding & Profile Data Flow
+---
+flowchart TD
+    subgraph Client
+        A[Tenant Device]
+    end
+
+    subgraph Next.js App
+        B[Onboarding UI]
+        C[Server Actions]
+    end
+
+    subgraph Supabase
+        D[Auth Service]
+        E[(profiles table)]
+        F[(units & leases tables)]
+        G[(storage: tenant-documents)]
+    end
+
+    subgraph Documenso
+        H[Lease Template API]
+        I[(Envelope Records)]
+    end
+
+    A -->|Submit onboarding form| B
+    B -->|Magic link sign-in| D
+    D -->|Session token| B
+    B -->|Profile payload| C
+    C -->|Create/Update profile| E
+    C -->|Lookup unit assignment| F
+    C -->|Upload identity docs| G
+    C -->|Prefill lease metadata| H
+    H -->|Generate envelope ID| I
+    C -->|Store Documenso envelope ID| E
+    I -->|Signed lease webhook| C
+    C -->|Lease status update| E
