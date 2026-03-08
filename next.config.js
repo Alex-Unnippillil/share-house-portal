@@ -62,6 +62,12 @@ const securityHeaders = [
   },
 ]
 
+const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable'
+const HTML_SWR_CACHE_CONTROL =
+  'public, max-age=0, s-maxage=60, stale-while-revalidate=86400'
+const API_SWR_CACHE_CONTROL =
+  'public, max-age=0, s-maxage=30, stale-while-revalidate=300'
+
 const nextConfig = {
   webpack: config => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
@@ -121,6 +127,50 @@ const nextConfig = {
   },
    async headers() {
       return [
+        {
+          source: '/_next/static/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: IMMUTABLE_CACHE_CONTROL,
+            },
+          ],
+        },
+        {
+          source:
+            '/(.*\\.(?:js|css|svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf|otf))',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: IMMUTABLE_CACHE_CONTROL,
+            },
+          ],
+        },
+        {
+          source: '/api/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: API_SWR_CACHE_CONTROL,
+            },
+          ],
+        },
+        {
+          source: '/:path*',
+          has: [
+            {
+              type: 'header',
+              key: 'accept',
+              value: 'text/html.*',
+            },
+          ],
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: HTML_SWR_CACHE_CONTROL,
+            },
+          ],
+        },
         {
           source: '/(.*)',
           headers: securityHeaders,

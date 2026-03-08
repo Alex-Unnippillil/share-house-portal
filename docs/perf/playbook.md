@@ -48,6 +48,14 @@ This playbook documents how Roomsily measures and protects critical experience-l
 3. Verify the rollback by re-running the synthetic check suite (`npm run test:e2e:smoke` in GitHub Actions or manually via Checkly) and confirming green results in the Vercel analytics dashboard.
 4. Re-enable auto-deploys and communicate completion in Slack `#incidents`.
 
+### CDN Cache Invalidation (Next.js on Vercel)
+- **Routine deploys:** Each production deploy emits fingerprinted bundles under `/_next/static` with `Cache-Control: public, max-age=31536000, immutable`. Publishing a new commit automatically shifts HTML to reference the new asset hashes, so no manual purge is needed.
+- **Hotfixing public assets or stale HTML/API payloads:**
+  1. Navigate to the Vercel project → **Deployments → Production** and open the latest deployment.
+  2. Use the **⋯ → Purge Cache** action. Prefer **Purge Specific Paths** (e.g., `/favicon.ico`, `/_next/data/*`, `/api/stripe/*`) before opting for **Purge Entire Project** to limit blast radius.
+  3. Announce the purge in Slack `#incidents` and monitor until the dashboard shows the purge completed.
+- **Verification:** From your workstation (or in CI), run `curl -I https://portal.roomsily.com -H 'Accept: text/html'` to confirm HTML responses advertise `Cache-Control: public, max-age=0, s-maxage=60, stale-while-revalidate=86400`. Spot-check an API (`curl -I https://portal.roomsily.com/api/health`) for the SWR policy and a static asset (`curl -I https://portal.roomsily.com/_next/static/...`) for the immutable directive. Capture the headers in the deployment checklist before calling the release done.
+
 ### Supabase Migrations
 1. Identify the offending migration in `supabase/migrations` (timestamps map to deploy order). Confirm via `supabase migration list --status applied`.
 2. Run `supabase db remote commit` to snapshot the current production state before touching schema.
