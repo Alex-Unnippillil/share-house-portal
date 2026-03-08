@@ -42,6 +42,17 @@ Roomsily (www.roomsily) is a comprehensive co-living portal that helps roommates
 - **Visitor Logs**: Overnight guest tracking and approval workflows
 - **Analytics Dashboard**: Payment success rates, booking utilization, and financial reports
 
+## Account Roles & Capabilities
+
+Roomsily supports four account types with intentionally scoped capabilities. Use the summary below for quick reference and see [docs/design/account-capabilities.md](docs/design/account-capabilities.md) for detailed narratives and the full capability matrix.
+
+| Role | Key Capabilities |
+| --- | --- |
+| **Tenant** | Completes onboarding, manages rent payments and receipts, signs assigned documents, books amenities, submits maintenance and visitor requests, participates in roommate messaging. |
+| **Roommate** | Shares the tenant dashboard without lease controls, can view balances, participate in bookings, messaging, maintenance, and visitor workflows, and keep personal profile information current. |
+| **Property Manager** | Oversees assigned buildings, invites residents, manages rent shares and unit metadata, drives document workflows, triages maintenance, moderates communications, and exports operational reports. |
+| **Admin** | Operates at a portfolio level with global configuration controls, manages RBAC policies and integrations, reviews audit logs, and handles escalations that require elevated privileges. |
+
 ## Tech Stack
 
 - **Framework**: Next.js 14 with App Router
