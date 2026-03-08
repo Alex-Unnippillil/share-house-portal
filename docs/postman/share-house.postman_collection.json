@@ -1,0 +1,416 @@
+{
+  "info": {
+    "_postman_id": "89443d3e-2551-48b6-ba37-e2640d3c7713",
+    "name": "Share House Portal API",
+    "description": "Requests covering the primary authentication entry points and representative resource interactions for the Share House Portal Next.js API routes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Start the Supabase-powered Google OAuth flow and inspect the callback exchange used to persist refresh tokens.",
+      "item": [
+        {
+          "name": "Start Google OAuth login",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/google?next={{app_redirect}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "google"
+              ],
+              "query": [
+                {
+                  "key": "next",
+                  "value": "{{app_redirect}}",
+                  "description": "Where to redirect after Supabase completes the OAuth flow."
+                }
+              ]
+            },
+            "description": "Redirects to the Supabase Google OAuth consent flow. Use the `next` parameter to control the landing page when the user returns to the portal."
+          },
+          "response": []
+        },
+        {
+          "name": "Handle OAuth callback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/callback?access_token={{supabase_access_token}}&refresh_token={{supabase_refresh_token}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "callback"
+              ],
+              "query": [
+                {
+                  "key": "access_token",
+                  "value": "{{supabase_access_token}}",
+                  "description": "Temporary access token returned by Supabase after the OAuth redirect."
+                },
+                {
+                  "key": "refresh_token",
+                  "value": "{{supabase_refresh_token}}",
+                  "description": "Refresh token issued for the authenticated user. Stored in the `user_tokens` table."
+                }
+              ]
+            },
+            "description": "Persists the Supabase refresh token for the authenticated user and redirects back to the app root. Useful for validating the callback contract when working locally."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "List tenant documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/documents?revision={{documents_revision}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "revision",
+                  "value": "{{documents_revision}}",
+                  "description": "Optional snapshot identifier for comparing document state revisions."
+                }
+              ]
+            },
+            "description": "Retrieves a cached list of tenant documents along with revision metadata. The endpoint supports ETag responses for efficient polling."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Query notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications?startDate={{notifications_start}}&endDate={{notifications_end}}&limit={{notifications_limit}}&page={{notifications_page}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{notifications_start}}",
+                  "description": "Inclusive ISO-8601 timestamp for the beginning of the query window."
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{notifications_end}}",
+                  "description": "Inclusive ISO-8601 timestamp for the end of the query window. Future dates are automatically clamped."
+                },
+                {
+                  "key": "limit",
+                  "value": "{{notifications_limit}}",
+                  "description": "Number of records per page (capped at 100)."
+                },
+                {
+                  "key": "page",
+                  "value": "{{notifications_page}}",
+                  "description": "1-indexed page to fetch (capped at 50)."
+                }
+              ]
+            },
+            "description": "Fetches notifications for the signed-in Supabase user, including pagination metadata and applied filters. Ensure the Supabase session cookie is present when issuing this request."
+          },
+          "response": []
+        },
+        {
+          "name": "Send in-app notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"in-app\",\n  \"notification\": {\n    \"userId\": \"{{tenant_id}}\",\n    \"title\": \"Maintenance scheduled\",\n    \"message\": \"Your AC repair is booked for tomorrow at 10am.\",\n    \"type\": \"info\",\n    \"actionUrl\": \"/maintenance\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Creates an in-app notification card for the supplied user. The payload is validated with zod and returns a success boolean per notification attempt."
+          },
+          "response": []
+        },
+        {
+          "name": "Send bulk email notifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"bulk\",\n  \"notifications\": [\n    {\n      \"type\": \"email\",\n      \"to\": \"tenant.one@example.com\",\n      \"subject\": \"Rent received\",\n      \"template\": \"payment-receipt\",\n      \"data\": {\n        \"tenantName\": \"Tenant One\",\n        \"amount\": \"$1200\",\n        \"description\": \"July rent\",\n        \"date\": \"2024-07-01\"\n      },\n      \"userId\": \"{{tenant_id}}\"\n    },\n    {\n      \"type\": \"in-app\",\n      \"userId\": \"{{tenant_id}}\",\n      \"title\": \"Community update\",\n      \"message\": \"Pool maintenance will occur Friday at 3pm.\",\n      \"type\": \"announcement\",\n      \"actionUrl\": \"/announcements\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/notifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Sends a mixed batch of email and in-app notifications. Useful for testing the `sendBulkNotifications` helper and verifying partial failure handling."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Stripe Checkout session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priceId\": \"{{stripe_price_id}}\",\n  \"quantity\": 1,\n  \"mode\": \"payment\",\n  \"metadata\": {\n    \"tenant_id\": \"{{tenant_id}}\",\n    \"unit_id\": \"{{unit_id}}\",\n    \"memo\": \"July rent\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/stripe/checkout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "stripe",
+                "checkout"
+              ]
+            },
+            "description": "Creates a Stripe Checkout session for a one-time rent payment. Populate the metadata to tie the payment back to Supabase tenants and units."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Stripe Billing Portal session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{stripe_customer_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/stripe/billing-portal",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "stripe",
+                "billing-portal"
+              ]
+            },
+            "description": "Generates a Stripe Billing Portal session so tenants can manage saved payment methods and subscriptions."
+          },
+          "response": []
+        },
+        {
+          "name": "Send payment receipt email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerEmail\": \"tenant.one@example.com\",\n  \"customerName\": \"Tenant One\",\n  \"paymentId\": \"pay_12345\",\n  \"amountPaid\": 1200,\n  \"currency\": \"usd\",\n  \"paymentDate\": \"2024-07-01T12:00:00.000Z\",\n  \"items\": [\n    {\n      \"description\": \"July rent\",\n      \"quantity\": 1,\n      \"unitAmount\": 1200,\n      \"totalAmount\": 1200\n    }\n  ],\n  \"businessName\": \"Roomsily Property Management\",\n  \"supportEmail\": \"support@example.com\",\n  \"billingAddress\": \"123 Main St, Springfield\",\n  \"notes\": \"Thank you for your on-time payment.\",\n  \"subtotalAmount\": 1200,\n  \"taxAmount\": 0,\n  \"discountAmount\": 0,\n  \"sendCopyTo\": [\n    \"property.manager@example.com\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/receipt",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "receipt"
+              ]
+            },
+            "description": "Validates a payment receipt payload with zod and triggers the Resend-powered email template delivery."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Operations",
+      "item": [
+        {
+          "name": "Send Resend test email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/send",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "send"
+              ]
+            },
+            "description": "Calls the helper route that renders the default `EmailTemplate` component and dispatches it through Resend. Requires `RESEND_API_KEY`."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "app_redirect",
+      "value": "/",
+      "type": "string"
+    },
+    {
+      "key": "supabase_access_token",
+      "value": "sb-access-token",
+      "type": "string"
+    },
+    {
+      "key": "supabase_refresh_token",
+      "value": "sb-refresh-token",
+      "type": "string"
+    },
+    {
+      "key": "documents_revision",
+      "value": "current",
+      "type": "string"
+    },
+    {
+      "key": "notifications_start",
+      "value": "2024-06-01T00:00:00.000Z",
+      "type": "string"
+    },
+    {
+      "key": "notifications_end",
+      "value": "2024-07-01T00:00:00.000Z",
+      "type": "string"
+    },
+    {
+      "key": "notifications_limit",
+      "value": "20",
+      "type": "string"
+    },
+    {
+      "key": "notifications_page",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "unit_id",
+      "value": "unit-1",
+      "type": "string"
+    },
+    {
+      "key": "stripe_price_id",
+      "value": "price_12345",
+      "type": "string"
+    },
+    {
+      "key": "stripe_customer_id",
+      "value": "cus_12345",
+      "type": "string"
+    }
+  ]
+}
