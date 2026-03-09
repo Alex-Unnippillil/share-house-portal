@@ -4,7 +4,7 @@ import { PortalShell } from "@/components/layouts/portal-shells"
 import type { PortalRole } from "@/config/navigation"
 import { fetchMemberRole } from "@/lib/data/members"
 import { readUserSession } from "@/utils/actions"
-import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import { createClient } from "@/utils/supabase/server"
 
 const portalTitles: Record<PortalRole, { title: string; subtitle: string }> = {
   tenant: {
@@ -38,7 +38,7 @@ export async function AuthenticatedRouteLayout({
     redirect("/auth")
   }
 
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = await createClient()
   const resolvedRole = await fetchMemberRole(supabase as never, session.user.id)
   const role: PortalRole =
     resolvedRole === "tenant" ||

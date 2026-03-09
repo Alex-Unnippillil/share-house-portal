@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { computeOnboardingCompletion } from "@/lib/onboarding"
-import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import { createClient } from "@/utils/supabase/server"
 
 export async function OnboardingPromptCard() {
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

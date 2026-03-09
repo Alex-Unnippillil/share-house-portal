@@ -75,3 +75,12 @@ The repository is organized to keep infrastructure, services, clients, and share
 - Ensure dependency scanning and container image scanning steps succeed before requesting review.
 
 These conventions will evolve with the platform. Propose updates via a new ADR or an update to this document and circulate it in the Platform Engineering Guild for approval.
+
+### Supabase Client Entry Points
+
+- Use only the canonical factories under `utils/supabase/*` for server execution contexts:
+  - `createClient` from `utils/supabase/server.ts` for server components and route handlers.
+  - `createActionClient` from `utils/supabase/actions.ts` for server actions and auth callback handlers that need cookie writes.
+  - `updateSession` from `utils/supabase/middleware.ts` for middleware session refresh logic.
+- Do not introduce alternate Supabase server client wrappers (for example `utils/supaone.tsx`); consolidate all shared behavior in the canonical factories above.
+- Keep all Supabase factory implementations aligned on `utils/supabase/env.ts` for environment resolution and `Database` typing from `lib/supabase`.

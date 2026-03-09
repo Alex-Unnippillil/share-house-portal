@@ -1,7 +1,7 @@
 import 'server-only'
 
 import type { Json } from '@/lib/supabase'
-import { createSupbaseServerClient } from '@/utils/supaone'
+import { createActionClient } from '@/utils/supabase/actions'
 
 export type AuditAction =
   | 'operations.dashboard.view'
@@ -24,7 +24,7 @@ export async function writeAuditRecord(input: {
   metadata?: Json
 }) {
   try {
-    const supabase = await createSupbaseServerClient()
+    const supabase = await createActionClient()
     await supabase.from('audit_logs').insert({
       action: input.action,
       actor_id: input.actorId,

@@ -1,6 +1,6 @@
 import "server-only"
 
-import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import { createClient } from "@/utils/supabase/server"
 
 import type {
   DashboardMetric,
@@ -123,7 +123,7 @@ function buildFallbackFloorplanWorkspace(currentUserId: string, currentUserRole:
 }
 
 async function getCurrentUserId() {
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -215,7 +215,7 @@ export async function fetchProductionRecentDocuments(): Promise<DocumentSummary[
 }
 
 export async function fetchProductionRoommateUpdates(): Promise<RoommateUpdate[]> {
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("threads")

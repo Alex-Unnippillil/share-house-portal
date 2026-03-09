@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { createSupbaseServerClient } from "@/utils/supaone"
+import { createActionClient } from "@/utils/supabase/actions"
 import { hasSupabasePublicEnv } from "@/utils/supabase/env"
 import type { SignInWithSSO } from "@supabase/supabase-js"
 
@@ -46,7 +46,7 @@ export async function signUpWithEmailAndPassword(data: {
   }
 
   try {
-    const supabase = await createSupbaseServerClient()
+    const supabase = await createActionClient()
     const result = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -74,7 +74,7 @@ export async function requestPasswordReset(email: string) {
   }
 
   try {
-    const supabase = await createSupbaseServerClient()
+    const supabase = await createActionClient()
     const redirectTo = process.env.NEXT_PUBLIC_SITE_URL
       ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/auth?mode=reset`
       : undefined
@@ -95,7 +95,7 @@ export async function updatePassword(newPassword: string) {
   }
 
   try {
-    const supabase = await createSupbaseServerClient()
+    const supabase = await createActionClient()
     const result = await supabase.auth.updateUser({ password: newPassword })
     return JSON.stringify(result)
   } catch (error) {
@@ -112,7 +112,7 @@ export async function loginWithEmailAndPassword(data: {
   }
 
   try {
-    const supabase = await createSupbaseServerClient()
+    const supabase = await createActionClient()
     const result = await supabase.auth.signInWithPassword(data)
     revalidatePath("/", "layout")
 
@@ -123,7 +123,7 @@ export async function loginWithEmailAndPassword(data: {
 }
 
 export async function signInWithWorkOS(domain?: string) {
-  const supabase = await createSupbaseServerClient()
+  const supabase = await createActionClient()
 
   const trimmedDomain = domain?.trim()
   const workosProviderId = process.env.SUPABASE_WORKOS_CONNECTION_ID
@@ -169,7 +169,7 @@ export async function signInWithWorkOS(domain?: string) {
 }
 
 export async function signInWithGoogle() {
-  const supabase = await createSupbaseServerClient()
+  const supabase = await createActionClient()
 
   const { data } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -191,7 +191,7 @@ export async function signInWithGoogle() {
 
 export async function signInWithGoogle(): Promise<{ error?: string; url?: string }> {
   try {
-    const supabase = createSupbaseServerClient()
+    const supabase = createActionClient()
 
     
     const { data, error } = await (await supabase).auth.signInWithOAuth({
@@ -230,7 +230,7 @@ export async function signInWithGoogle(): Promise<{ error?: string; url?: string
 */
 
 export async function signInWithGithub() {
-  const supabase = await createSupbaseServerClient()
+  const supabase = await createActionClient()
   const { data } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
@@ -243,7 +243,7 @@ export async function signInWithGithub() {
   }
 }
 export async function signInWithTwitter() {
-  const supabase = await createSupbaseServerClient()
+  const supabase = await createActionClient()
   const { data } = await supabase.auth.signInWithOAuth({
     provider: "twitter",
     options: {
@@ -256,7 +256,7 @@ export async function signInWithTwitter() {
   }
 }
 export async function signOut() {
-  const supabase = await createSupbaseServerClient()
+  const supabase = await createActionClient()
   await supabase.auth.signOut()
   redirect("/")
 }
