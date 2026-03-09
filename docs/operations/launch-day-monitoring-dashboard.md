@@ -15,6 +15,8 @@ Provide a real-time command-center view of traffic health, application reliabili
 
 ### 2) Critical reliability indicators (middle row)
 
+- Core readiness status from `GET /api/readiness` (default probe mode: app process + Supabase).
+- Optional dependency panel from `GET /api/readiness?full=1` (Stripe, Cal.com, Documenso) for deeper diagnostics.
 - Webhook failure rate (`webhook_failures_total`) split by provider (`stripe`, `calcom`, `documenso`).
 - Auth failure trend (`auth_failures_total`) with baseline overlay.
 - Booking conflict count (`booking_conflicts_total`) and conflict % of validation attempts.
@@ -49,6 +51,12 @@ All widgets should support filters for:
 2. At launch: pin dashboard to incident channel and assign one operator per dashboard section.
 3. Every 15 minutes: snapshot funnel conversion and error budget burn in incident thread.
 4. On threshold breach: jump from widget to correlated logs via `correlationId` and execute linked runbook.
+
+## Alerting split: core vs optional dependencies
+
+- **Core failure alert (P1):** Trigger when `/api/readiness` returns `degraded` or `down` for two consecutive windows. Treat as tenant-impacting because core checks cover application process and Supabase DB connectivity.
+- **Optional failure alert (P2):** Trigger when `/api/readiness?full=1` reports any optional dependency as `degraded` or `down` for three consecutive windows. Keep the app available, but route to the owning integration responders.
+- **Escalation rule:** Promote optional incidents to P1 only if business KPIs (payment conversion, booking completion, lease workflows) drop below launch thresholds.
 
 ## Minimum data sources
 

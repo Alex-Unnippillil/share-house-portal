@@ -38,8 +38,19 @@ When providers are unavailable:
 ## 4) Health/readiness checks
 
 - Liveness: `GET /api/health`.
-- Readiness: `GET /api/readiness`.
+- Core readiness: `GET /api/readiness` (app process + Supabase DB connectivity). This endpoint determines service readiness and should page primary on-call when degraded/down.
+- Extended readiness: `GET /api/readiness?full=1` (adds Stripe, Cal.com, Documenso optional probes). Use for diagnostics and integration-specific paging.
 - Operations dashboard includes dependency health indicators for Supabase, Stripe, Cal.com, Documenso.
+
+### Alert handling policy
+
+- **Core check failure (`/api/readiness`)**
+  - Severity: P1 by default.
+  - Immediate actions: halt risky deploys, run Supabase connectivity triage, validate app error rates and auth flows.
+- **Optional check failure (`/api/readiness?full=1`)**
+  - Severity: P2 by default.
+  - Immediate actions: engage provider-specific playbook (payment outage, booking sync drift, document signing delays) while keeping core platform online.
+  - Promotion to P1: if optional degradation causes sustained tenant-facing failures in critical funnels.
 
 ## 5) Incident playbooks and testing cadence
 
