@@ -29,6 +29,9 @@ jobs:
       - name: Validate component filenames
         run: pnpm check:component-files
 
+      - name: Validate app/api runtime targets
+        run: pnpm check:api-runtime-targets
+
       - name: Validate Tailwind config source
         run: pnpm check:tailwind-config
 
@@ -52,4 +55,3 @@ jobs:
 
       - name: Performance budget contract
         run: pnpm perf:ci
-
