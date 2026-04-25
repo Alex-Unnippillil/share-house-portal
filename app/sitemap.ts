@@ -9,17 +9,29 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: 'https://roomsily.app/contact',
+      url: 'https://roomsily.app/auth',
       lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 1,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
 
-   {
+    {
       url: 'https://roomsily.app/onboarding',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.5,
+    },
+    {
+      url: 'https://roomsily.app/privacy',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+    {
+      url: 'https://roomsily.app/terms',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.4,
     },
   ]
 }

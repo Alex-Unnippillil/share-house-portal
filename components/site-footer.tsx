@@ -60,24 +60,15 @@ export function SiteFooter() {
             </ul>
           </div>
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">Company</h3>
+            <h3 className="text-sm font-medium">Resources</h3>
             <ul className="space-y-3 text-sm">
               <li>
                 <SmartLink
-                  href="/about"
+                  href="/support"
                   className="text-muted-foreground transition-colors hover:text-primary"
                   intent="navigation"
                 >
-                  About Us
-                </SmartLink>
-              </li>
-              <li>
-                <SmartLink
-                  href="/contact"
-                  className="text-muted-foreground transition-colors hover:text-primary"
-                  intent="navigation"
-                >
-                  Contact
+                  Support
                 </SmartLink>
               </li>
               <li>
