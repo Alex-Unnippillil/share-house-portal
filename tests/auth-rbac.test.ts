@@ -18,7 +18,10 @@ describe('auth RBAC route helpers', () => {
     expect(requiresAuthentication('/dashboard')).toBe(true)
     expect(requiresAuthentication('/payments/history')).toBe(true)
     expect(requiresAuthentication('/visitors')).toBe(true)
+    expect(requiresAuthentication('/chores')).toBe(true)
+    expect(requiresAuthentication('/supplies')).toBe(true)
     expect(requiresAuthentication('/about')).toBe(false)
+    expect(requiresAuthentication('/terms')).toBe(false)
   })
 
   it('enforces role restrictions for manager pages', () => {
