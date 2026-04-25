@@ -24,6 +24,12 @@ vi.mock("@/components/ui/use-toast", () => ({
   toast: vi.fn(),
 }))
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}))
+
 import ListOfMembers from "@/app/dashboard/members/components/ListOfMembers"
 import TodoForm from "@/app/dashboard/todo/components/TodoForm"
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -17,6 +18,8 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 
+import { createTodo } from "../actions"
+
 const FormSchema = z.object({
   title: z.string().min(1, {
     message: "Title is required.",
@@ -24,7 +27,8 @@ const FormSchema = z.object({
 })
 
 export default function CreateForm() {
-  const [isPending] = useTransition()
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -34,15 +38,28 @@ export default function CreateForm() {
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    toast({
-      title: "You have successfully create todo.",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{data.title} is created</code>
-        </pre>
-      ),
+    startTransition(async () => {
+      const result = await createTodo({
+        title: data.title,
+      })
+
+      if (!result.success) {
+        toast({
+          title: "Failed to create todo",
+          description: result.error ?? "Unknown error",
+          variant: "destructive",
+        })
+        return
+      }
+
+      toast({
+        title: "Todo created",
+        description: `${result.data?.title ?? data.title} was added.`,
+      })
+
+      form.reset()
+      router.refresh()
     })
-    form.reset()
   }
 
   return (
