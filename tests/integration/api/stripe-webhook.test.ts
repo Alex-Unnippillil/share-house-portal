@@ -64,6 +64,7 @@ describe("POST /api/stripe/webhook", () => {
     const rentPaymentsInsert = vi.fn().mockResolvedValue({ data: null, error: null })
     const rentPaymentsUpsert = vi.fn().mockResolvedValue({ data: null, error: null })
     const webhookEventsInsert = vi.fn().mockResolvedValue({ data: null, error: null })
+    const webhookEventsSelectMaybeSingle = vi.fn().mockResolvedValue({ data: { payload: {} }, error: null })
 
     const updateEqEventId = vi.fn().mockResolvedValue({ data: null, error: null })
     const updateEqProvider = vi.fn(() => ({ eq: updateEqEventId }))
@@ -105,6 +106,11 @@ describe("POST /api/stripe/webhook", () => {
         return {
           insert: webhookEventsInsert,
           update,
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({ maybeSingle: webhookEventsSelectMaybeSingle })),
+            })),
+          })),
         }
       }
 

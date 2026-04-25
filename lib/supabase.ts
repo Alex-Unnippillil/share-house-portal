@@ -173,11 +173,12 @@ export type Database = {
       }>
       webhook_events: SupabaseTable<{
         id: string
-        provider: 'stripe'
+        provider: 'stripe' | 'calcom' | 'documenso'
         event_id: string
         event_type: string
         status: 'processing' | 'processed' | 'failed' | 'dead_lettered'
         payload: Json | null
+        payload_hash: string | null
         error_message: string | null
         processed_at: string | null
         retry_count: number

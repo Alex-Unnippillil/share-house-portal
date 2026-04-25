@@ -9,6 +9,11 @@ import { incrementOperationalMetric } from "@/lib/observability/metrics"
 import { isLikelyTransientError, RetryExhaustedError, retryWithBackoff } from "@/lib/resilience"
 import { getStripe } from "@/lib/stripe"
 import type { Database, Json, TablesInsert } from "@/lib/supabase"
+import {
+  appendWebhookPayloadMetadata,
+  markWebhookEventStatus,
+  registerWebhookEvent,
+} from "@/lib/webhook-events"
 
 class UnmappedPaymentEventError extends Error {
   eventId: string
@@ -113,53 +118,6 @@ function parseAmountInMajorUnits(amountInCents: number | null | undefined) {
   return amountInCents / 100
 }
 
-async function isDuplicateEvent(supabase: SupabaseClient<Database>, event: Stripe.Event) {
-  const payload: TablesInsert<"webhook_events"> = {
-    provider: "stripe",
-    event_id: event.id,
-    event_type: event.type,
-    status: "processing",
-    payload: event as unknown as Json,
-    processed_at: new Date().toISOString(),
-  }
-
-  const { error } = await supabase.from("webhook_events").insert(payload)
-
-  if (!error) {
-    return false
-  }
-
-  if (error.code === "23505") {
-    return true
-  }
-
-  throw error
-}
-
-async function markEventProcessed(
-  supabase: SupabaseClient<Database>,
-  eventId: string,
-  status: "processed" | "failed" | "dead_lettered",
-  options: { errorMessage?: string; retryCount?: number; maxRetries?: number } = {}
-) {
-  const now = new Date().toISOString()
-
-  await supabase
-    .from("webhook_events")
-    .update({
-      status,
-      error_message: options.errorMessage,
-      processed_at: now,
-      retry_count: options.retryCount ?? 0,
-      max_retries: options.maxRetries ?? 0,
-      dead_lettered_at: status === "dead_lettered" ? now : null,
-      last_attempt_at: now,
-      next_retry_at: null,
-    })
-    .eq("provider", "stripe")
-    .eq("event_id", eventId)
-}
-
 async function queueUnmappedPaymentEvent(
   supabase: SupabaseClient<Database>,
   params: {
@@ -179,21 +137,25 @@ async function queueUnmappedPaymentEvent(
       error_message: params.reason,
       processed_at: now,
       last_attempt_at: now,
-      payload: {
-        reconciliation: {
-          actionable: true,
-          triage_status: "open",
-          triage_notes: "",
-          queue_reason: "unmapped_payment_event",
-          webhook_event_type: params.eventType,
-          queued_at: now,
-          correlation_id: params.correlationId,
-          ...params.auditDetail,
-        },
-      },
+      next_retry_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     })
     .eq("provider", "stripe")
     .eq("event_id", params.eventId)
+
+  await appendWebhookPayloadMetadata(supabase, {
+    provider: "stripe",
+    eventId: params.eventId,
+    metadata: {
+      actionable: "true",
+      triage_status: "open",
+      triage_notes: "",
+      queue_reason: "unmapped_payment_event",
+      webhook_event_type: params.eventType,
+      queued_at: now,
+      correlation_id: params.correlationId,
+      ...params.auditDetail,
+    },
+  })
 }
 
 async function upsertRentPayment(
@@ -691,8 +653,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const duplicate = await isDuplicateEvent(supabase, event)
-    if (duplicate) {
+    const { isDuplicateProcessed } = await registerWebhookEvent(supabase, {
+      provider: "stripe",
+      eventId: event.id,
+      eventType: event.type,
+      payload: event as unknown as Json,
+      rawPayload: rawBody,
+    })
+
+    if (isDuplicateProcessed) {
       return new Response("ok", { status: 200 })
     }
 
@@ -706,7 +675,12 @@ export async function POST(req: Request) {
 
     if (!HANDLED_EVENTS.has(event.type)) {
       logger.info("stripe_webhook_unhandled_event", { eventName: event.type })
-      await markEventProcessed(supabase, event.id, "processed", { maxRetries })
+      await markWebhookEventStatus(supabase, {
+        provider: "stripe",
+        eventId: event.id,
+        status: "processed",
+        maxRetries,
+      })
     } else {
       const result = await retryWithBackoff(
         async () => {
@@ -729,7 +703,10 @@ export async function POST(req: Request) {
         recordStripePaymentMetric("failure", event.type, correlationId)
       }
 
-      await markEventProcessed(supabase, event.id, "processed", {
+      await markWebhookEventStatus(supabase, {
+        provider: "stripe",
+        eventId: event.id,
+        status: "processed",
         retryCount: Math.max(result.attempts - 1, 0),
         maxRetries,
       })
@@ -799,7 +776,10 @@ export async function POST(req: Request) {
     })
 
     if (exhausted) {
-      await markEventProcessed(supabase, event.id, "dead_lettered", {
+      await markWebhookEventStatus(supabase, {
+        provider: "stripe",
+        eventId: event.id,
+        status: "dead_lettered",
         errorMessage: message,
         retryCount: Math.max(err.attempts - 1, 0),
         maxRetries: 3,
@@ -811,10 +791,14 @@ export async function POST(req: Request) {
       })
     }
 
-    await markEventProcessed(supabase, event.id, "failed", {
+    await markWebhookEventStatus(supabase, {
+      provider: "stripe",
+      eventId: event.id,
+      status: "failed",
       errorMessage: message,
       retryCount: 0,
       maxRetries: 3,
+      retriable: true,
     })
 
     return jsonError("INTERNAL_SERVER_ERROR", {

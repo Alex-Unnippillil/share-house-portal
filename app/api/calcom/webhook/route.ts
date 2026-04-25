@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 
 import { toBookingInsert } from "@/lib/bookings/calcom-webhook"
 import type { Database, TablesInsert } from "@/lib/supabase"
+import { markWebhookEventStatus, registerWebhookEvent } from "@/lib/webhook-events"
 
 function createSupabaseAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -79,9 +80,6 @@ export async function POST(request: Request) {
   }
 
   const booking = toBookingInsert(parsedBody)
-  if (!booking) {
-    return NextResponse.json({ ok: true, ignored: true })
-  }
 
   const supabase = createSupabaseAdminClient()
   if (!supabase) {
@@ -91,13 +89,54 @@ export async function POST(request: Request) {
     )
   }
 
+  const eventId = String(
+    parsedBody?.id ?? parsedBody?.payload?.bookingId ?? parsedBody?.payload?.uid ?? "unknown-event",
+  )
+  const eventType = String(parsedBody?.triggerEvent ?? "unknown")
+
+  const { isDuplicateProcessed } = await registerWebhookEvent(supabase, {
+    provider: "calcom",
+    eventId,
+    eventType,
+    payload: parsedBody,
+    rawPayload: rawBody,
+  })
+
+  if (isDuplicateProcessed) {
+    return NextResponse.json({ ok: true, duplicate: true })
+  }
+
+  if (!booking) {
+    await markWebhookEventStatus(supabase, {
+      provider: "calcom",
+      eventId,
+      status: "processed",
+    })
+    return NextResponse.json({ ok: true, ignored: true })
+  }
+
   const { error } = await upsertBookingRecord(supabase, booking)
   if (error) {
+    await markWebhookEventStatus(supabase, {
+      provider: "calcom",
+      eventId,
+      status: "failed",
+      errorMessage: error.message,
+      maxRetries: 3,
+      retriable: true,
+    })
     return NextResponse.json(
       { ok: false, message: "Failed to mirror booking", details: error.message },
       { status: 500 },
     )
   }
+
+  await markWebhookEventStatus(supabase, {
+    provider: "calcom",
+    eventId,
+    status: "processed",
+    maxRetries: 3,
+  })
 
   return NextResponse.json({
     ok: true,
