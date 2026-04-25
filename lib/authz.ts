@@ -2,10 +2,9 @@ import 'server-only'
 
 import { redirect } from 'next/navigation'
 
+import { isPrivilegedRole } from '@/lib/auth-rbac'
 import { fetchMemberRole } from '@/lib/data/members'
 import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
-
-export const PRIVILEGED_ROLES = ['property_manager', 'admin'] as const
 
 export async function requirePrivilegedAccess() {
   const supabase = await createSupbaseServerClientReadOnly()
@@ -19,7 +18,7 @@ export async function requirePrivilegedAccess() {
 
   const role = await fetchMemberRole(supabase as any, user.id)
 
-  if (!role || !PRIVILEGED_ROLES.includes(role as (typeof PRIVILEGED_ROLES)[number])) {
+  if (!isPrivilegedRole(role)) {
     redirect('/dashboard')
   }
 

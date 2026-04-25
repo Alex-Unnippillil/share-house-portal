@@ -4,10 +4,14 @@ This matrix maps route-level access (middleware) and table-level actions (Supaba
 
 ## Roles
 
+Canonical application roles are strictly limited to:
+
 - `tenant`
 - `roommate`
 - `property_manager` (scoped to assigned units via `manager_unit_assignments`)
 - `admin` (global override)
+
+Legacy or unknown role strings (including historical `user`) are treated as `null` during role resolution. Middleware and privileged server checks fail closed when role resolution returns `null`.
 
 ## Route Access (Next.js middleware)
 

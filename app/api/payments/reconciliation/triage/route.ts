@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 
+import { isPrivilegedRole } from "@/lib/auth-rbac"
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
 
 const allowedTriageStatus = new Set(["open", "investigating", "resolved"])
@@ -22,7 +23,7 @@ export async function PATCH(req: Request) {
       .eq("id", user.id)
       .maybeSingle()
 
-    if (!profile || !["property_manager", "admin"].includes(profile.role ?? "")) {
+    if (!profile || !isPrivilegedRole(profile.role)) {
       return jsonError("AUTH_UNAUTHORIZED", {
         message: "Only property managers and admins can triage failed payments.",
       })

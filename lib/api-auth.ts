@@ -1,7 +1,6 @@
 import { jsonError } from "@/lib/errors"
+import { isPrivilegedRole, type PrivilegedAppRole } from "@/lib/auth-rbac"
 import { createClient } from "@/utils/supabase/server"
-
-const PRIVILEGED_ROLES = new Set(["property_manager", "admin"])
 
 type AuthenticatedApiContext = {
   supabase: ReturnType<typeof createClient>
@@ -9,7 +8,7 @@ type AuthenticatedApiContext = {
 }
 
 type PrivilegedApiContext = AuthenticatedApiContext & {
-  role: string
+  role: PrivilegedAppRole
 }
 
 export async function requireApiAuth(): Promise<AuthenticatedApiContext | Response> {
@@ -50,8 +49,8 @@ export async function requirePrivilegedApiAccess(): Promise<PrivilegedApiContext
     })
   }
 
-  const role = profile?.role ?? ""
-  if (!PRIVILEGED_ROLES.has(role)) {
+  const role = profile?.role
+  if (!isPrivilegedRole(role)) {
     return jsonError("AUTH_UNAUTHORIZED", {
       message: "Only property managers and admins can access this endpoint.",
     })

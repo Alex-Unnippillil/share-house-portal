@@ -2,8 +2,10 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 
 import type { Database } from '@/lib/supabase'
 
-export const APP_ROLES = ['tenant', 'roommate', 'property_manager', 'admin', 'user'] as const
+export const APP_ROLES = ['tenant', 'roommate', 'property_manager', 'admin'] as const
 export type AppRole = (typeof APP_ROLES)[number]
+export const PRIVILEGED_APP_ROLES = ['property_manager', 'admin'] as const
+export type PrivilegedAppRole = (typeof PRIVILEGED_APP_ROLES)[number]
 
 export const PUBLIC_ROUTE_PREFIXES = ['/auth', '/about', '/contact', '/error']
 export const PUBLIC_EXACT_ROUTES = ['/', '/favicon.ico']
@@ -25,12 +27,19 @@ const ROLE_ROUTE_RULES: Array<{ prefix: string; allowed: AppRole[] }> = [
   { prefix: '/dashboard/members', allowed: ['property_manager', 'admin'] },
 ]
 
-function coerceRole(value: unknown): AppRole | null {
+export function coerceRole(value: unknown): AppRole | null {
   if (typeof value !== 'string') {
     return null
   }
 
   return (APP_ROLES as readonly string[]).includes(value) ? (value as AppRole) : null
+}
+
+export function isPrivilegedRole(value: unknown): value is PrivilegedAppRole {
+  return (
+    typeof value === 'string' &&
+    (PRIVILEGED_APP_ROLES as readonly string[]).includes(value)
+  )
 }
 
 export async function resolveSessionRole(
@@ -46,7 +55,7 @@ export async function resolveSessionRole(
     coerceRole(user.user_metadata?.role) ??
     coerceRole((user as User & { role?: unknown }).role)
 
-  if (claimedRole && claimedRole !== 'user') {
+  if (claimedRole) {
     return claimedRole
   }
 
@@ -58,10 +67,10 @@ export async function resolveSessionRole(
 
   if (error) {
     console.error('Failed to resolve profile role in middleware:', error.message)
-    return claimedRole
+    return null
   }
 
-  return coerceRole(data?.role) ?? claimedRole
+  return coerceRole(data?.role)
 }
 
 export function isPublicRoute(pathname: string): boolean {
