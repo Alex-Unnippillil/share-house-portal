@@ -1,6 +1,8 @@
 import 'server-only'
 
-import type { Json } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+import type { Database, Json } from '@/lib/supabase'
 import { createSupbaseServerClient } from '@/utils/supaone'
 
 export type AuditAction =
@@ -38,6 +40,41 @@ export async function writeAuditRecord(input: {
     console.error('Unable to persist audit record', {
       action: input.action,
       actorId: input.actorId,
+      error,
+    })
+  }
+}
+
+export async function writeRetentionExecutionAuditLog(
+  client: SupabaseClient<Database>,
+  input: {
+    actorId: string
+    jobId: string
+    entity: string
+    mode: 'execute' | 'dry-run'
+    candidates: number
+    affected: number
+    metadata?: Json
+    error?: string | null
+  }
+) {
+  const payload = {
+    actor_id: input.actorId,
+    job_id: input.jobId,
+    entity: input.entity,
+    mode: input.mode,
+    candidates: input.candidates,
+    affected: input.affected,
+    metadata: input.metadata ?? null,
+    error: input.error ?? null,
+    created_at: new Date().toISOString(),
+  }
+
+  const { error } = await (client as any).from('retention_execution_audit_logs').insert(payload)
+
+  if (error) {
+    console.error('Unable to persist retention execution audit log', {
+      ...payload,
       error,
     })
   }

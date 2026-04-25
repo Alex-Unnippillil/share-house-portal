@@ -1,5 +1,13 @@
 import { createClient } from "@supabase/supabase-js"
 
+import { writeRetentionExecutionAuditLog } from "@/lib/audit"
+import {
+  applyNotificationPurge,
+  applySignedDocumentMetadataMinimization,
+  applyVisitorLogAnonymization,
+  applyVisitorLogPurge,
+  buildRetentionPlan,
+} from "@/lib/data/retention"
 import { createStructuredLogger } from "@/lib/observability/logger"
 import type { Database } from "@/lib/supabase"
 
@@ -23,14 +31,33 @@ function isAuthorized(req: Request) {
   return received === expected
 }
 
-function isoDaysAgo(days: number) {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+function parseDryRunMode(req: Request) {
+  const { searchParams } = new URL(req.url)
+  return searchParams.get("dryRun") === "true"
+}
+
+function parseActor(req: Request) {
+  const { searchParams } = new URL(req.url)
+  return searchParams.get("actor") ?? req.headers.get("x-retention-actor") ?? "system:cron-retention"
+}
+
+function parseJobId(req: Request) {
+  const { searchParams } = new URL(req.url)
+  return searchParams.get("jobId") ?? req.headers.get("x-job-id") ?? crypto.randomUUID()
 }
 
 export async function GET(req: Request) {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
+  const dryRun = parseDryRunMode(req)
+  const actorId = parseActor(req)
+  const jobId = parseJobId(req)
+
   const logger = createStructuredLogger("job", {
     component: "retention_job",
-    requestId: req.headers.get("x-request-id") ?? crypto.randomUUID(),
+    requestId,
+    jobId,
+    actorId,
+    mode: dryRun ? "dry-run" : "execute",
   })
 
   if (!isAuthorized(req)) {
@@ -49,38 +76,53 @@ export async function GET(req: Request) {
     )
   }
 
-  const visitorRetentionDate = isoDaysAgo(180)
-  const notificationRetentionDate = isoDaysAgo(90)
-  const auditRetentionDate = isoDaysAgo(730)
+  const plan = buildRetentionPlan()
 
-  const [visitorDelete, notificationDelete, auditDelete] = await Promise.all([
-    supabase
-      .from("visitor_logs")
-      .delete()
-      .lt("departure_date", visitorRetentionDate),
-    supabase
-      .from("notifications")
-      .delete()
-      .lt("created_at", notificationRetentionDate),
-    supabase.from("audit_logs").delete().lt("occurred_at", auditRetentionDate),
+  const results = await Promise.all([
+    applyVisitorLogAnonymization(supabase, plan, { dryRun }),
+    applyVisitorLogPurge(supabase, plan, { dryRun }),
+    applySignedDocumentMetadataMinimization(supabase, plan, { dryRun }),
+    applyNotificationPurge(supabase, plan, { dryRun }),
   ])
 
+  await Promise.all(
+    results.map((result) =>
+      writeRetentionExecutionAuditLog(supabase, {
+        actorId,
+        jobId,
+        entity: result.entity,
+        mode: dryRun ? "dry-run" : "execute",
+        candidates: result.candidates,
+        affected: result.affected,
+        metadata: {
+          policy: plan,
+          requestId,
+        },
+        error: result.error,
+      })
+    )
+  )
+
+  const hasError = results.some((result) => Boolean(result.error))
+
   logger.info("retention_job_completed", {
-    visitorRetentionDate,
-    notificationRetentionDate,
-    auditRetentionDate,
-    visitorDeleteError: visitorDelete.error?.message,
-    notificationDeleteError: notificationDelete.error?.message,
-    auditDeleteError: auditDelete.error?.message,
+    dryRun,
+    actorId,
+    jobId,
+    policy: plan,
+    hasError,
+    results,
   })
 
-  return Response.json({
-    ok: !visitorDelete.error && !notificationDelete.error && !auditDelete.error,
-    visitorRetentionDate,
-    notificationRetentionDate,
-    auditRetentionDate,
-    visitorDeleteError: visitorDelete.error?.message ?? null,
-    notificationDeleteError: notificationDelete.error?.message ?? null,
-    auditDeleteError: auditDelete.error?.message ?? null,
-  })
+  return Response.json(
+    {
+      ok: !hasError,
+      dryRun,
+      actorId,
+      jobId,
+      policy: plan,
+      results,
+    },
+    { status: hasError ? 500 : 200 }
+  )
 }

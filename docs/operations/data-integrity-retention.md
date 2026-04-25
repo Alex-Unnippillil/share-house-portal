@@ -26,13 +26,20 @@ Behavior:
 
 Current retention windows:
 
-- `visitor_logs`: delete entries older than 180 days from `departure_date`.
+- `visitor_logs`: anonymize PII after 180 days from `check_out_date`; purge entries after 365 days.
+- `documents` (`status='signed'`): minimize searchable metadata after 365 days while retaining immutable audit evidence.
 - `notifications`: delete entries older than 90 days from `created_at`.
 
 Behavior:
 
 - Emits `retention_job_completed` structured log.
-- Returns per-table deletion error details for debugging.
+- Supports `dryRun=true` for preflight analysis.
+- Writes per-entity execution records to append-only `retention_execution_audit_logs` including `actor_id` and `job_id`.
+- Returns per-entity mutation/error details for debugging.
+
+Runbook:
+
+- See `docs/operations/runbooks/retention-scheduler.md` for Vercel Cron and incident fallback procedures.
 
 ## Operational cadence
 

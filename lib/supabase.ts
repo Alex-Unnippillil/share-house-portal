@@ -33,6 +33,18 @@ export type Database = {
         occurred_at: string | null
         created_at: string | null
       }>
+      retention_execution_audit_logs: SupabaseTable<{
+        id: string
+        actor_id: string
+        job_id: string
+        entity: string
+        mode: 'execute' | 'dry-run'
+        candidates: number
+        affected: number
+        error: string | null
+        metadata: Json | null
+        created_at: string
+      }>
       bookings: SupabaseTable<{
         id: string
         created_at: string | null
