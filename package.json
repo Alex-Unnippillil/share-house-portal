@@ -30,6 +30,7 @@
     "test:perf": "pnpm css:purge && pnpm js:budget && node scripts/check-performance-budgets.mjs",
     "perf:ci": "pnpm test:perf",
     "check:component-files": "node scripts/check-component-filenames.mjs",
+    "check:api-runtime-targets": "node scripts/check-app-api-runtime-targets.mjs",
     "check:tailwind-config": "node scripts/check-tailwind-config.mjs",
     "js:budget": "node scripts/check-js-size.mjs",
     "check:legal-content": "node scripts/check-legal-content.mjs",

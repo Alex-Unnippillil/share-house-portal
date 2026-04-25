@@ -133,6 +133,12 @@ Open [http://localhost:3000](http://localhost:3000) to view the application. Tai
 
 Use the deployment runbook at [`docs/engineering/vercel-deployment-runbook.md`](docs/engineering/vercel-deployment-runbook.md) and configure variables according to [`docs/engineering/environment-contract.md`](docs/engineering/environment-contract.md).
 
+### API Runtime Targets
+
+- This repository supports **Next.js App Router Route Handlers only** under `app/api` (`route.ts` / `route.js` files).
+- Cross-runtime handlers (for example Rust runtime files like `*.rs`) are intentionally unsupported in `app/api` to avoid deployment ambiguity.
+- CI enforces this with `pnpm check:api-runtime-targets`.
+
 ## CI & Branch Protection
 
 - GitHub Actions uses pnpm for install/lint/typecheck/test/build gates.
