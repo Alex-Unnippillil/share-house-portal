@@ -17,6 +17,8 @@ This document defines the environment variables required to run **Share House Po
 | `NEXT_PUBLIC_SITE_URL` | Required | Required | Required | Site URL for auth callbacks and OAuth flows. |
 | `NEXT_PUBLIC_BASE_URL` | Required | Required | Required | API auth callback base URL. |
 | `VERCEL_URL` | Optional | Optional | Optional | Set automatically in Vercel previews/builds. |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Optional | Recommended | Required | Public support email shown on `/contact`; falls back to `support@roomsily.com` when unset. |
+| `NEXT_PUBLIC_SUPPORT_PHONE` | Optional | Recommended | Required | Public support phone shown on `/contact`; falls back to `+1-555-010-0000` when unset. |
 | `NEXT_PUBLIC_SUPABASE_URL` | Required | Required | Required | Supabase project URL for public and server clients. Missing values trigger runtime configuration errors when Supabase clients initialize. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Required | Required | Required | Public Supabase anon key. Can be replaced by `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; if neither is set, initialization throws a configuration error. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Required | Required | Required | Server-only key for privileged jobs/webhooks. |
