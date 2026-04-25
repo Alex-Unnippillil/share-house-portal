@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
+import { incrementOperationalMetric } from "@/lib/observability/metrics"
 
 const allowedTriageStatus = new Set(["open", "investigating", "resolved"])
 
@@ -111,6 +112,13 @@ export async function PATCH(req: Request) {
 
     return Response.json({ ok: true })
   } catch (error) {
+    incrementOperationalMetric("payment_reconciliation_failures_total", {
+      source: "payments_reconciliation_triage",
+      provider: "supabase",
+      reason: error instanceof Error ? error.message : "unknown_error",
+      severity: "high",
+    })
+
     return jsonErrorFromUnknown(error, "DATA_FETCH_FAILED")
   }
 }
