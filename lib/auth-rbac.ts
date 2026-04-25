@@ -5,21 +5,16 @@ import type { Database } from '@/lib/supabase'
 export const APP_ROLES = ['tenant', 'roommate', 'property_manager', 'admin', 'user'] as const
 export type AppRole = (typeof APP_ROLES)[number]
 
-export const PUBLIC_ROUTE_PREFIXES = ['/auth', '/about', '/contact', '/error']
-export const PUBLIC_EXACT_ROUTES = ['/', '/favicon.ico']
-
-const AUTHENTICATED_ROUTE_PREFIXES = [
-  '/dashboard',
-  '/payments',
-  '/documents',
-  '/bookings',
-  '/messaging',
-  '/maintenance',
-  '/visitors',
-  '/schedule',
-  '/account',
-  '/private',
+export const PUBLIC_ROUTE_PREFIXES = [
+  '/auth',
+  '/about',
+  '/contact',
+  '/error',
+  '/terms',
+  '/privacy',
+  '/data-retention',
 ]
+export const PUBLIC_EXACT_ROUTES = ['/', '/favicon.ico']
 
 const ROLE_ROUTE_RULES: Array<{ prefix: string; allowed: AppRole[] }> = [
   { prefix: '/dashboard/members', allowed: ['property_manager', 'admin'] },
@@ -73,9 +68,9 @@ export function isPublicRoute(pathname: string): boolean {
 }
 
 export function requiresAuthentication(pathname: string): boolean {
-  return AUTHENTICATED_ROUTE_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  )
+  // Routing policy: every app page is authenticated by default unless explicitly listed as public above.
+  // Add new legal/marketing pages to PUBLIC_* lists so workspace routes like /chores and /supplies stay protected.
+  return !isPublicRoute(pathname)
 }
 
 export function isRouteAllowedForRole(pathname: string, role: AppRole | null): boolean {
