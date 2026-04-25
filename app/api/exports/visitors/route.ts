@@ -16,7 +16,26 @@ export async function GET() {
   const role = await fetchMemberRole(supabase as any, user.id)
   if (role !== 'property_manager' && role !== 'admin') return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
-  const csv = toCsv((await getVisitorRows({ page: 1, pageSize: 1000 })).rows)
+  const { data: profile } = await (supabase as any)
+    .from('profiles')
+    .select('unit_id, metadata')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const propertyId =
+    role === 'property_manager' && typeof profile?.metadata?.property_id === 'string'
+      ? profile.metadata.property_id
+      : undefined
+  const unitIds = role === 'property_manager' && profile?.unit_id ? [profile.unit_id] : undefined
+
+  const csv = toCsv(
+    (
+      await getVisitorRows(
+        { page: 1, pageSize: 1000 },
+        { actorId: user.id, actorRole: role, propertyId, unitIds, client: supabase as any }
+      )
+    ).rows
+  )
   await writeAuditRecord({ action: 'operations.export.visitors', actorId: user.id, actorRole: role, targetType: 'visitors_export' })
 
   return new NextResponse(csv, {
