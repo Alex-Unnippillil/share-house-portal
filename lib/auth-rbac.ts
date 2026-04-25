@@ -21,8 +21,47 @@ const AUTHENTICATED_ROUTE_PREFIXES = [
   '/private',
 ]
 
+const TENANT_AND_ROOMMATE_ROLES: AppRole[] = ['tenant', 'roommate']
+const PROPERTY_MANAGER_ROLES: AppRole[] = ['property_manager']
+const ADMIN_ROLES: AppRole[] = ['admin']
+
 const ROLE_ROUTE_RULES: Array<{ prefix: string; allowed: AppRole[] }> = [
-  { prefix: '/dashboard/members', allowed: ['property_manager', 'admin'] },
+  {
+    prefix: '/dashboard/operations',
+    allowed: [...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
+  {
+    prefix: '/api/exports',
+    allowed: [...ADMIN_ROLES],
+  },
+  {
+    prefix: '/dashboard',
+    allowed: [...TENANT_AND_ROOMMATE_ROLES, ...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
+  {
+    prefix: '/payments',
+    allowed: [...TENANT_AND_ROOMMATE_ROLES, ...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
+  {
+    prefix: '/documents',
+    allowed: [...TENANT_AND_ROOMMATE_ROLES, ...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
+  {
+    prefix: '/bookings',
+    allowed: [...TENANT_AND_ROOMMATE_ROLES, ...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
+  {
+    prefix: '/maintenance',
+    allowed: [...TENANT_AND_ROOMMATE_ROLES, ...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
+  {
+    prefix: '/visitors',
+    allowed: [...TENANT_AND_ROOMMATE_ROLES, ...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
+  {
+    prefix: '/messaging',
+    allowed: [...TENANT_AND_ROOMMATE_ROLES, ...PROPERTY_MANAGER_ROLES, ...ADMIN_ROLES],
+  },
 ]
 
 function coerceRole(value: unknown): AppRole | null {
@@ -83,12 +122,12 @@ export function isRouteAllowedForRole(pathname: string, role: AppRole | null): b
     (entry) => pathname === entry.prefix || pathname.startsWith(`${entry.prefix}/`)
   )
 
-  if (!rule) {
-    return true
-  }
-
   if (!role) {
     return false
+  }
+
+  if (!rule) {
+    return !requiresAuthentication(pathname)
   }
 
   return rule.allowed.includes(role)
