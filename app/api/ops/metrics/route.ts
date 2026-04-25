@@ -1,18 +1,46 @@
 import { requirePrivilegedApiAccess } from "@/lib/api-auth"
 import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
-import { incrementOperationalMetric } from "@/lib/observability/metrics"
+import { getOperationalMetricsSummary, incrementOperationalMetric, type CounterMetricName } from "@/lib/observability/metrics"
 
 const ALLOWED = new Set([
   "payment_attempts_total",
   "payment_success_total",
   "payment_failures_total",
   "booking_conflicts_total",
+  "booking_conflict_validation_rejections_total",
   "webhook_failures_total",
+  "webhook_delivery_success_total",
+  "webhook_delivery_failure_total",
+  "unmapped_payment_events_total",
+  "payment_reconciliation_failures_total",
   "maintenance_sla_met_total",
   "maintenance_sla_breaches_total",
   "message_moderation_actions_total",
   "auth_failures_total",
-] as const)
+] as const satisfies readonly CounterMetricName[])
+
+export async function GET(req: Request) {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
+  const correlationId = getCorrelationId(req.headers, requestId)
+
+  const authContext = await requirePrivilegedApiAccess()
+  if (authContext instanceof Response) {
+    return authContext
+  }
+
+  return Response.json(
+    {
+      ok: true,
+      correlationId,
+      summary: getOperationalMetricsSummary(),
+    },
+    {
+      headers: {
+        "x-correlation-id": correlationId,
+      },
+    }
+  )
+}
 
 export async function POST(req: Request) {
   const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
@@ -38,7 +66,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "Invalid metric name" }, { status: 400 })
     }
 
-    incrementOperationalMetric(body.metricName as any, {
+    incrementOperationalMetric(body.metricName as CounterMetricName, {
       source: "ops_metrics_route",
       correlationId,
       ...(body.tags ?? {}),

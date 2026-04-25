@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 
 import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
+import { incrementOperationalMetric } from "@/lib/observability/metrics"
 
 function escapeCsv(value: string) {
   if (/[",\n]/.test(value)) {
@@ -116,6 +117,13 @@ export async function GET() {
       },
     })
   } catch (error) {
+    incrementOperationalMetric("payment_reconciliation_failures_total", {
+      source: "payments_reconciliation_export",
+      provider: "supabase",
+      reason: error instanceof Error ? error.message : "unknown_error",
+      severity: "high",
+    })
+
     return jsonErrorFromUnknown(error, "DATA_FETCH_FAILED")
   }
 }

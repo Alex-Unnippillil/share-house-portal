@@ -8,6 +8,7 @@ const sendInAppNotification = vi.fn()
 const createClient = vi.fn()
 const mockHeadersGet = vi.fn()
 const incrementOperationalMetric = vi.fn()
+const recordWebhookDeliveryMetric = vi.fn()
 
 vi.mock("next/headers", () => ({
   headers: async () => ({
@@ -42,6 +43,7 @@ vi.mock("@/lib/notifications", () => ({
 
 vi.mock("@/lib/observability/metrics", () => ({
   incrementOperationalMetric,
+  recordWebhookDeliveryMetric,
 }))
 
 describe("POST /api/stripe/webhook", () => {

@@ -5,7 +5,7 @@ import type Stripe from "stripe"
 import { jsonError } from "@/lib/errors"
 import { sendEmailNotification, sendInAppNotification } from "@/lib/notifications"
 import { createStructuredLogger, getCorrelationId } from "@/lib/observability/logger"
-import { incrementOperationalMetric } from "@/lib/observability/metrics"
+import { incrementOperationalMetric, recordWebhookDeliveryMetric } from "@/lib/observability/metrics"
 import { isLikelyTransientError, RetryExhaustedError, retryWithBackoff } from "@/lib/resilience"
 import { getStripe } from "@/lib/stripe"
 import type { Database, Json, TablesInsert } from "@/lib/supabase"
@@ -614,6 +614,7 @@ const HANDLED_EVENTS = new Set([
 ])
 
 export async function POST(req: Request) {
+  const requestStartedAt = Date.now()
   const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID()
   const correlationId = getCorrelationId(req.headers, requestId)
   const logger = createStructuredLogger("webhook_processor", {
@@ -683,6 +684,18 @@ export async function POST(req: Request) {
       correlationId,
       severity: "critical",
     })
+    recordWebhookDeliveryMetric({
+      outcome: "failure",
+      latencyMs: Date.now() - requestStartedAt,
+      tags: {
+        source: "stripe_webhook",
+        provider: "stripe",
+        eventType: "unknown",
+        reason: "stripe_signature_verification_failed",
+        correlationId,
+        severity: "critical",
+      },
+    })
 
     return jsonError("REQUEST_VALIDATION_ERROR", {
       message,
@@ -693,6 +706,17 @@ export async function POST(req: Request) {
   try {
     const duplicate = await isDuplicateEvent(supabase, event)
     if (duplicate) {
+      recordWebhookDeliveryMetric({
+        outcome: "success",
+        latencyMs: Date.now() - requestStartedAt,
+        tags: {
+          source: "stripe_webhook",
+          provider: "stripe",
+          eventType: event.type,
+          correlationId,
+          reason: "duplicate_event",
+        },
+      })
       return new Response("ok", { status: 200 })
     }
 
@@ -740,6 +764,16 @@ export async function POST(req: Request) {
       stripeEventId: event.id,
       lifecyclePhase: "webhook.processed",
     })
+    recordWebhookDeliveryMetric({
+      outcome: "success",
+      latencyMs: Date.now() - requestStartedAt,
+      tags: {
+        source: "stripe_webhook",
+        provider: "stripe",
+        eventType: event.type,
+        correlationId,
+      },
+    })
 
     return new Response("ok", {
       status: 200,
@@ -770,6 +804,18 @@ export async function POST(req: Request) {
         auditDetail: err.auditDetail,
         correlationId,
       })
+      recordWebhookDeliveryMetric({
+        outcome: "failure",
+        latencyMs: Date.now() - requestStartedAt,
+        tags: {
+          source: "stripe_webhook",
+          provider: "stripe",
+          eventType: err.eventType,
+          correlationId,
+          reason: "tenant_mapping_missing",
+          severity: "warning",
+        },
+      })
 
       return new Response("ok", {
         status: 200,
@@ -796,6 +842,18 @@ export async function POST(req: Request) {
       reason: message,
       correlationId,
       severity: "critical",
+    })
+    recordWebhookDeliveryMetric({
+      outcome: "failure",
+      latencyMs: Date.now() - requestStartedAt,
+      tags: {
+        source: "stripe_webhook",
+        provider: "stripe",
+        eventType: event.type,
+        reason: message,
+        correlationId,
+        severity: "critical",
+      },
     })
 
     if (exhausted) {

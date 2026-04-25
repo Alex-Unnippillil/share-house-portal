@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 
 import { amenityCatalog } from "@/lib/bookings/amenity-catalog"
 import { validateBookingPolicy } from "@/lib/bookings/policy"
+import { incrementOperationalMetric } from "@/lib/observability/metrics"
 import { createClient } from "@/utils/supa-server-actions"
 
 interface ValidateRequestBody {
@@ -51,6 +52,14 @@ export async function POST(request: Request) {
   })
 
   if (!policyResult.allowed) {
+    incrementOperationalMetric("booking_conflict_validation_rejections_total", {
+      source: "booking_validation",
+      provider: "supabase",
+      amenityId: amenity.id,
+      reason: "policy_violation",
+      severity: "medium",
+    })
+
     return NextResponse.json({
       ok: true,
       allowed: false,
@@ -79,6 +88,17 @@ export async function POST(request: Request) {
       { ok: false, message: "Unable to validate conflicts", details: error.message },
       { status: 500 },
     )
+  }
+
+  if (data.length > 0) {
+    incrementOperationalMetric("booking_conflict_validation_rejections_total", {
+      source: "booking_validation",
+      provider: "supabase",
+      amenityId: amenity.id,
+      reason: "overlap_conflict",
+      severity: "medium",
+      conflictCount: data.length,
+    })
   }
 
   return NextResponse.json({
