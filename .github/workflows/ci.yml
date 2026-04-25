@@ -5,6 +5,8 @@ on:
     branches:
       - main
   pull_request:
+  schedule:
+    - cron: "0 6 * * *"
 
 jobs:
   quality:
@@ -53,3 +55,58 @@ jobs:
       - name: Performance budget contract
         run: pnpm perf:ci
 
+  e2e-smoke:
+    name: E2E smoke (PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser (chromium)
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run smoke e2e suite
+        run: pnpm exec playwright test --project=chromium --grep @smoke
+
+  e2e-full-matrix:
+    name: E2E full (${{ matrix.project }})
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, webkit]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser (${{ matrix.project }})
+        run: pnpm exec playwright install --with-deps ${{ matrix.project }}
+
+      - name: Run full e2e suite
+        run: pnpm exec playwright test --project=${{ matrix.project }}
