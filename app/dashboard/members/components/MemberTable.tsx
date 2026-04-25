@@ -1,10 +1,10 @@
 import Table, { TableHeader } from "@/components/ui/table"
 
-import { getDashboardMembers } from "../data"
+import { readMembers } from "../actions"
 import ListOfMembers from "./ListOfMembers"
 
 export default async function MemberTable() {
-  const members = await getDashboardMembers()
+  const members = await readMembers()
 
   return (
     <Table stickyHeader>
