@@ -141,4 +141,80 @@ describe("Documenso signing workflow payloads", () => {
       },
     ])
   })
+
+  it("retries transient upload failures with bounded attempts", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("upstream busy", { status: 503, statusText: "Service Unavailable" }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "upload-1", documentDataId: "doc-data-1" }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "env-1",
+            title: "lease-2026",
+            status: "pending",
+            recipients: [
+              {
+                id: "recipient-1",
+                email: "roommate@example.com",
+                role: "SIGNER",
+                token: "token-1",
+                status: "pending",
+              },
+            ],
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ signingUrl: "https://documenso.test/sign/recipient-1" }), {
+          status: 200,
+        })
+      ) as typeof fetch
+
+    global.fetch = fetchMock
+
+    const file = new File(["lease"], "lease.pdf", { type: "application/pdf" })
+
+    const response = await createLeaseSigningRequest({
+      document_id: "lease-2026",
+      file,
+      tenantEmails: ["roommate@example.com"],
+    })
+
+    expect(response.success).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
+  it("returns outage message after bounded retries on envelope timeout", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "upload-1", documentDataId: "doc-data-1" }), {
+          status: 200,
+        })
+      )
+      .mockRejectedValueOnce(new Error("timeout"))
+      .mockRejectedValueOnce(new Error("timeout"))
+      .mockRejectedValueOnce(new Error("timeout")) as typeof fetch
+
+    global.fetch = fetchMock
+
+    const file = new File(["lease"], "lease.pdf", { type: "application/pdf" })
+
+    const response = await createLeaseSigningRequest({
+      document_id: "lease-2026",
+      file,
+      tenantEmails: ["roommate@example.com"],
+    })
+
+    expect(response.success).toBe(false)
+    expect(response.error).toContain("temporarily unavailable")
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
 })

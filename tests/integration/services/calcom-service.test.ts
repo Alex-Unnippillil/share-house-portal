@@ -66,4 +66,54 @@ describe("Cal.com booking integration payloads", () => {
     expect(result.success).toBe(false)
     expect(result.error).toContain("No booking slot available for PlayStation")
   })
+
+  it("retries transient 5xx responses for event type lookup with bounded attempts", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("temporary", { status: 503, statusText: "Service Unavailable" }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ eventTypes: [] }), { status: 200 })) as typeof fetch
+
+    global.fetch = fetchMock
+
+    await createAmenityBooking({
+      amenityType: "Kitchen",
+      startTime: "2026-06-01T10:00:00.000Z",
+      endTime: "2026-06-01T11:00:00.000Z",
+      userEmail: "tenant@example.com",
+      userName: "Ava Tenant",
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it("returns outage message after bounded retries on booking timeouts", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            eventTypes: [{ id: 22, title: "Kitchen Shared", hidden: false }],
+          }),
+          { status: 200 }
+        )
+      )
+      .mockRejectedValueOnce(new Error("timeout"))
+      .mockRejectedValueOnce(new Error("timeout"))
+      .mockRejectedValueOnce(new Error("timeout")) as typeof fetch
+
+    global.fetch = fetchMock
+
+    const result = await createAmenityBooking({
+      amenityType: "Kitchen",
+      startTime: "2026-06-01T10:00:00.000Z",
+      endTime: "2026-06-01T11:00:00.000Z",
+      userEmail: "tenant@example.com",
+      userName: "Ava Tenant",
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain("temporarily degraded")
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
 })
