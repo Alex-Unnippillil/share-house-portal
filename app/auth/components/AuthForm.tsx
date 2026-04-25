@@ -229,14 +229,20 @@ export default function AuthForm({ initialMode = "login", notice, error }: AuthF
   }
 
   return (
-    <div className="w-96 space-y-6">
+    <div className="w-full max-w-md space-y-6">
       {notice ? <p className="rounded-md bg-muted p-3 text-sm">{notice}</p> : null}
       {error ? <p className="rounded-md border border-destructive/40 p-3 text-sm text-destructive">{error}</p> : null}
       <Tabs defaultValue={initialMode === "signup" ? "signup" : initialMode === "reset" ? "reset" : "login"}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="login">Login</TabsTrigger>
-          <TabsTrigger value="signup">Sign up</TabsTrigger>
-          <TabsTrigger value="reset">Reset</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1">
+          <TabsTrigger className="px-2 text-xs sm:px-3 sm:text-sm" value="login">
+            Login
+          </TabsTrigger>
+          <TabsTrigger className="px-2 text-xs sm:px-3 sm:text-sm" value="signup">
+            Sign up
+          </TabsTrigger>
+          <TabsTrigger className="px-2 text-xs sm:px-3 sm:text-sm" value="reset">
+            Reset
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="login" className="space-y-6">
@@ -328,7 +334,7 @@ export default function AuthForm({ initialMode = "login", notice, error }: AuthF
                     <FormLabel>Account type</FormLabel>
                     <FormControl>
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         value={field.value}
                         onChange={field.onChange}
                       >

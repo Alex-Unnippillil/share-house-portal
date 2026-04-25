@@ -25,8 +25,8 @@ export default async function page({ searchParams }: AuthPageProps) {
     return redirect("/")
   }
   return (
-    <div className="mt-10 px-2 lg:p-8">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+    <div className="mt-10 px-4 sm:px-6 lg:p-8">
+      <div className="mx-auto flex w-full max-w-md flex-col justify-center space-y-6">
         <div className="flex flex-col items-center space-y-2 text-center">
           <SmartLink href="/auth" className="mb-8 inline-flex">
             <span className="flex items-center space-x-2">
@@ -46,7 +46,7 @@ export default async function page({ searchParams }: AuthPageProps) {
           notice={searchParams?.message}
           error={searchParams?.error}
         />
-        <p className="px-8 text-center text-sm text-muted-foreground">
+        <p className="px-2 text-center text-sm text-muted-foreground sm:px-8">
           By clicking continue, you agree to our{" "}
           <SmartLink
             href="/terms"
