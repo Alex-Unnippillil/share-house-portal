@@ -68,7 +68,7 @@ export function SiteFooter() {
                   className="text-muted-foreground transition-colors hover:text-primary"
                   intent="navigation"
                 >
-                  About Us
+                  Portal Help
                 </SmartLink>
               </li>
               <li>

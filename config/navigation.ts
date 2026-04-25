@@ -47,6 +47,7 @@ export const appWorkspaceNav: RoleNavItem[] = [
 
 export const publicNav: MainNavItem[] = [
   { title: "Home", href: "/", icon: "home" },
+  { title: "Portal Help", href: "/about" },
   { title: "Contact", href: "/contact", icon: "phone" },
 ]
 

@@ -5,7 +5,7 @@ import type { Database } from '@/lib/supabase'
 export const APP_ROLES = ['tenant', 'roommate', 'property_manager', 'admin', 'user'] as const
 export type AppRole = (typeof APP_ROLES)[number]
 
-export const PUBLIC_ROUTE_PREFIXES = ['/auth', '/about', '/contact', '/error']
+export const PUBLIC_ROUTE_PREFIXES = ['/auth', '/contact', '/about', '/error']
 export const PUBLIC_EXACT_ROUTES = ['/', '/favicon.ico']
 
 const AUTHENTICATED_ROUTE_PREFIXES = [
