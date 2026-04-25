@@ -62,4 +62,49 @@ describe('resolveSessionRole', () => {
     expect(eq).toHaveBeenCalledWith('id', 'user-1')
     expect(maybeSingle).toHaveBeenCalled()
   })
+
+  it('maps unknown metadata roles to null when profile role is missing', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: { role: null }, error: null })
+    const eq = vi.fn().mockReturnValue({ maybeSingle })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+
+    const role = await resolveSessionRole({ from } as any, {
+      id: 'user-unknown',
+      app_metadata: { role: 'legacy_manager' },
+      user_metadata: { role: 'guest' },
+    } as any)
+
+    expect(role).toBeNull()
+  })
+
+  it('returns null when profile role is missing and no role metadata is present', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null })
+    const eq = vi.fn().mockReturnValue({ maybeSingle })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+
+    const role = await resolveSessionRole({ from } as any, {
+      id: 'user-missing-role',
+      app_metadata: {},
+      user_metadata: {},
+    } as any)
+
+    expect(role).toBeNull()
+  })
+
+  it('treats legacy `user` metadata as unknown and uses canonical profile role during migration', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: { role: 'tenant' }, error: null })
+    const eq = vi.fn().mockReturnValue({ maybeSingle })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+
+    const role = await resolveSessionRole({ from } as any, {
+      id: 'legacy-user',
+      app_metadata: { role: 'user' },
+      user_metadata: {},
+    } as any)
+
+    expect(role).toBe('tenant')
+  })
 })

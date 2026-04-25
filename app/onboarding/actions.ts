@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { createSupbaseServerClient } from "@/utils/supaone"
+import { coerceRole } from "@/lib/auth-rbac"
 import type { Json } from "@/lib/supabase"
 import {
   computeOnboardingCompletion,
@@ -67,9 +68,8 @@ async function loadSelfProfile() {
     throw new Error("Unable to load your profile for onboarding.")
   }
 
-  const role = profile.role ?? "user"
-  const allowedRoles = new Set(["tenant", "roommate", "property_manager", "admin", "user"])
-  if (!allowedRoles.has(role)) {
+  const role = coerceRole(profile.role)
+  if (!role) {
     throw new Error("Your role is not allowed to update onboarding data.")
   }
 
