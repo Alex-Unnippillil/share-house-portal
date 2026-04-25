@@ -10,6 +10,6 @@ export const siteConfig = {
   links: {
     login: "/auth",
     signup: "/onboarding",
-    contact: "/contact",
+    contact: "/support",
   },
 }

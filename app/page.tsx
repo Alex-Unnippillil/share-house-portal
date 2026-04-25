@@ -38,7 +38,8 @@ export default async function IndexPage() {
             Start onboarding
           </SmartLink>
           <p className="pt-2 text-center text-sm text-muted-foreground">
-            Need help? <SmartLink href="/contact">Contact support</SmartLink>
+            Need help?{" "}
+            <SmartLink href="/auth?redirectTo=/support">Sign in to contact support</SmartLink>
           </p>
         </CardContent>
       </Card>

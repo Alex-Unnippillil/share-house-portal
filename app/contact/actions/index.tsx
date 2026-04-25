@@ -25,7 +25,7 @@ export async function submitInquiry(data: formData) {
 
     if (error) throw error
 
-    revalidatePath("/contact")
+    revalidatePath("/support")
     return { success: true, message: "Message sent successfully!" }
   } catch (error) {
     console.error("Error submitting inquiry:", error)
