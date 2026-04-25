@@ -14,6 +14,7 @@ export type AuditAction =
   | 'operations.export.maintenance'
   | 'operations.export.bookings'
   | 'operations.export.visitors'
+  | 'payments.reconciliation.export'
 
 export async function writeAuditRecord(input: {
   action: AuditAction

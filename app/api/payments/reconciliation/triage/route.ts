@@ -1,53 +1,50 @@
-import { createClient } from "@/utils/supabase/server"
+import { requirePrivilegedApiAccess } from '@/lib/api-auth'
+import { jsonError, jsonErrorFromUnknown } from '@/lib/errors'
+import { consumeRateLimit, createRateLimitResponse, getRateLimitKeyFromRequest } from '@/lib/rate-limit'
 
-import { jsonError, jsonErrorFromUnknown } from "@/lib/errors"
-
-const allowedTriageStatus = new Set(["open", "investigating", "resolved"])
+const allowedTriageStatus = new Set(['open', 'investigating', 'resolved'])
 
 export async function PATCH(req: Request) {
   try {
-    const supabase = createClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const authContext = await requirePrivilegedApiAccess()
 
-    if (authError || !user) {
-      return jsonError("AUTH_UNAUTHORIZED")
+    if (authContext instanceof Response) {
+      return authContext
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle()
+    const { supabase, userId } = authContext
 
-    if (!profile || !["property_manager", "admin"].includes(profile.role ?? "")) {
-      return jsonError("AUTH_UNAUTHORIZED", {
-        message: "Only property managers and admins can triage failed payments.",
-      })
+    const rateLimit = consumeRateLimit({
+      bucket: 'api:payments:reconciliation:triage',
+      key: getRateLimitKeyFromRequest(req, `user:${userId}`),
+      limit: 20,
+      windowMs: 60_000,
+    })
+
+    if (!rateLimit.ok) {
+      return createRateLimitResponse(rateLimit)
     }
 
     const payload = await req.json().catch(() => null)
-    const paymentId = typeof payload?.paymentId === "string" ? payload.paymentId : null
-    const recordType = payload?.recordType === "webhook_event" ? "webhook_event" : "rent_payment"
+    const paymentId = typeof payload?.paymentId === 'string' ? payload.paymentId : null
+    const recordType = payload?.recordType === 'webhook_event' ? 'webhook_event' : 'rent_payment'
     const triageStatus =
-      typeof payload?.triageStatus === "string" ? payload.triageStatus : "open"
+      typeof payload?.triageStatus === 'string' ? payload.triageStatus : 'open'
     const triageNotes =
-      typeof payload?.triageNotes === "string" ? payload.triageNotes.trim() : ""
+      typeof payload?.triageNotes === 'string' ? payload.triageNotes.trim() : ''
 
     if (!paymentId || !allowedTriageStatus.has(triageStatus)) {
-      return jsonError("REQUEST_VALIDATION_ERROR", {
-        message: "paymentId and a valid triageStatus are required.",
+      return jsonError('REQUEST_VALIDATION_ERROR', {
+        message: 'paymentId and a valid triageStatus are required.',
       })
     }
 
-    if (recordType === "webhook_event") {
+    if (recordType === 'webhook_event') {
       const { data: eventRow, error: eventError } = await supabase
-        .from("webhook_events")
-        .select("payload")
-        .eq("provider", "stripe")
-        .eq("event_id", paymentId)
+        .from('webhook_events')
+        .select('payload')
+        .eq('provider', 'stripe')
+        .eq('event_id', paymentId)
         .single()
 
       if (eventError) {
@@ -59,7 +56,7 @@ export async function PATCH(req: Request) {
         (existingPayload.reconciliation ?? {}) as Record<string, unknown>
 
       const { error: updateError } = await supabase
-        .from("webhook_events")
+        .from('webhook_events')
         .update({
           payload: {
             ...existingPayload,
@@ -67,13 +64,13 @@ export async function PATCH(req: Request) {
               ...existingReconciliation,
               triage_status: triageStatus,
               triage_notes: triageNotes,
-              triage_updated_by: user.id,
+              triage_updated_by: userId,
               triage_updated_at: new Date().toISOString(),
             },
           },
         })
-        .eq("provider", "stripe")
-        .eq("event_id", paymentId)
+        .eq('provider', 'stripe')
+        .eq('event_id', paymentId)
 
       if (updateError) {
         throw updateError
@@ -83,9 +80,9 @@ export async function PATCH(req: Request) {
     }
 
     const { data: payment, error: paymentError } = await supabase
-      .from("rent_payments")
-      .select("metadata")
-      .eq("id", paymentId)
+      .from('rent_payments')
+      .select('metadata')
+      .eq('id', paymentId)
       .single()
 
     if (paymentError) {
@@ -96,14 +93,14 @@ export async function PATCH(req: Request) {
       ...((payment.metadata ?? {}) as Record<string, unknown>),
       triage_status: triageStatus,
       triage_notes: triageNotes,
-      triage_updated_by: user.id,
+      triage_updated_by: userId,
       triage_updated_at: new Date().toISOString(),
     }
 
     const { error: updateError } = await supabase
-      .from("rent_payments")
+      .from('rent_payments')
       .update({ metadata: nextMetadata })
-      .eq("id", paymentId)
+      .eq('id', paymentId)
 
     if (updateError) {
       throw updateError
@@ -111,6 +108,6 @@ export async function PATCH(req: Request) {
 
     return Response.json({ ok: true })
   } catch (error) {
-    return jsonErrorFromUnknown(error, "DATA_FETCH_FAILED")
+    return jsonErrorFromUnknown(error, 'DATA_FETCH_FAILED')
   }
 }

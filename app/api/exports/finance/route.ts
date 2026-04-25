@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server'
 import { writeAuditRecord } from '@/lib/audit'
 import { fetchMemberRole } from '@/lib/data/members'
 import { getFinanceRows, toCsv } from '@/lib/operations/data'
+import { consumeRateLimit, createRateLimitResponse, getRateLimitKeyFromRequest } from '@/lib/rate-limit'
 import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
 
-export async function GET() {
+export async function GET(req: Request) {
   const supabase = await createSupbaseServerClientReadOnly()
   const {
     data: { user },
@@ -20,8 +21,32 @@ export async function GET() {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   }
 
-  const csv = toCsv((await getFinanceRows({ page: 1, pageSize: 1000 })).rows)
-  await writeAuditRecord({ action: 'operations.export.finance', actorId: user.id, actorRole: role, targetType: 'finance_export' })
+  const rateLimit = consumeRateLimit({
+    bucket: 'api:exports:finance',
+    key: getRateLimitKeyFromRequest(req, `user:${user.id}`),
+    limit: 5,
+    windowMs: 60_000,
+  })
+
+  if (!rateLimit.ok) {
+    return createRateLimitResponse(rateLimit)
+  }
+
+  const rows = (await getFinanceRows({ page: 1, pageSize: 1000 })).rows
+  const csv = toCsv(rows)
+  const exportedAt = new Date().toISOString()
+
+  await writeAuditRecord({
+    action: 'operations.export.finance',
+    actorId: user.id,
+    actorRole: role,
+    targetType: 'finance_export',
+    metadata: {
+      scope: 'finance',
+      rowCount: rows.length,
+      exportedAt,
+    },
+  })
 
   return new NextResponse(csv, {
     status: 200,
