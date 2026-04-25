@@ -31,7 +31,7 @@ const FormSchema = z
     name: z.string().min(2, {
       message: "Username must be at least 2 characters.",
     }),
-    role: z.enum(["user", "admin"]),
+    role: z.enum(["tenant", "roommate", "property_manager", "admin"]),
     status: z.enum(["active", "resigned"]),
     email: z.string().email(),
     password: z.string().min(6, { message: "Password should be 6 characters" }),
@@ -43,14 +43,14 @@ const FormSchema = z
   })
 
 export default function MemberForm() {
-  const roles = ["admin", "user"]
+  const roles = ["tenant", "roommate", "property_manager", "admin"]
   const status = ["active", "resigned"]
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       name: "",
-      role: "user",
+      role: "tenant",
       status: "active",
       email: "",
       password: "",
@@ -58,16 +58,30 @@ export default function MemberForm() {
     },
   })
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    createMember()
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    const result = await createMember({
+      email: data.email,
+      password: data.password,
+      confirm: data.confirm,
+      username: data.name,
+      role: data.role,
+      status: data.status,
+    })
+
+    if (!result.ok) {
+      toast({
+        variant: "destructive",
+        title: "Could not create member",
+        description: result.message,
+      })
+      return
+    }
+
     document.getElementById("create-trigger")?.click()
+    form.reset()
     toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
+      title: "Member created",
+      description: `${data.name} has been added successfully.`,
     })
   }
 
