@@ -41,7 +41,7 @@ describe("dashboard members/todo visual states", () => {
             },
             {
               name: "Former",
-              role: "user",
+              role: "tenant",
               createdAt: "Yesterday",
               status: "resigned",
             },

@@ -3,9 +3,10 @@ import 'server-only'
 import { redirect } from 'next/navigation'
 
 import { fetchMemberRole } from '@/lib/data/members'
+import { migrateLegacyRole, type AppRole } from '@/lib/roles'
 import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
 
-export const PRIVILEGED_ROLES = ['property_manager', 'admin'] as const
+export const PRIVILEGED_ROLES: AppRole[] = ['property_manager', 'admin']
 
 export async function requirePrivilegedAccess() {
   const supabase = await createSupbaseServerClientReadOnly()
@@ -17,9 +18,9 @@ export async function requirePrivilegedAccess() {
     redirect('/auth')
   }
 
-  const role = await fetchMemberRole(supabase as any, user.id)
+  const role = migrateLegacyRole(await fetchMemberRole(supabase as any, user.id))
 
-  if (!role || !PRIVILEGED_ROLES.includes(role as (typeof PRIVILEGED_ROLES)[number])) {
+  if (!role || !PRIVILEGED_ROLES.includes(role)) {
     redirect('/dashboard')
   }
 

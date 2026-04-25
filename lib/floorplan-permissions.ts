@@ -1,3 +1,5 @@
+import type { AppRole } from "@/lib/roles"
+
 export type FloorplanMarkerType = "room" | "storage" | "chore"
 
 export type FloorplanVisibilityScope =
@@ -5,12 +7,7 @@ export type FloorplanVisibilityScope =
   | "selected_roommates"
   | "private"
 
-export type FloorplanRole =
-  | "tenant"
-  | "roommate"
-  | "property_manager"
-  | "admin"
-  | "user"
+export type FloorplanRole = AppRole
 
 export type FloorplanAnnotation = {
   id: string
@@ -31,7 +28,6 @@ const roleMarkerPermissions: Record<FloorplanRole, FloorplanMarkerType[]> = {
   roommate: ["storage", "chore"],
   property_manager: ["room", "storage", "chore"],
   admin: ["room", "storage", "chore"],
-  user: ["chore"],
 }
 
 export function getAllowedMarkerTypes(role: FloorplanRole): FloorplanMarkerType[] {

@@ -1,3 +1,5 @@
+import type { AppRole } from "@/lib/roles"
+
 export type WelcomeMessage = {
   title: string
   subtitle: string
@@ -74,7 +76,7 @@ export type MaintenanceTicket = {
 export type FloorplanRoommate = {
   id: string
   name: string
-  role: "tenant" | "roommate" | "property_manager" | "admin" | "user"
+  role: AppRole
 }
 
 export type FloorplanAnnotation = {
@@ -109,7 +111,7 @@ export type FloorplanWorkspace = {
   svgMarkup: string
   currentVersion: number
   currentUserId: string
-  currentUserRole: "tenant" | "roommate" | "property_manager" | "admin" | "user"
+  currentUserRole: AppRole
   roommates: FloorplanRoommate[]
   annotations: FloorplanAnnotation[]
   annotationHistory: FloorplanAnnotationVersion[]

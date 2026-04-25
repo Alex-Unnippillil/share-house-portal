@@ -2,9 +2,11 @@ import "server-only"
 
 import { cache } from "react"
 
+import type { AppRole } from "@/lib/roles"
+
 export type DashboardMember = {
         name: string
-        role: "admin" | "user"
+        role: AppRole
         createdAt: string
         status: "active" | "resigned"
 }
@@ -23,20 +25,20 @@ export const getDashboardMembers = cache(async (): Promise<DashboardMember[]> =>
                         status: "active",
                 },
                 {
-                        name: "Non Admin User",
-                        role: "user",
+                        name: "Tenant Member",
+                        role: "tenant",
                         createdAt: new Date().toDateString(),
                         status: "active",
                 },
                 {
-                        name: "Administrator",
-                        role: "admin",
+                        name: "Property Manager",
+                        role: "property_manager",
                         createdAt: new Date().toDateString(),
                         status: "resigned",
                 },
                 {
-                        name: "Satoshi",
-                        role: "user",
+                        name: "Roommate Member",
+                        role: "roommate",
                         createdAt: new Date().toDateString(),
                         status: "active",
                 },

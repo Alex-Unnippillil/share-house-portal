@@ -30,7 +30,12 @@ export default function ListOfMembers({
   return (
     <tbody>
       {members.map((member, index) => {
-        const roleTone = member.role === "admin" ? "success" : "warning"
+        const roleTone =
+          member.role === "admin"
+            ? "success"
+            : member.role === "property_manager"
+              ? "warning"
+              : "neutral"
         const statusTone = member.status === "active" ? "success" : "danger"
 
         return (

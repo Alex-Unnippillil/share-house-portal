@@ -1,4 +1,5 @@
 import type { PortalRole } from "@/config/navigation"
+import { migrateLegacyRole } from "@/lib/roles"
 
 const ROLE_LABELS: Record<PortalRole, string> = {
   tenant: "Tenant",
@@ -24,16 +25,7 @@ export type RoleCue = {
 export function normalizePortalRole(
   role: string | null | undefined
 ): PortalRole {
-  if (
-    role === "tenant" ||
-    role === "roommate" ||
-    role === "property_manager" ||
-    role === "admin"
-  ) {
-    return role
-  }
-
-  return "tenant"
+  return migrateLegacyRole(role) ?? "tenant"
 }
 
 export function getRoleCue(role: string | null | undefined): RoleCue {
