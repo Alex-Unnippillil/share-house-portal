@@ -3,6 +3,9 @@
 import { createSupbaseServerClient } from "@/utils/supaone"
 import { Resend } from "resend"
 
+import { incrementOperationalMetric } from "@/lib/observability/metrics"
+import { providerOutageMessage, resilientRequest } from "@/lib/resilience"
+
 export interface NotificationData {
   to: string | string[]
   subject: string
@@ -59,12 +62,32 @@ class NotificationService {
         throw new Error(`Email template '${notification.template}' not found`)
       }
 
-      const { data, error } = await this.resend.emails.send({
-        from: "Roomsily <notifications@roomsily.com>",
-        to: recipients,
-        subject: notification.subject,
-        html: emailContent,
-      })
+      const { value: resendResponse } = await resilientRequest(
+        async () =>
+          this.resend!.emails.send({
+            from: "Roomsily <notifications@roomsily.com>",
+            to: recipients,
+            subject: notification.subject,
+            html: emailContent,
+          }),
+        {
+          provider: "resend",
+          operation: "send_email",
+          retries: 2,
+          initialDelayMs: 250,
+          jitter: true,
+          timeoutMs: 5_000,
+          onCircuitOpen: () => {
+            incrementOperationalMetric("upstream_circuit_open_total", {
+              source: "notification_service",
+              provider: "resend",
+              operation: "send_email",
+            })
+          },
+        }
+      )
+
+      const { data, error } = resendResponse
 
       if (error) {
         console.error("Failed to send email:", error)
@@ -81,7 +104,7 @@ class NotificationService {
       console.error("Email sending error:", error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: providerOutageMessage("resend"),
       }
     }
   }

@@ -43,6 +43,15 @@ export interface SerializedApiError {
   details?: unknown
 }
 
+export interface OperatorErrorLog {
+  code: ErrorCode
+  status: number
+  message: string
+  details?: unknown
+  causeName?: string
+  causeMessage?: string
+}
+
 export function getErrorDocsUrl(code: ErrorCode): string {
   return `${ERROR_DOCS_PATH}#${code.toLowerCase()}`
 }
@@ -79,8 +88,88 @@ export class ApiError extends Error {
   }
 }
 
+export class ConfigurationApiError extends ApiError {
+  constructor(variableName: string, cause?: unknown) {
+    super("CONFIGURATION_ERROR", {
+      message: `Missing or invalid configuration for ${variableName}.`,
+      details: { variableName },
+      cause,
+    })
+    this.name = "ConfigurationApiError"
+  }
+}
+
+interface UpstreamServiceApiErrorOptions extends ApiErrorOptions {
+  operation: string
+  upstreamStatus?: number
+}
+
+export class UpstreamServiceApiError extends ApiError {
+  readonly provider: string
+
+  readonly operation: string
+
+  readonly upstreamStatus?: number
+
+  constructor(provider: string, options: UpstreamServiceApiErrorOptions) {
+    super("UPSTREAM_SERVICE_ERROR", {
+      ...options,
+      details: {
+        provider,
+        operation: options.operation,
+        upstreamStatus: options.upstreamStatus,
+        ...(typeof options.details === "object" && options.details !== null ? options.details : {}),
+      },
+    })
+    this.name = "UpstreamServiceApiError"
+    this.provider = provider
+    this.operation = options.operation
+    this.upstreamStatus = options.upstreamStatus
+  }
+}
+
+export class RequestValidationApiError extends ApiError {
+  constructor(message: string, details?: unknown) {
+    super("REQUEST_VALIDATION_ERROR", { message, details })
+    this.name = "RequestValidationApiError"
+  }
+}
+
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError
+}
+
+function inferUpstreamFromError(error: Error): ApiError | null {
+  if (error.name === "OperationTimeoutError") {
+    return new UpstreamServiceApiError("unknown", {
+      operation: "unknown",
+      message: error.message,
+      details: { kind: "timeout" },
+      cause: error,
+    })
+  }
+
+  if (error.name === "CircuitOpenError") {
+    return new UpstreamServiceApiError("unknown", {
+      operation: "unknown",
+      message: error.message,
+      details: { kind: "circuit_open" },
+      cause: error,
+    })
+  }
+
+  if (error.name === "UpstreamHttpError") {
+    const maybeStatus = (error as Error & { status?: unknown }).status
+    return new UpstreamServiceApiError("unknown", {
+      operation: "unknown",
+      message: error.message,
+      upstreamStatus: typeof maybeStatus === "number" ? maybeStatus : undefined,
+      details: { kind: "http" },
+      cause: error,
+    })
+  }
+
+  return null
 }
 
 export function toApiError(
@@ -92,6 +181,11 @@ export function toApiError(
   }
 
   if (error instanceof Error) {
+    const inferredUpstreamError = inferUpstreamFromError(error)
+    if (inferredUpstreamError) {
+      return inferredUpstreamError
+    }
+
     return new ApiError(fallbackCode, {
       message: error.message,
       cause: error,
@@ -119,6 +213,20 @@ export function toApiError(
   }
 
   return new ApiError(fallbackCode)
+}
+
+export function toOperatorErrorLog(error: unknown): OperatorErrorLog {
+  const apiError = toApiError(error)
+  const cause = apiError.cause instanceof Error ? apiError.cause : undefined
+
+  return {
+    code: apiError.code,
+    status: apiError.status,
+    message: apiError.message,
+    details: apiError.details,
+    causeName: cause?.name,
+    causeMessage: cause?.message,
+  }
 }
 
 export function serializeError(error: ApiError): SerializedApiError {

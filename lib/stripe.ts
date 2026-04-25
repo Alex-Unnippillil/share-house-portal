@@ -1,5 +1,8 @@
 import Stripe from "stripe"
 
+import { ConfigurationApiError, UpstreamServiceApiError } from "@/lib/errors"
+import { resilientRequest } from "@/lib/resilience"
+
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 
 if (!stripeSecretKey) {
@@ -9,11 +12,36 @@ if (!stripeSecretKey) {
 
 export function getStripe(): Stripe {
   if (!stripeSecretKey) {
-    throw new Error("Stripe is not configured. Set STRIPE_SECRET_KEY in your environment.")
+    throw new ConfigurationApiError("STRIPE_SECRET_KEY")
   }
 
   const apiVersion: Stripe.StripeConfig["apiVersion"] = "2024-06-20"
   return new Stripe(stripeSecretKey, { apiVersion })
+}
+
+export async function withStripeResilience<T>(
+  operation: string,
+  request: () => Promise<T>
+): Promise<T> {
+  try {
+    const { value } = await resilientRequest(request, {
+      provider: "stripe",
+      operation,
+      retries: 2,
+      initialDelayMs: 250,
+      jitter: true,
+      timeoutMs: 6_000,
+      circuitFailureThreshold: 4,
+    })
+
+    return value
+  } catch (error) {
+    throw new UpstreamServiceApiError("stripe", {
+      operation,
+      details: { originalMessage: error instanceof Error ? error.message : String(error) },
+      cause: error,
+    })
+  }
 }
 
 export function getAppBaseUrl(): string {
@@ -23,5 +51,3 @@ export function getAppBaseUrl(): string {
   }
   return "http://localhost:3000"
 }
-
-

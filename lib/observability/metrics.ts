@@ -11,6 +11,7 @@ export type OperationalMetricName =
   | "maintenance_sla_breaches_total"
   | "message_moderation_actions_total"
   | "auth_failures_total"
+  | "upstream_circuit_open_total"
 
 export interface MetricTags {
   source: string
