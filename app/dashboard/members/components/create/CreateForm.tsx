@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
+import { CANONICAL_ROLES } from "@/lib/roles"
 
 import { createMember } from "../../actions"
 
@@ -31,7 +32,7 @@ const FormSchema = z
     name: z.string().min(2, {
       message: "Username must be at least 2 characters.",
     }),
-    role: z.enum(["user", "admin"]),
+    role: z.enum(CANONICAL_ROLES),
     status: z.enum(["active", "resigned"]),
     email: z.string().email(),
     password: z.string().min(6, { message: "Password should be 6 characters" }),
@@ -43,14 +44,14 @@ const FormSchema = z
   })
 
 export default function MemberForm() {
-  const roles = ["admin", "user"]
+  const roles = CANONICAL_ROLES
   const status = ["active", "resigned"]
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       name: "",
-      role: "user",
+      role: "tenant",
       status: "active",
       email: "",
       password: "",

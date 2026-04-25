@@ -11,8 +11,8 @@ const LEGACY_MEMBERS: DashboardMember[] = [
     status: "active",
   },
   {
-    name: "Non Admin User",
-    role: "user",
+    name: "Tenant Member",
+    role: "tenant",
     createdAt: new Date().toDateString(),
     status: "active",
   },
@@ -24,7 +24,7 @@ const LEGACY_MEMBERS: DashboardMember[] = [
   },
   {
     name: "Satoshi",
-    role: "user",
+    role: "roommate",
     createdAt: new Date().toDateString(),
     status: "active",
   },

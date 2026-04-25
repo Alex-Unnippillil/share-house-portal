@@ -1,6 +1,7 @@
 import type { MainNavItem, SidebarNavItem } from "@/types/nav"
+import type { AppRole as PortalRole } from "@/lib/roles"
 
-export type PortalRole = "tenant" | "roommate" | "property_manager" | "admin"
+export type { PortalRole }
 export type NavTree = "public" | "tenant" | "property_manager" | "admin"
 export type NavigationDomain = "core" | "operations" | "account"
 

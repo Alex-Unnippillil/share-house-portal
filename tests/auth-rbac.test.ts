@@ -62,4 +62,18 @@ describe('resolveSessionRole', () => {
     expect(eq).toHaveBeenCalledWith('id', 'user-1')
     expect(maybeSingle).toHaveBeenCalled()
   })
+
+  it('maps legacy user role to canonical tenant role', async () => {
+    const supabase = {
+      from: vi.fn(),
+    }
+
+    const role = await resolveSessionRole(supabase as any, {
+      app_metadata: { role: 'user' },
+      user_metadata: {},
+    } as any)
+
+    expect(role).toBe('tenant')
+    expect(supabase.from).not.toHaveBeenCalled()
+  })
 })

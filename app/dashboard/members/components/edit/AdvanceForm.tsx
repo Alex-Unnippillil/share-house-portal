@@ -22,20 +22,21 @@ import {
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
+import { CANONICAL_ROLES } from "@/lib/roles"
 
 const FormSchema = z.object({
-  role: z.enum(["admin", "user"]),
+  role: z.enum(CANONICAL_ROLES),
   status: z.enum(["active", "resigned"]),
 })
 
 export default function AdvanceForm() {
-  const roles = ["admin", "user"]
+  const roles = CANONICAL_ROLES
   const status = ["active", "resigned"]
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      role: "user",
+      role: "tenant",
       status: "active",
     },
   })
