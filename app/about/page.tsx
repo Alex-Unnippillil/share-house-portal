@@ -1,65 +1,96 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Star, Zap, Shield } from "lucide-react"
 
 import { Contact } from "@/components/forms/contact"
 
+const quickStartSteps = [
+  {
+    title: "Complete onboarding",
+    description:
+      "Confirm your unit assignment, rent share, emergency contacts, and vehicle details so roommates and property managers can coordinate safely.",
+  },
+  {
+    title: "Set up rent payments",
+    description:
+      "Connect a payment method, enable autopay if needed, and review due dates and receipts from the Payments workspace.",
+  },
+  {
+    title: "Book shared amenities",
+    description:
+      "Reserve shared spaces like kitchen, TV room, parking, and computer stations while avoiding booking conflicts.",
+  },
+  {
+    title: "Track documents and requests",
+    description:
+      "Use Documents for lease files and signed agreements, and Maintenance for issue reporting and progress updates.",
+  },
+]
+
+const faqItems = [
+  {
+    question: "Who can see my requests and bookings?",
+    answer:
+      "Roommates in your unit and authorized property managers can view booking and request status needed for household coordination.",
+  },
+  {
+    question: "How do overnight guest limits work?",
+    answer:
+      "Visitor requests are validated against your property policy before submission and notify roommates plus property management.",
+  },
+  {
+    question: "Where do I find signed lease agreements?",
+    answer:
+      "Open the Documents area to view the latest signed lease files, previous versions, and compliance records.",
+  },
+]
+
 export default function AboutPage() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      <section className="mb-16 text-center">
-        <h1 className="mb-4 text-4xl font-bold">About Our Company</h1>
-        <p className="text-xl text-muted-foreground">
-          We&#39;re on a mission to revolutionize the industry with innovative solutions.
+    <div className="container mx-auto space-y-10 px-4 py-12">
+      <section className="space-y-3">
+        <h1 className="text-4xl font-bold">Portal Help</h1>
+        <p className="max-w-3xl text-muted-foreground">
+          Use this guide to get started with rent, amenity bookings, documents, and roommate coordination in the Share House
+          Portal.
         </p>
       </section>
 
-      <section className="mb-16">
-        <h2 className="mb-8 text-center text-2xl font-semibold">Our Team</h2>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {teamMembers.map((member) => (
-            <div key={member.name}>
-              <Card>
-                <CardHeader className="text-center">
-                  <Avatar className="mx-auto mb-4 size-24">
-                    <AvatarImage src={member.avatar} alt={member.name} />
-                    <AvatarFallback>
-                      {member.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <CardTitle>{member.name}</CardTitle>
-                  <CardDescription>{member.role}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-center">{member.bio}</p>
-                </CardContent>
-              </Card>
-            </div>
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">How it works</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {quickStartSteps.map((step) => (
+            <Card key={step.title}>
+              <CardHeader>
+                <CardTitle>{step.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{step.description}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section className="mb-16">
-        <h2 className="mb-8 text-center text-2xl font-semibold">Our Values</h2>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {values.map((value) => (
-            <div key={value.title} className="text-center">
-              <div className="mb-4">{value.icon}</div>
-              <h3 className="mb-2 text-xl font-semibold">{value.title}</h3>
-              <p className="text-muted-foreground">{value.description}</p>
-            </div>
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">Frequently asked questions</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {faqItems.map((item) => (
+            <Card key={item.question}>
+              <CardHeader>
+                <CardTitle className="text-lg">{item.question}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{item.answer}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
 
-      <section className="mb-16">
+      <section>
         <Card>
           <CardHeader>
-            <CardTitle className="mb-4 text-2xl font-semibold">Contact Us</CardTitle>
-            <CardDescription>Have questions? Get in touch with our team.</CardDescription>
+            <CardTitle>Need more help?</CardTitle>
+            <CardDescription>Contact property support for account, billing, or booking issues.</CardDescription>
           </CardHeader>
           <CardContent>
             <Contact />
@@ -69,42 +100,3 @@ export default function AboutPage() {
     </div>
   )
 }
-
-const teamMembers = [
-  {
-    name: "Jane Doe",
-    role: "CEO & Founder",
-    bio: "Visionary leader with 15+ years of experience in tech innovation.",
-    avatar: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    name: "John Smith",
-    role: "CTO",
-    bio: "Tech guru passionate about creating cutting-edge solutions.",
-    avatar: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    name: "Emily Brown",
-    role: "Head of Design",
-    bio: "Creative mind behind our stunning user interfaces and experiences.",
-    avatar: "/placeholder.svg?height=100&width=100",
-  },
-]
-
-const values = [
-  {
-    title: "Innovation",
-    description: "We constantly push boundaries to create groundbreaking solutions.",
-    icon: <Star className="mx-auto size-12 text-primary" />,
-  },
-  {
-    title: "Efficiency",
-    description: "We optimize our processes to deliver results quickly and effectively.",
-    icon: <Zap className="mx-auto size-12 text-primary" />,
-  },
-  {
-    title: "Integrity",
-    description: "We uphold the highest standards of honesty and transparency in all we do.",
-    icon: <Shield className="mx-auto size-12 text-primary" />,
-  },
-]

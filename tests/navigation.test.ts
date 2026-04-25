@@ -30,7 +30,7 @@ describe("shared navigation configuration", () => {
       includeDisabled: false,
     }).map((item) => item.href)
 
-    expect(signedOut).toEqual(["/", "/contact"])
+    expect(signedOut).toEqual(["/", "/about", "/contact"])
     expect(signedIn).toEqual(
       expect.arrayContaining([
         "/dashboard",
