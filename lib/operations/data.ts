@@ -2,6 +2,8 @@ import 'server-only'
 
 import { unstable_cache, unstable_noStore } from 'next/cache'
 
+import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
+
 type KpiModule = {
   id: 'payments' | 'maintenance' | 'bookings' | 'moderation'
   title: string
@@ -60,6 +62,18 @@ export type PaginationOptions = {
   pageSize?: number
 }
 
+export type OperationsActorRole = 'tenant' | 'roommate' | 'property_manager' | 'admin' | 'user'
+
+export type OperationsDataContext = {
+  actorId: string
+  actorRole: OperationsActorRole
+  unitIds?: string[]
+  propertyId?: string
+  client?: {
+    from: (table: string) => any
+  }
+}
+
 export type PaginatedResult<T> = {
   rows: T[]
   page: number
@@ -68,48 +82,130 @@ export type PaginatedResult<T> = {
   totalPages: number
 }
 
-const financeRows: FinanceRow[] = [
-  { payment_id: 'pay_1001', tenant: 'Jordan Reed', unit: '3B', amount: 1260, status: 'succeeded', processed_at: '2025-02-01T09:10:00.000Z' },
-  { payment_id: 'pay_1002', tenant: 'Avery Stone', unit: '2A', amount: 980, status: 'failed', processed_at: '2025-02-03T11:00:00.000Z' },
-  { payment_id: 'pay_1003', tenant: 'Sam Lee', unit: '3B', amount: 1260, status: 'pending', processed_at: '2025-02-04T14:30:00.000Z' },
-]
+const PRIVILEGED_ROLES = new Set<OperationsActorRole>(['property_manager', 'admin'])
 
-const maintenanceRows: MaintenanceRow[] = [
-  { request_id: 'mnt_201', title: 'Leaky kitchen faucet', priority: 'high', status: 'in_progress', unit: '3B', updated_at: '2025-02-05T08:15:00.000Z' },
-  { request_id: 'mnt_202', title: 'Hallway light outage', priority: 'normal', status: 'pending', unit: '2A', updated_at: '2025-02-05T09:45:00.000Z' },
-  { request_id: 'mnt_203', title: 'AC filter replacement', priority: 'low', status: 'completed', unit: '1C', updated_at: '2025-02-03T12:20:00.000Z' },
-]
-
-const bookingRows: BookingRow[] = [
-  { booking_id: 'bk_301', amenity: 'Kitchen', unit: '3B', status: 'confirmed', start_time: '2025-02-07T18:00:00.000Z', end_time: '2025-02-07T19:30:00.000Z' },
-  { booking_id: 'bk_302', amenity: 'Parking Spot 2', unit: '2A', status: 'pending', start_time: '2025-02-08T20:00:00.000Z', end_time: '2025-02-09T08:00:00.000Z' },
-  { booking_id: 'bk_303', amenity: 'TV Room', unit: '1C', status: 'cancelled', start_time: '2025-02-06T21:00:00.000Z', end_time: '2025-02-06T22:00:00.000Z' },
-]
-
-const moderationRows: ModerationRow[] = [
-  { message_id: 'msg_401', thread: 'Quiet hours policy', author: 'Taylor Kim', flag_reason: 'Harassment', status: 'open', created_at: '2025-02-05T10:30:00.000Z' },
-  { message_id: 'msg_402', thread: 'Parking swap request', author: 'Chris Park', flag_reason: 'Spam', status: 'resolved', created_at: '2025-02-04T16:40:00.000Z' },
-  { message_id: 'msg_403', thread: 'Maintenance updates', author: 'Jamie Fox', flag_reason: 'Abusive language', status: 'open', created_at: '2025-02-05T12:00:00.000Z' },
-]
-
-const visitorRows: VisitorRow[] = [
-  { visitor_id: 'vis_501', guest_name: 'Nina Ortiz', host: 'Jordan Reed', status: 'approved', check_in_date: '2025-02-09', check_out_date: '2025-02-11' },
-  { visitor_id: 'vis_502', guest_name: 'Luis Grant', host: 'Avery Stone', status: 'pending', check_in_date: '2025-02-10', check_out_date: '2025-02-10' },
-  { visitor_id: 'vis_503', guest_name: 'Mia Wong', host: 'Sam Lee', status: 'completed', check_in_date: '2025-02-01', check_out_date: '2025-02-03' },
-]
-
-function paginateRows<T>(rows: T[], options: PaginationOptions = {}): PaginatedResult<T> {
+function normalizePagination(options: PaginationOptions = {}) {
   const pageSize = Number.isFinite(options.pageSize) ? Math.min(Math.max(options.pageSize ?? 20, 1), 100) : 20
-  const totalRows = rows.length
-  const totalPages = Math.max(Math.ceil(totalRows / pageSize), 1)
-  const page = Number.isFinite(options.page) ? Math.min(Math.max(options.page ?? 1, 1), totalPages) : 1
+  const page = Number.isFinite(options.page) ? Math.max(options.page ?? 1, 1) : 1
+  return { page, pageSize }
+}
 
-  const startIndex = (page - 1) * pageSize
-  const endIndex = startIndex + pageSize
+function mapPaymentStatus(status: string | null | undefined): FinanceRow['status'] {
+  if (status === 'succeeded' || status === 'completed') return 'succeeded'
+  if (status === 'failed' || status === 'cancelled') return 'failed'
+  return 'pending'
+}
+
+function mapMaintenancePriority(priority: string | null | undefined): MaintenanceRow['priority'] {
+  if (priority === 'low' || priority === 'normal' || priority === 'high' || priority === 'urgent') return priority
+  if (priority === 'medium') return 'normal'
+  return 'normal'
+}
+
+function mapMaintenanceStatus(status: string | null | undefined): MaintenanceRow['status'] {
+  if (status === 'pending' || status === 'in_progress' || status === 'completed') return status
+  if (status === 'open') return 'pending'
+  if (status === 'cancelled') return 'completed'
+  return 'pending'
+}
+
+function mapModerationStatus(status: string | null | undefined): ModerationRow['status'] {
+  if (status === 'flagged') return 'open'
+  return 'resolved'
+}
+
+function resolveScope(context?: OperationsDataContext) {
+  if (!context) {
+    return {
+      isPrivileged: true,
+      propertyId: undefined as string | undefined,
+      unitIds: [] as string[],
+      actorId: undefined as string | undefined,
+      actorRole: 'admin' as OperationsActorRole,
+    }
+  }
+
+  const actorRole = context.actorRole
+  const isPrivileged = PRIVILEGED_ROLES.has(actorRole)
 
   return {
-    rows: rows.slice(startIndex, endIndex),
-    page,
+    isPrivileged,
+    propertyId: context.propertyId,
+    unitIds: context.unitIds ?? [],
+    actorId: context.actorId,
+    actorRole,
+  }
+}
+
+function assertPrivilegedScope(context?: OperationsDataContext) {
+  const scope = resolveScope(context)
+
+  if (!scope.isPrivileged) {
+    throw new Error('Only property managers and admins can access operations exports.')
+  }
+
+  if (scope.actorRole === 'property_manager' && !scope.propertyId && !scope.unitIds.length) {
+    throw new Error('Property manager export scope is missing propertyId or unitIds.')
+  }
+
+  return scope
+}
+
+function applyManagerScopeFilters(query: any, context?: OperationsDataContext) {
+  const scope = assertPrivilegedScope(context)
+
+  if (scope.actorRole === 'admin') {
+    if (scope.propertyId) {
+      query = query.eq('property_id', scope.propertyId)
+    }
+    if (scope.unitIds.length) {
+      query = query.in('unit_id', scope.unitIds)
+    }
+    return query
+  }
+
+  if (scope.propertyId) {
+    query = query.eq('property_id', scope.propertyId)
+  }
+
+  if (scope.unitIds.length) {
+    query = query.in('unit_id', scope.unitIds)
+  }
+
+  return query
+}
+
+async function getClient(context?: OperationsDataContext) {
+  if (context?.client) return context.client
+  return createSupbaseServerClientReadOnly()
+}
+
+async function runPaginatedQuery<T>(
+  options: PaginationOptions | undefined,
+  fetchPage: (page: number, pageSize: number) => Promise<{ data: T[] | null; count: number | null; error: { message: string } | null }>
+): Promise<PaginatedResult<T>> {
+  const { page, pageSize } = normalizePagination(options)
+
+  let result = await fetchPage(page, pageSize)
+
+  if (result.error) {
+    throw new Error(result.error.message)
+  }
+
+  const totalRows = result.count ?? result.data?.length ?? 0
+  const totalPages = Math.max(Math.ceil(totalRows / pageSize), 1)
+  const clampedPage = Math.min(page, totalPages)
+
+  if (clampedPage !== page) {
+    result = await fetchPage(clampedPage, pageSize)
+    if (result.error) {
+      throw new Error(result.error.message)
+    }
+  }
+
+  return {
+    rows: result.data ?? [],
+    page: clampedPage,
     pageSize,
     totalRows,
     totalPages,
@@ -118,10 +214,23 @@ function paginateRows<T>(rows: T[], options: PaginationOptions = {}): PaginatedR
 
 const getCachedOperationsKpis = unstable_cache(
   async (): Promise<KpiModule[]> => {
-    const successRate = Math.round((financeRows.filter((row) => row.status === 'succeeded').length / financeRows.length) * 100)
-    const openMaintenance = maintenanceRows.filter((row) => row.status !== 'completed').length
-    const bookingUtilization = Math.round((bookingRows.filter((row) => row.status === 'confirmed').length / bookingRows.length) * 100)
-    const unresolvedModeration = moderationRows.filter((row) => row.status === 'open').length
+    const [finance, maintenance, bookings, moderation] = await Promise.all([
+      getFinanceRows({ page: 1, pageSize: 100 }),
+      getMaintenanceRows({ page: 1, pageSize: 100 }),
+      getBookingRows({ page: 1, pageSize: 100 }),
+      getModerationRows({ page: 1, pageSize: 100 }),
+    ])
+
+    const successRate =
+      finance.totalRows > 0
+        ? Math.round((finance.rows.filter((row) => row.status === 'succeeded').length / finance.totalRows) * 100)
+        : 0
+    const openMaintenance = maintenance.rows.filter((row) => row.status !== 'completed').length
+    const bookingUtilization =
+      bookings.totalRows > 0
+        ? Math.round((bookings.rows.filter((row) => row.status === 'confirmed').length / bookings.totalRows) * 100)
+        : 0
+    const unresolvedModeration = moderation.rows.filter((row) => row.status === 'open').length
 
     return [
       { id: 'payments', title: 'Payment success', value: `${successRate}%`, helper: 'Successful rent payments this cycle', href: '/dashboard/operations/finance' },
@@ -136,39 +245,167 @@ const getCachedOperationsKpis = unstable_cache(
 
 export const getOperationsKpis = async () => getCachedOperationsKpis()
 
-export async function getFinanceRows(options?: PaginationOptions) {
+export async function getFinanceRows(options?: PaginationOptions, context?: OperationsDataContext) {
   unstable_noStore()
-  return paginateRows(financeRows, options)
+  const client = await getClient(context)
+
+  const result = await runPaginatedQuery(options, async (page, pageSize) => {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    let query = client
+      .from('rent_payments')
+      .select('id, amount, status, paid_at, processed_at, created_at, tenant_id, payer_name, unit, unit_id, property_id', {
+        count: 'exact',
+      })
+      .order('processed_at', { ascending: false, nullsFirst: false })
+
+    query = applyManagerScopeFilters(query, context)
+
+    return query.range(from, to)
+  })
+
+  return {
+    ...result,
+    rows: result.rows.map((row: any) => ({
+      payment_id: String(row.id),
+      tenant: String(row.payer_name ?? row.tenant_name ?? row.tenant_id ?? 'Unknown'),
+      unit: String(row.unit ?? row.unit_label ?? row.unit_id ?? 'Unknown'),
+      amount: Number(row.amount ?? 0),
+      status: mapPaymentStatus(row.status),
+      processed_at: String(row.processed_at ?? row.paid_at ?? row.created_at ?? new Date(0).toISOString()),
+    } satisfies FinanceRow)),
+  }
 }
 
-const getCachedMaintenanceRows = unstable_cache(async () => maintenanceRows, ['maintenance-rows'], {
-  revalidate: 300,
-  tags: ['maintenance-rows'],
-})
-const getCachedBookingRows = unstable_cache(async () => bookingRows, ['booking-rows'], {
-  revalidate: 120,
-  tags: ['booking-rows'],
-})
-const getCachedModerationRows = unstable_cache(async () => moderationRows, ['moderation-rows'], {
-  revalidate: 120,
-  tags: ['moderation-rows'],
-})
-const getCachedVisitorRows = unstable_cache(async () => visitorRows, ['visitor-rows'], {
-  revalidate: 300,
-  tags: ['visitor-rows'],
-})
+export async function getMaintenanceRows(options?: PaginationOptions, context?: OperationsDataContext) {
+  const client = await getClient(context)
 
-export async function getMaintenanceRows(options?: PaginationOptions) {
-  return paginateRows(await getCachedMaintenanceRows(), options)
+  const result = await runPaginatedQuery(options, async (page, pageSize) => {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    let query = client
+      .from('maintenance_requests')
+      .select('id, title, priority, status, unit_id, unit_label, updated_at, property_id', { count: 'exact' })
+      .order('updated_at', { ascending: false, nullsFirst: false })
+
+    query = applyManagerScopeFilters(query, context)
+
+    return query.range(from, to)
+  })
+
+  return {
+    ...result,
+    rows: result.rows.map((row: any) => ({
+      request_id: String(row.id),
+      title: String(row.title ?? 'Untitled request'),
+      priority: mapMaintenancePriority(row.priority),
+      status: mapMaintenanceStatus(row.status),
+      unit: String(row.unit_label ?? row.unit_id ?? 'Unknown'),
+      updated_at: String(row.updated_at ?? new Date(0).toISOString()),
+    } satisfies MaintenanceRow)),
+  }
 }
-export async function getBookingRows(options?: PaginationOptions) {
-  return paginateRows(await getCachedBookingRows(), options)
+
+export async function getBookingRows(options?: PaginationOptions, context?: OperationsDataContext) {
+  const client = await getClient(context)
+
+  const result = await runPaginatedQuery(options, async (page, pageSize) => {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    let query = client
+      .from('bookings')
+      .select('id, amenity_name, amenity_id, unit_id, unit_label, status, start_time, end_time, property_id', {
+        count: 'exact',
+      })
+      .order('start_time', { ascending: false, nullsFirst: false })
+
+    query = applyManagerScopeFilters(query, context)
+
+    return query.range(from, to)
+  })
+
+  return {
+    ...result,
+    rows: result.rows.map((row: any) => ({
+      booking_id: String(row.id),
+      amenity: String(row.amenity_name ?? row.amenity_id ?? 'Amenity'),
+      unit: String(row.unit_label ?? row.unit_id ?? 'Unknown'),
+      status: row.status === 'pending' || row.status === 'cancelled' ? row.status : 'confirmed',
+      start_time: String(row.start_time),
+      end_time: String(row.end_time),
+    } satisfies BookingRow)),
+  }
 }
-export async function getModerationRows(options?: PaginationOptions) {
-  return paginateRows(await getCachedModerationRows(), options)
+
+export async function getModerationRows(options?: PaginationOptions, context?: OperationsDataContext) {
+  const client = await getClient(context)
+
+  const result = await runPaginatedQuery(options, async (page, pageSize) => {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    let query = client
+      .from('messages')
+      .select('id, thread_id, author_name, status, created_at, metadata, property_id, unit_id, threads!inner(title)', {
+        count: 'exact',
+      })
+      .order('created_at', { ascending: false, nullsFirst: false })
+
+    query = query.eq('status', 'flagged')
+    query = applyManagerScopeFilters(query, context)
+
+    return query.range(from, to)
+  })
+
+  return {
+    ...result,
+    rows: result.rows.map((row: any) => ({
+      message_id: String(row.id),
+      thread: String(row.threads?.title ?? row.thread_id ?? 'Thread'),
+      author: String(row.author_name ?? 'Unknown'),
+      flag_reason: String(row.metadata?.flag_reason ?? row.metadata?.reason ?? 'Flagged content'),
+      status: mapModerationStatus(row.status),
+      created_at: String(row.created_at ?? new Date(0).toISOString()),
+    } satisfies ModerationRow)),
+  }
 }
-export async function getVisitorRows(options?: PaginationOptions) {
-  return paginateRows(await getCachedVisitorRows(), options)
+
+export async function getVisitorRows(options?: PaginationOptions, context?: OperationsDataContext) {
+  const client = await getClient(context)
+
+  const result = await runPaginatedQuery(options, async (page, pageSize) => {
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    let query = client
+      .from('visitor_logs')
+      .select('id, guest_name, host_id, host_name, status, check_in_date, check_out_date, arrival_date, departure_date, unit_id, property_id', {
+        count: 'exact',
+      })
+      .order('check_in_date', { ascending: false, nullsFirst: false })
+
+    query = applyManagerScopeFilters(query, context)
+
+    return query.range(from, to)
+  })
+
+  return {
+    ...result,
+    rows: result.rows.map((row: any) => ({
+      visitor_id: String(row.id),
+      guest_name: String(row.guest_name ?? 'Guest'),
+      host: String(row.host_name ?? row.host_id ?? 'Host'),
+      status:
+        row.status === 'approved' || row.status === 'rejected' || row.status === 'completed'
+          ? row.status
+          : 'pending',
+      check_in_date: String(row.check_in_date ?? row.arrival_date ?? ''),
+      check_out_date: String(row.check_out_date ?? row.departure_date ?? ''),
+    } satisfies VisitorRow)),
+  }
 }
 
 export async function getGlobalSearchResults(query: string) {
@@ -183,31 +420,26 @@ export async function getGlobalSearchResults(query: string) {
     }
   }
 
-  const allMaintenanceRows = await getCachedMaintenanceRows()
-  const allBookingRows = await getCachedBookingRows()
-  const allVisitorRows = await getCachedVisitorRows()
+  const [finance, maintenance, bookings, visitors] = await Promise.all([
+    getFinanceRows({ page: 1, pageSize: 100 }),
+    getMaintenanceRows({ page: 1, pageSize: 100 }),
+    getBookingRows({ page: 1, pageSize: 100 }),
+    getVisitorRows({ page: 1, pageSize: 100 }),
+  ])
 
-  const tenants = Array.from(
-    new Set([...financeRows.map((row) => row.tenant), ...allVisitorRows.map((row) => row.host)])
-  )
+  const tenants = Array.from(new Set([...finance.rows.map((row) => row.tenant), ...visitors.rows.map((row) => row.host)]))
     .filter((name) => name.toLowerCase().includes(q))
     .map((name) => ({ id: name.toLowerCase().replace(/\s+/g, '-'), name }))
 
-  const units = Array.from(
-    new Set([
-      ...financeRows.map((row) => row.unit),
-      ...allMaintenanceRows.map((row) => row.unit),
-      ...allBookingRows.map((row) => row.unit),
-    ])
-  )
+  const units = Array.from(new Set([...finance.rows.map((row) => row.unit), ...maintenance.rows.map((row) => row.unit), ...bookings.rows.map((row) => row.unit)]))
     .filter((unit) => unit.toLowerCase().includes(q))
     .map((unit) => ({ id: unit.toLowerCase(), unit }))
 
-  const requests = allMaintenanceRows
+  const requests = maintenance.rows
     .filter((row) => row.title.toLowerCase().includes(q) || row.request_id.toLowerCase().includes(q))
     .map((row) => ({ id: row.request_id, title: row.title, status: row.status }))
 
-  const payments = financeRows
+  const payments = finance.rows
     .filter((row) => row.payment_id.toLowerCase().includes(q) || row.tenant.toLowerCase().includes(q))
     .map((row) => ({ id: row.payment_id, tenant: row.tenant, amount: row.amount, status: row.status }))
 
