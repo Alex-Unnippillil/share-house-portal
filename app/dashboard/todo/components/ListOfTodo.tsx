@@ -1,37 +1,30 @@
-import { TrashIcon } from "@radix-ui/react-icons"
-
 import {
   dashboardEmptyStateClass,
   dashboardStatusBadgeVariants,
 } from "@/app/dashboard/components/dashboard-component-variants"
-import { Button } from "@/components/ui/button"
 import { TableCell, TableRow } from "@/components/ui/table"
 
+import { readTodos } from "../actions"
+import DeleteTodoButton from "./DeleteTodoButton"
 import EditTodo from "./EditTodo"
 
-type TodoRow = {
-  title: string
-  status: "completed" | "pending"
-  createdAt: string
-  createdBy: string
-}
+export default async function ListOfTodo() {
+  const result = await readTodos()
 
-const todos: TodoRow[] = [
-  {
-    title: "Subscribe to my channel",
-    status: "completed",
-    createdAt: new Date().toDateString(),
-    createdBy: "Garfield",
-  },
-  {
-    title: "Prepare parking rules announcement",
-    status: "pending",
-    createdAt: new Date().toDateString(),
-    createdBy: "Trender",
-  },
-]
+  if (!result.success) {
+    return (
+      <tbody>
+        <tr>
+          <td colSpan={5} className="p-2">
+            <div className={dashboardEmptyStateClass}>{result.error ?? "Unable to load todos."}</div>
+          </td>
+        </tr>
+      </tbody>
+    )
+  }
 
-export default function ListOfTodo() {
+  const todos = result.data ?? []
+
   if (!todos.length) {
     return (
       <tbody>
@@ -47,26 +40,25 @@ export default function ListOfTodo() {
   return (
     <tbody>
       {todos.map((todo, index) => (
-        <TableRow key={todo.title + index} className={index === 0 ? "bg-muted/40" : undefined}>
+        <TableRow key={todo.id} className={index === 0 ? "bg-muted/40" : undefined}>
           <TableCell className="font-medium text-foreground">{todo.title}</TableCell>
           <TableCell>
             <span
               className={dashboardStatusBadgeVariants({
-                tone: todo.status === "completed" ? "success" : "warning",
+                tone: todo.completed ? "success" : "warning",
               })}
             >
-              {todo.status}
+              {todo.completed ? "completed" : "pending"}
             </span>
           </TableCell>
-          <TableCell className="text-muted-foreground">{todo.createdAt}</TableCell>
-          <TableCell className="text-muted-foreground">{todo.createdBy}</TableCell>
+          <TableCell className="text-muted-foreground">
+            {todo.created_at ? new Date(todo.created_at).toLocaleDateString() : "-"}
+          </TableCell>
+          <TableCell className="text-muted-foreground">{todo.author_id}</TableCell>
           <TableCell className="text-right">
             <div className="flex items-center justify-end gap-2">
-              <Button size="sm" variant="outline" className="gap-2">
-                <TrashIcon />
-                Delete
-              </Button>
-              <EditTodo />
+              <DeleteTodoButton todoId={todo.id} />
+              <EditTodo todo={todo} />
             </div>
           </TableCell>
         </TableRow>

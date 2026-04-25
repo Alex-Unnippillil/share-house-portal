@@ -2,10 +2,11 @@ import { Pencil1Icon } from "@radix-ui/react-icons"
 
 import { Button } from "@/components/ui/button"
 
+import type { TodoRecord } from "../actions"
 import DialogForm from "./DialogForm"
 import TodoForm from "./TodoForm"
 
-export default function EditTodo() {
+export default function EditTodo({ todo }: { todo: TodoRecord }) {
   return (
     <DialogForm
       id="update-trigger"
@@ -16,7 +17,7 @@ export default function EditTodo() {
           Edit
         </Button>
       }
-      form={<TodoForm isEdit />}
+      form={<TodoForm isEdit todo={todo} />}
     />
   )
 }

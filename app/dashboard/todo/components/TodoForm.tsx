@@ -1,5 +1,7 @@
 "use client"
 
+import { useTransition } from "react"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -17,7 +19,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { DashboardSubmitButton } from "@/app/dashboard/components/dashboard-submit-button"
 
-import { createTodo, updateTodoById } from "../actions"
+import { createTodo, type TodoRecord, updateTodoById } from "../actions"
 
 const FormSchema = z.object({
   title: z.string().min(10, {
@@ -26,49 +28,58 @@ const FormSchema = z.object({
   completed: z.boolean(),
 })
 
-export default function TodoForm({ isEdit }: { isEdit: boolean }) {
+export default function TodoForm({
+  isEdit,
+  todo,
+}: {
+  isEdit: boolean
+  todo?: TodoRecord
+}) {
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      title: "",
-      completed: false,
+      title: todo?.title ?? "",
+      completed: todo?.completed ?? false,
     },
   })
 
-  const handleCreateMember = (data: z.infer<typeof FormSchema>) => {
-    createTodo()
-    document.getElementById("create-trigger")?.click()
-
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
-  }
-
-  const handleUpdateMember = (data: z.infer<typeof FormSchema>) => {
-    updateTodoById("hello")
-    document.getElementById("update-trigger")?.click()
-
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
-  }
-
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    if (isEdit) {
-      handleUpdateMember(data)
-    } else {
-      handleCreateMember(data)
-    }
+    startTransition(async () => {
+      const result = isEdit
+        ? await updateTodoById(todo?.id ?? "", {
+            title: data.title,
+            completed: data.completed,
+          })
+        : await createTodo({
+            title: data.title,
+            completed: data.completed,
+          })
+
+      if (!result.success) {
+        toast({
+          title: isEdit ? "Failed to update todo" : "Failed to create todo",
+          description: result.error ?? "Unknown error",
+          variant: "destructive",
+        })
+        return
+      }
+
+      document.getElementById(isEdit ? "update-trigger" : "create-trigger")?.click()
+
+      toast({
+        title: isEdit ? "Todo updated" : "Todo created",
+        description: `${result.data?.title ?? data.title} saved successfully.`,
+      })
+
+      form.reset({
+        title: result.data?.title ?? "",
+        completed: result.data?.completed ?? false,
+      })
+      router.refresh()
+    })
   }
 
   return (
@@ -93,10 +104,7 @@ export default function TodoForm({ isEdit }: { isEdit: boolean }) {
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
               <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel>Complete</FormLabel>
@@ -104,7 +112,7 @@ export default function TodoForm({ isEdit }: { isEdit: boolean }) {
             </FormItem>
           )}
         />
-        <DashboardSubmitButton label="Submit" />
+        <DashboardSubmitButton label="Submit" pending={isPending} />
       </form>
     </Form>
   )
