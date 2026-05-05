@@ -7,7 +7,16 @@ import { z } from 'zod';
 import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
-import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
+import {
+  auditLogsTable,
+  documentsTable,
+  DOCUMENT_AUDIT_ACTIONS,
+  isPrivilegedRole,
+  logDocumentAccess,
+  type DocumentAuditAction,
+  type TypedSupabaseClient
+} from '@/utils/typed-supabase-client';
+import type { Json } from '@/lib/supabase';
 import {
   Document,
   DocumentWithLease,
@@ -65,16 +74,16 @@ async function logAuditEvent(
   }: {
     userId: string;
     documentId?: string;
-    action: string;
-    metadata?: Record<string, unknown>;
+    action: DocumentAuditAction;
+    metadata?: Json;
   }
 ) {
-  await (supabase as any).from('audit_logs').insert({
+  await auditLogsTable(supabase as unknown as TypedSupabaseClient).insert({
     actor_id: userId,
     entity_type: 'document',
     entity_id: documentId ?? null,
     action,
-    metadata: metadata ?? {},
+    metadata: metadata ?? null,
   });
 }
 
@@ -118,10 +127,10 @@ export async function getDocumentsAction(
 
     // Log access
     for (const doc of documents) {
-      await (supabase as any).rpc('log_document_access', {
-        p_document_id: doc.id,
-        p_action: 'view',
-        p_metadata: { source: 'documents_page' }
+      await logDocumentAccess(typedSupabase, {
+        documentId: doc.id,
+        action: 'view',
+        metadata: { source: 'documents_page' }
       });
     }
 
@@ -141,6 +150,7 @@ export async function uploadDocumentAction(
 ): Promise<ActionResult<Document>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -196,8 +206,7 @@ export async function uploadDocumentAction(
 
     let nextVersion = 1;
     if (validatedData.parent_document_id) {
-      const { data: parentVersion } = await (supabase as any)
-        .from('documents')
+      const { data: parentVersion } = await documentsTable(typedSupabase)
         .select('version')
         .eq('id', validatedData.parent_document_id)
         .single();
@@ -206,8 +215,7 @@ export async function uploadDocumentAction(
     }
 
     // Create document record
-    const { data: document, error: dbError } = await (supabase as any)
-      .from('documents')
+    const { data: document, error: dbError } = await documentsTable(typedSupabase)
       .insert({
         title: validatedData.title,
         description: validatedData.description,
@@ -242,16 +250,16 @@ export async function uploadDocumentAction(
     }
 
     // Log document creation
-    await (supabase as any).rpc('log_document_access', {
-      p_document_id: document.id,
-      p_action: 'upload',
-      p_metadata: { file_name: file.name, file_size: file.size, source: validatedData.source }
+    await logDocumentAccess(typedSupabase, {
+      documentId: document.id,
+      action: 'upload',
+      metadata: { file_name: file.name, file_size: file.size, source: validatedData.source }
     });
 
     await logAuditEvent(supabase, {
       userId: user.id,
       documentId: document.id,
-      action: 'document.uploaded',
+      action: DOCUMENT_AUDIT_ACTIONS.uploaded,
       metadata: {
         source: validatedData.source,
         version: nextVersion,
@@ -260,7 +268,7 @@ export async function uploadDocumentAction(
     });
 
     revalidatePath('/documents');
-    return { success: true, data: document, message: 'Document uploaded successfully.' };
+    return { success: true, data: document as Document, message: 'Document uploaded successfully.' };
   } catch (error) {
     console.error('Unexpected error in uploadDocumentAction:', error);
     return {
@@ -306,8 +314,7 @@ export async function createSigningRequestAction(
     const validatedData = validationResult.data;
 
     // Get document details
-    const { data: document, error: docError } = await (supabase as any)
-      .from('documents')
+    const { data: document, error: docError } = await documentsTable(typedSupabase)
       .select('*')
       .eq('id', validatedData.document_id)
       .single();
@@ -325,7 +332,7 @@ export async function createSigningRequestAction(
       return { success: false, error: 'You do not have permission to create signing requests for this document.' };
     }
 
-    if (role !== 'property_manager' && role !== 'admin' && document.tenant_id !== user.id) {
+    if (!isPrivilegedRole(role) && document.tenant_id !== user.id) {
       return { success: false, error: 'You do not have permission to create signing requests for this document.' };
     }
 
@@ -347,7 +354,7 @@ export async function createSigningRequestAction(
     let tenantProfiles: { id: string; email: string | null; full_name: string | null }[] = [];
 
     if (document.document_type === 'lease') {
-      const { data: lease } = await (supabase as any)
+      const { data: lease } = await typedSupabase
         .from('leases')
         .select('tenant_ids')
         .eq('document_id', document.id)
@@ -386,8 +393,7 @@ export async function createSigningRequestAction(
     }
 
     // Update document with Documenso envelope ID
-    await (supabase as any)
-      .from('documents')
+    await documentsTable(typedSupabase)
       .update({
         documenso_envelope_id: signingResult.id,
         status: 'pending_signature'
@@ -430,10 +436,10 @@ export async function createSigningRequestAction(
     }
 
     // Log signing request creation
-    await supabase.rpc('log_document_access', {
-      p_document_id: document.id,
-      p_action: 'signing_request_created',
-      p_metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
+    await logDocumentAccess(typedSupabase, {
+      documentId: document.id,
+      action: 'signing_request_created',
+      metadata: { envelope_id: signingResult.id, recipients: tenantEmails }
     });
 
     revalidatePath('/documents');
@@ -458,6 +464,7 @@ export async function signDocumentAction(
 ): Promise<ActionResult> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     // Check authentication
@@ -508,10 +515,10 @@ export async function signDocumentAction(
     }
 
     // Log signing action
-    await supabase.rpc('log_document_access', {
-      p_document_id: documentId,
-      p_action: 'signed',
-      p_metadata: signatureData
+    await logDocumentAccess(typedSupabase, {
+      documentId,
+      action: 'signed',
+      metadata: signatureData
     });
 
     revalidatePath('/documents');
@@ -531,6 +538,7 @@ export async function getSigningUrlAction(
 ): Promise<ActionResult<{ signing_url: string }>> {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
+  const typedSupabase = supabase as unknown as TypedSupabaseClient;
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -606,7 +614,7 @@ export async function getDocumentAccessUrlAction(
       .select('id, file_url, tenant_id, created_by, metadata')
       .eq('id', documentId);
 
-    if (role !== 'property_manager' && role !== 'admin') {
+    if (!isPrivilegedRole(role)) {
       query = query.or(`tenant_id.eq.${user.id},created_by.eq.${user.id}`);
     }
 
@@ -632,16 +640,16 @@ export async function getDocumentAccessUrlAction(
       return { success: false, error: 'Failed to create secure access URL.' };
     }
 
-    await supabase.rpc('log_document_access', {
-      p_document_id: documentId,
-      p_action: action,
-      p_metadata: { source: 'signed_url' },
+    await logDocumentAccess(typedSupabase, {
+      documentId,
+      action,
+      metadata: { source: 'signed_url' },
     });
 
     await logAuditEvent(supabase, {
       userId: user.id,
       documentId,
-      action: action === 'download' ? 'document.downloaded' : 'document.viewed',
+      action: action === 'download' ? DOCUMENT_AUDIT_ACTIONS.downloaded : DOCUMENT_AUDIT_ACTIONS.viewed,
       metadata: { source: 'signed_url' },
     });
 

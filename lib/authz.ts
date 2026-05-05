@@ -4,11 +4,10 @@ import { redirect } from 'next/navigation'
 
 import { fetchMemberRole } from '@/lib/data/members'
 import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
-
-export const PRIVILEGED_ROLES = ['property_manager', 'admin'] as const
+import { isPrivilegedRole, type TypedSupabaseClient } from '@/utils/typed-supabase-client'
 
 export async function requirePrivilegedAccess() {
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = (await createSupbaseServerClientReadOnly()) as TypedSupabaseClient
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -17,9 +16,9 @@ export async function requirePrivilegedAccess() {
     redirect('/auth')
   }
 
-  const role = await fetchMemberRole(supabase as any, user.id)
+  const role = await fetchMemberRole(supabase, user.id)
 
-  if (!role || !PRIVILEGED_ROLES.includes(role as (typeof PRIVILEGED_ROLES)[number])) {
+  if (!isPrivilegedRole(role)) {
     redirect('/dashboard')
   }
 
