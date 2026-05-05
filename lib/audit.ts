@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { Json } from '@/lib/supabase'
 import { createSupbaseServerClient } from '@/utils/supaone'
+import { auditLogsTable, type TypedSupabaseClient } from '@/utils/typed-supabase-client'
 
 export type AuditAction =
   | 'operations.dashboard.view'
@@ -24,8 +25,8 @@ export async function writeAuditRecord(input: {
   metadata?: Json
 }) {
   try {
-    const supabase = await createSupbaseServerClient()
-    await supabase.from('audit_logs').insert({
+    const supabase = (await createSupbaseServerClient()) as TypedSupabaseClient
+    await auditLogsTable(supabase).insert({
       action: input.action,
       actor_id: input.actorId,
       actor_role: input.actorRole,
@@ -33,7 +34,7 @@ export async function writeAuditRecord(input: {
       target_id: input.targetId ?? null,
       metadata: input.metadata ?? null,
       occurred_at: new Date().toISOString(),
-    } as any)
+    })
   } catch (error) {
     console.error('Unable to persist audit record', {
       action: input.action,
