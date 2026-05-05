@@ -41,14 +41,10 @@ export async function resolveSessionRole(
     return null
   }
 
-  const claimedRole =
+  const metadataRole =
     coerceRole(user.app_metadata?.role) ??
     coerceRole(user.user_metadata?.role) ??
     coerceRole((user as User & { role?: unknown }).role)
-
-  if (claimedRole && claimedRole !== 'user') {
-    return claimedRole
-  }
 
   const { data, error } = await supabase
     .from('profiles')
@@ -58,10 +54,11 @@ export async function resolveSessionRole(
 
   if (error) {
     console.error('Failed to resolve profile role in middleware:', error.message)
-    return claimedRole
+    // Fallback to metadata only when profile lookup is unavailable (for example, transient DB errors).
+    return metadataRole
   }
 
-  return coerceRole(data?.role) ?? claimedRole
+  return coerceRole(data?.role)
 }
 
 export function isPublicRoute(pathname: string): boolean {
@@ -87,7 +84,7 @@ export function isRouteAllowedForRole(pathname: string, role: AppRole | null): b
     return true
   }
 
-  if (!role) {
+  if (!role || role === 'user') {
     return false
   }
 

@@ -19,6 +19,18 @@ data is exposed across buildings or portfolios.
 Role assignment is maintained within Supabase Auth profiles and synchronized to
 an internal `user_roles` table that records `(UserID, BuildingID, Role)` tuples.
 
+
+## Session Role Resolution Precedence
+For authenticated sessions, middleware resolves the route authorization role in this order:
+
+1. Query `profiles.role` in Supabase as the server-authoritative source.
+2. If the profile query fails due to a lookup error (for example, a transient database outage), fall back to Supabase Auth metadata role claims (`app_metadata.role`, then `user_metadata.role`).
+3. If the profile record is missing or contains an unknown role value, no role is granted.
+
+Additional guardrails:
+- Unknown role values from metadata are ignored.
+- The pseudo-role `user` never grants access to role-restricted routes.
+
 ## Tenancy and Building Scoping
 * All business entities include a `building_id` column. Composite indexes enforce
   `(building_id, id)` lookups for secure filtering.

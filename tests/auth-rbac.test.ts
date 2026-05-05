@@ -25,26 +25,13 @@ describe('auth RBAC route helpers', () => {
     expect(isRouteAllowedForRole('/dashboard/members', 'admin')).toBe(true)
     expect(isRouteAllowedForRole('/dashboard/members', 'property_manager')).toBe(true)
     expect(isRouteAllowedForRole('/dashboard/members', 'tenant')).toBe(false)
+    expect(isRouteAllowedForRole('/dashboard/members', 'user')).toBe(false)
     expect(isRouteAllowedForRole('/dashboard', 'tenant')).toBe(true)
   })
 })
 
 describe('resolveSessionRole', () => {
-  it('prefers trusted app metadata role', async () => {
-    const supabase = {
-      from: vi.fn(),
-    }
-
-    const role = await resolveSessionRole(supabase as any, {
-      app_metadata: { role: 'admin' },
-      user_metadata: {},
-    } as any)
-
-    expect(role).toBe('admin')
-    expect(supabase.from).not.toHaveBeenCalled()
-  })
-
-  it('falls back to profile role lookup', async () => {
+  it('prefers profile role when it conflicts with metadata role', async () => {
     const maybeSingle = vi.fn().mockResolvedValue({ data: { role: 'roommate' }, error: null })
     const eq = vi.fn().mockReturnValue({ maybeSingle })
     const select = vi.fn().mockReturnValue({ eq })
@@ -52,14 +39,55 @@ describe('resolveSessionRole', () => {
 
     const role = await resolveSessionRole({ from } as any, {
       id: 'user-1',
-      app_metadata: {},
+      app_metadata: { role: 'admin' },
       user_metadata: {},
     } as any)
 
     expect(role).toBe('roommate')
-    expect(from).toHaveBeenCalledWith('profiles')
-    expect(select).toHaveBeenCalledWith('role')
-    expect(eq).toHaveBeenCalledWith('id', 'user-1')
-    expect(maybeSingle).toHaveBeenCalled()
+  })
+
+  it('returns null when profile is missing even if metadata role exists', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null })
+    const eq = vi.fn().mockReturnValue({ maybeSingle })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+
+    const role = await resolveSessionRole({ from } as any, {
+      id: 'user-2',
+      app_metadata: { role: 'tenant' },
+      user_metadata: {},
+    } as any)
+
+    expect(role).toBeNull()
+  })
+
+  it('falls back to metadata role when profile lookup errors', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: { message: 'db timeout' } })
+    const eq = vi.fn().mockReturnValue({ maybeSingle })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+
+    const role = await resolveSessionRole({ from } as any, {
+      id: 'user-3',
+      app_metadata: { role: 'tenant' },
+      user_metadata: {},
+    } as any)
+
+    expect(role).toBe('tenant')
+  })
+
+  it('ignores unknown metadata roles', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: { message: 'db timeout' } })
+    const eq = vi.fn().mockReturnValue({ maybeSingle })
+    const select = vi.fn().mockReturnValue({ eq })
+    const from = vi.fn().mockReturnValue({ select })
+
+    const role = await resolveSessionRole({ from } as any, {
+      id: 'user-4',
+      app_metadata: { role: 'superadmin' },
+      user_metadata: {},
+    } as any)
+
+    expect(role).toBeNull()
   })
 })
