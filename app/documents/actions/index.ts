@@ -8,6 +8,7 @@ import { documensoService } from '@/lib/documenso';
 import { fetchDocumentStats, fetchDocumentsList } from '@/lib/data/documents';
 import { fetchMemberRole } from '@/lib/data/members';
 import type { TypedSupabaseClient } from '@/utils/typed-supabase-client';
+import { createStructuredLogger } from '@/lib/observability/logger';
 import {
   Document,
   DocumentWithLease,
@@ -53,6 +54,10 @@ interface ActionResult<T = any> {
   error?: string;
   message?: string;
 }
+
+const documentsActionLogger = createStructuredLogger('server_action', {
+  component: 'documents_actions',
+});
 
 
 async function logAuditEvent(
@@ -116,12 +121,28 @@ export async function getDocumentsAction(
       return { success: false, error: 'Failed to fetch documents.' };
     }
 
-    // Log access
-    for (const doc of documents) {
-      await (supabase as any).rpc('log_document_access', {
-        p_document_id: doc.id,
+    const accessedDocumentIds = documents.map((doc) => doc.id);
+
+    if (accessedDocumentIds.length > 0) {
+      documentsActionLogger.info('documents_audit_batch_attempted', {
+        eventName: 'documents_audit_batch_attempted',
+        actorId: user.id,
+        auditBatchSize: accessedDocumentIds.length,
+      });
+
+      const auditPromise = (supabase as any).rpc('log_document_access_bulk', {
+        p_document_ids: accessedDocumentIds,
         p_action: 'view',
-        p_metadata: { source: 'documents_page' }
+        p_metadata: { source: 'documents_page' },
+      });
+
+      void auditPromise.catch((auditError: unknown) => {
+        documentsActionLogger.warn('documents_audit_batch_failed', {
+          eventName: 'documents_audit_batch_failed',
+          actorId: user.id,
+          auditBatchSize: accessedDocumentIds.length,
+          error: auditError instanceof Error ? auditError.message : String(auditError),
+        });
       });
     }
 
