@@ -1,27 +1,15 @@
 import { NextResponse } from 'next/server'
 
 import { writeAuditRecord } from '@/lib/audit'
-import { fetchMemberRole } from '@/lib/data/members'
+import { requirePrivilegedApiAccess } from '@/lib/authz'
 import { getFinanceRows, toCsv } from '@/lib/operations/data'
-import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
 
 export async function GET() {
-  const supabase = await createSupbaseServerClientReadOnly()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
-  }
-
-  const role = await fetchMemberRole(supabase as any, user.id)
-  if (role !== 'property_manager' && role !== 'admin') {
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
-  }
+  const auth = await requirePrivilegedApiAccess()
+  if ('response' in auth) return auth.response
 
   const csv = toCsv((await getFinanceRows({ page: 1, pageSize: 1000 })).rows)
-  await writeAuditRecord({ action: 'operations.export.finance', actorId: user.id, actorRole: role, targetType: 'finance_export' })
+  await writeAuditRecord({ action: 'operations.export.csv.finance', actorId: auth.user.id, actorRole: auth.role, targetType: 'finance_export' })
 
   return new NextResponse(csv, {
     status: 200,

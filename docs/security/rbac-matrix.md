@@ -56,3 +56,16 @@ This matrix maps route-level access (middleware) and table-level actions (Supaba
 ## Verification Script
 
 Use `supabase/tests/rls_rbac_verification.sql` to validate positive/negative RLS paths, including cross-unit read denial and admin override behavior.
+
+## API Export Guard Pattern
+
+- All operations export endpoints under `app/api/exports/*` must call `requirePrivilegedApiAccess()` from `lib/authz.ts` at the start of the request.
+- `requirePrivilegedApiAccess()` centralizes authentication and privileged-role authorization and returns either:
+  - `{ user, role, supabase }` for authorized `property_manager` and `admin` actors, or
+  - `{ response }` with standardized JSON payload/status (`401 Unauthorized` or `403 Forbidden`).
+- Guard usage pattern:
+  1. `const auth = await requirePrivilegedApiAccess()`
+  2. `if ('response' in auth) return auth.response`
+  3. continue route logic with `auth.user.id` and `auth.role` for audit attribution.
+
+This ensures consistent privileged export controls and avoids duplicated authz logic across export routes.
