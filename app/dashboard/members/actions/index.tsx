@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupbaseServerClient } from "@/utils/supaone";
+import { createSupabaseServerClient } from "@/utils/supaone";
 
 import { redirect } from "next/navigation";
 

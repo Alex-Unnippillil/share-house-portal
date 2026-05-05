@@ -3,12 +3,12 @@ import 'server-only'
 import { redirect } from 'next/navigation'
 
 import { fetchMemberRole } from '@/lib/data/members'
-import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
+import { createSupabaseServerClientReadOnly } from '@/utils/supaone'
 
 export const PRIVILEGED_ROLES = ['property_manager', 'admin'] as const
 
 export async function requirePrivilegedAccess() {
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = await createSupabaseServerClientReadOnly()
   const {
     data: { user },
   } = await supabase.auth.getUser()

@@ -2,9 +2,8 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from '@/lib/supabase'
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/utils/supabase/env'
-import type { TypedSupabaseClient } from '@/utils/typed-supabase-client'
 
-export async function createSupbaseServerClientReadOnly() {
+export async function createSupabaseServerClientReadOnly() {
 	const cookieStore = cookies();
 
 	return createServerClient(
@@ -20,7 +19,7 @@ export async function createSupbaseServerClientReadOnly() {
 	);
 }
 
-export async function createSupbaseServerClient() {
+export async function createSupabaseServerClient() {
 	const cookieStore = cookies();
 
 	return createServerClient<Database>(
@@ -41,3 +40,13 @@ export async function createSupbaseServerClient() {
 		}
 	);
 }
+
+/**
+ * @deprecated Use createSupabaseServerClientReadOnly. Keep this alias for one release cycle.
+ */
+export const createSupbaseServerClientReadOnly = createSupabaseServerClientReadOnly;
+
+/**
+ * @deprecated Use createSupabaseServerClient. Keep this alias for one release cycle.
+ */
+export const createSupbaseServerClient = createSupabaseServerClient;
