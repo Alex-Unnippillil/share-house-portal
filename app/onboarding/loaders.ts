@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation"
 
-import { createSupbaseServerClientReadOnly } from "@/utils/supaone"
+import { createSupabaseServerClientReadOnly } from "@/utils/supaone"
 import { computeOnboardingCompletion } from "@/lib/onboarding"
 
 type OnboardingMetadata = {
@@ -31,7 +31,7 @@ type OnboardingMetadata = {
 }
 
 export async function loadOnboardingState() {
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = await createSupabaseServerClientReadOnly()
 
   const {
     data: { user },

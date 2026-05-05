@@ -34,6 +34,7 @@ The repository is organized to keep infrastructure, services, clients, and share
 - Follow functional component patterns with hooks in React. Avoid legacy class components unless required by dependencies.
 - Group tests alongside implementation files using the `.test.ts(x)` suffix.
 - Favor named exports; use default exports only for Next.js page components.
+- Supabase server helpers in `utils/supaone.tsx` must use canonical names: `createSupabaseServerClientReadOnly` and `createSupabaseServerClient`. Keep deprecated `Supbase` aliases only for temporary compatibility and do not use them in new code.
 
 ### Go (Backend Services)
 

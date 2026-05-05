@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-import { createSupbaseServerClient } from "@/utils/supaone"
+import { createSupabaseServerClient } from "@/utils/supaone"
 import type { Json } from "@/lib/supabase"
 import {
   computeOnboardingCompletion,
@@ -47,7 +47,7 @@ type OnboardingMetadata = {
 }
 
 async function loadSelfProfile() {
-  const supabase = await createSupbaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const {
     data: { user },
     error: userError,

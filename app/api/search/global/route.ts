@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server'
 import { writeAuditRecord } from '@/lib/audit'
 import { fetchMemberRole } from '@/lib/data/members'
 import { getGlobalSearchResults } from '@/lib/operations/data'
-import { createSupbaseServerClientReadOnly } from '@/utils/supaone'
+import { createSupabaseServerClientReadOnly } from '@/utils/supaone'
 
 export async function GET(request: Request) {
-  const supabase = await createSupbaseServerClientReadOnly()
+  const supabase = await createSupabaseServerClientReadOnly()
   const {
     data: { user },
   } = await supabase.auth.getUser()
